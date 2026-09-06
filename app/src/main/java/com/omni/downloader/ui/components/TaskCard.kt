@@ -1,0 +1,408 @@
+package com.omni.downloader.ui.components
+
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
+import coil.compose.AsyncImage
+import com.omni.downloader.data.model.DownloadTask
+import com.omni.downloader.data.model.DownloadType
+import com.omni.downloader.data.model.TaskStatus
+import com.omni.downloader.ui.localization.LocalAppStrings
+import com.omni.downloader.ui.theme.ErrorRed
+import com.omni.downloader.ui.theme.SuccessGreen
+import com.omni.downloader.ui.theme.WarningOrange
+import java.io.File
+
+@Composable
+fun TaskCard(
+    task: DownloadTask,
+    onCancel: () -> Unit,
+    onDelete: (deleteFile: Boolean) -> Unit,
+    onRetry: () -> Unit
+) {
+    val context = LocalContext.current
+    val strings = LocalAppStrings.current
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                shape = RoundedCornerShape(12.dp)
+            ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            // 头部：封面、标题与状态
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                if (task.thumbnailUrl.isNotEmpty()) {
+                    AsyncImage(
+                        model = task.thumbnailUrl,
+                        contentDescription = "封面",
+                        modifier = Modifier
+                            .size(width = 90.dp, height = 54.dp)
+                            .clip(RoundedCornerShape(6.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 90.dp, height = 54.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = when (task.downloadType) {
+                                DownloadType.AUDIO_ONLY -> Icons.Default.Audiotrack
+                                DownloadType.VIDEO_ONLY -> Icons.Default.VolumeOff
+                                DownloadType.GIF -> Icons.Default.Gif
+                                DownloadType.COVER -> Icons.Default.Image
+                                else -> Icons.Default.Videocam
+                            },
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = task.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // 模式与清晰度徽章
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        BadgeChip(
+                            text = when (task.downloadType) {
+                                DownloadType.VIDEO_WITH_AUDIO -> "${strings.badgeVideo}: ${task.selectedResolution}"
+                                DownloadType.VIDEO_ONLY -> "${strings.badgeMute}: ${task.selectedResolution}"
+                                DownloadType.AUDIO_ONLY -> "${strings.badgeAudio}: ${task.audioFormat.ext.uppercase()}"
+                                DownloadType.GIF -> "${strings.badgeGif}: GIF"
+                                DownloadType.COVER -> "${strings.badgeCover}: 原图"
+                            },
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        val statusColor = when (task.status) {
+                            TaskStatus.COMPLETED -> SuccessGreen
+                            TaskStatus.DOWNLOADING, TaskStatus.PROCESSING -> MaterialTheme.colorScheme.primary
+                            TaskStatus.FAILED -> ErrorRed
+                            else -> WarningOrange
+                        }
+
+                        val statusText = when (task.status) {
+                            TaskStatus.PENDING -> strings.statusPending
+                            TaskStatus.DOWNLOADING -> strings.statusDownloading
+                            TaskStatus.PROCESSING -> strings.statusProcessing
+                            TaskStatus.COMPLETED -> strings.statusCompleted
+                            TaskStatus.FAILED -> strings.statusFailed
+                            TaskStatus.CANCELLED -> strings.statusCancelled
+                        }
+
+                        BadgeChip(
+                            text = statusText,
+                            color = statusColor
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // 进度条与速度
+            if (task.status == TaskStatus.DOWNLOADING || task.status == TaskStatus.PROCESSING) {
+                LinearProgressIndicator(
+                    progress = { (task.progress / 100f).coerceIn(0f, 1f) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = if (task.status == TaskStatus.PROCESSING) "正在合并音视频轨..." else "${task.progress.toInt()}% · ${task.speedText}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (task.etaText.isNotEmpty()) {
+                        Text(
+                            text = "剩余 ${task.etaText}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else if (task.status == TaskStatus.FAILED && task.errorMessage.isNotEmpty()) {
+                var showErrorDetailDialog by remember { mutableStateOf(false) }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable { showErrorDetailDialog = true }
+                        .padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "错误: ${task.errorMessage}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ErrorRed,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "查看详情",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                if (showErrorDetailDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showErrorDetailDialog = false },
+                        icon = { Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = ErrorRed) },
+                        title = { Text("下载失败详细日志", fontWeight = FontWeight.Bold) },
+                        text = {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                androidx.compose.foundation.text.selection.SelectionContainer {
+                                    Text(
+                                        text = task.errorMessage,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                    )
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            Button(onClick = {
+                                val clip = android.content.ClipData.newPlainText("ErrorLog", task.errorMessage)
+                                (context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager)?.setPrimaryClip(clip)
+                                Toast.makeText(context, "已复制错误日志", Toast.LENGTH_SHORT).show()
+                                showErrorDetailDialog = false
+                            }) {
+                                Text("复制日志")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showErrorDetailDialog = false }) {
+                                Text("关闭")
+                            }
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // 底部操作区
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                when (task.status) {
+                    TaskStatus.DOWNLOADING, TaskStatus.PROCESSING, TaskStatus.PENDING -> {
+                        OutlinedButton(
+                            onClick = onCancel,
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = strings.cancel, fontSize = 12.sp)
+                        }
+                    }
+                    TaskStatus.COMPLETED -> {
+                        // 播放 / 查看动图与封面按钮
+                        Button(
+                            onClick = { openMediaFile(context, task.localFilePath, task.downloadType) },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                imageVector = when (task.downloadType) {
+                                    DownloadType.COVER -> Icons.Default.Image
+                                    DownloadType.GIF -> Icons.Default.Visibility
+                                    else -> Icons.Default.PlayArrow
+                                },
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = if (task.downloadType == DownloadType.GIF || task.downloadType == DownloadType.COVER) "查看" else strings.play, fontSize = 12.sp)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        // 分享按钮
+                        OutlinedButton(
+                            onClick = { shareMediaFile(context, task.localFilePath, task.title) },
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = "分享", fontSize = 12.sp)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        // 删除按钮
+                        IconButton(
+                            onClick = { onDelete(true) },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteOutline,
+                                contentDescription = strings.delete,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    TaskStatus.FAILED, TaskStatus.CANCELLED -> {
+                        Button(
+                            onClick = onRetry,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = strings.retry, fontSize = 12.sp)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(
+                            onClick = { onDelete(false) },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteOutline,
+                                contentDescription = strings.delete,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BadgeChip(text: String, color: Color) {
+    Surface(
+        color = color.copy(alpha = 0.12f),
+        shape = RoundedCornerShape(4.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+private fun openMediaFile(context: Context, filePath: String, downloadType: DownloadType) {
+    val file = File(filePath)
+    if (!file.exists()) {
+        Toast.makeText(context, "文件不存在或已被移动", Toast.LENGTH_SHORT).show()
+        return
+    }
+    try {
+        val uri: Uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+        val isImage = downloadType == DownloadType.COVER || file.name.endsWith(".jpg", true) || file.name.endsWith(".png", true) || file.name.endsWith(".webp", true)
+        val mimeType = when {
+            isImage -> "image/*"
+            downloadType == DownloadType.AUDIO_ONLY -> "audio/*"
+            downloadType == DownloadType.GIF || file.name.endsWith(".gif", ignoreCase = true) -> "image/gif"
+            else -> "video/*"
+        }
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, mimeType)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        val chooserTitle = when {
+            isImage -> "查看封面图片"
+            downloadType == DownloadType.GIF || file.name.endsWith(".gif", ignoreCase = true) -> "选择相册或看图应用查看动图"
+            else -> "选择播放器播放"
+        }
+        context.startActivity(Intent.createChooser(intent, chooserTitle))
+    } catch (e: Exception) {
+        Toast.makeText(context, "无法打开媒体文件: ${e.message}", Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun shareMediaFile(context: Context, filePath: String, title: String) {
+    val file = File(filePath)
+    if (!file.exists()) {
+        Toast.makeText(context, "文件不存在", Toast.LENGTH_SHORT).show()
+        return
+    }
+    try {
+        val uri: Uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+        val isImage = file.name.endsWith(".jpg", true) || file.name.endsWith(".png", true) || file.name.endsWith(".webp", true) || file.name.endsWith(".gif", true)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = when {
+                isImage -> "image/*"
+                file.name.endsWith(".mp3") || file.name.endsWith(".m4a") || file.name.endsWith(".flac") -> "audio/*"
+                else -> "video/*"
+            }
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, title)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(intent, "分享到..."))
+    } catch (e: Exception) {
+        Toast.makeText(context, "分享失败: ${e.message}", Toast.LENGTH_SHORT).show()
+    }
+}
