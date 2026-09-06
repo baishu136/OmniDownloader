@@ -31,6 +31,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val downloadPath: StateFlow<String> = settingsRepository.downloadPath
     val appLanguage: StateFlow<String> = settingsRepository.appLanguage
     val bilibiliCookie: StateFlow<String> = settingsRepository.bilibiliCookie
+    val hasPromptedBilibiliLogin: StateFlow<Boolean> = settingsRepository.hasPromptedBilibiliLogin
+
+    fun markBilibiliLoginPrompted() {
+        settingsRepository.setHasPromptedBilibiliLogin(true)
+    }
 
     fun setAppLanguage(language: String) {
         settingsRepository.setAppLanguage(language)

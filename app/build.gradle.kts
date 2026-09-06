@@ -12,8 +12,8 @@ android {
         applicationId = "com.omni.downloader"
         minSdk = 26
         targetSdk = 34
-        versionCode = 19
-        versionName = "1.2.8"
+        versionCode = 20
+        versionName = "1.2.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

@@ -21,6 +21,9 @@ class SettingsRepository private constructor(context: Context) {
     private val _bilibiliCookie = MutableStateFlow(prefs.getString(KEY_BILIBILI_COOKIE, "") ?: "")
     val bilibiliCookie: StateFlow<String> = _bilibiliCookie.asStateFlow()
 
+    private val _hasPromptedBilibiliLogin = MutableStateFlow(prefs.getBoolean(KEY_HAS_PROMPTED_BILIBILI_LOGIN, false))
+    val hasPromptedBilibiliLogin: StateFlow<Boolean> = _hasPromptedBilibiliLogin.asStateFlow()
+
     private val _appLanguage: MutableStateFlow<String>
     val appLanguage: StateFlow<String>
 
@@ -68,6 +71,11 @@ class SettingsRepository private constructor(context: Context) {
         prefs.edit().remove(KEY_DOWNLOAD_PATH).apply()
     }
 
+    fun setHasPromptedBilibiliLogin(prompted: Boolean = true) {
+        _hasPromptedBilibiliLogin.value = prompted
+        prefs.edit().putBoolean(KEY_HAS_PROMPTED_BILIBILI_LOGIN, prompted).apply()
+    }
+
     fun setAppLanguage(language: String) {
         val clean = language.trim()
         _appLanguage.value = clean
@@ -78,6 +86,7 @@ class SettingsRepository private constructor(context: Context) {
         private const val KEY_PROXY_URL = "key_proxy_url"
         private const val KEY_DOWNLOAD_PATH = "key_download_path"
         private const val KEY_BILIBILI_COOKIE = "key_bilibili_cookie"
+        private const val KEY_HAS_PROMPTED_BILIBILI_LOGIN = "key_has_prompted_bilibili_login"
         private const val KEY_APP_LANGUAGE = "key_app_language"
 
         @Volatile

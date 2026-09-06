@@ -53,6 +53,18 @@ fun HomeScreen(
     val selectedVideoFormat by viewModel.selectedVideoFormat.collectAsState()
     val selectedAudioFormat by viewModel.selectedAudioFormat.collectAsState()
     val tasks by viewModel.tasks.collectAsState()
+    val hasPromptedBilibiliLogin by viewModel.hasPromptedBilibiliLogin.collectAsState()
+    val bilibiliCookie by viewModel.bilibiliCookie.collectAsState()
+
+    var showBilibiliGuideDialog by remember { mutableStateOf(false) }
+    var showBilibiliLoginSheet by remember { mutableStateOf(false) }
+
+    LaunchedEffect(hasPromptedBilibiliLogin, bilibiliCookie) {
+        if (!hasPromptedBilibiliLogin && bilibiliCookie.isEmpty()) {
+            kotlinx.coroutines.delay(600)
+            showBilibiliGuideDialog = true
+        }
+    }
 
     val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
 
@@ -98,9 +110,9 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     val appVer = remember {
                         try {
-                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.2.8"
+                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.2.9"
                         } catch (e: Exception) {
-                            "1.2.8"
+                            "1.2.9"
                         }
                     }
                     Surface(
@@ -385,6 +397,35 @@ fun HomeScreen(
             onDownloadSelectedMultiMedia = { indices, saveCover -> viewModel.startDownloadSelectedMultiMedia(context, indices, saveCover) },
             onSaveCoverDirectly = { viewModel.downloadCoverDirectly(context) },
             onDismiss = { viewModel.dismissFormatSheet() }
+        )
+    }
+
+    // 首次启动 B站画质解锁引导弹窗
+    if (showBilibiliGuideDialog) {
+        com.omni.downloader.ui.components.BilibiliGuideDialog(
+            onLoginClick = {
+                showBilibiliGuideDialog = false
+                viewModel.markBilibiliLoginPrompted()
+                showBilibiliLoginSheet = true
+            },
+            onDismiss = {
+                showBilibiliGuideDialog = false
+                viewModel.markBilibiliLoginPrompted()
+            }
+        )
+    }
+
+    // 内置网页安全登录弹窗（自动截获 Cookie）
+    if (showBilibiliLoginSheet) {
+        com.omni.downloader.ui.components.BilibiliLoginSheet(
+            onDismissRequest = {
+                showBilibiliLoginSheet = false
+            },
+            onCookieCaptured = { capturedCookie ->
+                showBilibiliLoginSheet = false
+                viewModel.updateBilibiliCookie(capturedCookie)
+                android.widget.Toast.makeText(context, strings.bilibiliLoginSuccess, android.widget.Toast.LENGTH_LONG).show()
+            }
         )
     }
 }

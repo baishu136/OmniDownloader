@@ -38,6 +38,7 @@ fun SettingsScreen(
 
     val savedBilibiliCookie by viewModel.bilibiliCookie.collectAsState()
     var bilibiliCookieInput by remember(savedBilibiliCookie) { mutableStateOf(savedBilibiliCookie) }
+    var showBilibiliLoginSheet by remember { mutableStateOf(false) }
 
     val savedDownloadPath by viewModel.downloadPath.collectAsState()
     var showPathDialog by remember { mutableStateOf(false) }
@@ -356,7 +357,24 @@ fun SettingsScreen(
                         fontSize = 11.5.sp,
                         lineHeight = 15.sp
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { showBilibiliLoginSheet = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(38.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Language, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(strings.bilibiliAutoLoginBtn, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = bilibiliCookieInput,
                         onValueChange = { bilibiliCookieInput = it },
@@ -527,9 +545,9 @@ fun SettingsScreen(
             ) {
                 val currentVer = remember {
                     try {
-                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.2.8"
+                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.2.9"
                     } catch (e: Exception) {
-                        "1.2.8"
+                        "1.2.9"
                     }
                 }
                 Text(
@@ -622,6 +640,20 @@ fun SettingsScreen(
                 TextButton(onClick = { showPathDialog = false }) {
                     Text(strings.cancel)
                 }
+            }
+        )
+    }
+
+    if (showBilibiliLoginSheet) {
+        com.omni.downloader.ui.components.BilibiliLoginSheet(
+            onDismissRequest = {
+                showBilibiliLoginSheet = false
+            },
+            onCookieCaptured = { capturedCookie ->
+                showBilibiliLoginSheet = false
+                viewModel.updateBilibiliCookie(capturedCookie)
+                bilibiliCookieInput = capturedCookie
+                Toast.makeText(context, strings.bilibiliLoginSuccess, Toast.LENGTH_LONG).show()
             }
         )
     }
