@@ -30,9 +30,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val proxyUrl: StateFlow<String> = settingsRepository.proxyUrl
     val downloadPath: StateFlow<String> = settingsRepository.downloadPath
     val appLanguage: StateFlow<String> = settingsRepository.appLanguage
+    val bilibiliCookie: StateFlow<String> = settingsRepository.bilibiliCookie
 
     fun setAppLanguage(language: String) {
         settingsRepository.setAppLanguage(language)
+    }
+
+    fun updateBilibiliCookie(cookie: String) {
+        settingsRepository.setBilibiliCookie(cookie)
+    }
+
+    fun clearBilibiliCookie() {
+        settingsRepository.clearBilibiliCookie()
     }
 
     private val _inputUrl = MutableStateFlow("")

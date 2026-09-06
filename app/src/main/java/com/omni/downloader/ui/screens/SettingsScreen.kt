@@ -36,6 +36,9 @@ fun SettingsScreen(
     val savedProxyUrl by viewModel.proxyUrl.collectAsState()
     var proxyInput by remember(savedProxyUrl) { mutableStateOf(savedProxyUrl) }
 
+    val savedBilibiliCookie by viewModel.bilibiliCookie.collectAsState()
+    var bilibiliCookieInput by remember(savedBilibiliCookie) { mutableStateOf(savedBilibiliCookie) }
+
     val savedDownloadPath by viewModel.downloadPath.collectAsState()
     var showPathDialog by remember { mutableStateOf(false) }
 
@@ -314,6 +317,92 @@ fun SettingsScreen(
             }
         }
 
+        // B站登录凭证配置 (Cookie / SESSDATA)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = strings.bilibiliCookieSection,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Surface(
+                            color = if (savedBilibiliCookie.isNotEmpty()) SuccessGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = if (savedBilibiliCookie.isNotEmpty()) strings.bilibiliCookieActive else strings.bilibiliCookieHint,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (savedBilibiliCookie.isNotEmpty()) SuccessGreen else MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = strings.bilibiliCookieHelp,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 11.5.sp,
+                        lineHeight = 15.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = bilibiliCookieInput,
+                        onValueChange = { bilibiliCookieInput = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text(strings.bilibiliCookiePlaceholder, fontSize = 12.sp) },
+                        singleLine = false,
+                        minLines = 2,
+                        maxLines = 3,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        if (savedBilibiliCookie.isNotEmpty()) {
+                            OutlinedButton(
+                                onClick = {
+                                    bilibiliCookieInput = ""
+                                    viewModel.clearBilibiliCookie()
+                                    Toast.makeText(context, strings.bilibiliCookieCleared, Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.height(34.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(strings.clearBilibiliCookie, fontSize = 12.sp)
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
+                        Button(
+                            onClick = {
+                                viewModel.updateBilibiliCookie(bilibiliCookieInput)
+                                Toast.makeText(context, strings.bilibiliCookieSaved, Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.height(34.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(strings.applyBilibiliCookie, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        }
+
         // 存储路径管理
         item {
             Card(
@@ -438,9 +527,9 @@ fun SettingsScreen(
             ) {
                 val currentVer = remember {
                     try {
-                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.2.7"
+                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.2.8"
                     } catch (e: Exception) {
-                        "1.2.7"
+                        "1.2.8"
                     }
                 }
                 Text(

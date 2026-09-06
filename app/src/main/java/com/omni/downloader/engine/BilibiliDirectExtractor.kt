@@ -37,8 +37,11 @@ object BilibiliDirectExtractor {
     private val BV_PATTERN = Pattern.compile("""(BV[a-zA-Z0-9]{10})|(av\d+)""", Pattern.CASE_INSENSITIVE)
     private val cookieMap = ConcurrentHashMap<String, String>()
 
+    @Volatile
+    var customUserCookie: String = ""
+
     /**
-     * 获取基础会话 Cookie
+     * 获取基础会话 Cookie 并拼接用户自定义凭证
      */
     private fun ensureCookies() {
         if (cookieMap.containsKey("buvid3")) return
@@ -66,7 +69,16 @@ object BilibiliDirectExtractor {
 
     private fun getCookieHeader(): String {
         ensureCookies()
-        return cookieMap.entries.joinToString("; ") { "${it.key}=${it.value}" }
+        val baseCookie = cookieMap.entries.joinToString("; ") { "${it.key}=${it.value}" }
+        val user = customUserCookie.trim()
+        if (user.isEmpty()) return baseCookie
+
+        val formattedUser = if (!user.contains("=") && !user.contains(";")) {
+            "SESSDATA=$user"
+        } else {
+            user
+        }
+        return "$baseCookie; $formattedUser"
     }
 
     /**
@@ -138,8 +150,8 @@ object BilibiliDirectExtractor {
             val owner = data.optJSONObject("owner")?.optString("name", "B站UP主") ?: "B站UP主"
             val cid = data.optLong("cid", 0)
 
-            // 2. 获取清晰度格式
-            val playApiUrl = "https://api.bilibili.com/x/player/playurl?bvid=$bvid&cid=$cid&qn=80&fnval=16&fnver=0&fourk=1"
+            // 2. 获取清晰度格式 (qn=120, fnval=4048 支持 4K/1080P/HDR 等全清晰度流)
+            val playApiUrl = "https://api.bilibili.com/x/player/playurl?bvid=$bvid&cid=$cid&qn=120&fnval=4048&fnver=0&fourk=1"
             val playRequest = Request.Builder()
                 .url(playApiUrl)
                 .header("User-Agent", PC_USER_AGENT)
@@ -373,8 +385,8 @@ object BilibiliDirectExtractor {
                 else -> 80
             }
 
-            // 2. 请求 DASH 流接口 (fnval=16)
-            val playApiUrl = "https://api.bilibili.com/x/player/playurl?bvid=$bvid&cid=$cid&qn=$qn&fnval=16&fnver=0&fourk=1"
+            // 2. 请求 DASH 流接口 (fnval=4048)
+            val playApiUrl = "https://api.bilibili.com/x/player/playurl?bvid=$bvid&cid=$cid&qn=$qn&fnval=4048&fnver=0&fourk=1"
             val playResp = httpClient.newCall(
                 Request.Builder()
                     .url(playApiUrl)

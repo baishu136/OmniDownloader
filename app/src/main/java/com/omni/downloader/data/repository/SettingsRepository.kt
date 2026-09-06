@@ -18,6 +18,9 @@ class SettingsRepository private constructor(context: Context) {
     private val _downloadPath = MutableStateFlow(prefs.getString(KEY_DOWNLOAD_PATH, "") ?: "")
     val downloadPath: StateFlow<String> = _downloadPath.asStateFlow()
 
+    private val _bilibiliCookie = MutableStateFlow(prefs.getString(KEY_BILIBILI_COOKIE, "") ?: "")
+    val bilibiliCookie: StateFlow<String> = _bilibiliCookie.asStateFlow()
+
     private val _appLanguage: MutableStateFlow<String>
     val appLanguage: StateFlow<String>
 
@@ -30,6 +33,22 @@ class SettingsRepository private constructor(context: Context) {
         }
         _appLanguage = MutableStateFlow(initial)
         appLanguage = _appLanguage.asStateFlow()
+
+        // 启动时自动注入保存的 B站 凭证
+        com.omni.downloader.engine.BilibiliDirectExtractor.customUserCookie = _bilibiliCookie.value
+    }
+
+    fun setBilibiliCookie(cookie: String) {
+        val clean = cookie.trim()
+        _bilibiliCookie.value = clean
+        prefs.edit().putString(KEY_BILIBILI_COOKIE, clean).apply()
+        com.omni.downloader.engine.BilibiliDirectExtractor.customUserCookie = clean
+    }
+
+    fun clearBilibiliCookie() {
+        _bilibiliCookie.value = ""
+        prefs.edit().remove(KEY_BILIBILI_COOKIE).apply()
+        com.omni.downloader.engine.BilibiliDirectExtractor.customUserCookie = ""
     }
 
     fun setProxyUrl(url: String) {
@@ -58,6 +77,7 @@ class SettingsRepository private constructor(context: Context) {
     companion object {
         private const val KEY_PROXY_URL = "key_proxy_url"
         private const val KEY_DOWNLOAD_PATH = "key_download_path"
+        private const val KEY_BILIBILI_COOKIE = "key_bilibili_cookie"
         private const val KEY_APP_LANGUAGE = "key_app_language"
 
         @Volatile

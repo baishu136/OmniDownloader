@@ -98,9 +98,9 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     val appVer = remember {
                         try {
-                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.2.7"
+                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.2.8"
                         } catch (e: Exception) {
-                            "1.2.7"
+                            "1.2.8"
                         }
                     }
                     Surface(
