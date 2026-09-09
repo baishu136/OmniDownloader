@@ -71,6 +71,14 @@ class TaskRepository private constructor(private val context: Context) {
         saveTasksToDisk()
     }
 
+    fun addTasks(newTasks: List<DownloadTask>) {
+        if (newTasks.isEmpty()) return
+        val current = _tasks.value.toMutableList()
+        current.addAll(0, newTasks)
+        _tasks.value = current
+        saveTasksToDisk()
+    }
+
     fun updateTaskProgress(
         taskId: String,
         progress: Float,
@@ -147,6 +155,34 @@ class TaskRepository private constructor(private val context: Context) {
             _tasks.value = current
             saveTasksToDisk()
         }
+    }
+
+    /**
+     * 批量清除符合条件的任务记录（单次更新 StateFlow 与单次落盘，避免并发竞态）
+     */
+    fun clearTasks(predicate: (DownloadTask) -> Boolean, deleteLocalFiles: Boolean = false): Int {
+        val current = _tasks.value.toMutableList()
+        val toRemove = current.filter(predicate)
+        if (toRemove.isEmpty()) return 0
+
+        if (deleteLocalFiles) {
+            toRemove.forEach { task ->
+                if (task.localFilePath.isNotEmpty()) {
+                    try {
+                        val file = File(task.localFilePath)
+                        if (file.exists()) {
+                            file.delete()
+                        }
+                    } catch (ignored: Exception) {
+                    }
+                }
+            }
+        }
+
+        current.removeAll(toRemove.toSet())
+        _tasks.value = current
+        saveTasksToDisk()
+        return toRemove.size
     }
 
     companion object {

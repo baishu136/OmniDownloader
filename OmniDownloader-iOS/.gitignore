@@ -1,0 +1,8 @@
+# Xcode 临时编译与用户偏好忽略
+build/
+DerivedData/
+*.xcuserstate
+project.xcworkspace/xcuserdata/
+*.xcuserdatad/
+.DS_Store
+*.ipa

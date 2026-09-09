@@ -1,0 +1,337 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		222222223333444400000001 /* OmniDownloaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000001 /* OmniDownloaderApp.swift */; };
+		222222223333444400000003 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000003 /* Models.swift */; };
+		222222223333444400000004 /* AppStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000004 /* AppStrings.swift */; };
+		222222223333444400000005 /* UrlSniffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000005 /* UrlSniffer.swift */; };
+		222222223333444400000006 /* BilibiliExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000006 /* BilibiliExtractor.swift */; };
+		222222223333444400000007 /* DomesticExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000007 /* DomesticExtractor.swift */; };
+		222222223333444400000008 /* AVMuxer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000008 /* AVMuxer.swift */; };
+		222222223333444400000009 /* CookieStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000009 /* CookieStore.swift */; };
+		22222222333344440000000A /* MediaSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111111222233330000000A /* MediaSaver.swift */; };
+		22222222333344440000000B /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111111222233330000000B /* DownloadManager.swift */; };
+		22222222333344440000000C /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111111222233330000000C /* MainTabView.swift */; };
+		22222222333344440000000D /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111111222233330000000D /* HomeView.swift */; };
+		22222222333344440000000E /* FormatSelectorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111111222233330000000E /* FormatSelectorSheet.swift */; };
+		22222222333344440000000F /* TaskCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111111222233330000000F /* TaskCard.swift */; };
+		222222223333444400000010 /* CollectionTaskCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000010 /* CollectionTaskCard.swift */; };
+		222222223333444400000011 /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000011 /* TasksView.swift */; };
+		222222223333444400000012 /* BilibiliLoginSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000012 /* BilibiliLoginSheet.swift */; };
+		222222223333444400000013 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000013 /* SettingsView.swift */; };
+		444444445555666600000014 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 333333334444555500000014 /* AVFoundation.framework */; };
+		444444445555666600000015 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 333333334444555500000015 /* Photos.framework */; };
+		444444445555666600000016 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 333333334444555500000016 /* WebKit.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		555555556666777700000001 /* OmniDownloader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OmniDownloader.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		111111112222333300000001 /* OmniDownloaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/App/OmniDownloaderApp.swift"; sourceTree = "<group>"; };
+		111111112222333300000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "OmniDownloader/App/Info.plist"; sourceTree = "<group>"; };
+		111111112222333300000003 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Models/Models.swift"; sourceTree = "<group>"; };
+		111111112222333300000004 /* AppStrings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Models/AppStrings.swift"; sourceTree = "<group>"; };
+		111111112222333300000005 /* UrlSniffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Engines/UrlSniffer.swift"; sourceTree = "<group>"; };
+		111111112222333300000006 /* BilibiliExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Engines/BilibiliExtractor.swift"; sourceTree = "<group>"; };
+		111111112222333300000007 /* DomesticExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Engines/DomesticExtractor.swift"; sourceTree = "<group>"; };
+		111111112222333300000008 /* AVMuxer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Media/AVMuxer.swift"; sourceTree = "<group>"; };
+		111111112222333300000009 /* CookieStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Services/CookieStore.swift"; sourceTree = "<group>"; };
+		11111111222233330000000A /* MediaSaver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Services/MediaSaver.swift"; sourceTree = "<group>"; };
+		11111111222233330000000B /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Services/DownloadManager.swift"; sourceTree = "<group>"; };
+		11111111222233330000000C /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/MainTabView.swift"; sourceTree = "<group>"; };
+		11111111222233330000000D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Home/HomeView.swift"; sourceTree = "<group>"; };
+		11111111222233330000000E /* FormatSelectorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Home/FormatSelectorSheet.swift"; sourceTree = "<group>"; };
+		11111111222233330000000F /* TaskCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Tasks/TaskCard.swift"; sourceTree = "<group>"; };
+		111111112222333300000010 /* CollectionTaskCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Tasks/CollectionTaskCard.swift"; sourceTree = "<group>"; };
+		111111112222333300000011 /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Tasks/TasksView.swift"; sourceTree = "<group>"; };
+		111111112222333300000012 /* BilibiliLoginSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Settings/BilibiliLoginSheet.swift"; sourceTree = "<group>"; };
+		111111112222333300000013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Settings/SettingsView.swift"; sourceTree = "<group>"; };
+		333333334444555500000014 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = "AVFoundation.framework"; path = "System/Library/Frameworks/AVFoundation.framework"; sourceTree = SDKROOT; };
+		333333334444555500000015 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = "Photos.framework"; path = "System/Library/Frameworks/Photos.framework"; sourceTree = SDKROOT; };
+		333333334444555500000016 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = "WebKit.framework"; path = "System/Library/Frameworks/WebKit.framework"; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		99999999AAAA000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				444444445555666600000014 /* AVFoundation.framework in Frameworks */,
+				444444445555666600000015 /* Photos.framework in Frameworks */,
+				444444445555666600000016 /* WebKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		888888889999AAAA00000001 = {
+			isa = PBXGroup;
+			children = (
+				111111112222333300000001 /* OmniDownloaderApp.swift */,
+				111111112222333300000002 /* Info.plist */,
+				111111112222333300000003 /* Models.swift */,
+				111111112222333300000004 /* AppStrings.swift */,
+				111111112222333300000005 /* UrlSniffer.swift */,
+				111111112222333300000006 /* BilibiliExtractor.swift */,
+				111111112222333300000007 /* DomesticExtractor.swift */,
+				111111112222333300000008 /* AVMuxer.swift */,
+				111111112222333300000009 /* CookieStore.swift */,
+				11111111222233330000000A /* MediaSaver.swift */,
+				11111111222233330000000B /* DownloadManager.swift */,
+				11111111222233330000000C /* MainTabView.swift */,
+				11111111222233330000000D /* HomeView.swift */,
+				11111111222233330000000E /* FormatSelectorSheet.swift */,
+				11111111222233330000000F /* TaskCard.swift */,
+				111111112222333300000010 /* CollectionTaskCard.swift */,
+				111111112222333300000011 /* TasksView.swift */,
+				111111112222333300000012 /* BilibiliLoginSheet.swift */,
+				111111112222333300000013 /* SettingsView.swift */,
+				888888889999AAAA00000003 /* Frameworks */,
+				888888889999AAAA00000002 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		888888889999AAAA00000002 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				555555556666777700000001 /* OmniDownloader.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		888888889999AAAA00000003 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				333333334444555500000014 /* AVFoundation.framework */,
+				333333334444555500000015 /* Photos.framework */,
+				333333334444555500000016 /* WebKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		666666667777888800000001 /* OmniDownloader */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AAAAAAAA0000111100000001 /* Build configuration list for PBXNativeTarget "OmniDownloader" */;
+			buildPhases = (
+				99999999AAAA000000000001 /* Sources */,
+				99999999AAAA000000000002 /* Frameworks */,
+				99999999AAAA000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OmniDownloader;
+			productName = OmniDownloader;
+			productReference = 555555556666777700000001 /* OmniDownloader.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		777777778888999900000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					666666667777888800000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = AAAAAAAA0000111100000002 /* Build configuration list for PBXProject "OmniDownloader" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = zh_CN;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				zh_CN,
+			);
+			mainGroup = 888888889999AAAA00000001;
+			productRefGroup = 888888889999AAAA00000002 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				666666667777888800000001 /* OmniDownloader */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		99999999AAAA000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		99999999AAAA000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				222222223333444400000001 /* OmniDownloaderApp.swift in Sources */,
+				222222223333444400000003 /* Models.swift in Sources */,
+				222222223333444400000004 /* AppStrings.swift in Sources */,
+				222222223333444400000005 /* UrlSniffer.swift in Sources */,
+				222222223333444400000006 /* BilibiliExtractor.swift in Sources */,
+				222222223333444400000007 /* DomesticExtractor.swift in Sources */,
+				222222223333444400000008 /* AVMuxer.swift in Sources */,
+				222222223333444400000009 /* CookieStore.swift in Sources */,
+				22222222333344440000000A /* MediaSaver.swift in Sources */,
+				22222222333344440000000B /* DownloadManager.swift in Sources */,
+				22222222333344440000000C /* MainTabView.swift in Sources */,
+				22222222333344440000000D /* HomeView.swift in Sources */,
+				22222222333344440000000E /* FormatSelectorSheet.swift in Sources */,
+				22222222333344440000000F /* TaskCard.swift in Sources */,
+				222222223333444400000010 /* CollectionTaskCard.swift in Sources */,
+				222222223333444400000011 /* TasksView.swift in Sources */,
+				222222223333444400000012 /* BilibiliLoginSheet.swift in Sources */,
+				222222223333444400000013 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		BBBBBBBB0000111100000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		BBBBBBBB0000111100000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = "wholemodule";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		BBBBBBBB0000111100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OmniDownloader/App/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.omnidownloader.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BBBBBBBB0000111100000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OmniDownloader/App/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.omnidownloader.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AAAAAAAA0000111100000002 /* Build configuration list for PBXProject "OmniDownloader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBBBBBBB0000111100000003 /* Debug */,
+				BBBBBBBB0000111100000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AAAAAAAA0000111100000001 /* Build configuration list for PBXNativeTarget "OmniDownloader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBBBBBBB0000111100000001 /* Debug */,
+				BBBBBBBB0000111100000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 777777778888999900000001 /* Project object */;
+}

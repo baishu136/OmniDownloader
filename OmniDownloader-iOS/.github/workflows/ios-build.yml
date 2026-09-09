@@ -1,0 +1,51 @@
+name: 构建 iOS OmniDownloader.ipa
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'OmniDownloader-iOS/**'
+
+jobs:
+  build-ipa:
+    name: 编译与打包 IPA
+    runs-on: macos-14
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 选择 Xcode 版本
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+          xcodebuild -version
+
+      - name: 编译 iOS App (Release)
+        working-directory: ./OmniDownloader-iOS
+        run: |
+          xcodebuild build \
+            -project OmniDownloader.xcodeproj \
+            -scheme OmniDownloader \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: 打包为标准未签名 IPA (供巨魔/爱思/AltStore签名安装)
+        working-directory: ./OmniDownloader-iOS
+        run: |
+          mkdir -p build/Payload
+          cp -r build/Build/Products/Release-iphoneos/OmniDownloader.app build/Payload/
+          cd build
+          zip -r -q OmniDownloader.ipa Payload
+          ls -lh OmniDownloader.ipa
+
+      - name: 上传 IPA 产物到 GitHub Actions Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmniDownloader-iOS-IPA
+          path: OmniDownloader-iOS/build/OmniDownloader.ipa
+          retention-days: 14

@@ -1,0 +1,8 @@
+fastapi>=0.110.0
+uvicorn>=0.28.0
+yt-dlp>=2024.4.9
+requests>=2.31.0
+aiofiles>=23.2.1
+pywebview>=5.0.0
+imageio-ffmpeg>=0.4.9
+pyinstaller>=6.5.0

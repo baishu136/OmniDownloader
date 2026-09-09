@@ -110,9 +110,9 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     val appVer = remember {
                         try {
-                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.2.9"
+                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.4.7"
                         } catch (e: Exception) {
-                            "1.2.9"
+                            "1.4.7"
                         }
                     }
                     Surface(
@@ -165,133 +165,127 @@ fun HomeScreen(
             }
         }
 
-        // 输入与操作面板（固定高度 minLines=3, maxLines=3，防止输入文本时页面跳动）
+        // 输入与操作面板（向左拉伸至与顶部文字左侧露出部分完全对齐）
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    OutlinedTextField(
-                        value = inputUrl,
-                        onValueChange = { viewModel.updateInputUrl(it) },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = {
-                            Text(
-                                text = strings.inputPlaceholder,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                fontSize = 13.5.sp
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(imageVector = Icons.Default.Link, contentDescription = null)
-                        },
-                        trailingIcon = {
-                            if (inputUrl.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.updateInputUrl("") }) {
-                                    Icon(imageVector = Icons.Default.Clear, contentDescription = strings.clear)
-                                }
-                            } else {
-                                IconButton(onClick = { viewModel.checkClipboardAndPaste(context, autoDownload = false) }) {
-                                    Icon(imageVector = Icons.Default.ContentPaste, contentDescription = strings.paste)
-                                }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = inputUrl,
+                    onValueChange = { viewModel.updateInputUrl(it) },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = {
+                        Text(
+                            text = strings.inputPlaceholder,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 13.5.sp
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Link, contentDescription = null)
+                    },
+                    trailingIcon = {
+                        if (inputUrl.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.updateInputUrl("") }) {
+                                Icon(imageVector = Icons.Default.Clear, contentDescription = strings.clear)
                             }
-                        },
-                        singleLine = false,
-                        minLines = 3,
-                        maxLines = 3,
-                        shape = RoundedCornerShape(12.dp),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = {
+                        } else {
+                            IconButton(onClick = { viewModel.checkClipboardAndPaste(context, autoDownload = false) }) {
+                                Icon(imageVector = Icons.Default.ContentPaste, contentDescription = strings.paste)
+                            }
+                        }
+                    },
+                    singleLine = false,
+                    minLines = 3,
+                    maxLines = 3,
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = {
+                        keyboardController?.hide()
+                        viewModel.startAnalyze()
+                    })
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { viewModel.checkClipboardAndPaste(context, autoDownload = true) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(46.dp),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentPaste,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = strings.pasteClipboard,
+                                fontSize = 12.5.sp,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = {
                             keyboardController?.hide()
                             viewModel.startAnalyze()
-                        })
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(46.dp),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        enabled = !isAnalyzing && inputUrl.isNotBlank()
                     ) {
-                        OutlinedButton(
-                            onClick = { viewModel.checkClipboardAndPaste(context, autoDownload = true) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(46.dp),
-                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
-                            shape = RoundedCornerShape(10.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ContentPaste,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
+                            if (isAnalyzing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onPrimary
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = strings.pasteClipboard,
+                                    text = strings.analyzing,
                                     fontSize = 12.5.sp,
                                     maxLines = 1,
                                     softWrap = false,
                                     overflow = TextOverflow.Ellipsis,
                                     fontWeight = FontWeight.SemiBold
                                 )
-                            }
-                        }
-
-                        Button(
-                            onClick = {
-                                keyboardController?.hide()
-                                viewModel.startAnalyze()
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(46.dp),
-                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            enabled = !isAnalyzing && inputUrl.isNotBlank()
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                if (isAnalyzing) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(16.dp),
-                                        strokeWidth = 2.dp,
-                                        color = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = strings.analyzing,
-                                        fontSize = 12.5.sp,
-                                        maxLines = 1,
-                                        softWrap = false,
-                                        overflow = TextOverflow.Ellipsis,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Default.Bolt,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = strings.startAnalyze,
-                                        fontSize = 12.5.sp,
-                                        maxLines = 1,
-                                        softWrap = false,
-                                        overflow = TextOverflow.Ellipsis,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Bolt,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = strings.startAnalyze,
+                                    fontSize = 12.5.sp,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
                         }
                     }

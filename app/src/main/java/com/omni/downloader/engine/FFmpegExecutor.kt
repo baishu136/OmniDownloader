@@ -129,12 +129,13 @@ object FFmpegExecutor {
         val ffmpeg = getFFmpegBinary(context)
             ?: return@withContext Result.failure(Exception("未能找到 FFmpeg 核心执行组件"))
 
-        val filterGraph = "fps=15,scale='min(480,iw)':-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer"
+        val filterGraph = "fps=15,scale='min(480,trunc(iw/2)*2)':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer"
         val commands = listOf(
             ffmpeg.absolutePath,
             "-y",
             "-i", inputFile.absolutePath,
             "-vf", filterGraph,
+            "-loop", "0",
             outputFile.absolutePath
         )
 
@@ -143,13 +144,14 @@ object FFmpegExecutor {
             return@withContext Result.success(Unit)
         }
 
-        // 简易备选指令（若复杂滤镜图遇到非标分辨率，平滑降级）
+        // 简易备选指令（若复杂滤镜图遇到非标编码，平滑降级并保证 -loop 0 无限循环与偶数分辨率）
         Log.w(TAG, "两阶段调色板 GIF 转换未通过，切换通用降级转换: ${res.exceptionOrNull()?.message}")
         val fallbackCommands = listOf(
             ffmpeg.absolutePath,
             "-y",
             "-i", inputFile.absolutePath,
-            "-r", "15",
+            "-vf", "fps=15,scale='min(480,trunc(iw/2)*2)':-2:flags=lanczos",
+            "-loop", "0",
             outputFile.absolutePath
         )
         executeCommand(context, fallbackCommands)

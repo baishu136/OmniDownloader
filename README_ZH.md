@@ -10,107 +10,88 @@
 </p>
 
 [![Release](https://img.shields.io/github/v/release/baishu136/OmniDownloader?color=blue&label=Release)](https://github.com/baishu136/OmniDownloader/releases)
-[![Android](https://img.shields.io/badge/Android-8.0%2B-green.svg)](https://developer.android.com)
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.23-purple.svg)](https://kotlinlang.org)
-[![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose%20M3-4285F4.svg)](https://developer.android.com/jetpack/compose)
+[![Android](https://img.shields.io/badge/Android-v1.4.7-green.svg)](https://developer.android.com)
+[![iOS](https://img.shields.io/badge/iOS-SwiftUI%20Native-orange.svg)](OmniDownloader-iOS)
+[![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
 
-专为 Android 平台打造的现代化原生多媒体下载利器。基于 **Jetpack Compose (Material 3)** 构建，底层内嵌工业级 **yt-dlp**、**FFmpeg** 与 **Aria2c** 原生引擎，支持 10 大主流平台的音视频高效解析与下载。
-
-<br />
-
-<img src="docs/images/screenshot.png" alt="OmniDownloader 应用主界面截图" width="320" style="border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
+**OmniDownloader** 是一套现代化全平台多媒体音视频下载矩阵（涵盖 **Android 原生、Apple iOS 原生、Windows 桌面独立版、Web 网页纯后台服务版**）。支持 **哔哩哔哩 (4K/1080P60/DASH分离流/合集聚合)、抖音、快手、小红书、TikTok、YouTube、X (Twitter)** 等各大主流平台的原画无水印直连极速提取。
 
 </div>
 
 ---
 
-## 🌟 核心特性
+## 🌟 全平台产品形态一览
 
-### 1. 🌐 10+ 主流媒体平台全方位支持
-- **国内平台深度定制**：
-  - **哔哩哔哩 (Bilibili)**：支持常规视频、多 P 分集视频、系列合集、番剧；自动还原手机端 `b23.tv` 短链；原生 Dash 音视频分离流合并。
-  - **抖音 (Douyin)**：支持分享口令与短链解析，自动重定向嗅探无水印视频流。
-  - **快手 (Kuaishou)**：一键嗅探短视频直链。
-  - **小红书 (Xiaohongshu)**：支持笔记视频解析。
-- **国际主流媒体全面覆盖**：
-  - **YouTube**：支持普通视频、Shorts 短视频，最高支持 4K/2K/1080P 超高清流。
-  - **TikTok**：支持全球版视频无水印解析。
-  - **X (Twitter)**：支持推文附带的各种分辨率视频流。
-  - **Instagram**：Reels 与帖子视频。
-  - **Facebook**：公开视频与短视频。
-  - **Pinterest**：高品质灵感视频。
+| 平台形态 | 适用设备 | 核心技术栈 | 获取与安装方式 |
+| :--- | :--- | :--- | :--- |
+| **🤖 Android 原生版** | Android 手机 / 平板 / 车机 / 电视 (Android 8.0+) | Kotlin + Jetpack Compose + FFmpegKit + Aria2c | [下载最新 APK (v1.4.7)](OmniDownloader_LATEST.apk) 或 Releases 页面 |
+| **🍎 iOS 原生版** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + AVFoundation 原生硬件混流 + Photos 相簿 | 源码工程在 [`OmniDownloader-iOS`](OmniDownloader-iOS)，支持 GitHub Actions 免费打包 IPA 并通过 TrollStore 巨魔或自签侧载 |
+| **💻 Windows 桌面版** | Windows 10 / 11 (64位) | Python 3 + FastAPI + Edge WebView2 原生独立窗口 + 内置 FFmpeg | 下载 [`windows/release/OmniDownloader_桌面独立版.zip`](windows/release/)，免环境解压即用，附带多国语言说明 |
+| **🌐 Web 网页纯后台版** | Windows 电脑，支持局域网内任意手机/平板浏览器访问 | 轻量托盘守护进程 + 本地 Web 服务 + 内置 FFmpeg | 下载 [`windows/release/OmniDownloader_网页纯后台版.zip`](windows/release/)，静默常驻托盘，支持浏览器原生接管下载 |
 
-### 2. 🎬 灵活的下载模式选择
-| 下载模式 | 功能说明 | 技术实现 |
-| :--- | :--- | :--- |
-| **音画合流** | 自由挑选目标分辨率（4K / 1080P / 720P / 480P），提供文件预估大小 | 自动挑选最佳画质轨与最佳音轨，调用内置 FFmpeg 无缝合并为 MP4 |
-| **纯视频画面** | 剥除音频轨道，仅下载纯净画面（适合剪辑二创素材） | 原生注入 `-an` 参数去除声轨，免除二次消音处理 |
-| **提取音频** | 抽取并转码高品质独立音频文件 | 支持导出为 **MP3**、**M4A (AAC)**、**FLAC (无损)**、**OPUS**，自动注入标题元数据 |
-| **动态图 (GIF)** | 将视频精彩片段转换为轻量动态图 | FFmpeg 调优调色板生成高质量 GIF |
-| **保存高清封面** | 独立可开关选项，随视频下载或一键单独保存 | 自动下载视频高清缩略图并直接同步至系统相册 |
+---
 
-### 3. 📦 智能合集与多视频防误触机制
-- **合集智能识别**：使用“粘贴剪贴板”时，若链接为合集（如 B站多 P 视频、番剧、系列资源），**系统自动拦截直接下载**，弹出下载选项弹窗供用户自主决定。
-- **自主勾选与批量管理**：
-  - 支持直接在单集模式下横向预览各集并指定下载；
-  - 支持一键切换为「合集模式」，提供每集复选框、一键「全选」与「反选」，自主勾选所需分集进行批量下载。
+## 🚀 核心特性
 
-### 4. 🚀 强大的后台服务与系统集成
-- **前台常驻服务 (Foreground Service)**：锁屏或切换到后台时下载不中断，通知栏实时反馈传输百分比、下载速度与预估剩余时间。
-- **多语言国际化**：内置简体中文、繁體中文、English、日本語 4 种语言，默认智能跟随系统语言并支持随时在设置中切换。
-- **公共存储与相册自动同步**：符合 Android 分区存储规范，下载完成即时触发系统媒体库扫描，相册与播放器即刻可见。
-- **网络代理支持**：支持配置 HTTP 与 SOCKS5 代理端口，便于解析访问外网资源。
-- **在线引擎热更新**：设置内支持一键在线更新底层 yt-dlp 规则引擎，平台规则变更时无需重新安装应用。
+### 1. 🌐 主流音视频平台原生全支持
+- **哔哩哔哩 (Bilibili)**：
+  - 支持单视频、多 P 分集与番剧/电视剧 UGC 合集批量识别；
+  - 原生 DASH 双流解耦与自适应流优选算法（优先 4K/1080P60 极清画质与兼容性最佳的 AVC 编码）；
+  - 安全截取持久化 `SESSDATA` 凭证，轻松解锁未登录游客 480P 限制。
+- **国内短视频去水印直连**：
+  - **抖音 (Douyin)**：支持分享口令与短链解析，自动重定向嗅探原画无水印直链；
+  - **快手 (Kuaishou)**：短视频直链免水印嗅探；
+  - **小红书 (Xiaohongshu)**：图文笔记及超清视频极速抓取。
+- **国际主流媒体全方位覆盖**：
+  - **YouTube**：支持 4K/2K/1080P 超高清流与 Shorts 短视频；
+  - **TikTok**：免登录绕过 WAF，提取 1080P 原生无水印直链；
+  - **X (Twitter) / Instagram / Facebook / Pinterest**：完整通用媒体解析引擎。
+
+### 2. 🎬 丰富的导出与转码模式
+- **音画合流 (MP4)**：自由挑选目标清晰度（4K、2K、1080P、720P），毫秒级无损合并音视频轨道。
+- **仅纯视频画面**：自动剥离音轨，生成无声纯净视频，专为视频混剪与鬼畜二创设计。
+- **提取高保真音频**：提取原轨并支持转码为 **MP3 (最高 320kbps)**、**M4A**、**FLAC 无损**、**OPUS**。
+- **动态图 (GIF)**：基于双通道调色板优化算法，生成高清晰度免播放器预览动图。
+- **保存高清封面**：一键保存视频原始超清封面图并同步至系统相册。
+
+### 3. 📦 智能合集聚合与分集抽屉设计
+- **下载页聚合卡片**：下载多视频或合集时，不逐一堆叠各个视频，而是显示**加权整体总进度条 + 当前子集进度 + 平滑展开/收起分集抽屉**，页面清爽直观。
+- **吸底操作栏 (Sticky Footer)**：格式与合集下载弹窗采用规范的“可滚动主体 + 吸底常驻操作栏”，无论分集列表多长，操作按钮始终常驻底部。
+
+### 4. 🌍 全链路多国语言与国际化
+- 网页版、桌面客户端及压缩包内均内置 **简体中文、繁體中文、English、日本語** 4 种语言的完整使用指南；
+- 随包附带排版美观的离线 HTML 手册与便携文本说明。
 
 ---
 
 ## 📲 快速下载安装
 
-您可以前往 [Releases 页面](https://github.com/baishu136/OmniDownloader/releases) 下载最新的安装包：
+### Android 安装包
+- 📦 **[`OmniDownloader_LATEST.apk`](OmniDownloader_LATEST.apk)**（或最新版 [`OmniDownloader-v1.4.7-debug.apk`](OmniDownloader-v1.4.7-debug.apk)）：直接安装至安卓手机。
+- 📦 **[`OmniDownloader_Source_LATEST.zip`](OmniDownloader_Source_LATEST.zip)**：完整工程源码归档。
 
-- 📦 **`OmniDownloader-v1.2.7-debug.apk`**：最新 Android 安装包（支持 Android 8.0 及更高版本，arm64-v8a 架构）。
-- 📦 **`OmniDownloader-v1.2.7-Source.zip`**：完整工程纯净源码压缩包。
+### iOS 原生工程与打包
+- 源码工程位于 [`OmniDownloader-iOS/`](OmniDownloader-iOS/)；
+- 配套自动化构建：推送到 GitHub 后可在 Actions 免费自动编译打包生成 `OmniDownloader.ipa`；
+- 支持 **TrollStore（巨魔商店 - 永久保活）**、**AltStore / Sideloadly** 免费自签安装。详情参见 [iOS 侧载安装指南](OmniDownloader-iOS/README_IOS.md)。
 
----
-
-## 🛠️ 技术架构
-
-- **开发语言**：Kotlin 1.9.23
-- **构建系统**：Gradle 8.5 + AGP 8.3.2
-- **界面架构**：Jetpack Compose + Material Design 3
-- **架构设计**：MVVM (Model-View-ViewModel) + Clean Architecture
-- **异步响应**：Kotlin Coroutines + StateFlow
-- **解析与音视频引擎**：
-  - `io.github.junkfood02.youtubedl-android:library:0.18.1` (yt-dlp)
-  - `io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1` (FFmpeg)
-  - `io.github.junkfood02.youtubedl-android:aria2c:0.18.1` (Aria2c)
-- **网络与嗅探**：Square OkHttp 4.12.0
-- **图片加载**：Coil Compose 2.6.0
+### Windows 桌面独立版 & 网页纯后台版
+- 💻 **桌面独立版**：下载解压 [`windows/release/OmniDownloader_桌面独立版.zip`](windows/release/)，双击 `OmniDownloader_Desktop.exe` 直接运行；
+- 🌐 **网页纯后台版**：下载解压 [`windows/release/OmniDownloader_网页纯后台版.zip`](windows/release/)，双击 `OmniDownloader_Web.exe` 启动后台服务并在浏览器秒开使用。
 
 ---
 
-## 💻 源码编译指南
+## 📝 最近更新日志 (v1.4.7)
 
-如果您想自行编译和二次开发：
-
-```bash
-# 1. 克隆仓库
-git clone https://github.com/baishu136/OmniDownloader.git
-cd OmniDownloader
-
-# 2. Windows 环境下编译 Debug APK
-.\gradlew.bat assembleDebug --no-daemon
-
-# 3. macOS / Linux 环境下编译
-chmod +x ./gradlew
-./gradlew assembleDebug --no-daemon
-```
-
-编译生成文件位于：`app/build/outputs/apk/debug/app-debug.apk`。
+- **[NEW] 全新发布 Apple iOS 原生版**：SwiftUI + 纯原生 AVFoundation 硬件加速音视频混流，自动存入系统照片相簿，支持后台持久下载与 Actions 免费云端打包。
+- **[NEW] 网页版与桌面 EXE 版多国语言指南**：界面新增多语言使用说明模态框，打包压缩包内集成中/繁/英/日 4 国语言离线使用手册。
+- **[OPTIMIZE] 合集下载页面架构重构**：多视频下载时合并展示加权总进度条与子进度，支持折叠展开分集抽屉。
+- **[OPTIMIZE] B站清晰度优选算法**：精选候选流优先匹配 4K/1080P60 及高兼容 AVC 编码，支持平滑降级。
+- **[FIX] 修复合集下载弹窗在部分场景下按钮缺失问题**：重构为“可滚动主体 + 吸底常驻操作栏 (Sticky Footer)”规范。
+- **[FIX] 修复下载页在多次翻页后动画卡顿与渲染开销问题**。
 
 ---
 
-## 📄 开源许可证
-
-本项目基于 [MIT 许可证](LICENSE) 开源。仅供个人学习、技术研究与离线备份使用，请严格遵守各平台服务协议与版权法规。
+## 📄 授权与免责声明
+本项目仅供编程学习与个人个人影音离线归档使用，解析下载音视频之著作权归各平台及原作者所有。遵循 MIT 开源许可协议。

@@ -9,16 +9,19 @@ import com.omni.downloader.data.model.AudioFormat
 import com.omni.downloader.data.model.DownloadTask
 import com.omni.downloader.data.model.DownloadType
 import com.omni.downloader.data.model.FormatOption
+import com.omni.downloader.data.model.TaskStatus
 import com.omni.downloader.data.model.VideoMetadata
 import com.omni.downloader.data.repository.SettingsRepository
 import com.omni.downloader.data.repository.TaskRepository
 import com.omni.downloader.engine.DownloadEngine
 import com.omni.downloader.engine.UrlSniffer
 import com.omni.downloader.service.DownloadService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.UUID
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -176,11 +179,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _selectedMultiMediaIndex.value = 0
                 val activeMeta = if (data.multiMediaList.isNotEmpty()) data.multiMediaList[0] else data
                 _selectedVideoFormat.value = activeMeta.availableVideoFormats.firstOrNull()
-                if (activeMeta.isGif) {
-                    _selectedDownloadType.value = DownloadType.GIF
-                } else {
-                    _selectedDownloadType.value = DownloadType.VIDEO_WITH_AUDIO
-                }
+                // 默认下载类型始终锁定为原画视频 (VIDEO_WITH_AUDIO)，
+                // 彻底杜绝普通视频或短动效在粘贴自动下载时被私自执行 GIF 转码
+                _selectedDownloadType.value = DownloadType.VIDEO_WITH_AUDIO
                 _selectedAudioFormat.value = AudioFormat.MP3
 
                 if (autoDownload && context != null) {
@@ -320,7 +321,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             else -> format?.resolutionLabel ?: "最佳画质"
         }
 
-        targetList.forEach { sub ->
+        val isCollection = targetList.size > 1
+        val collectionId = if (isCollection) "col_" + UUID.randomUUID().toString().replace("-", "").take(12) else null
+        val collectionTitle = meta.title.ifBlank { "合集视频" }
+        val totalEpisodes = targetList.size
+
+        val tasksToAdd = mutableListOf<DownloadTask>()
+
+        targetList.forEachIndexed { index, sub ->
             val finalType = if (type == DownloadType.COVER) {
                 DownloadType.COVER
             } else if (sub.isGif) {
@@ -333,34 +341,44 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 id = UUID.randomUUID().toString().replace("-", "").take(12),
                 url = sub.url,
                 title = sub.title,
-                author = sub.author,
-                thumbnailUrl = sub.thumbnailUrl,
+                author = sub.author.ifBlank { meta.author },
+                thumbnailUrl = sub.thumbnailUrl.ifBlank { meta.thumbnailUrl },
                 downloadType = finalType,
                 selectedResolution = resolutionLabel,
-                audioFormat = audioFormat
+                audioFormat = audioFormat,
+                collectionId = collectionId,
+                collectionTitle = if (isCollection) collectionTitle else null,
+                episodeIndex = if (isCollection) index + 1 else 0,
+                episodeTotal = if (isCollection) totalEpisodes else 0
             )
-
-            repository.addTask(task)
-            DownloadService.startDownload(context, task.id)
+            tasksToAdd.add(task)
 
             if (saveCover && sub.thumbnailUrl.isNotBlank()) {
                 val coverTask = DownloadTask(
                     id = UUID.randomUUID().toString().replace("-", "").take(12),
                     url = sub.url,
                     title = "${sub.title} (封面)",
-                    author = sub.author,
+                    author = sub.author.ifBlank { meta.author },
                     thumbnailUrl = sub.thumbnailUrl,
                     downloadType = DownloadType.COVER,
                     selectedResolution = "原图封面",
                     audioFormat = AudioFormat.MP3
                 )
-                repository.addTask(coverTask)
-                DownloadService.startDownload(context, coverTask.id)
+                tasksToAdd.add(coverTask)
             }
         }
 
+        repository.addTasks(tasksToAdd)
+        tasksToAdd.forEach { task ->
+            DownloadService.startDownload(context, task.id)
+        }
+
         _showFormatSheet.value = false
-        _message.value = if (saveCover) "已同时添加 ${targetList.size} 个视频及对应封面下载任务" else "已同时添加 ${targetList.size} 个视频独立下载任务"
+        _message.value = if (isCollection) {
+            "已加入合集下载队列 (共 ${targetList.size} 集)"
+        } else {
+            "已开始下载: ${targetList[0].title}"
+        }
     }
 
     /**
@@ -379,6 +397,108 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteTask(taskId: String, deleteFile: Boolean) {
         repository.removeTask(taskId, deleteFile)
         _message.value = if (deleteFile) "已删除记录与本地文件" else "已从列表移除"
+    }
+
+    /**
+     * 取消合集下的所有正在下载或等待中的分集
+     */
+    fun cancelCollection(context: Context, collectionId: String) {
+        val allTasks = repository.tasks.value.filter { it.collectionId == collectionId }
+        allTasks.forEach { task ->
+            if (task.status == TaskStatus.DOWNLOADING || task.status == TaskStatus.PROCESSING || task.status == TaskStatus.PENDING) {
+                DownloadService.cancelDownload(context, task.id)
+            }
+        }
+        _message.value = "合集下载已取消"
+    }
+
+    /**
+     * 删除整个合集记录及可选本地文件
+     */
+    fun deleteCollection(collectionId: String, deleteFile: Boolean) {
+        val allTasks = repository.tasks.value.filter { it.collectionId == collectionId }
+        allTasks.forEach { task ->
+            repository.removeTask(task.id, deleteFile)
+        }
+        _message.value = if (deleteFile) "已删除合集记录与本地文件" else "已从列表移除合集"
+    }
+
+    /**
+     * 重试合集中未完成（失败或取消）的分集
+     */
+    fun retryCollection(context: Context, collectionId: String) {
+        val allTasks = repository.tasks.value.filter { it.collectionId == collectionId }
+        val toRetry = allTasks.filter { it.status == TaskStatus.FAILED || it.status == TaskStatus.CANCELLED }
+        toRetry.forEach { task ->
+            repository.updateTaskProgress(task.id, 0f, "", "", TaskStatus.PENDING)
+            DownloadService.startDownload(context, task.id)
+        }
+        _message.value = "已重新开始下载合集中的未完成项 (${toRetry.size} 集)"
+    }
+
+    /**
+     * 智能批量清除历史记录
+     * @param pageIndex 0: 全部(清除已完成/失败/取消), 1: 正在下载(清除残留失败/取消), 2: 已完成(清除已完成)
+     */
+    fun clearFinishedTasks(pageIndex: Int = 0) {
+        val predicate: (com.omni.downloader.data.model.DownloadTask) -> Boolean = when (pageIndex) {
+            2 -> { task -> task.status == TaskStatus.COMPLETED }
+            1 -> { task -> task.status == TaskStatus.FAILED || task.status == TaskStatus.CANCELLED }
+            else -> { task ->
+                task.status == TaskStatus.COMPLETED || task.status == TaskStatus.FAILED || task.status == TaskStatus.CANCELLED
+            }
+        }
+        val count = repository.clearTasks(predicate, deleteLocalFiles = false)
+        _message.value = if (count > 0) "已清除 $count 条任务记录" else "暂无需要清除的历史记录"
+    }
+
+    /**
+     * 终止所有未完成任务并彻底删除本地临时残留文件
+     */
+    fun cancelAndCleanAllActiveTasks(context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val allTasks = repository.tasks.value
+            val unfinished = allTasks.filter {
+                it.status == TaskStatus.DOWNLOADING ||
+                it.status == TaskStatus.PROCESSING ||
+                it.status == TaskStatus.PENDING ||
+                it.status == TaskStatus.FAILED ||
+                it.status == TaskStatus.CANCELLED
+            }
+            if (unfinished.isEmpty()) return@launch
+
+            // 1. 终止正在执行的底层进程并清空下载服务队列
+            DownloadService.cancelAllDownloads(context)
+            unfinished.forEach { task ->
+                DownloadEngine.cancelTask(task.id)
+            }
+
+            // 2. 清理各任务关联的本地残留文件
+            unfinished.forEach { task ->
+                if (task.localFilePath.isNotBlank()) {
+                    try {
+                        val f = File(task.localFilePath)
+                        if (f.exists()) f.delete()
+                    } catch (ignored: Exception) {}
+                }
+            }
+
+            // 3. 清理缓存目录中的 staging 临时目录
+            try {
+                val stagingDir = File(context.cacheDir, "staging")
+                if (stagingDir.exists() && stagingDir.isDirectory) {
+                    stagingDir.listFiles()?.forEach { file ->
+                        try { file.delete() } catch (ignored: Exception) {}
+                    }
+                }
+            } catch (ignored: Exception) {}
+
+            // 4. 从数据仓库彻底批量清除记录
+            val unfinishedIds = unfinished.map { it.id }.toSet()
+            repository.clearTasks({ task -> task.id in unfinishedIds }, deleteLocalFiles = true)
+
+            _message.value = "已终止 ${unfinished.size} 个任务并清理残留文件"
+        }
     }
 
     fun updateEngine(context: Context) {

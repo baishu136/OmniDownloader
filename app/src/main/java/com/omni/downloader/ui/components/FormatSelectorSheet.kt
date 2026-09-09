@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -82,9 +84,15 @@ fun FormatSelectorSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 32.dp)
+                .navigationBarsPadding()
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
+            ) {
             // 视频头部概览
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -357,7 +365,7 @@ fun FormatSelectorSheet(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 140.dp)
+                            .height(140.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f))
@@ -471,13 +479,11 @@ fun FormatSelectorSheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 220.dp),
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(currentMedia.availableVideoFormats, key = { it.formatId }) { format ->
+                        currentMedia.availableVideoFormats.forEach { format ->
                             FormatRowItem(
                                 format = format,
                                 isSelected = selectedVideoFormat?.formatId == format.formatId,
@@ -493,13 +499,11 @@ fun FormatSelectorSheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 220.dp),
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(currentMedia.availableVideoFormats, key = { it.formatId }) { format ->
+                        currentMedia.availableVideoFormats.forEach { format ->
                             FormatRowItem(
                                 format = format,
                                 isSelected = selectedVideoFormat?.formatId == format.formatId,
@@ -560,106 +564,122 @@ fun FormatSelectorSheet(
                 else -> {}
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
-            // 确认下载按钮
-            if (isCollectionMode) {
-                val count = selectedEpisodes.size
-                val resLabel = selectedVideoFormat?.resolutionLabel ?: ""
-                val coverSuffix = if (saveCoverWithDownload) " + ${strings.badgeCover}" else ""
-                val batchBtnText = when (selectedType) {
-                    DownloadType.AUDIO_ONLY -> String.format(strings.batchDownloadAudio, count, selectedAudioFormat.ext.uppercase()) + coverSuffix
-                    DownloadType.GIF -> String.format(strings.batchDownloadGif, count) + coverSuffix
-                    else -> String.format(strings.batchDownloadVideos, count, resLabel) + coverSuffix
-                }
-
-                Button(
-                    onClick = {
-                        if (selectedEpisodes.isNotEmpty()) {
-                            onDownloadSelectedMultiMedia(selectedEpisodes, saveCoverWithDownload)
+            // 固定吸底操作栏 (Sticky Footer)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp,
+                shadowElevation = 8.dp,
+                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                ) {
+                    // 确认下载按钮
+                    if (isCollectionMode) {
+                        val count = selectedEpisodes.size
+                        val resLabel = selectedVideoFormat?.resolutionLabel ?: ""
+                        val coverSuffix = if (saveCoverWithDownload) " + ${strings.badgeCover}" else ""
+                        val batchBtnText = when (selectedType) {
+                            DownloadType.AUDIO_ONLY -> String.format(strings.batchDownloadAudio, count, selectedAudioFormat.ext.uppercase()) + coverSuffix
+                            DownloadType.GIF -> String.format(strings.batchDownloadGif, count) + coverSuffix
+                            else -> String.format(strings.batchDownloadVideos, count, resLabel) + coverSuffix
                         }
-                    },
-                    enabled = selectedEpisodes.isNotEmpty(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Icon(imageVector = Icons.Default.DownloadForOffline, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (selectedEpisodes.isNotEmpty()) batchBtnText else strings.pleaseSelectEpisode,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
 
-                Spacer(modifier = Modifier.height(10.dp))
-                OutlinedButton(
-                    onClick = {
-                        onDownloadSelectedMultiMedia(metadata.multiMediaList.indices.toSet(), saveCoverWithDownload)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = String.format(strings.downloadAllCount, metadata.multiMediaList.size) + coverSuffix,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            } else {
-                Button(
-                    onClick = { onConfirmDownload(saveCoverWithDownload) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Icon(imageVector = Icons.Default.Download, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    val resLabel = selectedVideoFormat?.resolutionLabel ?: ""
-                    val currentEpLabel = if (currentMedia.title.contains(" - P")) {
-                        val pNum = currentMedia.title.substringAfter(" - P").substringBefore(" ")
-                        "P$pNum · "
-                    } else ""
-                    val coverSuffix = if (saveCoverWithDownload) " + ${strings.badgeCover}" else ""
-                    val buttonText = when (selectedType) {
-                        DownloadType.VIDEO_WITH_AUDIO -> "${strings.startDownload} ($currentEpLabel$resLabel$coverSuffix)"
-                        DownloadType.VIDEO_ONLY -> "${strings.tabMute} ($currentEpLabel$resLabel$coverSuffix)"
-                        DownloadType.AUDIO_ONLY -> "${strings.tabAudio} ($currentEpLabel${selectedAudioFormat.ext.uppercase()}$coverSuffix)"
-                        DownloadType.GIF -> "${strings.startDownload} (GIF$coverSuffix)"
-                        else -> strings.startDownload
-                    }
-                    Text(
-                        text = buttonText,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                        Button(
+                            onClick = {
+                                if (selectedEpisodes.isNotEmpty()) {
+                                    onDownloadSelectedMultiMedia(selectedEpisodes, saveCoverWithDownload)
+                                }
+                            },
+                            enabled = selectedEpisodes.isNotEmpty(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Icon(imageVector = Icons.Default.DownloadForOffline, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (selectedEpisodes.isNotEmpty()) batchBtnText else strings.pleaseSelectEpisode,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
 
-                if (metadata.multiMediaList.size > 1) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedButton(
-                        onClick = { isCollectionMode = true },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(44.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.VideoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = String.format(strings.switchToCollectionMode, metadata.multiMediaList.size),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = {
+                                onDownloadSelectedMultiMedia(metadata.multiMediaList.indices.toSet(), saveCoverWithDownload)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(42.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = String.format(strings.downloadAllCount, metadata.multiMediaList.size) + coverSuffix,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    } else {
+                        Button(
+                            onClick = { onConfirmDownload(saveCoverWithDownload) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Icon(imageVector = Icons.Default.Download, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            val resLabel = selectedVideoFormat?.resolutionLabel ?: ""
+                            val currentEpLabel = if (currentMedia.title.contains(" - P")) {
+                                val pNum = currentMedia.title.substringAfter(" - P").substringBefore(" ")
+                                "P$pNum · "
+                            } else ""
+                            val coverSuffix = if (saveCoverWithDownload) " + ${strings.badgeCover}" else ""
+                            val buttonText = when (selectedType) {
+                                DownloadType.VIDEO_WITH_AUDIO -> "${strings.startDownload} ($currentEpLabel$resLabel$coverSuffix)"
+                                DownloadType.VIDEO_ONLY -> "${strings.tabMute} ($currentEpLabel$resLabel$coverSuffix)"
+                                DownloadType.AUDIO_ONLY -> "${strings.tabAudio} ($currentEpLabel${selectedAudioFormat.ext.uppercase()}$coverSuffix)"
+                                DownloadType.GIF -> "${strings.startDownload} (GIF$coverSuffix)"
+                                else -> strings.startDownload
+                            }
+                            Text(
+                                text = buttonText,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        if (metadata.multiMediaList.size > 1) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedButton(
+                                onClick = { isCollectionMode = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(42.dp),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(imageVector = Icons.Default.VideoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = String.format(strings.switchToCollectionMode, metadata.multiMediaList.size),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -790,8 +810,15 @@ private fun FormatRowItem(
                     fontWeight = FontWeight.Medium
                 )
                 if (format.fps > 30) {
+                    val codecPart = if (format.note.isNotEmpty()) " · ${format.note}" else ""
                     Text(
-                        text = "${format.fps} FPS · ${format.ext.uppercase()}",
+                        text = "${format.fps} FPS · ${format.ext.uppercase()}$codecPart",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else if (format.note.isNotEmpty()) {
+                    Text(
+                        text = format.note,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

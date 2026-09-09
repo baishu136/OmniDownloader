@@ -335,7 +335,7 @@ object DownloadEngine {
         val site = UrlSniffer.identifySite(cleanUrl)
 
         val publicDir = getDownloadDir(context).apply { mkdirs() }
-        val stagingDir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.cacheDir, "staging").apply { mkdirs() }
+        val stagingDir = File(context.cacheDir, "staging").apply { mkdirs() }
 
         // 0. 保存封面专属逻辑
         if (task.downloadType == DownloadType.COVER) {
@@ -416,6 +416,9 @@ object DownloadEngine {
                 addOption("--retries", "10")
                 addOption("--fragment-retries", "10")
                 addOption("--concurrent-fragments", "1")
+                addOption("--windows-filenames")
+                addOption("--restrict-filenames")
+                addOption("--no-part")
 
                 if (proxyUrl.isNotBlank()) {
                     addOption("--proxy", proxyUrl.trim())
@@ -497,30 +500,84 @@ object DownloadEngine {
 
             var lastReportedPath = ""
 
-            YoutubeDL.getInstance().execute(
-                request,
-                task.id
-            ) { progress, etaInSeconds, line ->
-                val etaStr = if (etaInSeconds > 0) {
-                    val m = etaInSeconds / 60
-                    val s = etaInSeconds % 60
-                    if (m > 0) "${m}分${s}秒" else "${s}秒"
-                } else ""
+            try {
+                YoutubeDL.getInstance().execute(
+                    request,
+                    task.id
+                ) { progress, etaInSeconds, line ->
+                    val etaStr = if (etaInSeconds > 0) {
+                        val m = etaInSeconds / 60
+                        val s = etaInSeconds % 60
+                        if (m > 0) "${m}分${s}秒" else "${s}秒"
+                    } else ""
 
-                val speed = parseSpeedFromLine(line)
-                val currentStatus = when {
-                    progress >= 99.5f -> TaskStatus.PROCESSING
-                    else -> TaskStatus.DOWNLOADING
-                }
-
-                if (line.contains("[download] Destination:") || line.contains("[Merger] Merging formats into")) {
-                    val candidate = line.substringAfter(":").trim().trim('"', '\'')
-                    if (candidate.isNotEmpty()) {
-                        lastReportedPath = candidate
+                    val speed = parseSpeedFromLine(line)
+                    val currentStatus = when {
+                        progress >= 99.5f -> TaskStatus.PROCESSING
+                        else -> TaskStatus.DOWNLOADING
                     }
-                }
 
-                onProgressUpdate(progress, speed, etaStr, currentStatus)
+                    if (line.contains("[download] Destination:") || line.contains("[Merger] Merging formats into")) {
+                        val candidate = line.substringAfter(":").trim().trim('"', '\'')
+                        if (candidate.isNotEmpty()) {
+                            lastReportedPath = candidate
+                        }
+                    }
+
+                    onProgressUpdate(progress, speed, etaStr, currentStatus)
+                }
+            } catch (firstEx: Exception) {
+                val rootMsg = getRootCause(firstEx).message ?: firstEx.message ?: ""
+                if (rootMsg.contains("I/O operation on closed file", ignoreCase = true) ||
+                    rootMsg.contains("closed file", ignoreCase = true) ||
+                    rootMsg.contains("broken pipe", ignoreCase = true)
+                ) {
+                    Log.w(TAG, "首次下载检测到管道/句柄中断，正在自动无缝启用安全单流通道重试: $rootMsg")
+                    onProgressUpdate(10f, "", "自动切换安全通道重试中...", TaskStatus.DOWNLOADING)
+
+                    val safeStagingDir = File(context.filesDir, "safe_staging").apply { mkdirs() }
+                    safeStagingDir.listFiles()?.filter { it.name.contains(task.id) }?.forEach { it.delete() }
+
+                    val safeRequest = YoutubeDLRequest(cleanUrl).apply {
+                        addOption("-o", "${safeStagingDir.absolutePath}/%(id)s.%(ext)s")
+                        addOption("--no-playlist")
+                        addOption("--no-check-certificate")
+                        addOption("--no-warnings")
+                        addOption("--ignore-config")
+                        addOption("--no-cache-dir")
+                        addOption("--no-mtime")
+                        addOption("--windows-filenames")
+                        addOption("--restrict-filenames")
+                        addOption("--no-part")
+                        addOption("--concurrent-fragments", "1")
+                        addOption("-f", "best/bestvideo+bestaudio")
+
+                        if (proxyUrl.isNotBlank()) {
+                            addOption("--proxy", proxyUrl.trim())
+                        }
+                    }
+
+                    YoutubeDL.getInstance().execute(safeRequest, task.id) { progress, etaInSeconds, line ->
+                        val etaStr = if (etaInSeconds > 0) "${etaInSeconds}秒" else ""
+                        val speed = parseSpeedFromLine(line)
+                        onProgressUpdate(progress, speed, etaStr, TaskStatus.DOWNLOADING)
+                    }
+
+                    val safeFile = safeStagingDir.listFiles()?.filter { it.isFile && it.length() > 0 }?.maxByOrNull { it.lastModified() }
+                    if (safeFile != null) {
+                        val cleanTitle = task.title.replace(Regex("""[\\/:*?"<>|]"""), "_").trim().ifBlank { "video_${System.currentTimeMillis()}" }
+                        val safeFinal = File(publicDir, "${cleanTitle.take(60)}.mp4")
+                        safeFile.copyTo(safeFinal, overwrite = true)
+                        safeFile.delete()
+                        try {
+                            android.media.MediaScannerConnection.scanFile(context, arrayOf(safeFinal.absolutePath), null, null)
+                        } catch (ignored: Exception) {}
+                        onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
+                        return@withContext Result.success(safeFinal.absolutePath)
+                    }
+                } else {
+                    throw firstEx
+                }
             }
 
             val stagedFile = findGeneratedFile(stagingDir, task.id, lastReportedPath)
@@ -532,15 +589,29 @@ object DownloadEngine {
                     val baseName = stagedFile.nameWithoutExtension
                     val cleanBase = if (baseName.length > 60) baseName.take(60) else baseName
                     val destGif = File(publicDir, "$cleanBase.gif")
-                    val gifRes = FFmpegExecutor.convertToGif(context, stagedFile, destGif)
-                    stagedFile.delete()
-                    if (gifRes.isSuccess && destGif.exists() && destGif.length() > 0) {
+
+                    val isNativeGif = stagedFile.extension.equals("gif", ignoreCase = true) || isGifMagic(stagedFile)
+                    if (isNativeGif) {
+                        Log.d(TAG, "源文件本身即为标准 GIF 动图，执行直通转存: ${stagedFile.name}")
+                        stagedFile.copyTo(destGif, overwrite = true)
+                        stagedFile.delete()
                         destGif
                     } else {
-                        // 若转换异常则平滑降级为 mp4
-                        val fallbackDest = File(publicDir, "$cleanBase.mp4")
-                        stagedFile.copyTo(fallbackDest, overwrite = true)
-                        fallbackDest
+                        val gifRes = FFmpegExecutor.convertToGif(context, stagedFile, destGif)
+                        if (gifRes.isSuccess && destGif.exists() && destGif.length() > 0) {
+                            stagedFile.delete()
+                            destGif
+                        } else {
+                            Log.w(TAG, "GIF 转换未通过，降级保留 MP4 原片: ${gifRes.exceptionOrNull()?.message}")
+                            val fallbackDest = File(publicDir, "$cleanBase.mp4")
+                            try {
+                                stagedFile.copyTo(fallbackDest, overwrite = true)
+                                stagedFile.delete()
+                            } catch (ce: Exception) {
+                                Log.e(TAG, "降级复制 MP4 失败", ce)
+                            }
+                            if (fallbackDest.exists() && fallbackDest.length() > 0) fallbackDest else stagedFile
+                        }
                     }
                 } else {
                     val dest = File(publicDir, stagedFile.name)
@@ -557,9 +628,24 @@ object DownloadEngine {
                 File(publicDir, "${task.title}.mp4")
             }
 
-            // 广播通知系统相册媒体库刷新新生成的文件
+            // 广播通知系统相册媒体库刷新新生成的文件，显式指定 image/gif 等标准 MIME 类型
             try {
-                android.media.MediaScannerConnection.scanFile(context, arrayOf(finalFile.absolutePath), null, null)
+                val mimeType = when {
+                    finalFile.name.endsWith(".gif", ignoreCase = true) -> "image/gif"
+                    finalFile.name.endsWith(".mp4", ignoreCase = true) -> "video/mp4"
+                    finalFile.name.endsWith(".mp3", ignoreCase = true) -> "audio/mpeg"
+                    finalFile.name.endsWith(".m4a", ignoreCase = true) -> "audio/mp4"
+                    finalFile.name.endsWith(".jpg", ignoreCase = true) || finalFile.name.endsWith(".jpeg", ignoreCase = true) -> "image/jpeg"
+                    finalFile.name.endsWith(".png", ignoreCase = true) -> "image/png"
+                    finalFile.name.endsWith(".webp", ignoreCase = true) -> "image/webp"
+                    else -> null
+                }
+                android.media.MediaScannerConnection.scanFile(
+                    context,
+                    arrayOf(finalFile.absolutePath),
+                    if (mimeType != null) arrayOf(mimeType) else null,
+                    null
+                )
             } catch (ignored: Exception) {}
 
             onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
@@ -670,14 +756,20 @@ object DownloadEngine {
         val formatsJson = json.optJSONArray("formats") ?: JSONArray()
         val videoFormatsMap = mutableMapOf<Int, FormatOption>()
         val audioFormatsList = mutableListOf<FormatOption>()
-        var isGifDetected = false
+        var hasTwitterRegularVideo = false
+        var hasTwitterTweetVideo = false
 
         for (i in 0 until formatsJson.length()) {
             val f = formatsJson.optJSONObject(i) ?: continue
             val formatUrl = f.optString("url", "")
             val formatId = f.optString("format_id", "")
-            if (formatUrl.contains("tweet_video") || formatId.contains("gif", ignoreCase = true)) {
-                isGifDetected = true
+            if (site == "X (Twitter)") {
+                if (formatUrl.contains("ext_tw_video") || formatUrl.contains("amplify_video")) {
+                    hasTwitterRegularVideo = true
+                }
+                if (formatUrl.contains("video.twimg.com/tweet_video/")) {
+                    hasTwitterTweetVideo = true
+                }
             }
 
             val h = f.optInt("height", 0)
@@ -728,17 +820,8 @@ object DownloadEngine {
             }
         }
 
-        // Twitter GIF 深度特征校验
-        if (!isGifDetected && site == "X (Twitter)") {
-            val thumb = json.optString("thumbnail", "")
-            val desc = json.optString("description", "")
-            if (thumb.contains("tweet_video") || desc.contains("GIF", ignoreCase = true)) {
-                isGifDetected = true
-            } else if (duration in 1..15 && audioFormatsList.isEmpty() && videoFormatsMap.isNotEmpty()) {
-                // Twitter 平台短小且全无音频流的媒体，符合 GIF 特征
-                isGifDetected = true
-            }
-        }
+        // Twitter GIF 严格特征判定：仅当流来自 tweet_video 专用动图路径且无常规视频流与音频轨时，才标记为动图
+        val isGifDetected = (site == "X (Twitter)" && hasTwitterTweetVideo && !hasTwitterRegularVideo && audioFormatsList.isEmpty())
 
         val sortedVideoFormats = if (videoFormatsMap.isNotEmpty()) {
             val sorted = videoFormatsMap.values.sortedByDescending { it.height }
@@ -798,8 +881,8 @@ object DownloadEngine {
                 "系统拦截了运行权限，请检查手机是否开启了安全隔离模式"
             msg.contains("Unable to extract", ignoreCase = true) ->
                 "解析受限: 视频需要登录/大会员或平台更新了规则 ($msg)"
-            msg.contains("I/O operation on closed file", ignoreCase = true) ->
-                "下载流意外中断 (I/O closed)。已自动启用单流安全通道与私有沙盒防护，请重新尝试下载"
+            msg.contains("I/O operation on closed file", ignoreCase = true) || msg.contains("closed file", ignoreCase = true) ->
+                "下载写入异常 (I/O closed)，建议检查手机可用存储空间或尝试更换清晰度"
             msg.contains("timed out", ignoreCase = true) || msg.contains("Connection refused", ignoreCase = true) || msg.contains("Failed to connect", ignoreCase = true) ->
                 "网络连接超时: 解析海外视频 (YouTube/X) 请在设置中开启或配置代理端口"
             else -> msg
@@ -815,6 +898,13 @@ object DownloadEngine {
     }
 
     private fun extractHeightFromResolution(resolutionLabel: String): Int {
+        val lower = resolutionLabel.lowercase(java.util.Locale.ROOT).trim()
+        if (lower.contains("自适应") || lower.contains("最佳") || lower.contains("最高") ||
+            lower.contains("auto") || lower.contains("best") || lower.contains("默认")) {
+            return 0
+        }
+        if (lower.contains("4k") || lower.contains("2160")) return 2160
+        if (lower.contains("2k") || lower.contains("1440")) return 1440
         val regex = Regex("(\\d{3,4})")
         val match = regex.find(resolutionLabel)
         return match?.groupValues?.get(1)?.toIntOrNull() ?: 0
@@ -851,6 +941,22 @@ object DownloadEngine {
             String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s)
         } else {
             String.format(Locale.getDefault(), "%02d:%02d", m, s)
+        }
+    }
+
+    private fun isGifMagic(file: File): Boolean {
+        if (!file.exists() || file.length() < 6) return false
+        return try {
+            file.inputStream().use {
+                val bytes = ByteArray(6)
+                val read = it.read(bytes)
+                if (read >= 6) {
+                    val header = String(bytes, Charsets.US_ASCII)
+                    header == "GIF87a" || header == "GIF89a"
+                } else false
+            }
+        } catch (e: Exception) {
+            false
         }
     }
 }

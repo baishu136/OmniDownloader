@@ -92,5 +92,10 @@ data class DownloadTask(
     var fileSizeText: String = "",
     var localFilePath: String = "",
     var errorMessage: String = "",
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    // === 合集与多视频扩展字段 ===
+    val collectionId: String? = null,
+    val collectionTitle: String? = null,
+    val episodeIndex: Int = 0,
+    val episodeTotal: Int = 0
 )

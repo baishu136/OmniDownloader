@@ -336,27 +336,21 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
-                        Surface(
-                            color = if (savedBilibiliCookie.isNotEmpty()) SuccessGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
-                            shape = RoundedCornerShape(4.dp)
-                        ) {
-                            Text(
-                                text = if (savedBilibiliCookie.isNotEmpty()) strings.bilibiliCookieActive else strings.bilibiliCookieHint,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (savedBilibiliCookie.isNotEmpty()) SuccessGreen else MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                        if (savedBilibiliCookie.isNotEmpty()) {
+                            Surface(
+                                color = SuccessGreen.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = strings.bilibiliCookieActive,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = SuccessGreen,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = strings.bilibiliCookieHelp,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.5.sp,
-                        lineHeight = 15.sp
-                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = { showBilibiliLoginSheet = true },
@@ -379,7 +373,6 @@ fun SettingsScreen(
                         value = bilibiliCookieInput,
                         onValueChange = { bilibiliCookieInput = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text(strings.bilibiliCookiePlaceholder, fontSize = 12.sp) },
                         singleLine = false,
                         minLines = 2,
                         maxLines = 3,
@@ -545,9 +538,9 @@ fun SettingsScreen(
             ) {
                 val currentVer = remember {
                     try {
-                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.2.9"
+                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.4.7"
                     } catch (e: Exception) {
-                        "1.2.9"
+                        "1.4.7"
                     }
                 }
                 Text(

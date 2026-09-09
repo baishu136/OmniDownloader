@@ -49,33 +49,12 @@ fun BilibiliGuideDialog(
             )
         },
         text = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = strings.bilibiliGuideMessage,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 20.sp
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-                // 对比展示条目
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "❌ 游客模式: ", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                            Text(text = "仅限 360P / 480P 标清", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "✅ 登录配置: ", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                            Text(text = "解锁 1080P 高清 / 4K 超清", style = MaterialTheme.typography.bodySmall, color = SuccessGreen, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
+            Text(
+                text = strings.bilibiliGuideMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 20.sp
+            )
         },
         confirmButton = {
             Button(

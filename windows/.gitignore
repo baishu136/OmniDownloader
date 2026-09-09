@@ -1,0 +1,10 @@
+# Windows 模块构建临时产物与缓存忽略
+build/
+dist/
+release/
+__pycache__/
+*.spec
+bin/ffmpeg.exe
+tasks.json
+config.json
+*.pyc

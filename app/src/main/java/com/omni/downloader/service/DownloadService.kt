@@ -32,6 +32,8 @@ class DownloadService : Service() {
     private val taskQueue = ConcurrentLinkedQueue<DownloadTask>()
     @Volatile
     private var isProcessing = false
+    @Volatile
+    private var currentRunningTaskId: String? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -53,8 +55,21 @@ class DownloadService : Service() {
             }
             ACTION_CANCEL_TASK -> {
                 val taskId = intent.getStringExtra(EXTRA_TASK_ID) ?: return START_NOT_STICKY
-                DownloadEngine.cancelTask(taskId)
+                taskQueue.removeIf { it.id == taskId }
+                if (currentRunningTaskId == taskId) {
+                    DownloadEngine.cancelTask(taskId)
+                    currentRunningTaskId = null
+                }
                 repository.updateTaskProgress(taskId, 0f, "", "", TaskStatus.CANCELLED)
+            }
+            ACTION_CANCEL_ALL -> {
+                currentRunningTaskId?.let { runningId ->
+                    DownloadEngine.cancelTask(runningId)
+                    currentRunningTaskId = null
+                }
+                taskQueue.clear()
+                isProcessing = false
+                stopForeground(STOP_FOREGROUND_DETACH)
             }
         }
         return START_NOT_STICKY
@@ -68,6 +83,7 @@ class DownloadService : Service() {
         }
 
         isProcessing = true
+        currentRunningTaskId = next.id
         startForeground(NOTIFICATION_ID, buildProgressNotification(next, 0f, "准备下载..."))
 
         serviceScope.launch {
@@ -110,6 +126,7 @@ class DownloadService : Service() {
             }
 
             isProcessing = false
+            currentRunningTaskId = null
             processNextTask()
         }
     }
@@ -175,6 +192,7 @@ class DownloadService : Service() {
 
         const val ACTION_START_TASK = "com.omni.downloader.START_TASK"
         const val ACTION_CANCEL_TASK = "com.omni.downloader.CANCEL_TASK"
+        const val ACTION_CANCEL_ALL = "com.omni.downloader.CANCEL_ALL"
         const val EXTRA_TASK_ID = "extra_task_id"
 
         fun startDownload(context: Context, taskId: String) {
@@ -193,6 +211,13 @@ class DownloadService : Service() {
             val intent = Intent(context, DownloadService::class.java).apply {
                 action = ACTION_CANCEL_TASK
                 putExtra(EXTRA_TASK_ID, taskId)
+            }
+            context.startService(intent)
+        }
+
+        fun cancelAllDownloads(context: Context) {
+            val intent = Intent(context, DownloadService::class.java).apply {
+                action = ACTION_CANCEL_ALL
             }
             context.startService(intent)
         }

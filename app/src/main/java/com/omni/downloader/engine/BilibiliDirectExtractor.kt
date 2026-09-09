@@ -195,6 +195,13 @@ object BilibiliDirectExtractor {
                                 formatBytes((bandwidth * duration) / 8)
                             } else ""
 
+                            val codecNote = when {
+                                codecs.startsWith("avc", ignoreCase = true) -> "AVC"
+                                codecs.startsWith("hev", ignoreCase = true) -> "HEVC"
+                                codecs.startsWith("av01", ignoreCase = true) -> "AV1"
+                                else -> codecs
+                            }
+
                             videoFormats.add(
                                 FormatOption(
                                     formatId = "bili_$id",
@@ -203,7 +210,7 @@ object BilibiliDirectExtractor {
                                     height = h,
                                     fps = v.optInt("frameRate", 30),
                                     approximateSize = estSize,
-                                    note = codecs
+                                    note = codecNote
                                 )
                             )
                         }
@@ -295,7 +302,29 @@ object BilibiliDirectExtractor {
                 }
             }
 
-            val finalTitle = if (multiMediaList.size > 1) "$title (共${multiMediaList.size}集)" else title
+            val finalVideoFormats = if (multiMediaList.isNotEmpty()) {
+                val list = mutableListOf<FormatOption>()
+                list.add(
+                    FormatOption(
+                        formatId = "bili_auto_best",
+                        resolutionLabel = "自适应最高画质 (推荐)",
+                        height = 99999,
+                        note = "各集自动匹配最高清晰度"
+                    )
+                )
+                list.addAll(videoFormats)
+                list
+            } else {
+                videoFormats
+            }
+
+            val updatedMultiMediaList = if (multiMediaList.isNotEmpty()) {
+                multiMediaList.map { it.copy(availableVideoFormats = finalVideoFormats) }
+            } else {
+                multiMediaList
+            }
+
+            val finalTitle = if (updatedMultiMediaList.size > 1) "$title (共${updatedMultiMediaList.size}集)" else title
             val meta = VideoMetadata(
                 url = "https://www.bilibili.com/video/$bvid",
                 title = finalTitle,
@@ -303,9 +332,9 @@ object BilibiliDirectExtractor {
                 durationText = formatDuration(duration),
                 thumbnailUrl = if (pic.startsWith("//")) "https:$pic" else pic,
                 siteName = "哔哩哔哩",
-                availableVideoFormats = videoFormats,
+                availableVideoFormats = finalVideoFormats,
                 availableAudioFormats = audioFormats,
-                multiMediaList = multiMediaList
+                multiMediaList = updatedMultiMediaList
             )
 
             Log.d(TAG, "B站解析成功: $finalTitle, 分集数: ${multiMediaList.size}")
@@ -378,15 +407,18 @@ object BilibiliDirectExtractor {
             }
 
             val reqHeight = extractHeightFromResolution(task.selectedResolution)
-            val qn = when {
+            val durlQn = when {
+                reqHeight >= 2160 -> 120
+                reqHeight >= 1440 -> 120
                 reqHeight >= 1080 -> 80
                 reqHeight >= 720 -> 64
                 reqHeight >= 480 -> 32
+                reqHeight <= 0 -> 120
                 else -> 80
             }
 
-            // 2. 请求 DASH 流接口 (fnval=4048)
-            val playApiUrl = "https://api.bilibili.com/x/player/playurl?bvid=$bvid&cid=$cid&qn=$qn&fnval=4048&fnver=0&fourk=1"
+            // 2. 请求 DASH 流接口 (始终请求 qn=120&fourk=1 获取 4K/1080P60/1080P 等全量流)
+            val playApiUrl = "https://api.bilibili.com/x/player/playurl?bvid=$bvid&cid=$cid&qn=120&fnval=4048&fnver=0&fourk=1"
             val playResp = httpClient.newCall(
                 Request.Builder()
                     .url(playApiUrl)
@@ -411,37 +443,13 @@ object BilibiliDirectExtractor {
 
                 // 优先尝试 DASH 双流下载并 FFmpeg 毫秒混流
                 if (dash != null) {
-                    val videosJson = dash.optJSONArray("video")
                     val audiosJson = dash.optJSONArray("audio")
 
-                    var bestVideoUrl = ""
-                    var bestVideoBackups = listOf<String>()
-                    var bestDiff = Int.MAX_VALUE
-                    var bestIsAvc = false
-
-                    if (videosJson != null && videosJson.length() > 0) {
-                        for (i in 0 until videosJson.length()) {
-                            val v = videosJson.getJSONObject(i)
-                            val h = v.optInt("height", 0)
-                            val codecs = v.optString("codecs", "")
-                            val isAvc = codecs.startsWith("avc", ignoreCase = true)
-                            val diff = if (reqHeight > 0) Math.abs(h - reqHeight) else 0
-
-                            val isBetter = when {
-                                bestVideoUrl.isEmpty() -> true
-                                diff < bestDiff -> true
-                                diff == bestDiff && isAvc && !bestIsAvc -> true
-                                else -> false
-                            }
-
-                            if (isBetter) {
-                                bestDiff = diff
-                                bestIsAvc = isAvc
-                                bestVideoUrl = v.optString("baseUrl", v.optString("base_url", ""))
-                                val backups = v.optJSONArray("backupUrl") ?: v.optJSONArray("backup_url")
-                                bestVideoBackups = parseBackupUrls(backups)
-                            }
-                        }
+                    val bestVideo = selectBestDashVideo(dash.optJSONArray("video"), reqHeight)
+                    val bestVideoUrl = bestVideo?.url ?: ""
+                    val bestVideoBackups = bestVideo?.backups ?: emptyList()
+                    if (bestVideo != null) {
+                        Log.d(TAG, "已选定 B站 视频流: height=${bestVideo.height}, qnId=${bestVideo.qnId}, isAvc=${bestVideo.isAvc}, bandwidth=${bestVideo.bandwidth}")
                     }
 
                     var bestAudioUrl = ""
@@ -517,7 +525,7 @@ object BilibiliDirectExtractor {
                     val durlSuccess = downloadDurlDirectly(
                         bvid = bvid,
                         cid = cid,
-                        qn = qn,
+                        qn = durlQn,
                         dest = mergedFile,
                         onProgressUpdate = onProgressUpdate
                     )
@@ -545,13 +553,11 @@ object BilibiliDirectExtractor {
 
             // 处理 VIDEO_ONLY 纯视频画面
             if (task.downloadType == DownloadType.VIDEO_ONLY) {
-                val videosJson = dash?.optJSONArray("video")
-                var bestVideoUrl = ""
-                var bestVideoBackups = listOf<String>()
-                if (videosJson != null && videosJson.length() > 0) {
-                    val v = videosJson.getJSONObject(0)
-                    bestVideoUrl = v.optString("baseUrl", v.optString("base_url", ""))
-                    bestVideoBackups = parseBackupUrls(v.optJSONArray("backupUrl") ?: v.optJSONArray("backup_url"))
+                val bestVideo = selectBestDashVideo(dash?.optJSONArray("video"), reqHeight)
+                val bestVideoUrl = bestVideo?.url ?: ""
+                val bestVideoBackups = bestVideo?.backups ?: emptyList()
+                if (bestVideo != null) {
+                    Log.d(TAG, "已选定 B站 纯画面视频流: height=${bestVideo.height}, qnId=${bestVideo.qnId}, isAvc=${bestVideo.isAvc}")
                 }
 
                 if (bestVideoUrl.isEmpty()) {
@@ -817,10 +823,80 @@ object BilibiliDirectExtractor {
         return if (safe.length > 70) safe.substring(0, 70).trim() else safe.ifEmpty { "video_${System.currentTimeMillis()}" }
     }
 
+    private data class DashVideoCandidate(
+        val qnId: Int,
+        val height: Int,
+        val bandwidth: Long,
+        val isAvc: Boolean,
+        val url: String,
+        val backups: List<String>
+    )
+
+    /**
+     * 智能挑选最佳 DASH 视频画面流：
+     * 1. 当 reqHeight <= 0（自适应最高画质）时：优先选择最高分辨率；同分辨率下优先高 qn (如 1080P60 优先于 1080P30)、优先 AVC 编码、优先高码率；
+     * 2. 当 reqHeight > 0（指定目标分辨率）时：挑选与目标高度最接近的视频流；若有多个，优先不超过请求高度且优先高 qn 与 AVC 兼容流。
+     */
+    private fun selectBestDashVideo(
+        videosJson: org.json.JSONArray?,
+        reqHeight: Int
+    ): DashVideoCandidate? {
+        if (videosJson == null || videosJson.length() == 0) return null
+
+        val candidates = mutableListOf<DashVideoCandidate>()
+        for (i in 0 until videosJson.length()) {
+            val v = videosJson.optJSONObject(i) ?: continue
+            val url = v.optString("baseUrl", v.optString("base_url", ""))
+            if (url.isEmpty()) continue
+            val h = v.optInt("height", 0)
+            val qnId = v.optInt("id", 0)
+            val bandwidth = v.optLong("bandwidth", 0L)
+            val codecs = v.optString("codecs", "")
+            val isAvc = codecs.startsWith("avc", ignoreCase = true)
+            val backups = parseBackupUrls(v.optJSONArray("backupUrl") ?: v.optJSONArray("backup_url"))
+            candidates.add(DashVideoCandidate(qnId, h, bandwidth, isAvc, url, backups))
+        }
+        if (candidates.isEmpty()) return null
+
+        return if (reqHeight <= 0) {
+            // 自适应最高画质：高度优先 -> qn优先（如1080P60优先于1080P30） -> AVC兼容优先 -> 带宽码率优先
+            candidates.maxWithOrNull(
+                compareBy<DashVideoCandidate> { it.height }
+                    .thenBy { it.qnId }
+                    .thenBy { if (it.isAvc) 1 else 0 }
+                    .thenBy { it.bandwidth }
+            )
+        } else {
+            // 指定清晰度（如 1080、720、4K 等）：
+            // 寻找与 reqHeight 差值最小的流；若差值相同，优先高 qn、AVC 兼容与高码率
+            candidates.minWithOrNull(
+                compareBy<DashVideoCandidate> { Math.abs(it.height - reqHeight) }
+                    .thenByDescending { it.qnId }
+                    .thenByDescending { if (it.isAvc) 1 else 0 }
+                    .thenByDescending { it.bandwidth }
+            )
+        }
+    }
+
     private fun extractHeightFromResolution(resolutionLabel: String): Int {
+        val lower = resolutionLabel.lowercase(Locale.ROOT).trim()
+        if (lower.contains("自适应") || lower.contains("最佳") || lower.contains("最高") ||
+            lower.contains("auto") || lower.contains("best") || lower.contains("默认")) {
+            return 0
+        }
+        if (lower.contains("4k") || lower.contains("2160")) return 2160
+        if (lower.contains("2k") || lower.contains("1440")) return 1440
         val regex = Regex("(\\d{3,4})")
         val match = regex.find(resolutionLabel)
-        return match?.groupValues?.get(1)?.toIntOrNull() ?: 1080
+        if (match != null) {
+            val parsed = match.groupValues[1].toIntOrNull()
+            if (parsed != null && parsed > 0) return parsed
+        }
+        if (lower.contains("1080")) return 1080
+        if (lower.contains("720")) return 720
+        if (lower.contains("480")) return 480
+        if (lower.contains("360")) return 360
+        return 0
     }
 
     private fun formatBytes(bytes: Long): String {

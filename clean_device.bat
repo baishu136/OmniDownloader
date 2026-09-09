@@ -22,10 +22,10 @@ if %errorlevel% neq 0 (
 )
 
 echo 请选择清理模式:
-echo [1] 完全卸载旧版、清除残留缓存并全新安装最新 v1.2.9 (推荐)
+echo [1] 完全卸载旧版、清除残留缓存并全新安装最新 v1.4.6 (推荐)
 echo [2] 仅清除手机中的 OmniDownloader 下载碎片文件 (.part / .ytdl)
 echo [3] 彻底卸载 OmniDownloader 与 OmniCleaner (不重新安装)
-echo [4] 仅安装最新版 OmniDownloader-v1.2.9-debug.apk
+echo [4] 仅安装最新版 OmniDownloader-v1.4.6-debug.apk
 echo [0] 退出
 echo.
 set /p choice="请输入数字 (1-4, 0): "
@@ -43,10 +43,10 @@ echo [1/4] 正在卸载旧版 com.omni.downloader (清理私有数据和旧版�
 adb uninstall com.omni.downloader
 echo [2/4] 正在清理存储中的中断碎片文件...
 adb shell "rm -rf /sdcard/Download/OmniDownloader/*.part /sdcard/Download/OmniDownloader/*.ytdl /sdcard/Download/OmniDownloader/*.tmp 2>/dev/null"
-echo [3/4] 正在全新安装最新 OmniDownloader-v1.2.9-debug.apk...
-adb install -r OmniDownloader-v1.2.9-debug.apk
+echo [3/4] 正在全新安装最新 OmniDownloader-v1.4.6-debug.apk...
+adb install -r OmniDownloader-v1.4.6-debug.apk
 echo.
-echo [4/4] 安装完成！v1.2.9 已实现 B站凭证自动化获取与首次安装配置向导！
+echo [4/4] 安装完成！v1.4.6 已修复合集下载弹窗吸底操作栏与下载按键显示！
 echo.
 pause
 exit /b
@@ -72,8 +72,8 @@ exit /b
 
 :install_only
 echo.
-echo 正在安装 OmniDownloader-v1.2.9-debug.apk...
-adb install -r OmniDownloader-v1.2.9-debug.apk
+echo 正在安装 OmniDownloader-v1.4.6-debug.apk...
+adb install -r OmniDownloader-v1.4.6-debug.apk
 echo.
 pause
 exit /b

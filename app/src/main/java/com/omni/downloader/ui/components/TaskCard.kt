@@ -43,6 +43,8 @@ fun TaskCard(
 ) {
     val context = LocalContext.current
     val strings = LocalAppStrings.current
+    val isGifTask = task.downloadType == DownloadType.GIF || task.localFilePath.endsWith(".gif", ignoreCase = true)
+    var showGifPreviewDialog by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -260,7 +262,13 @@ fun TaskCard(
                     TaskStatus.COMPLETED -> {
                         // 播放 / 查看动图与封面按钮
                         Button(
-                            onClick = { openMediaFile(context, task.localFilePath, task.downloadType) },
+                            onClick = {
+                                if (isGifTask) {
+                                    showGifPreviewDialog = true
+                                } else {
+                                    openMediaFile(context, task.localFilePath, task.downloadType)
+                                }
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                         ) {
@@ -325,10 +333,83 @@ fun TaskCard(
             }
         }
     }
+
+    // 应用内原生无缝动图无限循环播放弹窗
+    if (showGifPreviewDialog) {
+        val targetFile = File(task.localFilePath)
+        AlertDialog(
+            onDismissRequest = { showGifPreviewDialog = false },
+            title = {
+                Text(
+                    text = "GIF 动图无限循环播放",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (targetFile.exists()) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 340.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            AsyncImage(
+                                model = targetFile,
+                                contentDescription = "GIF 循环动图",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight(),
+                                contentScale = ContentScale.Fit
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "${task.title}\n(${String.format(java.util.Locale.getDefault(), "%.1f MB", targetFile.length() / (1024.0 * 1024.0))})",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    } else {
+                        Text(
+                            text = "动图文件不存在或已被移动",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    openMediaFile(context, task.localFilePath, task.downloadType)
+                }) {
+                    Text("系统相册打开")
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        shareMediaFile(context, task.localFilePath, task.title)
+                    }) {
+                        Text("分享")
+                    }
+                    TextButton(onClick = { showGifPreviewDialog = false }) {
+                        Text("关闭")
+                    }
+                }
+            }
+        )
+    }
 }
 
 @Composable
-private fun BadgeChip(text: String, color: Color) {
+internal fun BadgeChip(text: String, color: Color) {
     Surface(
         color = color.copy(alpha = 0.12f),
         shape = RoundedCornerShape(4.dp)
@@ -343,7 +424,7 @@ private fun BadgeChip(text: String, color: Color) {
     }
 }
 
-private fun openMediaFile(context: Context, filePath: String, downloadType: DownloadType) {
+internal fun openMediaFile(context: Context, filePath: String, downloadType: DownloadType) {
     val file = File(filePath)
     if (!file.exists()) {
         Toast.makeText(context, "文件不存在或已被移动", Toast.LENGTH_SHORT).show()
@@ -372,7 +453,21 @@ private fun openMediaFile(context: Context, filePath: String, downloadType: Down
             downloadType == DownloadType.GIF || file.name.endsWith(".gif", ignoreCase = true) -> "选择相册或看图应用查看动图"
             else -> "选择播放器播放"
         }
-        context.startActivity(Intent.createChooser(intent, chooserTitle))
+        try {
+            context.startActivity(Intent.createChooser(intent, chooserTitle))
+        } catch (e: Exception) {
+            val isGif = downloadType == DownloadType.GIF || file.name.endsWith(".gif", ignoreCase = true)
+            if (isGif) {
+                val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "image/*")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(Intent.createChooser(fallbackIntent, "选择相册或看图应用查看动图"))
+            } else {
+                throw e
+            }
+        }
     } catch (e: Exception) {
         Toast.makeText(context, "无法打开媒体文件: ${e.message}", Toast.LENGTH_SHORT).show()
     }
