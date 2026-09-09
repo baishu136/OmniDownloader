@@ -71,6 +71,54 @@ def create_desktop_shortcut():
     print(f"[OK] 桌面快捷方式已创建: {shortcut_path}")
 
 
+def get_start_menu_folder() -> Path:
+    """获取当前用户的 Windows 开始菜单程序文件夹 (Start Menu\\Programs)"""
+    appdata = os.environ.get("APPDATA")
+    if appdata:
+        return Path(appdata) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
+    return Path(os.environ["USERPROFILE"]) / "AppData" / "Roaming" / "Microsoft" / "Windows" / "Start Menu" / "Programs"
+
+
+def create_start_menu_shortcut():
+    """在开始菜单常驻应用列表中创建快捷方式"""
+    programs_dir = get_start_menu_folder()
+    
+    # 1. 根程序列表中的快捷方式
+    root_lnk = programs_dir / "OmniDownloader 网页版.lnk"
+    target = get_target_path()
+    create_shortcut(root_lnk, target, "OmniDownloader 全能音视频下载器 (网页版)")
+    print(f"[OK] 开始菜单快捷方式已创建: {root_lnk}")
+
+    # 2. 文件夹分组中的快捷方式
+    group_dir = programs_dir / "OmniDownloader"
+    group_lnk = group_dir / "OmniDownloader 网页版.lnk"
+    create_shortcut(group_lnk, target, "OmniDownloader 全能音视频下载器 (网页版)")
+    print(f"[OK] 开始菜单分组快捷方式已创建: {group_lnk}")
+
+    # 3. 如果存在桌面版 EXE，也一并加入分组
+    desktop_exe = BASE_DIR / "dist" / "OmniDownloader_Desktop" / "OmniDownloader_Desktop.exe"
+    if desktop_exe.exists():
+        desktop_lnk = group_dir / "OmniDownloader 桌面独立版.lnk"
+        create_shortcut(desktop_lnk, str(desktop_exe), "OmniDownloader 桌面独立客户端")
+        print(f"[OK] 开始菜单桌面客户端快捷方式已创建: {desktop_lnk}")
+
+    # 4. 尝试通过 PowerShell 钉选到开始菜单 (Pin to Start)
+    try:
+        ps_cmd = f"""
+        $shell = New-Object -ComObject Shell.Application
+        $folder = $shell.Namespace('{str(programs_dir)}')
+        $item = $folder.ParseName('OmniDownloader 网页版.lnk')
+        if ($item) {{
+            $verb = $item.Verbs() | Where-Object {{ $_.Name.Replace('&', '') -match '固定到“开始”屏幕|Pin to Start' }}
+            if ($verb) {{ $verb.DoIt() }}
+        }}
+        """
+        import subprocess
+        subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True, check=False)
+    except Exception:
+        pass
+
+
 def is_autostart_enabled() -> bool:
     """检查是否已开启开机自启动"""
     # 1. 检查 Startup 快捷方式
@@ -185,6 +233,7 @@ def main():
     parser = argparse.ArgumentParser(description="OmniDownloader 自启动与快捷方式管理")
     parser.add_argument("--autostart", choices=["on", "off"], help="开启或关闭开机自启动")
     parser.add_argument("--desktop", action="store_true", help="创建桌面快捷方式")
+    parser.add_argument("--startmenu", action="store_true", help="创建开始菜单快捷方式并常驻")
     parser.add_argument("--protocol", action="store_true", help="注册 omni:// 伪协议")
     parser.add_argument("--status", action="store_true", help="查询当前开机自启动状态")
     args = parser.parse_args()
@@ -202,12 +251,16 @@ def main():
     if args.desktop:
         create_desktop_shortcut()
 
+    if args.startmenu:
+        create_start_menu_shortcut()
+
     if args.protocol:
         register_url_protocol()
 
-    if not any([args.autostart, args.desktop, args.protocol, args.status]):
+    if not any([args.autostart, args.desktop, args.startmenu, args.protocol, args.status]):
         # 默认一键全配置
         create_desktop_shortcut()
+        create_start_menu_shortcut()
         register_url_protocol()
         enable_autostart(True)
 
