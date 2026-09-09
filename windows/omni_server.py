@@ -296,6 +296,30 @@ async def sse_events(request: Request):
     )
 
 
+@app.get("/api/system/client-status")
+async def get_client_status():
+    """查询是否有活跃打开的网页客户端页面"""
+    count = task_manager.get_active_client_count()
+    return {
+        "status": "running",
+        "activeClients": count,
+        "hasActivePage": count > 0
+    }
+
+
+@app.post("/api/system/activate-page")
+async def activate_client_page():
+    """向所有已打开的浏览器页面下发 focus_page 唤醒/置顶通知"""
+    count = task_manager.get_active_client_count()
+    if count > 0:
+        await task_manager.broadcast_event({"type": "focus_page"})
+    return {
+        "status": "success",
+        "activeClients": count,
+        "hasActivePage": count > 0
+    }
+
+
 # 挂载 Web UI 静态目录
 def get_web_dir() -> Path:
     if getattr(sys, 'frozen', False):

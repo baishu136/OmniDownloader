@@ -1136,6 +1136,11 @@
           } else if (data.type === 'task_deleted') {
             allTasks = allTasks.filter(t => t.id !== data.taskId);
             renderTaskList(allTasks);
+          } else if (data.type === 'focus_page') {
+            try {
+              window.focus();
+            } catch(e) {}
+            showToast("OmniDownloader 页面已就绪！");
           } else if (data.type === 'tasks_cleared') {
             fetchTasks();
           }
@@ -1144,7 +1149,8 @@
         }
       };
       evtSource.onerror = () => {
-        console.warn("SSE 连接中断，5秒后自动重连...");
+        try { evtSource.close(); } catch(e) {}
+        setTimeout(initSSE, 1000);
       };
     }
 

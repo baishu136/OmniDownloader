@@ -92,6 +92,18 @@ class TaskManager:
             except Exception:
                 self.listeners.discard(q)
 
+    async def broadcast_event(self, payload: dict):
+        """广播任意系统级自定义事件（如页面聚焦 focus_page 指令）"""
+        for q in list(self.listeners):
+            try:
+                await q.put(payload)
+            except Exception:
+                self.listeners.discard(q)
+
+    def get_active_client_count(self) -> int:
+        """获取当前正在监听 SSE 推流的活跃网页客户端数量"""
+        return len(self.listeners)
+
     def get_all_tasks(self) -> List[DownloadTask]:
         """按倒序返回全部任务（最新的在前面）"""
         return list(reversed(list(self.tasks.values())))
