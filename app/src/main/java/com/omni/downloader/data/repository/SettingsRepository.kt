@@ -2,15 +2,20 @@ package com.omni.downloader.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.omni.downloader.data.model.RelaySite
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.util.Locale
 
 class SettingsRepository private constructor(context: Context) {
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences("omni_downloader_prefs", Context.MODE_PRIVATE)
+
+    private val json = Json { ignoreUnknownKeys = true }
 
     private val _proxyUrl = MutableStateFlow(prefs.getString(KEY_PROXY_URL, "") ?: "")
     val proxyUrl: StateFlow<String> = _proxyUrl.asStateFlow()
@@ -24,10 +29,26 @@ class SettingsRepository private constructor(context: Context) {
     private val _hasPromptedBilibiliLogin = MutableStateFlow(prefs.getBoolean(KEY_HAS_PROMPTED_BILIBILI_LOGIN, false))
     val hasPromptedBilibiliLogin: StateFlow<Boolean> = _hasPromptedBilibiliLogin.asStateFlow()
 
+    private val _relaySites: MutableStateFlow<List<RelaySite>>
+    val relaySites: StateFlow<List<RelaySite>>
+
     private val _appLanguage: MutableStateFlow<String>
     val appLanguage: StateFlow<String>
 
     init {
+        val savedSitesStr = prefs.getString(KEY_RELAY_SITES, null)
+        val initialSites = if (!savedSitesStr.isNullOrBlank()) {
+            try {
+                json.decodeFromString<List<RelaySite>>(savedSitesStr)
+            } catch (e: Exception) {
+                emptyList()
+            }
+        } else {
+            emptyList()
+        }
+        _relaySites = MutableStateFlow(initialSites)
+        relaySites = _relaySites.asStateFlow()
+
         val saved = prefs.getString(KEY_APP_LANGUAGE, null)
         val initial = if (saved.isNullOrBlank() || saved == "system") {
             getDefaultSystemLanguage()
@@ -82,12 +103,72 @@ class SettingsRepository private constructor(context: Context) {
         prefs.edit().putString(KEY_APP_LANGUAGE, clean).apply()
     }
 
+    fun addRelaySite(site: RelaySite) {
+        val current = _relaySites.value.toMutableList()
+        current.removeAll { it.id == site.id || it.url == site.url }
+        current.add(site)
+        _relaySites.value = current
+        saveRelaySites(current)
+    }
+
+    fun removeRelaySite(siteId: String) {
+        val current = _relaySites.value.filter { it.id != siteId }
+        _relaySites.value = current
+        saveRelaySites(current)
+    }
+
+    private fun saveRelaySites(sites: List<RelaySite>) {
+        try {
+            val jsonStr = json.encodeToString(sites)
+            prefs.edit().putString(KEY_RELAY_SITES, jsonStr).apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     companion object {
         private const val KEY_PROXY_URL = "key_proxy_url"
         private const val KEY_DOWNLOAD_PATH = "key_download_path"
         private const val KEY_BILIBILI_COOKIE = "key_bilibili_cookie"
         private const val KEY_HAS_PROMPTED_BILIBILI_LOGIN = "key_has_prompted_bilibili_login"
         private const val KEY_APP_LANGUAGE = "key_app_language"
+        private const val KEY_RELAY_SITES = "key_relay_sites"
+
+        /**
+         * 预设常用第三方中转解析站点
+         */
+        val DEFAULT_PRESET_RELAY_SITES = listOf(
+            RelaySite(
+                id = "snapany_bili",
+                name = "SnapAny (哔哩哔哩)",
+                url = "https://snapany.com/zh/bilibili",
+                iconUrl = "https://icon.horse/icon/snapany.com"
+            ),
+            RelaySite(
+                id = "x2twitter",
+                name = "X2Twitter",
+                url = "https://x2twitter.com/zh-cn3",
+                iconUrl = "https://icon.horse/icon/x2twitter.com"
+            ),
+            RelaySite(
+                id = "greenvideo",
+                name = "GreenVideo",
+                url = "https://greenvideo.cc/",
+                iconUrl = "https://icon.horse/icon/greenvideo.cc"
+            ),
+            RelaySite(
+                id = "twittersaver",
+                name = "TwitterSaver",
+                url = "https://twittersaver.net/zh-cn",
+                iconUrl = "https://icon.horse/icon/twittersaver.net"
+            ),
+            RelaySite(
+                id = "snapany_tiktok",
+                name = "SnapAny (TikTok)",
+                url = "https://snapany.com/zh/tiktok",
+                iconUrl = "https://icon.horse/icon/snapany.com"
+            )
+        )
 
         @Volatile
         private var INSTANCE: SettingsRepository? = null

@@ -28,8 +28,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.omni.downloader.data.model.RelaySite
 import com.omni.downloader.data.model.TaskStatus
+import com.omni.downloader.ui.components.AddRelaySiteDialog
 import com.omni.downloader.ui.components.FormatSelectorSheet
+import com.omni.downloader.ui.components.RelaySitesSection
 import com.omni.downloader.ui.components.TaskCard
 import com.omni.downloader.ui.theme.*
 import com.omni.downloader.ui.viewmodel.MainViewModel
@@ -52,12 +55,13 @@ fun HomeScreen(
     val selectedType by viewModel.selectedDownloadType.collectAsState()
     val selectedVideoFormat by viewModel.selectedVideoFormat.collectAsState()
     val selectedAudioFormat by viewModel.selectedAudioFormat.collectAsState()
-    val tasks by viewModel.tasks.collectAsState()
     val hasPromptedBilibiliLogin by viewModel.hasPromptedBilibiliLogin.collectAsState()
     val bilibiliCookie by viewModel.bilibiliCookie.collectAsState()
+    val relaySites by viewModel.relaySites.collectAsState()
 
     var showBilibiliGuideDialog by remember { mutableStateOf(false) }
     var showBilibiliLoginSheet by remember { mutableStateOf(false) }
+    var showAddSiteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(hasPromptedBilibiliLogin, bilibiliCookie) {
         if (!hasPromptedBilibiliLogin && bilibiliCookie.isEmpty()) {
@@ -67,14 +71,6 @@ fun HomeScreen(
     }
 
     val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
-
-    val activeTasks by remember(tasks) {
-        derivedStateOf {
-            tasks.filter {
-                it.status == TaskStatus.DOWNLOADING || it.status == TaskStatus.PROCESSING || it.status == TaskStatus.PENDING
-            }
-        }
-    }
 
     LazyColumn(
         modifier = Modifier
@@ -293,33 +289,29 @@ fun HomeScreen(
             }
         }
 
-        // 正在进行的任务提示条
-        if (activeTasks.isNotEmpty()) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "${strings.activeTasksTitle} (${activeTasks.size})",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+        // 备用中转解析站区域（通过独立局部作用域组件隔离高频重组与智能折叠，消除卡顿）
+        item(key = "relay_sites_section") {
+            RelaySitesSection(
+                relaySites = relaySites,
+                globalInputUrl = inputUrl,
+                onStartDirectDownload = { directUrl, title ->
+                    viewModel.startDirectDownload(
+                        context = context,
+                        directUrl = directUrl,
+                        title = title
                     )
-                    TextButton(onClick = onNavigateToTasks) {
-                        Text(strings.viewAll)
-                    }
-                }
-            }
+                },
+                onAddSiteClick = { showAddSiteDialog = true },
+                onDeleteSite = { siteId -> viewModel.removeRelaySite(siteId) }
+            )
+        }
 
-            items(items = activeTasks.take(2), key = { it.id }) { task ->
-                TaskCard(
-                    task = task,
-                    onCancel = { viewModel.cancelTask(context, task.id) },
-                    onDelete = { viewModel.deleteTask(task.id, it) },
-                    onRetry = { viewModel.startAnalyze(task.url) }
-                )
-            }
+        // 正在进行的任务提示条（通过独立局部作用域组件隔离高频重组，彻底消除主屏掉帧）
+        item(key = "home_active_tasks_section") {
+            HomeActiveTasksSection(
+                viewModel = viewModel,
+                onNavigateToTasks = onNavigateToTasks
+            )
         }
     }
 
@@ -422,6 +414,16 @@ fun HomeScreen(
             }
         )
     }
+
+    // 添加备用中转网址弹窗
+    if (showAddSiteDialog) {
+        AddRelaySiteDialog(
+            onDismiss = { showAddSiteDialog = false },
+            onAddSite = { newSite ->
+                viewModel.addRelaySite(newSite)
+            }
+        )
+    }
 }
 
 @Composable
@@ -447,6 +449,53 @@ private fun PlatformChip(name: String, color: Color) {
                 fontWeight = FontWeight.SemiBold,
                 color = color
             )
+        }
+    }
+}
+
+/**
+ * 局部隔离的正在进行任务展示区：
+ * 仅该独立 Composable 订阅 activeTasks 状态，下载进度高频刷新时完全不触发主屏输入框、中转卡片与平台标签重组
+ */
+@Composable
+private fun HomeActiveTasksSection(
+    viewModel: MainViewModel,
+    onNavigateToTasks: () -> Unit
+) {
+    val context = LocalContext.current
+    val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
+    val activeTasks by viewModel.activeTasks.collectAsState()
+
+    if (activeTasks.isNotEmpty()) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${strings.activeTasksTitle} (${activeTasks.size})",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                TextButton(onClick = onNavigateToTasks) {
+                    Text(strings.viewAll)
+                }
+            }
+
+            activeTasks.take(2).forEach { task ->
+                key(task.id) {
+                    TaskCard(
+                        task = task,
+                        onCancel = { viewModel.cancelTask(context, task.id) },
+                        onDelete = { viewModel.deleteTask(task.id, it) },
+                        onRetry = { viewModel.startAnalyze(task.url) }
+                    )
+                }
+            }
         }
     }
 }

@@ -1,7 +1,9 @@
 package com.omni.downloader.engine
 
 import android.content.Context
+import android.media.MediaScannerConnection
 import android.os.Environment
+import android.os.SystemClock
 import android.util.Log
 import com.omni.downloader.data.model.AudioFormat
 import com.omni.downloader.data.model.DownloadTask
@@ -16,21 +18,26 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import okhttp3.Call
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
-import okhttp3.OkHttpClient
-import okhttp3.Request
 
 object DownloadEngine {
 
     private const val TAG = "DownloadEngine"
     private val initMutex = Mutex()
+    private val activeHttpCalls = ConcurrentHashMap<String, Call>()
+    private val cancelledTaskIds = ConcurrentHashMap.newKeySet<String>()
     @Volatile
     private var isEngineReady = false
     @Volatile
@@ -350,6 +357,35 @@ object DownloadEngine {
             )
         }
 
+        // 0.5 中转站直链或媒体直接下载链接，优先走 OkHttp 高速流式下载 (彻底避免 yt-dlp 启动开销与超长文件名报错)
+        val isDirectStream = task.selectedResolution == "中转直链" ||
+                task.selectedResolution.startsWith("http") ||
+                UrlSniffer.isDirectMediaUrl(cleanUrl) ||
+                cleanUrl.contains("snapcdn.app") ||
+                cleanUrl.contains("twimg.com")
+
+        if (isDirectStream) {
+            val targetStreamUrl = if (task.selectedResolution.startsWith("http")) {
+                task.selectedResolution
+            } else {
+                task.url.ifBlank { cleanUrl }
+            }
+            Log.d(TAG, "命中直链下载规则: targetUrl=$targetStreamUrl, title=${task.title}")
+            val directResult = downloadDirectMediaStream(
+                context = context,
+                task = task,
+                targetUrl = targetStreamUrl,
+                proxyUrl = proxyUrl,
+                stagingDir = stagingDir,
+                publicDir = publicDir,
+                onProgressUpdate = onProgressUpdate
+            )
+            if (directResult.isSuccess) {
+                return@withContext directResult
+            }
+            Log.w(TAG, "直链极速下载失败，尝试降级通用规则引擎: ${directResult.exceptionOrNull()?.message}")
+        }
+
         // 1. 哔哩哔哩直连下载
         if (site == "哔哩哔哩") {
             val directResult = BilibiliDirectExtractor.download(
@@ -406,7 +442,7 @@ object DownloadEngine {
 
         try {
             val request = YoutubeDLRequest(cleanUrl).apply {
-                addOption("-o", "${stagingDir.absolutePath}/%(title).80s-%(id)s.%(ext)s")
+                addOption("-o", "${stagingDir.absolutePath}/%(title).50s-%(id).30s.%(ext)s")
                 addOption("--no-playlist")
                 addOption("--no-check-certificate")
                 addOption("--no-warnings")
@@ -658,10 +694,236 @@ object DownloadEngine {
     }
 
     fun cancelTask(taskId: String) {
+        cancelledTaskIds.add(taskId)
+        try {
+            activeHttpCalls.remove(taskId)?.cancel()
+        } catch (ignored: Exception) {
+        }
         try {
             YoutubeDL.getInstance().destroyProcessById(taskId)
         } catch (ignored: Exception) {
         }
+    }
+
+    /**
+     * 直接通过 OkHttp 执行网络音视频直链的高速流式下载 (跳过 yt-dlp，支持断点/平滑速率/避免超长文件名报错)
+     */
+    private suspend fun downloadDirectMediaStream(
+        context: Context,
+        task: DownloadTask,
+        targetUrl: String,
+        proxyUrl: String = "",
+        stagingDir: File,
+        publicDir: File,
+        onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit
+    ): Result<String> = withContext(Dispatchers.IO) {
+        val isAudio = task.downloadType == DownloadType.AUDIO_ONLY
+        val ext = if (isAudio) "mp3" else "mp4"
+
+        // 规范化文件名，截断为安全长度（小于60字符，彻底杜绝 Linux 文件系统 255 字节超长报错）
+        val cleanTitle = task.title
+            .replace(Regex("""[\\/:*?"<>|]"""), "_")
+            .trim()
+            .ifBlank { "OmniVideo_${System.currentTimeMillis()}" }
+        val safeTitle = if (cleanTitle.length > 60) cleanTitle.take(60) else cleanTitle
+
+        val tempFile = File(stagingDir, "direct_${task.id}.$ext")
+        val finalFile = File(publicDir, "$safeTitle.$ext")
+        cancelledTaskIds.remove(task.id)
+
+        val clientBuilder = OkHttpClient.Builder()
+            .followRedirects(true)
+            .followSslRedirects(true)
+            .retryOnConnectionFailure(true)
+            .connectTimeout(25, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+
+        if (proxyUrl.isNotBlank()) {
+            try {
+                val cleanProxy = proxyUrl.removePrefix("http://").removePrefix("socks5://").trim()
+                val parts = cleanProxy.split(":")
+                if (parts.size == 2) {
+                    val host = parts[0]
+                    val port = parts[1].toInt()
+                    val type = if (proxyUrl.startsWith("socks5://")) Proxy.Type.SOCKS else Proxy.Type.HTTP
+                    clientBuilder.proxy(Proxy(type, InetSocketAddress(host, port)))
+                }
+            } catch (pe: Exception) {
+                Log.w(TAG, "设置代理失败，降级为直连: ${pe.message}")
+            }
+        }
+
+        val client = clientBuilder.build()
+        var retryCount = 0
+        val maxRetries = 3
+        var lastException: Exception? = null
+
+        while (retryCount <= maxRetries) {
+            try {
+                val existingBytes = if (tempFile.exists()) tempFile.length() else 0L
+
+                val reqBuilder = Request.Builder()
+                    .url(targetUrl)
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+
+                if (targetUrl.contains("twimg.com") || targetUrl.contains("twitter.com")) {
+                    reqBuilder.header("Referer", "https://twitter.com/")
+                } else if (targetUrl.contains("snapcdn.app")) {
+                    reqBuilder.header("Referer", "https://x2twitter.com/")
+                }
+
+                // 支持 HTTP Range 断点续传
+                if (existingBytes > 0) {
+                    reqBuilder.header("Range", "bytes=$existingBytes-")
+                    Log.d(TAG, "启用断点续传: 从字节 $existingBytes 继续拉取")
+                }
+
+                val call = client.newCall(reqBuilder.build())
+                activeHttpCalls[task.id] = call
+
+                val response = call.execute()
+                val responseCode = response.code
+
+                if (responseCode == 416) {
+                    // 416 表示范围无法满足，即本地已全部下载完毕
+                    Log.d(TAG, "服务器返回 416 Range Not Satisfiable，本地文件已为完整内容")
+                    lastException = null
+                    break
+                }
+
+                if (!response.isSuccessful && responseCode != 206) {
+                    throw IOException("HTTP 错误: $responseCode")
+                }
+
+                val isPartial = (responseCode == 206)
+                val appendMode = isPartial && existingBytes > 0
+                val body = response.body ?: throw IOException("直链响应体为空")
+
+                val contentLength = body.contentLength()
+                val totalBytes = if (isPartial && contentLength > 0) {
+                    existingBytes + contentLength
+                } else if (contentLength > 0) {
+                    contentLength
+                } else {
+                    -1L
+                }
+
+                var downloadedBytes = if (appendMode) existingBytes else 0L
+                var lastReportTime = SystemClock.elapsedRealtime()
+                var bytesSinceLastReport = 0L
+
+                onProgressUpdate(
+                    if (totalBytes > 0) (downloadedBytes.toFloat() / totalBytes * 100f).coerceIn(0f, 99f) else 5f,
+                    "",
+                    if (appendMode) "断点续传恢复中..." else "正在极速下载直链...",
+                    TaskStatus.DOWNLOADING
+                )
+
+                body.byteStream().use { input ->
+                    FileOutputStream(tempFile, appendMode).use { output ->
+                        val buffer = ByteArray(64 * 1024)
+                        var read: Int
+                        while (input.read(buffer).also { read = it } != -1) {
+                            output.write(buffer, 0, read)
+                            downloadedBytes += read
+                            bytesSinceLastReport += read
+
+                            val now = SystemClock.elapsedRealtime()
+                            if (now - lastReportTime >= 350) {
+                                val timeDiffSec = (now - lastReportTime) / 1000f
+                                val speedBytesPerSec = if (timeDiffSec > 0) bytesSinceLastReport / timeDiffSec else 0f
+                                val speedStr = formatSpeed(speedBytesPerSec)
+
+                                val progress = if (totalBytes > 0) {
+                                    (downloadedBytes.toFloat() / totalBytes * 100f).coerceIn(0f, 99f)
+                                } else 50f
+
+                                val etaStr = if (totalBytes > downloadedBytes && speedBytesPerSec > 0) {
+                                    val remainingSec = ((totalBytes - downloadedBytes) / speedBytesPerSec).toLong()
+                                    formatEta(remainingSec)
+                                } else ""
+
+                                onProgressUpdate(progress, speedStr, etaStr, TaskStatus.DOWNLOADING)
+                                lastReportTime = now
+                                bytesSinceLastReport = 0L
+                            }
+                        }
+                        output.flush()
+                    }
+                }
+
+                // 正常写完，清除异常标记并退出重试循环
+                lastException = null
+                break
+            } catch (e: Exception) {
+                lastException = e
+                activeHttpCalls.remove(task.id)
+                Log.w(TAG, "第 ${retryCount + 1} 次直链流式下载中断: ${e.message}")
+
+                // 检查任务是否已被用户取消
+                val isCancelled = cancelledTaskIds.contains(task.id)
+                if (isCancelled) {
+                    Log.d(TAG, "任务已被用户取消，终止重连重试")
+                    break
+                }
+
+                retryCount++
+                if (retryCount <= maxRetries) {
+                    onProgressUpdate(
+                        if (tempFile.exists()) (tempFile.length().toFloat() / 1024f / 1024f) else 0f,
+                        "",
+                        "网络抖动，第 $retryCount 次自动重连续传中...",
+                        TaskStatus.DOWNLOADING
+                    )
+                    kotlinx.coroutines.delay((600L * retryCount).coerceAtMost(2000L))
+                }
+            } finally {
+                activeHttpCalls.remove(task.id)
+            }
+        }
+
+        if (lastException != null && (!tempFile.exists() || tempFile.length() == 0L)) {
+            Log.e(TAG, "直链下载彻底失败: ${lastException.message}", lastException)
+            val msg = formatDetailedError(lastException)
+            onProgressUpdate(0f, "", "", TaskStatus.FAILED)
+            return@withContext Result.failure(Exception(msg, lastException))
+        }
+
+        try {
+            onProgressUpdate(99f, "", "正在保存到媒体库...", TaskStatus.PROCESSING)
+            tempFile.copyTo(finalFile, overwrite = true)
+            tempFile.delete()
+
+            try {
+                val mimeType = if (isAudio) "audio/mpeg" else "video/mp4"
+                MediaScannerConnection.scanFile(context, arrayOf(finalFile.absolutePath), arrayOf(mimeType), null)
+            } catch (ignored: Exception) {}
+
+            onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
+            Result.success(finalFile.absolutePath)
+        } catch (e: Exception) {
+            val msg = formatDetailedError(e)
+            onProgressUpdate(0f, "", "", TaskStatus.FAILED)
+            Result.failure(Exception(msg, e))
+        } finally {
+            cancelledTaskIds.remove(task.id)
+        }
+    }
+
+    private fun formatSpeed(bytesPerSec: Float): String {
+        return when {
+            bytesPerSec >= 1024 * 1024 -> String.format(Locale.getDefault(), "%.1f MB/s", bytesPerSec / (1024 * 1024))
+            bytesPerSec >= 1024 -> String.format(Locale.getDefault(), "%.1f KB/s", bytesPerSec / 1024)
+            else -> String.format(Locale.getDefault(), "%d B/s", bytesPerSec.toInt())
+        }
+    }
+
+    private fun formatEta(seconds: Long): String {
+        if (seconds <= 0) return ""
+        val m = seconds / 60
+        val s = seconds % 60
+        return if (m > 0) "${m}分${s}秒" else "${s}秒"
     }
 
     suspend fun updateEngine(context: Context): Result<String> = withContext(Dispatchers.IO) {

@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -47,14 +48,12 @@ fun TaskCard(
     var showGifPreviewDialog by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
-                shape = RoundedCornerShape(12.dp)
-            ),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+        ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -63,33 +62,56 @@ fun TaskCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top
             ) {
-                if (task.thumbnailUrl.isNotEmpty()) {
-                    AsyncImage(
-                        model = task.thumbnailUrl,
-                        contentDescription = "封面",
-                        modifier = Modifier
-                            .size(width = 90.dp, height = 54.dp)
-                            .clip(RoundedCornerShape(6.dp)),
-                        contentScale = ContentScale.Crop
+                val mediaCoverModel = remember(task.thumbnailUrl) {
+                    task.thumbnailUrl.ifBlank { null }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(width = 90.dp, height = 54.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // 底层：轻量级静态占位图标，零动画开销
+                    Icon(
+                        imageVector = when (task.downloadType) {
+                            DownloadType.AUDIO_ONLY -> Icons.Default.Audiotrack
+                            DownloadType.VIDEO_ONLY -> Icons.Default.VolumeOff
+                            DownloadType.GIF -> Icons.Default.Gif
+                            DownloadType.COVER -> Icons.Default.Image
+                            else -> Icons.Default.Videocam
+                        },
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                        modifier = Modifier.size(24.dp)
                     )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(width = 90.dp, height = 54.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = when (task.downloadType) {
-                                DownloadType.AUDIO_ONLY -> Icons.Default.Audiotrack
-                                DownloadType.VIDEO_ONLY -> Icons.Default.VolumeOff
-                                DownloadType.GIF -> Icons.Default.Gif
-                                DownloadType.COVER -> Icons.Default.Image
-                                else -> Icons.Default.Videocam
-                            },
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+
+                    val imageRequest = remember(mediaCoverModel, context) {
+                        if (mediaCoverModel == null) null
+                        else {
+                            coil.request.ImageRequest.Builder(context)
+                                .data(mediaCoverModel)
+                                .size(270, 162)
+                                .crossfade(true)
+                                .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                                .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                                .apply {
+                                    if (mediaCoverModel.contains("bilibili") || mediaCoverModel.contains("hdslb")) {
+                                        setHeader("Referer", "https://www.bilibili.com/")
+                                    }
+                                }
+                                .build()
+                        }
+                    }
+
+                    // 顶层：普通 AsyncImage 异步解码淡入覆盖，彻底移除 SubcomposeAsyncImage 延迟子组合与无限循环动画
+                    if (imageRequest != null) {
+                        AsyncImage(
+                            model = imageRequest,
+                            contentDescription = "封面",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
                         )
                     }
                 }
@@ -242,7 +264,7 @@ fun TaskCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 底部操作区
+            // 底部操作区（使用高性能轻量按钮，彻底消除 Material3 Button 的深层图层与 CompositionLocal 开销）
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
@@ -250,84 +272,60 @@ fun TaskCard(
             ) {
                 when (task.status) {
                     TaskStatus.DOWNLOADING, TaskStatus.PROCESSING, TaskStatus.PENDING -> {
-                        OutlinedButton(
-                            onClick = onCancel,
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = strings.cancel, fontSize = 12.sp)
-                        }
+                        TaskActionBtn(
+                            icon = Icons.Default.Close,
+                            text = strings.cancel,
+                            isPrimary = false,
+                            onClick = onCancel
+                        )
                     }
                     TaskStatus.COMPLETED -> {
                         // 播放 / 查看动图与封面按钮
-                        Button(
+                        TaskActionBtn(
+                            icon = when (task.downloadType) {
+                                DownloadType.COVER -> Icons.Default.Image
+                                DownloadType.GIF -> Icons.Default.Visibility
+                                else -> Icons.Default.PlayArrow
+                            },
+                            text = if (task.downloadType == DownloadType.GIF || task.downloadType == DownloadType.COVER) "查看" else strings.play,
+                            isPrimary = true,
                             onClick = {
                                 if (isGifTask) {
                                     showGifPreviewDialog = true
                                 } else {
                                     openMediaFile(context, task.localFilePath, task.downloadType)
                                 }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Icon(
-                                imageVector = when (task.downloadType) {
-                                    DownloadType.COVER -> Icons.Default.Image
-                                    DownloadType.GIF -> Icons.Default.Visibility
-                                    else -> Icons.Default.PlayArrow
-                                },
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = if (task.downloadType == DownloadType.GIF || task.downloadType == DownloadType.COVER) "查看" else strings.play, fontSize = 12.sp)
-                        }
+                            }
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         // 分享按钮
-                        OutlinedButton(
-                            onClick = { shareMediaFile(context, task.localFilePath, task.title) },
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = "分享", fontSize = 12.sp)
-                        }
+                        TaskActionBtn(
+                            icon = Icons.Default.Share,
+                            text = "分享",
+                            isPrimary = false,
+                            onClick = { shareMediaFile(context, task.localFilePath, task.title) }
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         // 删除按钮
-                        IconButton(
-                            onClick = { onDelete(true) },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DeleteOutline,
-                                contentDescription = strings.delete,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        TaskIconBtn(
+                            icon = Icons.Default.DeleteOutline,
+                            contentDescription = strings.delete,
+                            onClick = { onDelete(true) }
+                        )
                     }
                     TaskStatus.FAILED, TaskStatus.CANCELLED -> {
-                        Button(
-                            onClick = onRetry,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = strings.retry, fontSize = 12.sp)
-                        }
+                        TaskActionBtn(
+                            icon = Icons.Default.Refresh,
+                            text = strings.retry,
+                            isPrimary = true,
+                            onClick = onRetry
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
-                        IconButton(
-                            onClick = { onDelete(false) },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DeleteOutline,
-                                contentDescription = strings.delete,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        TaskIconBtn(
+                            icon = Icons.Default.DeleteOutline,
+                            contentDescription = strings.delete,
+                            onClick = { onDelete(false) }
+                        )
                     }
                 }
             }
@@ -410,16 +408,74 @@ fun TaskCard(
 
 @Composable
 internal fun BadgeChip(text: String, color: Color) {
-    Surface(
-        color = color.copy(alpha = 0.12f),
-        shape = RoundedCornerShape(4.dp)
+    Box(
+        modifier = Modifier
+            .background(color.copy(alpha = 0.12f), RoundedCornerShape(4.dp))
+            .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
             style = MaterialTheme.typography.labelSmall,
             color = color,
             fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun TaskActionBtn(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    isPrimary: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                if (isPrimary) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = if (isPrimary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = text,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (isPrimary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun TaskIconBtn(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String?,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

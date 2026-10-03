@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.omni.downloader.engine.UrlSniffer
@@ -163,37 +164,14 @@ class MainActivity : ComponentActivity() {
                                     .padding(innerPadding),
                                 color = MaterialTheme.colorScheme.background
                             ) {
-                                // 阻尼视差平滑翻页系统：200ms 柔和视觉缓冲，clipToBounds 彻底消灭撕裂与拖影
-                                AnimatedContent(
-                                    targetState = currentTab,
-                                    transitionSpec = {
-                                        val isForward = targetState > initialState
-                                        val enterOffset = if (isForward) 0.28f else -0.28f
-                                        val exitOffset = if (isForward) -0.15f else 0.15f
-                                        (slideInHorizontally(
-                                            initialOffsetX = { fullWidth -> (fullWidth * enterOffset).toInt() },
-                                            animationSpec = tween(durationMillis = 200, easing = TransitionCushionEasing)
-                                        ) + fadeIn(animationSpec = tween(durationMillis = 200, easing = TransitionCushionEasing))) togetherWith (
-                                            slideOutHorizontally(
-                                                targetOffsetX = { fullWidth -> (fullWidth * exitOffset).toInt() },
-                                                animationSpec = tween(durationMillis = 200, easing = TransitionCushionEasing)
-                                            ) + fadeOut(animationSpec = tween(durationMillis = 140))
-                                        )
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clipToBounds(),
-                                    label = "MainScreenPageTransition"
-                                ) { page ->
-                                    when (page) {
-                                        0 -> HomeScreen(
-                                            viewModel = viewModel,
-                                            onNavigateToTasks = { if (currentTab != 1) currentTab = 1 },
-                                            onNavigateToSettings = { if (currentTab != 2) currentTab = 2 }
-                                        )
-                                        1 -> TasksScreen(viewModel = viewModel)
-                                        2 -> SettingsScreen(viewModel = viewModel)
-                                    }
+                                when (currentTab) {
+                                    0 -> HomeScreen(
+                                        viewModel = viewModel,
+                                        onNavigateToTasks = { currentTab = 1 },
+                                        onNavigateToSettings = { currentTab = 2 }
+                                    )
+                                    1 -> TasksScreen(viewModel = viewModel)
+                                    2 -> SettingsScreen(viewModel = viewModel)
                                 }
                             }
                         }

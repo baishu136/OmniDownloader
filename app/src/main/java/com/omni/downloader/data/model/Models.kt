@@ -1,5 +1,6 @@
 package com.omni.downloader.data.model
 
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 
 /**
@@ -75,6 +76,7 @@ enum class TaskStatus(val label: String) {
 /**
  * 单个下载任务实体（支持序列化持久化）
  */
+@Immutable
 @Serializable
 data class DownloadTask(
     val id: String,

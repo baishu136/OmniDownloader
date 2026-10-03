@@ -9,6 +9,7 @@ import com.omni.downloader.data.model.AudioFormat
 import com.omni.downloader.data.model.DownloadTask
 import com.omni.downloader.data.model.DownloadType
 import com.omni.downloader.data.model.FormatOption
+import com.omni.downloader.data.model.RelaySite
 import com.omni.downloader.data.model.TaskStatus
 import com.omni.downloader.data.model.VideoMetadata
 import com.omni.downloader.data.repository.SettingsRepository
@@ -18,8 +19,11 @@ import com.omni.downloader.engine.UrlSniffer
 import com.omni.downloader.service.DownloadService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.UUID
@@ -30,11 +34,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val settingsRepository = SettingsRepository.getInstance(application)
 
     val tasks: StateFlow<List<DownloadTask>> = repository.tasks
+    val activeTasks: StateFlow<List<DownloadTask>> = repository.tasks
+        .map { list ->
+            list.filter {
+                it.status == TaskStatus.DOWNLOADING || it.status == TaskStatus.PROCESSING || it.status == TaskStatus.PENDING
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val proxyUrl: StateFlow<String> = settingsRepository.proxyUrl
     val downloadPath: StateFlow<String> = settingsRepository.downloadPath
     val appLanguage: StateFlow<String> = settingsRepository.appLanguage
     val bilibiliCookie: StateFlow<String> = settingsRepository.bilibiliCookie
     val hasPromptedBilibiliLogin: StateFlow<Boolean> = settingsRepository.hasPromptedBilibiliLogin
+    val relaySites: StateFlow<List<RelaySite>> = settingsRepository.relaySites
+
+    fun addRelaySite(site: RelaySite) {
+        settingsRepository.addRelaySite(site)
+    }
+
+    fun removeRelaySite(siteId: String) {
+        settingsRepository.removeRelaySite(siteId)
+    }
 
     fun markBilibiliLoginPrompted() {
         settingsRepository.setHasPromptedBilibiliLogin(true)
@@ -253,6 +274,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         _showFormatSheet.value = false
         _message.value = if (saveCover) "已加入下载队列 (含封面): ${task.title}" else "已加入下载队列: ${task.title}"
+    }
+
+    /**
+     * 将从第三方中转网页捕获到的视频下载直链直接加入后台下载队列
+     */
+    fun startDirectDownload(
+        context: Context,
+        directUrl: String,
+        title: String = "中转下载视频",
+        author: String = "第三方中转",
+        thumbnailUrl: String = ""
+    ) {
+        val (cleanUrl, unpackedTitle) = UrlSniffer.unpackDirectMediaUrl(directUrl, title)
+        val candidateTitle = if (unpackedTitle.isNotBlank() && unpackedTitle != "中转下载视频" && unpackedTitle != "视频") unpackedTitle else title
+        val safeTitle = candidateTitle
+            .replace(Regex("""[\\/:*?"<>|]"""), "_")
+            .trim()
+            .ifBlank { "中转下载视频" }
+            .take(60)
+
+        val task = DownloadTask(
+            id = UUID.randomUUID().toString().replace("-", "").take(12),
+            url = cleanUrl,
+            title = safeTitle,
+            author = author,
+            thumbnailUrl = thumbnailUrl,
+            downloadType = DownloadType.VIDEO_WITH_AUDIO,
+            selectedResolution = "中转直链",
+            audioFormat = AudioFormat.MP3
+        )
+        repository.addTask(task)
+        DownloadService.startDownload(context, task.id)
+        _message.value = "已从备用站捕获并加入下载队列: $safeTitle"
     }
 
     /**

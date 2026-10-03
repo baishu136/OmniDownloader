@@ -1,9 +1,11 @@
 package com.omni.downloader.engine
 
+import android.util.Base64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
@@ -186,5 +188,58 @@ object UrlSniffer {
         }
 
         cleanUrl
+    }
+
+    /**
+     * 解析中转站提取的直链或携带 JWT Payload (如 SnapCDN/X2Twitter/TwitterSaver) 的长链接
+     * 解码出真实的视频直链与规范的文件名，若无法解码则原样返回
+     */
+    fun unpackDirectMediaUrl(rawUrl: String, defaultTitle: String = "中转下载视频"): Pair<String, String> {
+        val trimmed = rawUrl.trim()
+        try {
+            // 匹配 URL 中包含 token=eyJ...
+            val tokenIndex = trimmed.indexOf("token=")
+            if (tokenIndex != -1) {
+                var tokenVal = trimmed.substring(tokenIndex + 6)
+                val ampersandIndex = tokenVal.indexOf('&')
+                if (ampersandIndex != -1) {
+                    tokenVal = tokenVal.substring(0, ampersandIndex)
+                }
+                if (tokenVal.startsWith("eyJ") && tokenVal.contains(".")) {
+                    val parts = tokenVal.split(".")
+                    if (parts.size >= 2) {
+                        val payload = parts[1]
+                        val decodedBytes = Base64.decode(payload, Base64.URL_SAFE or Base64.NO_WRAP)
+                        val jsonStr = String(decodedBytes, Charsets.UTF_8)
+                        val json = JSONObject(jsonStr)
+                        val realUrl = json.optString("url")
+                        val filename = json.optString("filename")
+                        val title = if (filename.isNotBlank()) {
+                            filename.substringBeforeLast(".")
+                        } else defaultTitle
+                        if (realUrl.isNotBlank() && realUrl.startsWith("http")) {
+                            return Pair(realUrl, title)
+                        }
+                    }
+                }
+            }
+        } catch (ignored: Exception) {
+        }
+        return Pair(trimmed, defaultTitle)
+    }
+
+    /**
+     * 判断是否属于网络媒体直链
+     */
+    fun isDirectMediaUrl(url: String): Boolean {
+        val lower = url.lowercase()
+        return lower.endsWith(".mp4") || lower.contains(".mp4?") ||
+                lower.endsWith(".m4a") || lower.contains(".m4a?") ||
+                lower.endsWith(".mp3") || lower.contains(".mp3?") ||
+                lower.endsWith(".webm") || lower.contains(".webm?") ||
+                lower.contains("dl.snapcdn.app") ||
+                lower.contains("video.twimg.com") ||
+                lower.contains("snapany.com/api/download") ||
+                lower.contains("googlevideo.com/videoplayback")
     }
 }
