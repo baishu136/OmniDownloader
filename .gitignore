@@ -18,3 +18,4 @@ YoutubeDL.class
 jni/
 ytdl_lib/
 scratch/
+*.log
