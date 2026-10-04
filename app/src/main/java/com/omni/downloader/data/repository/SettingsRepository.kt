@@ -29,6 +29,9 @@ class SettingsRepository private constructor(context: Context) {
     private val _hasPromptedBilibiliLogin = MutableStateFlow(prefs.getBoolean(KEY_HAS_PROMPTED_BILIBILI_LOGIN, false))
     val hasPromptedBilibiliLogin: StateFlow<Boolean> = _hasPromptedBilibiliLogin.asStateFlow()
 
+    private val _hasShownRelayCompatTip: MutableStateFlow<Boolean>
+    val hasShownRelayCompatTip: StateFlow<Boolean>
+
     private val _relaySites: MutableStateFlow<List<RelaySite>>
     val relaySites: StateFlow<List<RelaySite>>
 
@@ -36,16 +39,49 @@ class SettingsRepository private constructor(context: Context) {
     val appLanguage: StateFlow<String>
 
     init {
-        val savedSitesStr = prefs.getString(KEY_RELAY_SITES, null)
-        val initialSites = if (!savedSitesStr.isNullOrBlank()) {
-            try {
-                json.decodeFromString<List<RelaySite>>(savedSitesStr)
-            } catch (e: Exception) {
+        // 新版本配置规范迁移：彻底在软件配置内移除内置网页与旧预设
+        val lastConfigVersion = prefs.getInt(KEY_APP_CONFIG_VERSION, 0)
+        val initialSites: List<RelaySite>
+        var compatTipShown = prefs.getBoolean(KEY_HAS_SHOWN_RELAY_COMPAT_TIP, false)
+
+        if (lastConfigVersion < 39) {
+            // 新版本配置生效：在软件配置中彻底移除旧的 relay_sites，并重置提示状态
+            prefs.edit()
+                .remove(KEY_RELAY_SITES)
+                .remove(KEY_HAS_SHOWN_RELAY_COMPAT_TIP)
+                .putInt(KEY_APP_CONFIG_VERSION, 39)
+                .apply()
+            initialSites = emptyList()
+            compatTipShown = false
+        } else {
+            val savedSitesStr = prefs.getString(KEY_RELAY_SITES, null)
+            initialSites = if (!savedSitesStr.isNullOrBlank()) {
+                try {
+                    val decoded = json.decodeFromString<List<RelaySite>>(savedSitesStr)
+                    // 防御性过滤，确保无任何旧内置网页残留
+                    val legacyPresetIds = setOf("snapany_bili", "x2twitter", "greenvideo", "twittersaver", "snapany_tiktok")
+                    decoded.filter { site ->
+                        site.id !in legacyPresetIds &&
+                        !site.url.contains("snapany.com", ignoreCase = true) &&
+                        !site.url.contains("x2twitter.com", ignoreCase = true) &&
+                        !site.url.contains("greenvideo.cc", ignoreCase = true) &&
+                        !site.url.contains("twittersaver.net", ignoreCase = true) &&
+                        !site.name.contains("SnapAny", ignoreCase = true) &&
+                        !site.name.contains("X2Twitter", ignoreCase = true) &&
+                        !site.name.contains("GreenVideo", ignoreCase = true) &&
+                        !site.name.contains("TwitterSaver", ignoreCase = true)
+                    }
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            } else {
                 emptyList()
             }
-        } else {
-            emptyList()
         }
+
+        _hasShownRelayCompatTip = MutableStateFlow(compatTipShown)
+        hasShownRelayCompatTip = _hasShownRelayCompatTip.asStateFlow()
+
         _relaySites = MutableStateFlow(initialSites)
         relaySites = _relaySites.asStateFlow()
 
@@ -97,6 +133,11 @@ class SettingsRepository private constructor(context: Context) {
         prefs.edit().putBoolean(KEY_HAS_PROMPTED_BILIBILI_LOGIN, prompted).apply()
     }
 
+    fun setHasShownRelayCompatTip(shown: Boolean = true) {
+        _hasShownRelayCompatTip.value = shown
+        prefs.edit().putBoolean(KEY_HAS_SHOWN_RELAY_COMPAT_TIP, shown).apply()
+    }
+
     fun setAppLanguage(language: String) {
         val clean = language.trim()
         _appLanguage.value = clean
@@ -119,8 +160,12 @@ class SettingsRepository private constructor(context: Context) {
 
     private fun saveRelaySites(sites: List<RelaySite>) {
         try {
-            val jsonStr = json.encodeToString(sites)
-            prefs.edit().putString(KEY_RELAY_SITES, jsonStr).apply()
+            if (sites.isEmpty()) {
+                prefs.edit().remove(KEY_RELAY_SITES).apply()
+            } else {
+                val jsonStr = json.encodeToString(sites)
+                prefs.edit().putString(KEY_RELAY_SITES, jsonStr).apply()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -133,42 +178,8 @@ class SettingsRepository private constructor(context: Context) {
         private const val KEY_HAS_PROMPTED_BILIBILI_LOGIN = "key_has_prompted_bilibili_login"
         private const val KEY_APP_LANGUAGE = "key_app_language"
         private const val KEY_RELAY_SITES = "key_relay_sites"
-
-        /**
-         * 预设常用第三方中转解析站点
-         */
-        val DEFAULT_PRESET_RELAY_SITES = listOf(
-            RelaySite(
-                id = "snapany_bili",
-                name = "SnapAny (哔哩哔哩)",
-                url = "https://snapany.com/zh/bilibili",
-                iconUrl = "https://icon.horse/icon/snapany.com"
-            ),
-            RelaySite(
-                id = "x2twitter",
-                name = "X2Twitter",
-                url = "https://x2twitter.com/zh-cn3",
-                iconUrl = "https://icon.horse/icon/x2twitter.com"
-            ),
-            RelaySite(
-                id = "greenvideo",
-                name = "GreenVideo",
-                url = "https://greenvideo.cc/",
-                iconUrl = "https://icon.horse/icon/greenvideo.cc"
-            ),
-            RelaySite(
-                id = "twittersaver",
-                name = "TwitterSaver",
-                url = "https://twittersaver.net/zh-cn",
-                iconUrl = "https://icon.horse/icon/twittersaver.net"
-            ),
-            RelaySite(
-                id = "snapany_tiktok",
-                name = "SnapAny (TikTok)",
-                url = "https://snapany.com/zh/tiktok",
-                iconUrl = "https://icon.horse/icon/snapany.com"
-            )
-        )
+        private const val KEY_HAS_SHOWN_RELAY_COMPAT_TIP = "key_has_shown_relay_compat_tip"
+        private const val KEY_APP_CONFIG_VERSION = "key_app_config_version"
 
         @Volatile
         private var INSTANCE: SettingsRepository? = null

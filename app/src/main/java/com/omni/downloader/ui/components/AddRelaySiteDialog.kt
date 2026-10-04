@@ -1,11 +1,7 @@
 package com.omni.downloader.ui.components
 
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -20,7 +16,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omni.downloader.data.model.RelaySite
-import com.omni.downloader.data.repository.SettingsRepository
 import java.util.UUID
 
 /**
@@ -58,42 +53,16 @@ fun AddRelaySiteDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
-                    text = "快捷预设（点击直接填入）：",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "请输入您需要添加的第三方网页名称与网址：",
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    items(SettingsRepository.DEFAULT_PRESET_RELAY_SITES) { preset ->
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
-                            modifier = Modifier.clickable {
-                                nameInput = preset.name
-                                urlInput = preset.url
-                            }
-                        ) {
-                            Text(
-                                text = preset.name,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
 
                 OutlinedTextField(
                     value = nameInput,
                     onValueChange = { nameInput = it },
                     label = { Text("网站名称") },
-                    placeholder = { Text("例如：X2Twitter / 快存") },
+                    placeholder = { Text("例如：备用解析工具") },
                     leadingIcon = {
                         Icon(imageVector = Icons.Default.Language, contentDescription = null)
                     },

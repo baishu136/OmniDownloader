@@ -47,6 +47,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val appLanguage: StateFlow<String> = settingsRepository.appLanguage
     val bilibiliCookie: StateFlow<String> = settingsRepository.bilibiliCookie
     val hasPromptedBilibiliLogin: StateFlow<Boolean> = settingsRepository.hasPromptedBilibiliLogin
+    val hasShownRelayCompatTip: StateFlow<Boolean> = settingsRepository.hasShownRelayCompatTip
     val relaySites: StateFlow<List<RelaySite>> = settingsRepository.relaySites
 
     fun addRelaySite(site: RelaySite) {
@@ -55,6 +56,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun removeRelaySite(siteId: String) {
         settingsRepository.removeRelaySite(siteId)
+    }
+
+    fun markRelayCompatTipShown() {
+        settingsRepository.setHasShownRelayCompatTip(true)
     }
 
     fun markBilibiliLoginPrompted() {

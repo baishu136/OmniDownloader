@@ -34,6 +34,7 @@ import com.omni.downloader.data.model.RelaySite
 import com.omni.downloader.data.model.TaskStatus
 import com.omni.downloader.ui.components.AddRelaySiteDialog
 import com.omni.downloader.ui.components.FormatSelectorSheet
+import com.omni.downloader.ui.components.RelaySiteCompatDialog
 import com.omni.downloader.ui.components.RelaySitesOverlays
 import com.omni.downloader.ui.components.RelaySitesSection
 import com.omni.downloader.ui.components.relaySitesItems
@@ -61,11 +62,13 @@ fun HomeScreen(
     val selectedVideoFormat by viewModel.selectedVideoFormat.collectAsState()
     val selectedAudioFormat by viewModel.selectedAudioFormat.collectAsState()
     val hasPromptedBilibiliLogin by viewModel.hasPromptedBilibiliLogin.collectAsState()
+    val hasShownRelayCompatTip by viewModel.hasShownRelayCompatTip.collectAsState()
     val bilibiliCookie by viewModel.bilibiliCookie.collectAsState()
     val relaySites by viewModel.relaySites.collectAsState()
 
     var showBilibiliGuideDialog by remember { mutableStateOf(false) }
     var showBilibiliLoginSheet by remember { mutableStateOf(false) }
+    var showCompatDialog by remember { mutableStateOf(false) }
     var showAddSiteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(hasPromptedBilibiliLogin, bilibiliCookie) {
@@ -76,13 +79,20 @@ fun HomeScreen(
     }
 
     val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
-    val relayState = rememberRelaySitesState()
     val onStartDirectDownloadAction = remember(viewModel, context) {
         { directUrl: String, title: String ->
             viewModel.startDirectDownload(context = context, directUrl = directUrl, title = title)
         }
     }
-    val onAddSiteClickAction = remember { { showAddSiteDialog = true } }
+    val onAddSiteClickAction = remember(hasShownRelayCompatTip) {
+        {
+            if (!hasShownRelayCompatTip) {
+                showCompatDialog = true
+            } else {
+                showAddSiteDialog = true
+            }
+        }
+    }
     val onDeleteSiteAction = remember(viewModel) { { siteId: String -> viewModel.removeRelaySite(siteId) } }
 
     val scrollState = rememberScrollState()
@@ -406,6 +416,20 @@ fun HomeScreen(
                 showBilibiliLoginSheet = false
                 viewModel.updateBilibiliCookie(capturedCookie)
                 android.widget.Toast.makeText(context, strings.bilibiliLoginSuccess, android.widget.Toast.LENGTH_LONG).show()
+            }
+        )
+    }
+
+    // 首次添加第三方网页时的兼容性与使用须知提示弹窗
+    if (showCompatDialog) {
+        RelaySiteCompatDialog(
+            onConfirm = {
+                showCompatDialog = false
+                viewModel.markRelayCompatTipShown()
+                showAddSiteDialog = true
+            },
+            onDismiss = {
+                showCompatDialog = false
             }
         )
     }
