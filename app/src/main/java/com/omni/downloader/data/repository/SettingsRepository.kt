@@ -39,44 +39,55 @@ class SettingsRepository private constructor(context: Context) {
     val appLanguage: StateFlow<String>
 
     init {
-        // 新版本配置规范迁移：彻底在软件配置内移除内置网页与旧预设
+        // 新版本配置规范迁移：剔除旧版内置预设，严格保留用户此前的自定义网站配置
         val lastConfigVersion = prefs.getInt(KEY_APP_CONFIG_VERSION, 0)
         val initialSites: List<RelaySite>
-        var compatTipShown = prefs.getBoolean(KEY_HAS_SHOWN_RELAY_COMPAT_TIP, false)
+        val compatTipShown: Boolean
 
-        if (lastConfigVersion < 39) {
-            // 新版本配置生效：在软件配置中彻底移除旧的 relay_sites，并重置提示状态
-            prefs.edit()
-                .remove(KEY_RELAY_SITES)
-                .remove(KEY_HAS_SHOWN_RELAY_COMPAT_TIP)
-                .putInt(KEY_APP_CONFIG_VERSION, 39)
-                .apply()
-            initialSites = emptyList()
-            compatTipShown = false
-        } else {
-            val savedSitesStr = prefs.getString(KEY_RELAY_SITES, null)
-            initialSites = if (!savedSitesStr.isNullOrBlank()) {
-                try {
-                    val decoded = json.decodeFromString<List<RelaySite>>(savedSitesStr)
-                    // 防御性过滤，确保无任何旧内置网页残留
-                    val legacyPresetIds = setOf("snapany_bili", "x2twitter", "greenvideo", "twittersaver", "snapany_tiktok")
-                    decoded.filter { site ->
-                        site.id !in legacyPresetIds &&
-                        !site.url.contains("snapany.com", ignoreCase = true) &&
-                        !site.url.contains("x2twitter.com", ignoreCase = true) &&
-                        !site.url.contains("greenvideo.cc", ignoreCase = true) &&
-                        !site.url.contains("twittersaver.net", ignoreCase = true) &&
-                        !site.name.contains("SnapAny", ignoreCase = true) &&
-                        !site.name.contains("X2Twitter", ignoreCase = true) &&
-                        !site.name.contains("GreenVideo", ignoreCase = true) &&
-                        !site.name.contains("TwitterSaver", ignoreCase = true)
-                    }
-                } catch (e: Exception) {
-                    emptyList()
-                }
-            } else {
+        val savedSitesStr = prefs.getString(KEY_RELAY_SITES, null)
+        val rawSites = if (!savedSitesStr.isNullOrBlank()) {
+            try {
+                json.decodeFromString<List<RelaySite>>(savedSitesStr)
+            } catch (e: Exception) {
                 emptyList()
             }
+        } else {
+            emptyList()
+        }
+
+        // 精准剔除旧版所有内置网页，严格保留用户此前自己添加的自定义网站配置
+        val legacyPresetIds = setOf("snapany_bili", "x2twitter", "greenvideo", "twittersaver", "snapany_tiktok")
+        val filteredSites = rawSites.filter { site ->
+            site.id !in legacyPresetIds &&
+            !site.url.contains("snapany.com", ignoreCase = true) &&
+            !site.url.contains("x2twitter.com", ignoreCase = true) &&
+            !site.url.contains("greenvideo.cc", ignoreCase = true) &&
+            !site.url.contains("twittersaver.net", ignoreCase = true) &&
+            !site.name.contains("SnapAny", ignoreCase = true) &&
+            !site.name.contains("X2Twitter", ignoreCase = true) &&
+            !site.name.contains("GreenVideo", ignoreCase = true) &&
+            !site.name.contains("TwitterSaver", ignoreCase = true)
+        }
+
+        if (lastConfigVersion < 39) {
+            val editor = prefs.edit()
+            if (filteredSites.isEmpty()) {
+                editor.remove(KEY_RELAY_SITES)
+                compatTipShown = false
+                editor.remove(KEY_HAS_SHOWN_RELAY_COMPAT_TIP)
+            } else {
+                // 用户此前添加过自定义网站：100% 完整保留用户此前的网站配置！
+                try {
+                    editor.putString(KEY_RELAY_SITES, json.encodeToString(filteredSites))
+                } catch (ignored: Exception) {}
+                compatTipShown = true
+                editor.putBoolean(KEY_HAS_SHOWN_RELAY_COMPAT_TIP, true)
+            }
+            editor.putInt(KEY_APP_CONFIG_VERSION, 39).apply()
+            initialSites = filteredSites
+        } else {
+            compatTipShown = prefs.getBoolean(KEY_HAS_SHOWN_RELAY_COMPAT_TIP, false)
+            initialSites = filteredSites
         }
 
         _hasShownRelayCompatTip = MutableStateFlow(compatTipShown)

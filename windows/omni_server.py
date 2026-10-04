@@ -86,11 +86,46 @@ class UpdateSettingsRequest(BaseModel):
     theme: Optional[str] = None
     auto_start: Optional[bool] = Field(None, alias="autoStart")
 
-    class Config:
-        populate_by_name = True
+class AddRelaySiteRequest(BaseModel):
+    name: str
+    url: str
 
 
 # === API 路由 ===
+
+@app.get("/api/relay-sites")
+async def get_relay_sites():
+    """获取所有备用中转网站列表及兼容性提示状态"""
+    return {
+        "relaySites": config.relay_sites,
+        "hasShownRelayCompatTip": config.has_shown_relay_compat_tip
+    }
+
+
+@app.post("/api/relay-sites")
+async def add_relay_site(req: AddRelaySiteRequest):
+    """添加备用中转网站"""
+    name = req.name.strip()
+    url = req.url.strip()
+    if not name or not url:
+        raise HTTPException(status_code=400, detail="网站名称与网址不能为空")
+    site = config.add_relay_site(name, url)
+    return {"status": "success", "site": site, "relaySites": config.relay_sites}
+
+
+@app.delete("/api/relay-sites/{site_id}")
+async def delete_relay_site(site_id: str):
+    """删除指定的备用中转网站"""
+    config.remove_relay_site(site_id)
+    return {"status": "success", "relaySites": config.relay_sites}
+
+
+@app.post("/api/relay-sites/confirm-tip")
+async def confirm_relay_compat_tip():
+    """标记已阅读第三方兼容性与免责声明提示"""
+    config.confirm_relay_compat_tip()
+    return {"status": "success", "hasShownRelayCompatTip": True}
+
 
 @app.post("/api/analyze", response_model=VideoMetadata)
 async def analyze_url(req: AnalyzeRequest):

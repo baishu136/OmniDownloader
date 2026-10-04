@@ -183,6 +183,30 @@
         </div>
       </div>
 
+      <!-- 备用中转解析站板块 (Relay Sites Section) -->
+      <div class="bg-white rounded-3xl p-6 shadow-sm border border-indigo-100/80 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <i class="fa-solid fa-globe text-sm"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-slate-800">备用中转解析站</h3>
+              <p class="text-[11px] text-slate-400">当直连解析遇防爬或失效时，可利用备用网站提取直链</p>
+            </div>
+          </div>
+          <button onclick="handleOpenAddRelaySite()" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 shadow-xs">
+            <i class="fa-solid fa-plus text-[11px]"></i>
+            <span>添加网址</span>
+          </button>
+        </div>
+
+        <!-- 站点列表卡片网格 -->
+        <div id="relay-sites-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <!-- 动态渲染 -->
+        </div>
+      </div>
+
       <!-- 解析结果展示抽屉 / 卡片 -->
       <div id="analyze-result" class="hidden bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-indigo-100 space-y-6 fade-in">
         <!-- 视频主体信息 -->
@@ -615,6 +639,73 @@
     </div>
   </div>
 
+  <!-- 第三方网页使用须知与兼容性提示模态框 -->
+  <div id="relay-compat-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 fade-in">
+    <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-indigo-100 p-6 space-y-5">
+      <div class="flex flex-col items-center text-center space-y-2">
+        <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-inner">
+          <i class="fa-solid fa-shield-halved text-xl"></i>
+        </div>
+        <h3 class="font-bold text-base text-slate-800">第三方网页使用须知与兼容性提示</h3>
+      </div>
+
+      <div class="space-y-3 text-left">
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+          <div class="text-xs font-bold text-indigo-600">1. 服务性质声明</div>
+          <p class="text-[11px] text-slate-500 leading-relaxed">备用中转功能仅提供第三方网页的快捷导航与直链下载支持，本应用未内置亦未与任何第三方中转解析站点达成合作，不保证任何第三方网站的长期可用性。</p>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+          <div class="text-xs font-bold text-indigo-600">2. 兼容性与网页行为</div>
+          <p class="text-[11px] text-slate-500 leading-relaxed">各站点的页面交互、反爬机制及解析链路存在较大差异。使用过程中若遇人机验证、广告跳转、临时失效或防盗链拦截均属于网页端行为，建议优先使用主界面的原生直连解析。</p>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+          <div class="text-xs font-bold text-indigo-600">3. 安全与隐私保护</div>
+          <p class="text-[11px] text-slate-500 leading-relaxed">请确保您添加并访问的网址合法合规。在加载第三方网页时，请勿输入个人账号、密码或敏感隐私信息，防范钓鱼与安全风险。</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button onclick="closeRelayCompatModal()" class="px-4 py-2 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded-xl transition">取消</button>
+        <button onclick="confirmRelayCompatModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition">我已知晓并继续</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加备用中转网站模态框 -->
+  <div id="add-relay-site-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 fade-in">
+    <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-indigo-100 p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <i class="fa-solid fa-plus text-xs"></i>
+          </div>
+          <h3 class="font-bold text-sm text-slate-800">添加备用中转网站</h3>
+        </div>
+        <button onclick="closeAddRelaySiteModal()" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-500">请输入您需要添加的第三方网页名称与网址：</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">网站名称</label>
+          <input type="text" id="input-site-name" placeholder="例如：备用解析工具" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 rounded-xl outline-none text-xs transition" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">网站完整网址</label>
+          <input type="text" id="input-site-url" placeholder="https://..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 rounded-xl outline-none text-xs transition" />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button onclick="closeAddRelaySiteModal()" class="px-4 py-2 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded-xl transition">取消</button>
+        <button onclick="submitAddRelaySite()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition">确认添加</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 全局轻量 Toast 提示框 -->
   <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-12 opacity-0 transition-all duration-300 pointer-events-none px-4 py-3 bg-slate-900/90 text-white text-xs font-medium rounded-2xl shadow-xl backdrop-blur-md flex items-center space-x-2">
     <i id="toast-icon" class="fa-solid fa-circle-check text-cyan-400"></i>
@@ -628,6 +719,159 @@
     let selectedFormatId = '';
     let selectedAudioFormat = 'mp3';
     let allTasks = [];
+    let relaySites = [];
+    let hasShownRelayCompatTip = false;
+
+    // 获取并渲染备用中转站
+    async function fetchRelaySites() {
+      try {
+        const res = await fetch('/api/relay-sites');
+        if (res.ok) {
+          const data = await res.json();
+          relaySites = data.relaySites || [];
+          hasShownRelayCompatTip = Boolean(data.hasShownRelayCompatTip);
+          renderRelaySites();
+        }
+      } catch (e) {
+        console.error('获取备用中转站失败:', e);
+      }
+    }
+
+    function renderRelaySites() {
+      const container = document.getElementById('relay-sites-container');
+      if (!container) return;
+
+      if (!relaySites || relaySites.length === 0) {
+        container.innerHTML = `
+          <div onclick="handleOpenAddRelaySite()" class="col-span-full border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/30 hover:bg-indigo-50/60 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition text-indigo-600 group">
+            <div class="w-10 h-10 rounded-full bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center mb-2 transition">
+              <i class="fa-solid fa-plus text-sm"></i>
+            </div>
+            <span class="text-xs font-bold">添加网址</span>
+            <span class="text-[11px] text-slate-400 mt-0.5">自主配置您信赖的第三方备用中转解析服务</span>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = relaySites.map(site => {
+        const safeName = site.name || '备用站点';
+        const safeUrl = site.url || '#';
+        const initial = safeName.charAt(0).toUpperCase();
+        const iconHtml = site.iconUrl ?
+          `<img src="${site.iconUrl}" onerror="this.outerHTML='<div class=\\'w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center text-xs\\'>${initial}</div>'" class="w-8 h-8 rounded-xl object-contain border border-slate-100 bg-white" />` :
+          `<div class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center text-xs">${initial}</div>`;
+
+        return `
+          <div class="p-3.5 bg-slate-50/80 hover:bg-indigo-50/40 border border-slate-200/80 hover:border-indigo-200 rounded-2xl transition flex items-center justify-between group shadow-xs">
+            <div class="flex items-center space-x-3 overflow-hidden cursor-pointer" onclick="openRelaySite('${safeUrl}')">
+              ${iconHtml}
+              <div class="overflow-hidden">
+                <h4 class="text-xs font-bold text-slate-800 truncate" title="${safeName}">${safeName}</h4>
+                <span class="text-[10px] text-slate-400 hover:text-indigo-600 truncate block mt-0.5" title="${safeUrl}">
+                  ${safeUrl.replace(/^https?:\/\//, '')}
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center space-x-1 flex-shrink-0">
+              <button onclick="openRelaySite('${safeUrl}')" title="访问此网站" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-white transition">
+                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+              </button>
+              <button onclick="deleteRelaySite('${site.id}')" title="删除此网站" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-white transition">
+                <i class="fa-regular fa-trash-can text-xs"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleOpenAddRelaySite() {
+      if (!hasShownRelayCompatTip) {
+        const modal = document.getElementById('relay-compat-modal');
+        if (modal) modal.classList.remove('hidden');
+      } else {
+        openAddRelaySiteModal();
+      }
+    }
+
+    function closeRelayCompatModal() {
+      const modal = document.getElementById('relay-compat-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function confirmRelayCompatModal() {
+      closeRelayCompatModal();
+      hasShownRelayCompatTip = true;
+      try {
+        await fetch('/api/relay-sites/confirm-tip', { method: 'POST' });
+      } catch (e) {}
+      openAddRelaySiteModal();
+    }
+
+    function openAddRelaySiteModal() {
+      document.getElementById('input-site-name').value = '';
+      document.getElementById('input-site-url').value = '';
+      const modal = document.getElementById('add-relay-site-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeAddRelaySiteModal() {
+      const modal = document.getElementById('add-relay-site-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function submitAddRelaySite() {
+      const name = document.getElementById('input-site-name').value.trim();
+      let url = document.getElementById('input-site-url').value.trim();
+      if (!name || !url) {
+        showToast('请完整输入网站名称与网址', true);
+        return;
+      }
+      try {
+        const res = await fetch('/api/relay-sites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, url })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          relaySites = data.relaySites || [];
+          renderRelaySites();
+          closeAddRelaySiteModal();
+          showToast('成功添加备用中转网站');
+        } else {
+          const err = await res.json();
+          showToast(err.detail || '添加失败', true);
+        }
+      } catch (e) {
+        showToast('添加异常: ' + e.message, true);
+      }
+    }
+
+    async function deleteRelaySite(siteId) {
+      if (!confirm('确定要从列表中移除该网站吗？')) return;
+      try {
+        const res = await fetch(`/api/relay-sites/${siteId}`, { method: 'DELETE' });
+        if (res.ok) {
+          const data = await res.json();
+          relaySites = data.relaySites || [];
+          renderRelaySites();
+          showToast('已移除该网站');
+        }
+      } catch (e) {
+        showToast('删除失败: ' + e.message, true);
+      }
+    }
+
+    function openRelaySite(url) {
+      const curInput = (document.getElementById('input-url')?.value || '').trim();
+      if (curInput) {
+        navigator.clipboard?.writeText(curInput);
+        showToast('已将待下载链接复制至剪贴板，正在前往备用站...');
+      }
+      window.open(url, '_blank');
+    }
 
     // 多语言使用说明模态框控制
     function openGuideModal() {
@@ -663,10 +907,13 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadSettings();
       fetchTasks();
+      fetchRelaySites();
       initSSE();
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           closeGuideModal();
+          closeRelayCompatModal();
+          closeAddRelaySiteModal();
         }
       });
     });
