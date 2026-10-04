@@ -6,6 +6,8 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -33,6 +35,7 @@ import com.omni.downloader.data.model.TaskStatus
 import com.omni.downloader.ui.components.AddRelaySiteDialog
 import com.omni.downloader.ui.components.FormatSelectorSheet
 import com.omni.downloader.ui.components.RelaySitesOverlays
+import com.omni.downloader.ui.components.RelaySitesSection
 import com.omni.downloader.ui.components.relaySitesItems
 import com.omni.downloader.ui.components.rememberRelaySitesState
 import com.omni.downloader.ui.components.TaskCard
@@ -82,16 +85,17 @@ fun HomeScreen(
     val onAddSiteClickAction = remember { { showAddSiteDialog = true } }
     val onDeleteSiteAction = remember(viewModel) { { siteId: String -> viewModel.removeRelaySite(siteId) } }
 
+    val scrollState = rememberScrollState()
+
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(vertical = 16.dp),
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // 顶部品牌区
-            item(key = "home_brand_header") {
             Column(modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
@@ -136,10 +140,8 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
 
-        // 平台支持标签直接铺开展示
-        item(key = "home_platforms_row") {
+            // 平台支持标签直接铺开展示
             val supportedPlatforms = remember {
                 listOf(
                     "哔哩哔哩" to BilibiliPink,
@@ -164,10 +166,8 @@ fun HomeScreen(
                     PlatformChip(name = name, color = color)
                 }
             }
-        }
 
-        // 输入与操作面板（向左拉伸至与顶部文字左侧露出部分完全对齐）
-        item(key = "home_input_panel") {
+            // 输入与操作面板
             Column(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = inputUrl,
@@ -292,33 +292,23 @@ fun HomeScreen(
                     }
                 }
             }
-        }
 
-        // 备用中转解析站区域（直接平铺为独立 item，享受懒加载与按需测量，彻底消除卡顿）
-        relaySitesItems(
-            relaySites = relaySites,
-            relayState = relayState,
-            globalInputUrl = inputUrl,
-            onAddSiteClick = onAddSiteClickAction,
-            onDeleteSite = onDeleteSiteAction,
-            context = context
-        )
+            // 备用中转解析站区域（直接放入，滑动阶段 0 次测量、0 次重组）
+            RelaySitesSection(
+                relaySites = relaySites,
+                globalInputUrl = inputUrl,
+                onStartDirectDownload = onStartDirectDownloadAction,
+                onAddSiteClick = onAddSiteClickAction,
+                onDeleteSite = onDeleteSiteAction
+            )
 
-        // 正在进行的任务提示条（通过独立局部作用域组件隔离高频重组，彻底消除主屏掉帧）
-        item(key = "home_active_tasks_section") {
+            // 正在进行的任务提示条
             HomeActiveTasksSection(
                 viewModel = viewModel,
                 onNavigateToTasks = onNavigateToTasks
             )
         }
     }
-
-    // 中转站后台静默解析与浏览器排查浮层（脱离列表测量体系，避免重组污染列表）
-    RelaySitesOverlays(
-        relayState = relayState,
-        onStartDirectDownload = onStartDirectDownloadAction
-    )
-}
 
     // 详细错误弹窗
     if (errorDialogDetail != null) {

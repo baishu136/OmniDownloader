@@ -62,11 +62,11 @@ fun RelaySiteCard(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(
-            1.dp,
-            if (isResolving) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+            if (isResolving) 1.5.dp else 1.dp,
+            if (isResolving) MaterialTheme.colorScheme.primary
             else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         ),
-        shadowElevation = if (isResolving) 2.dp else 1.dp
+        shadowElevation = 0.dp
     ) {
         Column(
             modifier = Modifier

@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -73,6 +74,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestHighRefreshRate()
         checkAndRequestPermissions()
         handleIntent(intent)
 
@@ -192,67 +194,102 @@ private fun MainTabContent(
     viewModel: MainViewModel,
     modifier: Modifier = Modifier
 ) {
+    val onNavTasks = remember(onSelectTab) { { onSelectTab(1) } }
+    val onNavSettings = remember(onSelectTab) { { onSelectTab(2) } }
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Tab 0: 首页 (持久保活，Placement 延迟阶段瞬间偏移，0 重组、0 重新测量)
+        // Tab 0: 首页 (持久保活，未激活时通过 clearAndSetSemantics 彻底剪枝无障碍几何树递归)
+        val tab0Active = currentTabProvider() == 0
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .offset {
-                    val tab = currentTabProvider()
-                    IntOffset(if (tab == 0) 0 else -50000, 0)
+                    IntOffset(if (currentTabProvider() == 0) 0 else -50000, 0)
                 }
                 .clipToBounds()
+                .then(
+                    if (!tab0Active) Modifier.clearAndSetSemantics { } else Modifier
+                )
                 .graphicsLayer {
-                    val tab = currentTabProvider()
-                    alpha = if (tab == 0) 1f else 0f
+                    alpha = if (currentTabProvider() == 0) 1f else 0f
                 }
         ) {
             HomeScreen(
                 viewModel = viewModel,
-                onNavigateToTasks = { onSelectTab(1) },
-                onNavigateToSettings = { onSelectTab(2) }
+                onNavigateToTasks = onNavTasks,
+                onNavigateToSettings = onNavSettings
             )
         }
 
-        // Tab 1: 任务列表 (持久保活，Placement 延迟阶段瞬间偏移，0 重组、0 重新测量)
+        // Tab 1: 任务列表 (持久保活，未激活时通过 clearAndSetSemantics 彻底剪枝无障碍几何树递归)
+        val tab1Active = currentTabProvider() == 1
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .offset {
-                    val tab = currentTabProvider()
-                    IntOffset(if (tab == 1) 0 else -50000, 0)
+                    IntOffset(if (currentTabProvider() == 1) 0 else -50000, 0)
                 }
                 .clipToBounds()
+                .then(
+                    if (!tab1Active) Modifier.clearAndSetSemantics { } else Modifier
+                )
                 .graphicsLayer {
-                    val tab = currentTabProvider()
-                    alpha = if (tab == 1) 1f else 0f
+                    alpha = if (currentTabProvider() == 1) 1f else 0f
                 }
         ) {
             TasksScreen(viewModel = viewModel)
         }
 
-        // Tab 2: 设置 (持久保活，Placement 延迟阶段瞬间偏移，0 重组、0 重新测量)
+        // Tab 2: 设置 (持久保活，未激活时通过 clearAndSetSemantics 彻底剪枝无障碍几何树递归)
+        val tab2Active = currentTabProvider() == 2
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .offset {
-                    val tab = currentTabProvider()
-                    IntOffset(if (tab == 2) 0 else -50000, 0)
+                    IntOffset(if (currentTabProvider() == 2) 0 else -50000, 0)
                 }
                 .clipToBounds()
+                .then(
+                    if (!tab2Active) Modifier.clearAndSetSemantics { } else Modifier
+                )
                 .graphicsLayer {
-                    val tab = currentTabProvider()
-                    alpha = if (tab == 2) 1f else 0f
+                    alpha = if (currentTabProvider() == 2) 1f else 0f
                 }
         ) {
             SettingsScreen(viewModel = viewModel)
         }
     }
 }
+
+    override fun onResume() {
+        super.onResume()
+        requestHighRefreshRate()
+    }
+
+    private fun requestHighRefreshRate() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                val currentDisplay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    display
+                } else {
+                    @Suppress("DEPRECATION")
+                    windowManager.defaultDisplay
+                }
+                val modes = currentDisplay?.supportedModes ?: emptyArray()
+                val maxMode = modes.maxByOrNull { it.refreshRate }
+                val lp = window.attributes
+                if (maxMode != null && maxMode.refreshRate > 60f) {
+                    lp.preferredDisplayModeId = maxMode.modeId
+                    lp.preferredRefreshRate = maxMode.refreshRate
+                    window.attributes = lp
+                }
+            } catch (_: Exception) {}
+        }
+    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
