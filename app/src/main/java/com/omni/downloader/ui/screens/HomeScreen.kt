@@ -32,7 +32,9 @@ import com.omni.downloader.data.model.RelaySite
 import com.omni.downloader.data.model.TaskStatus
 import com.omni.downloader.ui.components.AddRelaySiteDialog
 import com.omni.downloader.ui.components.FormatSelectorSheet
-import com.omni.downloader.ui.components.RelaySitesSection
+import com.omni.downloader.ui.components.RelaySitesOverlays
+import com.omni.downloader.ui.components.relaySitesItems
+import com.omni.downloader.ui.components.rememberRelaySitesState
 import com.omni.downloader.ui.components.TaskCard
 import com.omni.downloader.ui.theme.*
 import com.omni.downloader.ui.viewmodel.MainViewModel
@@ -71,16 +73,25 @@ fun HomeScreen(
     }
 
     val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
+    val relayState = rememberRelaySitesState()
+    val onStartDirectDownloadAction = remember(viewModel, context) {
+        { directUrl: String, title: String ->
+            viewModel.startDirectDownload(context = context, directUrl = directUrl, title = title)
+        }
+    }
+    val onAddSiteClickAction = remember { { showAddSiteDialog = true } }
+    val onDeleteSiteAction = remember(viewModel) { { siteId: String -> viewModel.removeRelaySite(siteId) } }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        // 顶部品牌区
-        item {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // 顶部品牌区
+            item(key = "home_brand_header") {
             Column(modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
@@ -104,13 +115,7 @@ fun HomeScreen(
                         fontWeight = FontWeight.ExtraBold
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    val appVer = remember {
-                        try {
-                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.4.7"
-                        } catch (e: Exception) {
-                            "1.4.7"
-                        }
-                    }
+                    val appVer = com.omni.downloader.OmniApp.appVersion
                     Surface(
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                         shape = RoundedCornerShape(4.dp)
@@ -134,7 +139,7 @@ fun HomeScreen(
         }
 
         // 平台支持标签直接铺开展示
-        item {
+        item(key = "home_platforms_row") {
             val supportedPlatforms = remember {
                 listOf(
                     "哔哩哔哩" to BilibiliPink,
@@ -162,7 +167,7 @@ fun HomeScreen(
         }
 
         // 输入与操作面板（向左拉伸至与顶部文字左侧露出部分完全对齐）
-        item {
+        item(key = "home_input_panel") {
             Column(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = inputUrl,
@@ -289,22 +294,15 @@ fun HomeScreen(
             }
         }
 
-        // 备用中转解析站区域（通过独立局部作用域组件隔离高频重组与智能折叠，消除卡顿）
-        item(key = "relay_sites_section") {
-            RelaySitesSection(
-                relaySites = relaySites,
-                globalInputUrl = inputUrl,
-                onStartDirectDownload = { directUrl, title ->
-                    viewModel.startDirectDownload(
-                        context = context,
-                        directUrl = directUrl,
-                        title = title
-                    )
-                },
-                onAddSiteClick = { showAddSiteDialog = true },
-                onDeleteSite = { siteId -> viewModel.removeRelaySite(siteId) }
-            )
-        }
+        // 备用中转解析站区域（直接平铺为独立 item，享受懒加载与按需测量，彻底消除卡顿）
+        relaySitesItems(
+            relaySites = relaySites,
+            relayState = relayState,
+            globalInputUrl = inputUrl,
+            onAddSiteClick = onAddSiteClickAction,
+            onDeleteSite = onDeleteSiteAction,
+            context = context
+        )
 
         // 正在进行的任务提示条（通过独立局部作用域组件隔离高频重组，彻底消除主屏掉帧）
         item(key = "home_active_tasks_section") {
@@ -314,6 +312,13 @@ fun HomeScreen(
             )
         }
     }
+
+    // 中转站后台静默解析与浏览器排查浮层（脱离列表测量体系，避免重组污染列表）
+    RelaySitesOverlays(
+        relayState = relayState,
+        onStartDirectDownload = onStartDirectDownloadAction
+    )
+}
 
     // 详细错误弹窗
     if (errorDialogDetail != null) {
@@ -487,12 +492,14 @@ private fun HomeActiveTasksSection(
             }
 
             activeTasks.take(2).forEach { task ->
-                key(task.id) {
+                val taskId = task.id
+                val taskUrl = task.url
+                key(taskId) {
                     TaskCard(
                         task = task,
-                        onCancel = { viewModel.cancelTask(context, task.id) },
-                        onDelete = { viewModel.deleteTask(task.id, it) },
-                        onRetry = { viewModel.startAnalyze(task.url) }
+                        onCancel = remember(taskId) { { viewModel.cancelTask(context, taskId) } },
+                        onDelete = remember(taskId) { { deleteFile -> viewModel.deleteTask(taskId, deleteFile) } },
+                        onRetry = remember(taskUrl) { { viewModel.startAnalyze(taskUrl) } }
                     )
                 }
             }

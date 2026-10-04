@@ -18,6 +18,11 @@ import kotlinx.coroutines.launch
 
 class OmniApp : Application(), ImageLoaderFactory {
 
+    companion object {
+        var appVersion: String = "1.4.7"
+            private set
+    }
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun newImageLoader(): ImageLoader {
@@ -48,6 +53,10 @@ class OmniApp : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        try {
+            appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "1.4.7"
+        } catch (_: Exception) {}
+
         // 后台异步预热初始化核心下载引擎，避免阻塞启动并提前解压
         appScope.launch {
             try {

@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.omni.downloader.engine.UrlSniffer
@@ -97,89 +98,161 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxSize(),
                             snackbarHost = { SnackbarHost(snackbarHostState) },
                             bottomBar = {
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(56.dp),
-                                    color = MaterialTheme.colorScheme.surface,
-                                    tonalElevation = 2.dp
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(horizontal = 24.dp),
-                                        horizontalArrangement = Arrangement.SpaceAround,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        val navItems = remember(appStrings) {
-                                            listOf(
-                                                Triple(0, Icons.Default.Home, appStrings.navHome),
-                                                Triple(1, Icons.Default.Download, appStrings.navTasks),
-                                                Triple(2, Icons.Default.Settings, appStrings.navSettings)
-                                            )
-                                        }
-                                        navItems.forEach { (tabIndex, icon, desc) ->
-                                            val isSelected = currentTab == tabIndex
-                                            Box(
-                                                modifier = Modifier
-                                                    .weight(1f)
-                                                    .fillMaxHeight()
-                                                    .clickable(
-                                                        interactionSource = remember { MutableInteractionSource() },
-                                                        indication = null
-                                                    ) {
-                                                        if (currentTab != tabIndex) {
-                                                            currentTab = tabIndex
-                                                        }
-                                                    },
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(width = 58.dp, height = 34.dp)
-                                                        .clip(RoundedCornerShape(17.dp))
-                                                        .background(
-                                                            if (isSelected) MaterialTheme.colorScheme.secondaryContainer
-                                                            else Color.Transparent
-                                                        ),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Icon(
-                                                        imageVector = icon,
-                                                        contentDescription = desc,
-                                                        modifier = Modifier.size(26.dp),
-                                                        tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
-                                                        else MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                                OmniBottomBar(
+                                    currentTab = currentTab,
+                                    onTabSelected = { currentTab = it },
+                                    appStrings = appStrings
+                                )
                             }
                         ) { innerPadding ->
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
-                                color = MaterialTheme.colorScheme.background
-                            ) {
-                                when (currentTab) {
-                                    0 -> HomeScreen(
-                                        viewModel = viewModel,
-                                        onNavigateToTasks = { currentTab = 1 },
-                                        onNavigateToSettings = { currentTab = 2 }
-                                    )
-                                    1 -> TasksScreen(viewModel = viewModel)
-                                    2 -> SettingsScreen(viewModel = viewModel)
-                                }
-                            }
+                            MainTabContent(
+                                currentTabProvider = { currentTab },
+                                onSelectTab = { currentTab = it },
+                                viewModel = viewModel,
+                                modifier = Modifier.padding(innerPadding)
+                            )
                         }
                     }
                 }
             }
         }
     }
+
+@Composable
+private fun OmniBottomBar(
+    currentTab: Int,
+    onTabSelected: (Int) -> Unit,
+    appStrings: com.omni.downloader.ui.localization.AppStrings
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val navItems = remember(appStrings) {
+                listOf(
+                    Triple(0, Icons.Default.Home, appStrings.navHome),
+                    Triple(1, Icons.Default.Download, appStrings.navTasks),
+                    Triple(2, Icons.Default.Settings, appStrings.navSettings)
+                )
+            }
+            navItems.forEach { (tabIndex, icon, desc) ->
+                val isSelected = currentTab == tabIndex
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            if (currentTab != tabIndex) {
+                                onTabSelected(tabIndex)
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 58.dp, height = 34.dp)
+                            .clip(RoundedCornerShape(17.dp))
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.secondaryContainer
+                                else Color.Transparent
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = desc,
+                            modifier = Modifier.size(26.dp),
+                            tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainTabContent(
+    currentTabProvider: () -> Int,
+    onSelectTab: (Int) -> Unit,
+    viewModel: MainViewModel,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // Tab 0: 首页 (持久保活，Placement 延迟阶段瞬间偏移，0 重组、0 重新测量)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset {
+                    val tab = currentTabProvider()
+                    IntOffset(if (tab == 0) 0 else -50000, 0)
+                }
+                .clipToBounds()
+                .graphicsLayer {
+                    val tab = currentTabProvider()
+                    alpha = if (tab == 0) 1f else 0f
+                }
+        ) {
+            HomeScreen(
+                viewModel = viewModel,
+                onNavigateToTasks = { onSelectTab(1) },
+                onNavigateToSettings = { onSelectTab(2) }
+            )
+        }
+
+        // Tab 1: 任务列表 (持久保活，Placement 延迟阶段瞬间偏移，0 重组、0 重新测量)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset {
+                    val tab = currentTabProvider()
+                    IntOffset(if (tab == 1) 0 else -50000, 0)
+                }
+                .clipToBounds()
+                .graphicsLayer {
+                    val tab = currentTabProvider()
+                    alpha = if (tab == 1) 1f else 0f
+                }
+        ) {
+            TasksScreen(viewModel = viewModel)
+        }
+
+        // Tab 2: 设置 (持久保活，Placement 延迟阶段瞬间偏移，0 重组、0 重新测量)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset {
+                    val tab = currentTabProvider()
+                    IntOffset(if (tab == 2) 0 else -50000, 0)
+                }
+                .clipToBounds()
+                .graphicsLayer {
+                    val tab = currentTabProvider()
+                    alpha = if (tab == 2) 1f else 0f
+                }
+        ) {
+            SettingsScreen(viewModel = viewModel)
+        }
+    }
+}
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)

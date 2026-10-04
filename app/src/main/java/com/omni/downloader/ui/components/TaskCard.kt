@@ -93,7 +93,7 @@ fun TaskCard(
                             coil.request.ImageRequest.Builder(context)
                                 .data(mediaCoverModel)
                                 .size(270, 162)
-                                .crossfade(true)
+                                .crossfade(false)
                                 .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
                                 .diskCachePolicy(coil.request.CachePolicy.ENABLED)
                                 .apply {

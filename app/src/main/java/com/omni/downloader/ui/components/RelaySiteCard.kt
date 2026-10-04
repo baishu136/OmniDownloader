@@ -9,9 +9,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -134,7 +136,10 @@ fun RelaySiteCard(
                         else {
                             ImageRequest.Builder(context)
                                 .data(faviconUrl)
-                                .crossfade(true)
+                                .size(66, 66)
+                                .crossfade(false)
+                                .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                                .diskCachePolicy(coil.request.CachePolicy.ENABLED)
                                 .build()
                         }
                     }
@@ -194,78 +199,107 @@ fun RelaySiteCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 第二行：输入框 + 内置[粘贴剪切板]图标 + [⚡ 解析] 按钮
+            // 第二行：高性能轻量输入框 + 内置[粘贴剪切板]图标 + [⚡ 解析] 按钮
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
+                BasicTextField(
                     value = inputUrl,
                     onValueChange = { inputUrl = it },
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp),
+                        .height(44.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                            shape = RoundedCornerShape(8.dp)
+                        ),
                     enabled = !isResolving,
-                    placeholder = {
-                        Text(
-                            text = "输入或粘贴欲中转下载的视频链接...",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 12.5.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Link,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    },
-                    trailingIcon = {
-                        if (inputUrl.isNotBlank() && !isResolving) {
-                            IconButton(onClick = { inputUrl = "" }) {
-                                Icon(
-                                    imageVector = Icons.Default.Clear,
-                                    contentDescription = "清空",
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        } else if (!isResolving) {
-                            // 粘贴剪切板按钮
-                            IconButton(onClick = {
-                                val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = cm.primaryClip
-                                if (clip != null && clip.itemCount > 0) {
-                                    val text = clip.getItemAt(0).text?.toString()?.trim() ?: ""
-                                    if (text.isNotBlank()) {
-                                        inputUrl = text
-                                        Toast.makeText(context, "已粘贴剪贴板链接", Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        Toast.makeText(context, "剪贴板为空", Toast.LENGTH_SHORT).show()
-                                    }
-                                } else {
-                                    Toast.makeText(context, "剪贴板为空", Toast.LENGTH_SHORT).show()
-                                }
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.ContentPaste,
-                                    contentDescription = "粘贴剪切板",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                    },
                     singleLine = true,
-                    shape = RoundedCornerShape(8.dp),
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 13.sp
+                    ),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = {
                         keyboardController?.hide()
                         if (!isResolving) {
                             onStartResolve(site, inputUrl)
                         }
-                    })
+                    }),
+                    decorationBox = { innerTextField ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Link,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(modifier = Modifier.weight(1f)) {
+                                if (inputUrl.isEmpty()) {
+                                    Text(
+                                        text = "输入或粘贴欲中转下载的视频链接...",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                        fontSize = 12.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                innerTextField()
+                            }
+                            if (inputUrl.isNotBlank() && !isResolving) {
+                                IconButton(
+                                    onClick = { inputUrl = "" },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Clear,
+                                        contentDescription = "清空",
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            } else if (!isResolving) {
+                                IconButton(
+                                    onClick = {
+                                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        val clip = cm.primaryClip
+                                        if (clip != null && clip.itemCount > 0) {
+                                            val text = clip.getItemAt(0).text?.toString()?.trim() ?: ""
+                                            if (text.isNotBlank()) {
+                                                inputUrl = text
+                                                Toast.makeText(context, "已粘贴剪贴板链接", Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                Toast.makeText(context, "剪贴板为空", Toast.LENGTH_SHORT).show()
+                                            }
+                                        } else {
+                                            Toast.makeText(context, "剪贴板为空", Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ContentPaste,
+                                        contentDescription = "粘贴剪切板",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -280,7 +314,7 @@ fun RelaySiteCard(
                             onStartResolve(site, inputUrl)
                         }
                     },
-                    modifier = Modifier.height(50.dp),
+                    modifier = Modifier.height(44.dp),
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp),
                     colors = if (isResolving) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
