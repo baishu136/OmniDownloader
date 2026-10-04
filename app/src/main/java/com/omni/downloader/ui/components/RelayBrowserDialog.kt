@@ -191,11 +191,28 @@ fun RelayBrowserDialog(
                                 setSupportZoom(true)
                                 builtInZoomControls = true
                                 displayZoomControls = false
+                                setSupportMultipleWindows(true)
+                                javaScriptCanOpenWindowsAutomatically = true
                                 allowFileAccess = false
                                 cacheMode = WebSettings.LOAD_DEFAULT
                                 mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                                userAgentString = "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+                                userAgentString = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
                             }
+
+                            // 注入 JS 桥接供直接捕获下载
+                            addJavascriptInterface(object {
+                                @JavascriptInterface
+                                fun onCaptured(url: String, title: String) {
+                                    if (url.isNotBlank()) {
+                                        post {
+                                            val (cleanUrl, cleanTitle) = com.omni.downloader.engine.UrlSniffer.unpackDirectMediaUrl(url, title.ifBlank { "${site.name} 中转视频" })
+                                            Toast.makeText(context, "成功捕获中转下载地址，已加入下载队列！", Toast.LENGTH_SHORT).show()
+                                            onCapturedDownload(cleanUrl, cleanTitle)
+                                            onDismiss()
+                                        }
+                                    }
+                                }
+                            }, "OmniDialogBridge")
 
                             webChromeClient = object : WebChromeClient() {
                                 override fun onProgressChanged(view: WebView?, newProgress: Int) {
@@ -207,30 +224,112 @@ fun RelayBrowserDialog(
                                         pageTitle = title
                                     }
                                 }
+
+                                override fun onCreateWindow(
+                                    view: WebView?,
+                                    isDialog: Boolean,
+                                    isUserGesture: Boolean,
+                                    resultMsg: android.os.Message?
+                                ): Boolean {
+                                    val transport = resultMsg?.obj as? WebView.WebViewTransport ?: return false
+                                    val popupWv = WebView(view?.context ?: return false)
+                                    popupWv.settings.javaScriptEnabled = true
+                                    popupWv.webViewClient = object : WebViewClient() {
+                                        override fun shouldOverrideUrlLoading(v: WebView?, req: WebResourceRequest?): Boolean {
+                                            val target = req?.url?.toString() ?: return false
+                                            if (target.endsWith(".exe", true) || target.endsWith(".apk", true) || target.endsWith(".dmg", true)) {
+                                                return true
+                                            }
+                                            if (target.isNotBlank()) {
+                                                if (target.contains(".mp4") || target.contains(".m4a") || target.contains(".webm") ||
+                                                    target.contains("download") || target.contains("googlevideo") ||
+                                                    target.contains("twimg.com/video") || target.contains("twcdn.net") ||
+                                                    target.contains("snapcdn") || target.contains("greenvideo")) {
+                                                    val (cleanUrl, cleanTitle) = com.omni.downloader.engine.UrlSniffer.unpackDirectMediaUrl(target, "${site.name} 中转视频")
+                                                    Toast.makeText(context, "成功捕获中转下载地址，已加入下载队列！", Toast.LENGTH_SHORT).show()
+                                                    onCapturedDownload(cleanUrl, cleanTitle)
+                                                    onDismiss()
+                                                    return true
+                                                }
+                                            }
+                                            return false
+                                        }
+                                    }
+                                    transport.webView = popupWv
+                                    resultMsg.sendToTarget()
+                                    return true
+                                }
                             }
 
                             webViewClient = object : WebViewClient() {
                                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                                     url?.let { currentUrl = it }
                                     canGoBack = view?.canGoBack() ?: false
+                                    view?.evaluateJavascript("window.__cfRLUnblockHandlers = true;", null)
                                 }
 
                                 override fun onPageFinished(view: WebView?, url: String?) {
                                     url?.let { currentUrl = it }
                                     canGoBack = view?.canGoBack() ?: false
 
-                                    // 自动检测并智能填充视频链接到目标网站的输入框
-                                    if (initialVideoUrl.isNotBlank()) {
-                                        val encodedUrl = Uri.encode(initialVideoUrl)
-                                        val jsSnippet = """
-                                            (function() {
-                                                try {
-                                                    var targetUrl = decodeURIComponent('$encodedUrl');
+                                    val encodedUrl = if (initialVideoUrl.isNotBlank()) Uri.encode(initialVideoUrl) else ""
+                                    val jsSnippet = """
+                                        (function() {
+                                            try {
+                                                window.__cfRLUnblockHandlers = true;
+
+                                                // Hook a.click
+                                                if (!window.__dialogAnchorHooked) {
+                                                    window.__dialogAnchorHooked = true;
+                                                    var origAnchorClick = HTMLAnchorElement.prototype.click;
+                                                    HTMLAnchorElement.prototype.click = function() {
+                                                        try {
+                                                            var href = this.href || this.getAttribute('href') || '';
+                                                            var filename = this.download || this.title || document.title || '';
+                                                            if (href && typeof href === 'string' && href.indexOf('http') === 0) {
+                                                                if (!href.match(/\.(exe|apk|dmg|pkg|deb|zip|rar)(\?.*)?$/i)) {
+                                                                    if (window.OmniDialogBridge) {
+                                                                        window.OmniDialogBridge.onCaptured(href, filename);
+                                                                    }
+                                                                }
+                                                            }
+                                                            if (this.target === '_blank') {
+                                                                this.target = '_self';
+                                                            }
+                                                        } catch(e) {}
+                                                        return origAnchorClick.apply(this, arguments);
+                                                    };
+                                                }
+
+                                                // Hook window.open
+                                                if (!window.__dialogOpenHooked) {
+                                                    window.__dialogOpenHooked = true;
+                                                    var origWindowOpen = window.open;
+                                                    window.open = function(url) {
+                                                        try {
+                                                            if (url && typeof url === 'string' && url.indexOf('http') === 0) {
+                                                                if (!url.match(/\.(exe|apk|dmg|pkg|deb|zip|rar)(\?.*)?$/i)) {
+                                                                    if (window.OmniDialogBridge) {
+                                                                        window.OmniDialogBridge.onCaptured(url, document.title || '');
+                                                                    }
+                                                                }
+                                                            }
+                                                        } catch(e) {}
+                                                        return origWindowOpen.apply(this, arguments);
+                                                    };
+                                                }
+
+                                                // 自动填入链接
+                                                var rawTarget = '$encodedUrl';
+                                                if (rawTarget) {
+                                                    var targetUrl = decodeURIComponent(rawTarget);
                                                     var selectors = [
+                                                        'input.n-input__input-el',
                                                         '#s_input',
                                                         'input[name="link"]',
                                                         'input[name="q"]',
-                                                        'input.n-input__input-el',
+                                                        'input[name="url"]',
+                                                        'input.search__input',
                                                         'input[placeholder*="http"]',
                                                         'input[placeholder*="链接"]',
                                                         'input[placeholder*="粘贴"]',
@@ -242,20 +341,41 @@ fun RelayBrowserDialog(
                                                         var el = document.querySelector(selectors[i]);
                                                         if (el) {
                                                             el.focus();
-                                                            el.value = targetUrl;
+                                                            var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
+                                                            if (setter && setter.set) {
+                                                                setter.set.call(el, targetUrl);
+                                                            } else {
+                                                                el.value = targetUrl;
+                                                            }
+                                                            try {
+                                                                el.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, cancelable: true, data: targetUrl, inputType: 'insertText' }));
+                                                                el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, data: targetUrl, inputType: 'insertText' }));
+                                                            } catch(e) {}
                                                             el.dispatchEvent(new Event('input', { bubbles: true }));
                                                             el.dispatchEvent(new Event('change', { bubbles: true }));
+                                                            el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: targetUrl }));
                                                             console.log('[OmniDownloader] Auto-filled URL into: ' + selectors[i]);
                                                             break;
                                                         }
                                                     }
-                                                } catch(e) {
-                                                    console.error('[OmniDownloader] Auto-fill failed: ' + e);
+
+                                                    // 同步 Nuxt 3 Pinia video store
+                                                    try {
+                                                        var nuxtRoot = document.querySelector('#__nuxt');
+                                                        var vueApp = nuxtRoot ? nuxtRoot.__vue_app__ : window.__nuxt_app__;
+                                                        var pinia = vueApp ? ((vueApp.config && vueApp.config.globalProperties && vueApp.config.globalProperties["\x24pinia"]) || (vueApp._context && vueApp._context.provides && vueApp._context.provides.pinia)) : null;
+                                                        if (pinia && pinia._s && pinia._s.get('video')) {
+                                                            var videoStore = pinia._s.get('video');
+                                                            videoStore.inputUrl = targetUrl;
+                                                        }
+                                                    } catch(e) {}
                                                 }
-                                            })();
-                                        """.trimIndent()
-                                        view?.evaluateJavascript(jsSnippet, null)
-                                    }
+                                            } catch(e) {
+                                                console.error('[OmniDownloader] Auto-fill failed: ' + e);
+                                            }
+                                        })();
+                                    """.trimIndent()
+                                    view?.evaluateJavascript(jsSnippet, null)
                                 }
 
                                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {

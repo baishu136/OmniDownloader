@@ -237,9 +237,12 @@ object UrlSniffer {
                 lower.endsWith(".m4a") || lower.contains(".m4a?") ||
                 lower.endsWith(".mp3") || lower.contains(".mp3?") ||
                 lower.endsWith(".webm") || lower.contains(".webm?") ||
+                lower.endsWith(".flv") || lower.contains(".flv?") ||
+                lower.endsWith(".m3u8") || lower.contains(".m3u8?") ||
                 lower.contains("dl.snapcdn.app") ||
                 lower.contains("video.twimg.com") ||
                 lower.contains("snapany.com/api/download") ||
+                lower.contains("greenvideo.cc/api/video/download") ||
                 lower.contains("googlevideo.com/videoplayback")
     }
 }
