@@ -3,6 +3,7 @@ package com.omni.downloader.ui.screens
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -70,7 +71,6 @@ fun TasksScreen(
     val context = LocalContext.current
     val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
     val tasks by viewModel.tasks.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
 
     // 将底层任务根据合集维度进行聚合，不再逐一堆叠
     val allDisplayItems = remember(tasks) { aggregateTasks(tasks) }
@@ -248,7 +248,10 @@ fun TasksScreen(
                     { taskId: String -> com.omni.downloader.service.DownloadService.startDownload(context, taskId) }
                 }
 
+                val listState = rememberLazyListState()
+
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 16.dp),

@@ -191,7 +191,19 @@ data class AppStrings(
     val collectionDeleteConfirmTitle: String,
     val collectionDeleteConfirmMessage: String,
     val collectionCancelConfirmTitle: String,
-    val collectionCancelConfirmMessage: String
+    val collectionCancelConfirmMessage: String,
+
+    // 第三方中转网站
+    val relaySitesSection: String,
+    val relaySitesDesc: String,
+    val addRelaySiteBtn: String,
+    val relaySitesEmptySettings: String,
+    val relaySitesEmptyHome: String,
+    val goToSettings: String,
+    val fetchingTitle: String,
+    val fetchTitleFailed: String,
+    val deleteRelaySiteConfirmTitle: String,
+    val deleteRelaySiteConfirmMessage: String
 )
 
 val ZhHansStrings = AppStrings(
@@ -372,7 +384,18 @@ val ZhHansStrings = AppStrings(
     collectionDeleteConfirmTitle = "删除合集任务",
     collectionDeleteConfirmMessage = "确定要删除该合集下的全部 %d 个分集任务记录吗？",
     collectionCancelConfirmTitle = "取消合集下载",
-    collectionCancelConfirmMessage = "确定要终止该合集下所有正在下载与等待中的任务并清除缓存碎片吗？"
+    collectionCancelConfirmMessage = "确定要终止该合集下所有正在下载与等待中的任务并清除缓存碎片吗？",
+
+    relaySitesSection = "第三方中转网站",
+    relaySitesDesc = "自定义添加备用解析站点，在首页中转解析时直接调用",
+    addRelaySiteBtn = "添加网址",
+    relaySitesEmptySettings = "暂无配置任何中转网站，点击右上角添加",
+    relaySitesEmptyHome = "暂无第三方中转网址，可在「设置」中添加",
+    goToSettings = "前往设置",
+    fetchingTitle = "正在检索网页名称...",
+    fetchTitleFailed = "未能自动获取名称，请手动输入",
+    deleteRelaySiteConfirmTitle = "删除中转网站",
+    deleteRelaySiteConfirmMessage = "确定要删除中转网站「%s」吗？"
 )
 
 val ZhHantStrings = AppStrings(
@@ -553,7 +576,18 @@ val ZhHantStrings = AppStrings(
     collectionDeleteConfirmTitle = "刪除合集任務",
     collectionDeleteConfirmMessage = "確定要刪除該合集下的全部 %d 個分集任務記錄嗎？",
     collectionCancelConfirmTitle = "取消合集下載",
-    collectionCancelConfirmMessage = "確定要終止該合集下所有正在下載與等待中的任務並清除快取碎片嗎？"
+    collectionCancelConfirmMessage = "確定要終止該合集下所有正在下載與等待中的任務並清除快取碎片嗎？",
+
+    relaySitesSection = "第三方轉發網站",
+    relaySitesDesc = "自訂新增備用解析網站，在首頁轉發解析時直接調用",
+    addRelaySiteBtn = "新增網址",
+    relaySitesEmptySettings = "暫無配置任何轉發網站，點擊右上角新增",
+    relaySitesEmptyHome = "暫無第三方轉發網址，可在「設定」中新增",
+    goToSettings = "前往設定",
+    fetchingTitle = "正在檢索網頁名稱...",
+    fetchTitleFailed = "未能自動獲取名稱，請手動輸入",
+    deleteRelaySiteConfirmTitle = "刪除轉發網站",
+    deleteRelaySiteConfirmMessage = "確定要刪除轉發網站「%s」嗎？"
 )
 
 val EnStrings = AppStrings(
@@ -734,7 +768,18 @@ val EnStrings = AppStrings(
     collectionDeleteConfirmTitle = "Delete Collection",
     collectionDeleteConfirmMessage = "Are you sure you want to delete all %d episode tasks in this collection?",
     collectionCancelConfirmTitle = "Cancel Collection Download",
-    collectionCancelConfirmMessage = "Are you sure you want to cancel all running and queued tasks in this collection?"
+    collectionCancelConfirmMessage = "Are you sure you want to cancel all running and queued tasks in this collection?",
+
+    relaySitesSection = "Third-Party Relay Sites",
+    relaySitesDesc = "Add custom relay parsing websites to use on the home page",
+    addRelaySiteBtn = "Add Website",
+    relaySitesEmptySettings = "No relay sites configured yet. Tap above to add.",
+    relaySitesEmptyHome = "No relay sites yet. You can add them in Settings.",
+    goToSettings = "Go to Settings",
+    fetchingTitle = "Fetching website title...",
+    fetchTitleFailed = "Failed to fetch title, please enter manually",
+    deleteRelaySiteConfirmTitle = "Delete Relay Site",
+    deleteRelaySiteConfirmMessage = "Are you sure you want to delete \"%s\"?"
 )
 
 val JaStrings = AppStrings(
@@ -915,7 +960,18 @@ val JaStrings = AppStrings(
     collectionDeleteConfirmTitle = "合集タスクを削除",
     collectionDeleteConfirmMessage = "この合集の全 %d 件のエピソードタスクを削除しますか？",
     collectionCancelConfirmTitle = "合集ダウンロードをキャンセル",
-    collectionCancelConfirmMessage = "この合集で進行中および待機中のタスクをすべて中止しますか？"
+    collectionCancelConfirmMessage = "この合集で進行中および待機中のタスクをすべて中止しますか？",
+
+    relaySitesSection = "サードパーティ中継サイト",
+    relaySitesDesc = "予備の解析サイトを追加し、ホーム画面で直接呼び出し可能",
+    addRelaySiteBtn = "サイトを追加",
+    relaySitesEmptySettings = "中継サイトがありません。上部から追加してください",
+    relaySitesEmptyHome = "中継サイトがありません。「設定」から追加できます",
+    goToSettings = "設定へ",
+    fetchingTitle = "タイトルを取得中...",
+    fetchTitleFailed = "タイトルを取得できませんでした。手動で入力してください",
+    deleteRelaySiteConfirmTitle = "中継サイトを削除",
+    deleteRelaySiteConfirmMessage = "中継サイト「%s」を削除しますか？"
 )
 
 fun resolveAppStrings(languagePreference: String): AppStrings {

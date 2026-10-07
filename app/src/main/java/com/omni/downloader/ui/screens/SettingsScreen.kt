@@ -6,8 +6,10 @@ import android.provider.DocumentsContract
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,11 +17,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.omni.downloader.data.model.RelaySite
 import com.omni.downloader.engine.DownloadEngine
+import com.omni.downloader.ui.components.AddRelaySiteDialog
+import com.omni.downloader.ui.components.RelaySiteCompatDialog
 import com.omni.downloader.ui.theme.ErrorRed
 import com.omni.downloader.ui.theme.SuccessGreen
 import com.omni.downloader.ui.viewmodel.MainViewModel
@@ -35,6 +45,12 @@ fun SettingsScreen(
     val isUpdatingEngine by viewModel.isUpdatingEngine.collectAsState()
     val savedProxyUrl by viewModel.proxyUrl.collectAsState()
     var proxyInput by remember(savedProxyUrl) { mutableStateOf(savedProxyUrl) }
+
+    val relaySites by viewModel.relaySites.collectAsState()
+    val hasShownRelayCompatTip by viewModel.hasShownRelayCompatTip.collectAsState()
+    var showCompatDialog by remember { mutableStateOf(false) }
+    var showAddSiteDialog by remember { mutableStateOf(false) }
+    var siteToDelete by remember { mutableStateOf<RelaySite?>(null) }
 
     val savedBilibiliCookie by viewModel.bilibiliCookie.collectAsState()
     var bilibiliCookieInput by remember(savedBilibiliCookie) { mutableStateOf(savedBilibiliCookie) }
@@ -70,8 +86,10 @@ fun SettingsScreen(
 
     val isEngineReady = DownloadEngine.isReady()
     val initError = DownloadEngine.getInitError()
+    val listState = rememberLazyListState()
 
     LazyColumn(
+        state = listState,
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
@@ -312,6 +330,205 @@ fun SettingsScreen(
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Text(strings.applyProxy, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        // 第三方中转网站配置 (Relay Sites)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Language,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = strings.relaySitesSection,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                            ) {
+                                Text(
+                                    text = "${relaySites.size}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
+                                )
+                            }
+                        }
+
+                        Button(
+                            onClick = {
+                                if (!hasShownRelayCompatTip) {
+                                    showCompatDialog = true
+                                } else {
+                                    showAddSiteDialog = true
+                                }
+                            },
+                            modifier = Modifier.height(32.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(strings.addRelaySiteBtn, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = strings.relaySitesDesc,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (relaySites.isEmpty()) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 14.dp, horizontal = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = strings.relaySitesEmptySettings,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            relaySites.forEach { site ->
+                                val domain = remember(site.url) {
+                                    try {
+                                        Uri.parse(site.url).host ?: ""
+                                    } catch (_: Exception) {
+                                        ""
+                                    }
+                                }
+                                val (brandChar, brandColor) = remember(site.name) {
+                                    val initial = site.name.trim().take(1).uppercase(java.util.Locale.ROOT).ifBlank { "W" }
+                                    val palette = listOf(
+                                        Color(0xFF6366F1), Color(0xFFEC4899), Color(0xFFF59E0B),
+                                        Color(0xFF14B8A6), Color(0xFF3B82F6), Color(0xFF8B5CF6)
+                                    )
+                                    val color = palette[kotlin.math.abs(site.name.hashCode()) % palette.size]
+                                    initial to color
+                                }
+                                val faviconUrl = remember(site.iconUrl, domain) {
+                                    when {
+                                        site.iconUrl.isNotBlank() && !site.iconUrl.endsWith(".ico", ignoreCase = true) -> site.iconUrl
+                                        domain.isNotBlank() -> "https://icon.horse/icon/$domain"
+                                        site.iconUrl.isNotBlank() -> site.iconUrl
+                                        else -> ""
+                                    }
+                                }
+
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(28.dp)
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(brandColor.copy(alpha = 0.15f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = brandChar,
+                                                color = brandColor,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 12.sp
+                                            )
+                                            if (faviconUrl.isNotBlank()) {
+                                                AsyncImage(
+                                                    model = ImageRequest.Builder(context)
+                                                        .data(faviconUrl)
+                                                        .size(56, 56)
+                                                        .crossfade(false)
+                                                        .build(),
+                                                    contentDescription = site.name,
+                                                    modifier = Modifier
+                                                        .size(18.dp)
+                                                        .clip(RoundedCornerShape(3.dp))
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.width(10.dp))
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = site.name,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = domain.ifBlank { site.url },
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+
+                                        IconButton(
+                                            onClick = { siteToDelete = site },
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.DeleteOutline,
+                                                contentDescription = "删除",
+                                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.85f),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -647,6 +864,61 @@ fun SettingsScreen(
                 viewModel.updateBilibiliCookie(capturedCookie)
                 bilibiliCookieInput = capturedCookie
                 Toast.makeText(context, strings.bilibiliLoginSuccess, Toast.LENGTH_LONG).show()
+            }
+        )
+    }
+
+    if (showCompatDialog) {
+        RelaySiteCompatDialog(
+            onDismiss = { showCompatDialog = false },
+            onConfirm = {
+                viewModel.markRelayCompatTipShown()
+                showCompatDialog = false
+                showAddSiteDialog = true
+            }
+        )
+    }
+
+    if (showAddSiteDialog) {
+        AddRelaySiteDialog(
+            onDismiss = { showAddSiteDialog = false },
+            onAddSite = { site ->
+                viewModel.addRelaySite(site)
+                Toast.makeText(context, "已成功添加中转网站：${site.name}", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    if (siteToDelete != null) {
+        val targetSite = siteToDelete!!
+        AlertDialog(
+            onDismissRequest = { siteToDelete = null },
+            title = {
+                Text(
+                    text = strings.deleteRelaySiteConfirmTitle,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(text = String.format(strings.deleteRelaySiteConfirmMessage, targetSite.name))
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.removeRelaySite(targetSite.id)
+                        siteToDelete = null
+                        Toast.makeText(context, "已删除：${targetSite.name}", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(strings.delete)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { siteToDelete = null }) {
+                    Text(strings.cancel)
+                }
             }
         )
     }

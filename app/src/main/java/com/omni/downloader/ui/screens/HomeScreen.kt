@@ -6,9 +6,8 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -32,9 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omni.downloader.data.model.RelaySite
 import com.omni.downloader.data.model.TaskStatus
-import com.omni.downloader.ui.components.AddRelaySiteDialog
 import com.omni.downloader.ui.components.FormatSelectorSheet
-import com.omni.downloader.ui.components.RelaySiteCompatDialog
 import com.omni.downloader.ui.components.RelaySitesOverlays
 import com.omni.downloader.ui.components.RelaySitesSection
 import com.omni.downloader.ui.components.relaySitesItems
@@ -62,14 +59,11 @@ fun HomeScreen(
     val selectedVideoFormat by viewModel.selectedVideoFormat.collectAsState()
     val selectedAudioFormat by viewModel.selectedAudioFormat.collectAsState()
     val hasPromptedBilibiliLogin by viewModel.hasPromptedBilibiliLogin.collectAsState()
-    val hasShownRelayCompatTip by viewModel.hasShownRelayCompatTip.collectAsState()
     val bilibiliCookie by viewModel.bilibiliCookie.collectAsState()
     val relaySites by viewModel.relaySites.collectAsState()
 
     var showBilibiliGuideDialog by remember { mutableStateOf(false) }
     var showBilibiliLoginSheet by remember { mutableStateOf(false) }
-    var showCompatDialog by remember { mutableStateOf(false) }
-    var showAddSiteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(hasPromptedBilibiliLogin, bilibiliCookie) {
         if (!hasPromptedBilibiliLogin && bilibiliCookie.isEmpty()) {
@@ -84,101 +78,98 @@ fun HomeScreen(
             viewModel.startDirectDownload(context = context, directUrl = directUrl, title = title)
         }
     }
-    val onAddSiteClickAction = remember(hasShownRelayCompatTip) {
-        {
-            if (!hasShownRelayCompatTip) {
-                showCompatDialog = true
-            } else {
-                showAddSiteDialog = true
-            }
-        }
-    }
-    val onDeleteSiteAction = remember(viewModel) { { siteId: String -> viewModel.removeRelaySite(siteId) } }
 
-    val scrollState = rememberScrollState()
+    val relayState = rememberRelaySitesState()
+    val listState = rememberLazyListState()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(
+        LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // 顶部品牌区
-            Column(modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CloudDownload,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = "OmniDownloader",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    val appVer = com.omni.downloader.OmniApp.appVersion
-                    Surface(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
+            item(key = "home_brand_header", contentType = "brand_header") {
+                Column(modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudDownload,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "v$appVer",
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
+                            text = "OmniDownloader",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.ExtraBold
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        val appVer = com.omni.downloader.OmniApp.appVersion
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = "v$appVer",
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = strings.appSubtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = strings.appSubtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
 
             // 平台支持标签直接铺开展示
-            val supportedPlatforms = remember {
-                listOf(
-                    "哔哩哔哩" to BilibiliPink,
-                    "抖音" to DouyinBlack,
-                    "快手" to KuaishouOrange,
-                    "小红书" to XiaohongshuRed,
-                    "YouTube" to YouTubeRed,
-                    "TikTok" to TikTokCyan,
-                    "X (Twitter)" to TwitterBlue,
-                    "Instagram" to InstagramPink,
-                    "Facebook" to FacebookBlue,
-                    "Pinterest" to PinterestRed
-                )
-            }
-            @OptIn(ExperimentalLayoutApi::class)
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                supportedPlatforms.forEach { (name, color) ->
-                    PlatformChip(name = name, color = color)
+            item(key = "home_platforms_row", contentType = "platforms_row") {
+                val supportedPlatforms = remember {
+                    listOf(
+                        "哔哩哔哩" to BilibiliPink,
+                        "抖音" to DouyinBlack,
+                        "快手" to KuaishouOrange,
+                        "小红书" to XiaohongshuRed,
+                        "YouTube" to YouTubeRed,
+                        "TikTok" to TikTokCyan,
+                        "X (Twitter)" to TwitterBlue,
+                        "Instagram" to InstagramPink,
+                        "Facebook" to FacebookBlue,
+                        "Pinterest" to PinterestRed
+                    )
+                }
+                @OptIn(ExperimentalLayoutApi::class)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    supportedPlatforms.forEach { (name, color) ->
+                        PlatformChip(name = name, color = color)
+                    }
                 }
             }
 
             // 输入与操作面板
-            Column(modifier = Modifier.fillMaxWidth()) {
+            item(key = "home_input_panel", contentType = "input_panel") {
+                Column(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = inputUrl,
                     onValueChange = { viewModel.updateInputUrl(it) },
@@ -302,22 +293,31 @@ fun HomeScreen(
                     }
                 }
             }
+        }
 
-            // 备用中转解析站区域（直接放入，滑动阶段 0 次测量、0 次重组）
-            RelaySitesSection(
+        // 备用中转解析站区域（平铺为独立 items，享受懒加载与按需测量，彻底消除卡顿）
+        relaySitesItems(
                 relaySites = relaySites,
+                relayState = relayState,
                 globalInputUrl = inputUrl,
-                onStartDirectDownload = onStartDirectDownloadAction,
-                onAddSiteClick = onAddSiteClickAction,
-                onDeleteSite = onDeleteSiteAction
+                onNavigateToSettings = onNavigateToSettings,
+                context = context
             )
 
             // 正在进行的任务提示条
-            HomeActiveTasksSection(
-                viewModel = viewModel,
-                onNavigateToTasks = onNavigateToTasks
-            )
+            item(key = "home_active_tasks_section", contentType = "active_tasks") {
+                HomeActiveTasksSection(
+                    viewModel = viewModel,
+                    onNavigateToTasks = onNavigateToTasks
+                )
+            }
         }
+
+        // 中转站后台静默解析与浏览器排查浮层（脱离列表测量体系，避免重组污染列表）
+        RelaySitesOverlays(
+            relayState = relayState,
+            onStartDirectDownload = onStartDirectDownloadAction
+        )
     }
 
     // 详细错误弹窗
@@ -416,30 +416,6 @@ fun HomeScreen(
                 showBilibiliLoginSheet = false
                 viewModel.updateBilibiliCookie(capturedCookie)
                 android.widget.Toast.makeText(context, strings.bilibiliLoginSuccess, android.widget.Toast.LENGTH_LONG).show()
-            }
-        )
-    }
-
-    // 首次添加第三方网页时的兼容性与使用须知提示弹窗
-    if (showCompatDialog) {
-        RelaySiteCompatDialog(
-            onConfirm = {
-                showCompatDialog = false
-                viewModel.markRelayCompatTipShown()
-                showAddSiteDialog = true
-            },
-            onDismiss = {
-                showCompatDialog = false
-            }
-        )
-    }
-
-    // 添加备用中转网址弹窗
-    if (showAddSiteDialog) {
-        AddRelaySiteDialog(
-            onDismiss = { showAddSiteDialog = false },
-            onAddSite = { newSite ->
-                viewModel.addRelaySite(newSite)
             }
         )
     }

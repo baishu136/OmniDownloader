@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -108,7 +109,7 @@ class MainActivity : ComponentActivity() {
                             }
                         ) { innerPadding ->
                             MainTabContent(
-                                currentTabProvider = { currentTab },
+                                currentTab = currentTab,
                                 onSelectTab = { currentTab = it },
                                 viewModel = viewModel,
                                 modifier = Modifier.padding(innerPadding)
@@ -189,11 +190,12 @@ private fun OmniBottomBar(
 
 @Composable
 private fun MainTabContent(
-    currentTabProvider: () -> Int,
+    currentTab: Int,
     onSelectTab: (Int) -> Unit,
     viewModel: MainViewModel,
     modifier: Modifier = Modifier
 ) {
+    val saveableStateHolder = rememberSaveableStateHolder()
     val onNavTasks = remember(onSelectTab) { { onSelectTab(1) } }
     val onNavSettings = remember(onSelectTab) { { onSelectTab(2) } }
 
@@ -202,65 +204,16 @@ private fun MainTabContent(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Tab 0: 首页 (持久保活，未激活时通过 clearAndSetSemantics 彻底剪枝无障碍几何树递归)
-        val tab0Active = currentTabProvider() == 0
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .offset {
-                    IntOffset(if (currentTabProvider() == 0) 0 else -50000, 0)
-                }
-                .clipToBounds()
-                .then(
-                    if (!tab0Active) Modifier.clearAndSetSemantics { } else Modifier
+        saveableStateHolder.SaveableStateProvider(currentTab) {
+            when (currentTab) {
+                0 -> HomeScreen(
+                    viewModel = viewModel,
+                    onNavigateToTasks = onNavTasks,
+                    onNavigateToSettings = onNavSettings
                 )
-                .graphicsLayer {
-                    alpha = if (currentTabProvider() == 0) 1f else 0f
-                }
-        ) {
-            HomeScreen(
-                viewModel = viewModel,
-                onNavigateToTasks = onNavTasks,
-                onNavigateToSettings = onNavSettings
-            )
-        }
-
-        // Tab 1: 任务列表 (持久保活，未激活时通过 clearAndSetSemantics 彻底剪枝无障碍几何树递归)
-        val tab1Active = currentTabProvider() == 1
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .offset {
-                    IntOffset(if (currentTabProvider() == 1) 0 else -50000, 0)
-                }
-                .clipToBounds()
-                .then(
-                    if (!tab1Active) Modifier.clearAndSetSemantics { } else Modifier
-                )
-                .graphicsLayer {
-                    alpha = if (currentTabProvider() == 1) 1f else 0f
-                }
-        ) {
-            TasksScreen(viewModel = viewModel)
-        }
-
-        // Tab 2: 设置 (持久保活，未激活时通过 clearAndSetSemantics 彻底剪枝无障碍几何树递归)
-        val tab2Active = currentTabProvider() == 2
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .offset {
-                    IntOffset(if (currentTabProvider() == 2) 0 else -50000, 0)
-                }
-                .clipToBounds()
-                .then(
-                    if (!tab2Active) Modifier.clearAndSetSemantics { } else Modifier
-                )
-                .graphicsLayer {
-                    alpha = if (currentTabProvider() == 2) 1f else 0f
-                }
-        ) {
-            SettingsScreen(viewModel = viewModel)
+                1 -> TasksScreen(viewModel = viewModel)
+                2 -> SettingsScreen(viewModel = viewModel)
+            }
         }
     }
 }

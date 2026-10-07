@@ -7,17 +7,20 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omni.downloader.data.model.RelaySite
+import com.omni.downloader.ui.localization.LocalAppStrings
 
 /**
  * 中转站全局操作与状态持有者：
@@ -76,114 +79,93 @@ fun LazyListScope.relaySitesItems(
     relaySites: List<RelaySite>,
     relayState: RelaySitesState,
     globalInputUrl: String,
-    onAddSiteClick: () -> Unit,
-    onDeleteSite: (siteId: String) -> Unit,
+    onNavigateToSettings: (() -> Unit)? = null,
+    onDeleteSite: ((siteId: String) -> Unit)? = null,
     context: Context
 ) {
     if (relaySites.isEmpty()) {
-        item(key = "relay_empty_card", contentType = "relay_empty") {
-            AddRelaySiteCard(onClick = onAddSiteClick)
-        }
+        // 主页中无中转站时不占位展示空卡片
+        return
+    }
+
+    val visibleSites = if (relayState.isExpanded || relaySites.size <= 3) {
+        relaySites
     } else {
-        val visibleSites = if (relayState.isExpanded || relaySites.size <= 3) {
-            relaySites
-        } else {
-            val topSites = relaySites.take(3).toMutableList()
-            val currentResolvingId = relayState.resolvingSiteId
-            if (currentResolvingId != null && topSites.none { it.id == currentResolvingId }) {
-                val current = relaySites.find { it.id == currentResolvingId }
-                if (current != null) {
-                    topSites[topSites.lastIndex] = current
-                }
+        val topSites = relaySites.take(3).toMutableList()
+        val currentResolvingId = relayState.resolvingSiteId
+        if (currentResolvingId != null && topSites.none { it.id == currentResolvingId }) {
+            val current = relaySites.find { it.id == currentResolvingId }
+            if (current != null) {
+                topSites[topSites.lastIndex] = current
             }
-            topSites
         }
+        topSites
+    }
 
-        items(
-            items = visibleSites,
-            key = { "relay_site_${it.id}" },
-            contentType = { "relay_card" }
-        ) { site ->
-            val isCurrentResolving = relayState.resolvingSiteId == site.id
-            val currentStatus = if (isCurrentResolving) relayState.resolvingStatus else ""
+    items(
+        items = visibleSites,
+        key = { "relay_site_${it.id}" },
+        contentType = { "relay_card" }
+    ) { site ->
+        val isCurrentResolving = relayState.resolvingSiteId == site.id
+        val currentStatus = if (isCurrentResolving) relayState.resolvingStatus else ""
 
-            val onStartResolveCard = remember(site, globalInputUrl, context) {
-                { targetSite: RelaySite, targetUrl: String ->
-                    val finalUrl = targetUrl.ifBlank { globalInputUrl }.trim()
-                    if (finalUrl.isBlank()) {
-                        Toast.makeText(context, "请先输入或粘贴待中转下载的视频链接", Toast.LENGTH_SHORT).show()
-                    } else {
-                        relayState.startResolve(targetSite, finalUrl)
-                    }
+        val onStartResolveCard = remember(site, globalInputUrl, context) {
+            { targetSite: RelaySite, targetUrl: String ->
+                val finalUrl = targetUrl.ifBlank { globalInputUrl }.trim()
+                if (finalUrl.isBlank()) {
+                    Toast.makeText(context, "请先输入或粘贴待中转下载的视频链接", Toast.LENGTH_SHORT).show()
+                } else {
+                    relayState.startResolve(targetSite, finalUrl)
                 }
             }
-            val onCancelResolveCard = remember(relayState) {
-                { relayState.cancelResolve() }
+        }
+        val onCancelResolveCard = remember(relayState) {
+            { relayState.cancelResolve() }
+        }
+        val onOpenManualBrowserCard = remember(relayState, globalInputUrl) {
+            { targetSite: RelaySite, targetUrl: String ->
+                relayState.openManualBrowser(targetSite, targetUrl.ifBlank { globalInputUrl }.trim())
             }
-            val onOpenManualBrowserCard = remember(relayState, globalInputUrl) {
-                { targetSite: RelaySite, targetUrl: String ->
-                    relayState.openManualBrowser(targetSite, targetUrl.ifBlank { globalInputUrl }.trim())
-                }
-            }
-            val onDeleteSiteCard = remember(site.id, relayState, onDeleteSite) {
+        }
+        val onDeleteSiteCard = remember(site.id, relayState, onDeleteSite) {
+            if (onDeleteSite != null) {
                 { siteId: String ->
                     if (relayState.resolvingSiteId == siteId) {
                         relayState.cancelResolve()
                     }
                     onDeleteSite(siteId)
                 }
-            }
-
-            RelaySiteCard(
-                site = site,
-                isResolving = isCurrentResolving,
-                resolvingStatus = currentStatus,
-                onStartResolve = onStartResolveCard,
-                onCancelResolve = onCancelResolveCard,
-                onOpenManualBrowser = onOpenManualBrowserCard,
-                onDeleteSite = onDeleteSiteCard
-            )
+            } else null
         }
 
-        if (relaySites.size > 3) {
-            item(key = "relay_expand_button", contentType = "relay_action_button") {
-                TextButton(
-                    onClick = { relayState.isExpanded = !relayState.isExpanded },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(
-                        imageVector = if (relayState.isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (relayState.isExpanded) "收起部分中转网站" else "展开全部 ${relaySites.size} 个中转网站",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-        }
+        RelaySiteCard(
+            site = site,
+            isResolving = isCurrentResolving,
+            resolvingStatus = currentStatus,
+            onStartResolve = onStartResolveCard,
+            onCancelResolve = onCancelResolveCard,
+            onOpenManualBrowser = onOpenManualBrowserCard,
+            onDeleteSite = onDeleteSiteCard
+        )
+    }
 
-        item(key = "relay_add_button", contentType = "relay_action_button") {
-            OutlinedButton(
-                onClick = onAddSiteClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(42.dp),
-                shape = RoundedCornerShape(10.dp)
+    if (relaySites.size > 3) {
+        item(key = "relay_expand_button", contentType = "relay_action_button") {
+            TextButton(
+                onClick = { relayState.isExpanded = !relayState.isExpanded },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Add,
+                    imageVector = if (relayState.isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(18.dp)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "添加更多中转网址",
-                    fontSize = 13.sp,
+                    text = if (relayState.isExpanded) "收起部分中转网站" else "展开全部 ${relaySites.size} 个中转网站",
+                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -248,10 +230,15 @@ fun RelaySitesSection(
     relaySites: List<RelaySite>,
     globalInputUrl: String,
     onStartDirectDownload: (directUrl: String, title: String) -> Unit,
-    onAddSiteClick: () -> Unit,
-    onDeleteSite: (siteId: String) -> Unit,
+    onNavigateToSettings: (() -> Unit)? = null,
+    onDeleteSite: ((siteId: String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    if (relaySites.isEmpty()) {
+        // 主页中无中转站时不占位展示
+        return
+    }
+
     val context = LocalContext.current
     val relayState = rememberRelaySitesState()
 
@@ -259,90 +246,68 @@ fun RelaySitesSection(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        if (relaySites.isEmpty()) {
-            AddRelaySiteCard(onClick = onAddSiteClick)
+        val visibleSites = if (relayState.isExpanded || relaySites.size <= 3) {
+            relaySites
         } else {
-            val visibleSites = if (relayState.isExpanded || relaySites.size <= 3) {
-                relaySites
-            } else {
-                val topSites = relaySites.take(3).toMutableList()
-                val currentResolvingId = relayState.resolvingSiteId
-                if (currentResolvingId != null && topSites.none { it.id == currentResolvingId }) {
-                    val current = relaySites.find { it.id == currentResolvingId }
-                    if (current != null) {
-                        topSites[topSites.lastIndex] = current
-                    }
+            val topSites = relaySites.take(3).toMutableList()
+            val currentResolvingId = relayState.resolvingSiteId
+            if (currentResolvingId != null && topSites.none { it.id == currentResolvingId }) {
+                val current = relaySites.find { it.id == currentResolvingId }
+                if (current != null) {
+                    topSites[topSites.lastIndex] = current
                 }
-                topSites
             }
+            topSites
+        }
 
-            visibleSites.forEach { site ->
-                key(site.id) {
-                    val isCurrentResolving = relayState.resolvingSiteId == site.id
-                    val currentStatus = if (isCurrentResolving) relayState.resolvingStatus else ""
+        visibleSites.forEach { site ->
+            key(site.id) {
+                val isCurrentResolving = relayState.resolvingSiteId == site.id
+                val currentStatus = if (isCurrentResolving) relayState.resolvingStatus else ""
 
-                    RelaySiteCard(
-                        site = site,
-                        isResolving = isCurrentResolving,
-                        resolvingStatus = currentStatus,
-                        onStartResolve = { targetSite, targetUrl ->
-                            val finalUrl = targetUrl.ifBlank { globalInputUrl }.trim()
-                            if (finalUrl.isBlank()) {
-                                Toast.makeText(context, "请先输入或粘贴待中转下载的视频链接", Toast.LENGTH_SHORT).show()
-                            } else {
-                                relayState.startResolve(targetSite, finalUrl)
-                            }
-                        },
-                        onCancelResolve = { relayState.cancelResolve() },
-                        onOpenManualBrowser = { targetSite, targetUrl ->
-                            relayState.openManualBrowser(targetSite, targetUrl.ifBlank { globalInputUrl }.trim())
-                        },
-                        onDeleteSite = { siteId ->
+                RelaySiteCard(
+                    site = site,
+                    isResolving = isCurrentResolving,
+                    resolvingStatus = currentStatus,
+                    onStartResolve = { targetSite, targetUrl ->
+                        val finalUrl = targetUrl.ifBlank { globalInputUrl }.trim()
+                        if (finalUrl.isBlank()) {
+                            Toast.makeText(context, "请先输入或粘贴待中转下载的视频链接", Toast.LENGTH_SHORT).show()
+                        } else {
+                            relayState.startResolve(targetSite, finalUrl)
+                        }
+                    },
+                    onCancelResolve = { relayState.cancelResolve() },
+                    onOpenManualBrowser = { targetSite, targetUrl ->
+                        relayState.openManualBrowser(targetSite, targetUrl.ifBlank { globalInputUrl }.trim())
+                    },
+                    onDeleteSite = if (onDeleteSite != null) {
+                        { siteId ->
                             if (relayState.resolvingSiteId == siteId) {
                                 relayState.cancelResolve()
                             }
                             onDeleteSite(siteId)
                         }
-                    )
-                }
+                    } else null
+                )
             }
+        }
 
-            if (relaySites.size > 3) {
-                TextButton(
-                    onClick = { relayState.isExpanded = !relayState.isExpanded },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(
-                        imageVector = if (relayState.isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (relayState.isExpanded) "收起部分中转网站" else "展开全部 ${relaySites.size} 个中转网站",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-
-            OutlinedButton(
-                onClick = onAddSiteClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(42.dp),
-                shape = RoundedCornerShape(10.dp)
+        if (relaySites.size > 3) {
+            TextButton(
+                onClick = { relayState.isExpanded = !relayState.isExpanded },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Add,
+                    imageVector = if (relayState.isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(18.dp)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "添加更多中转网址",
-                    fontSize = 13.sp,
+                    text = if (relayState.isExpanded) "收起部分中转网站" else "展开全部 ${relaySites.size} 个中转网站",
+                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )
             }

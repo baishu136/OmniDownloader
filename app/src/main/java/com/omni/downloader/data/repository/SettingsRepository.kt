@@ -15,7 +15,11 @@ class SettingsRepository private constructor(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("omni_downloader_prefs", Context.MODE_PRIVATE)
 
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true
+    }
 
     private val _proxyUrl = MutableStateFlow(prefs.getString(KEY_PROXY_URL, "") ?: "")
     val proxyUrl: StateFlow<String> = _proxyUrl.asStateFlow()
@@ -39,7 +43,7 @@ class SettingsRepository private constructor(context: Context) {
     val appLanguage: StateFlow<String>
 
     init {
-        // 新版本配置规范迁移：剔除旧版内置预设，严格保留用户此前的自定义网站配置
+        // 新版本配置规范迁移：仅在首次升级到版本 40 时清理旧版内置固定 ID，绝不误伤用户保存的任何网站
         val lastConfigVersion = prefs.getInt(KEY_APP_CONFIG_VERSION, 0)
         val initialSites: List<RelaySite>
         val compatTipShown: Boolean
@@ -49,45 +53,36 @@ class SettingsRepository private constructor(context: Context) {
             try {
                 json.decodeFromString<List<RelaySite>>(savedSitesStr)
             } catch (e: Exception) {
+                e.printStackTrace()
                 emptyList()
             }
         } else {
             emptyList()
         }
 
-        // 精准剔除旧版所有内置网页，严格保留用户此前自己添加的自定义网站配置
-        val legacyPresetIds = setOf("snapany_bili", "x2twitter", "greenvideo", "twittersaver", "snapany_tiktok")
-        val filteredSites = rawSites.filter { site ->
-            site.id !in legacyPresetIds &&
-            !site.url.contains("snapany.com", ignoreCase = true) &&
-            !site.url.contains("x2twitter.com", ignoreCase = true) &&
-            !site.url.contains("greenvideo.cc", ignoreCase = true) &&
-            !site.url.contains("twittersaver.net", ignoreCase = true) &&
-            !site.name.contains("SnapAny", ignoreCase = true) &&
-            !site.name.contains("X2Twitter", ignoreCase = true) &&
-            !site.name.contains("GreenVideo", ignoreCase = true) &&
-            !site.name.contains("TwitterSaver", ignoreCase = true)
-        }
+        if (lastConfigVersion < 40) {
+            // 一次性迁移清理：仅针对历史版本写死的固定 ID 进行剔除
+            val legacyPresetIds = setOf("snapany_bili", "x2twitter", "greenvideo", "twittersaver", "snapany_tiktok")
+            val filteredSites = rawSites.filter { site -> site.id !in legacyPresetIds }
 
-        if (lastConfigVersion < 39) {
             val editor = prefs.edit()
             if (filteredSites.isEmpty()) {
                 editor.remove(KEY_RELAY_SITES)
                 compatTipShown = false
                 editor.remove(KEY_HAS_SHOWN_RELAY_COMPAT_TIP)
             } else {
-                // 用户此前添加过自定义网站：100% 完整保留用户此前的网站配置！
                 try {
                     editor.putString(KEY_RELAY_SITES, json.encodeToString(filteredSites))
                 } catch (ignored: Exception) {}
-                compatTipShown = true
-                editor.putBoolean(KEY_HAS_SHOWN_RELAY_COMPAT_TIP, true)
+                compatTipShown = prefs.getBoolean(KEY_HAS_SHOWN_RELAY_COMPAT_TIP, true)
+                editor.putBoolean(KEY_HAS_SHOWN_RELAY_COMPAT_TIP, compatTipShown)
             }
-            editor.putInt(KEY_APP_CONFIG_VERSION, 39).apply()
+            editor.putInt(KEY_APP_CONFIG_VERSION, 40).commit()
             initialSites = filteredSites
         } else {
+            // 正常启动：完整信任并读取用户本地存储的所有网站，绝不执行任何关键字黑名单过滤！
             compatTipShown = prefs.getBoolean(KEY_HAS_SHOWN_RELAY_COMPAT_TIP, false)
-            initialSites = filteredSites
+            initialSites = rawSites
         }
 
         _hasShownRelayCompatTip = MutableStateFlow(compatTipShown)
@@ -157,7 +152,9 @@ class SettingsRepository private constructor(context: Context) {
 
     fun addRelaySite(site: RelaySite) {
         val current = _relaySites.value.toMutableList()
-        current.removeAll { it.id == site.id || it.url == site.url }
+        current.removeAll {
+            it.id == site.id || it.url.trim().equals(site.url.trim(), ignoreCase = true)
+        }
         current.add(site)
         _relaySites.value = current
         saveRelaySites(current)
@@ -172,10 +169,10 @@ class SettingsRepository private constructor(context: Context) {
     private fun saveRelaySites(sites: List<RelaySite>) {
         try {
             if (sites.isEmpty()) {
-                prefs.edit().remove(KEY_RELAY_SITES).apply()
+                prefs.edit().remove(KEY_RELAY_SITES).commit()
             } else {
                 val jsonStr = json.encodeToString(sites)
-                prefs.edit().putString(KEY_RELAY_SITES, jsonStr).apply()
+                prefs.edit().putString(KEY_RELAY_SITES, jsonStr).commit()
             }
         } catch (e: Exception) {
             e.printStackTrace()

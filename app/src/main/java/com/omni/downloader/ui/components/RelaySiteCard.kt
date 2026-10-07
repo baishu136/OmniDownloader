@@ -50,7 +50,7 @@ fun RelaySiteCard(
     onStartResolve: (site: RelaySite, videoUrl: String) -> Unit,
     onCancelResolve: () -> Unit = {},
     onOpenManualBrowser: (site: RelaySite, videoUrl: String) -> Unit = { _, _ -> },
-    onDeleteSite: (siteId: String) -> Unit,
+    onDeleteSite: ((siteId: String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -182,18 +182,20 @@ fun RelaySiteCard(
                     )
                 }
 
-                // 删除按钮
-                IconButton(
-                    onClick = { onDeleteSite(site.id) },
-                    modifier = Modifier.size(28.dp),
-                    enabled = !isResolving
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "删除",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                        modifier = Modifier.size(16.dp)
-                    )
+                // 删除按钮（仅在提供回调时展示）
+                if (onDeleteSite != null) {
+                    IconButton(
+                        onClick = { onDeleteSite(site.id) },
+                        modifier = Modifier.size(28.dp),
+                        enabled = !isResolving
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "删除",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
 

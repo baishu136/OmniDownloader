@@ -87,13 +87,13 @@ data class DownloadTask(
     val downloadType: DownloadType,
     val selectedResolution: String = "", // 如 "1080p"
     val audioFormat: AudioFormat = AudioFormat.MP3,
-    var status: TaskStatus = TaskStatus.PENDING,
-    var progress: Float = 0f, // 0.0 - 100.0
-    var speedText: String = "",
-    var etaText: String = "",
-    var fileSizeText: String = "",
-    var localFilePath: String = "",
-    var errorMessage: String = "",
+    val status: TaskStatus = TaskStatus.PENDING,
+    val progress: Float = 0f, // 0.0 - 100.0
+    val speedText: String = "",
+    val etaText: String = "",
+    val fileSizeText: String = "",
+    val localFilePath: String = "",
+    val errorMessage: String = "",
     val createdAt: Long = System.currentTimeMillis(),
     // === 合集与多视频扩展字段 ===
     val collectionId: String? = null,
