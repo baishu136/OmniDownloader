@@ -105,8 +105,15 @@ fun SilentRelayEngine(
                         fun onResolved(directUrl: String, title: String) {
                             Log.d(TAG, "Bridge onResolved: $directUrl (title: $title)")
                             if (!isCompleted && directUrl.isNotBlank()) {
-                                isCompleted = true
                                 val (cleanUrl, cleanTitle) = UrlSniffer.unpackDirectMediaUrl(directUrl, title)
+                                // 关键防御：严禁将中转站自身主页或非媒体网页当作视频直链回调！
+                                if (cleanUrl.equals(site.url, ignoreCase = true) ||
+                                    cleanUrl.trimEnd('/') == site.url.trimEnd('/') ||
+                                    !UrlSniffer.isDirectMediaUrl(cleanUrl)) {
+                                    Log.w(TAG, "忽略非媒体直链或站点自身URL: $cleanUrl")
+                                    return
+                                }
+                                isCompleted = true
                                 mainHandler.post {
                                     onSuccess(cleanUrl, cleanTitle)
                                 }
@@ -151,8 +158,13 @@ fun SilentRelayEngine(
                             return@setDownloadListener
                         }
                         if (!isCompleted && downloadUrl.isNotBlank()) {
-                            isCompleted = true
                             val (cleanUrl, cleanTitle) = UrlSniffer.unpackDirectMediaUrl(downloadUrl, "")
+                            if (cleanUrl.equals(site.url, ignoreCase = true) || cleanUrl.trimEnd('/') == site.url.trimEnd('/') ||
+                                !UrlSniffer.isDirectMediaUrl(cleanUrl)) {
+                                Log.w(TAG, "DownloadListener 忽略非媒体直链: $cleanUrl")
+                                return@setDownloadListener
+                            }
+                            isCompleted = true
                             mainHandler.post {
                                 onSuccess(cleanUrl, cleanTitle)
                             }
@@ -226,7 +238,14 @@ fun SilentRelayEngine(
                                                     var href = this.href || this.getAttribute('href') || '';
                                                     var filename = this.download || this.title || document.title || '视频';
                                                     if (href && typeof href === 'string' && href.indexOf('http') === 0) {
-                                                        if (!href.match(/\.(exe|apk|dmg|pkg|deb|zip|rar)(\?.*)?$/i)) {
+                                                        var isCurrentSite = (href === window.location.href || href.replace(/\/+$/, '') === window.location.origin);
+                                                        var isMedia = href.match(/\.(mp4|m4a|webm|flv|m3u8|mp3)(\?.*)?$/i) ||
+                                                                      href.indexOf('googlevideo.com') !== -1 ||
+                                                                      href.indexOf('twimg.com/video') !== -1 ||
+                                                                      href.indexOf('snapcdn.app') !== -1 ||
+                                                                      href.indexOf('/api/video/download') !== -1 ||
+                                                                      href.indexOf('token=') !== -1;
+                                                        if (!isCurrentSite && isMedia) {
                                                             console.log('[OmniSilent] Intercepted a.click() download url:', href);
                                                             if (!window.__omniDone && window.OmniBridge) {
                                                                 window.__omniDone = true;
@@ -252,7 +271,14 @@ fun SilentRelayEngine(
                                             window.open = function(url) {
                                                 try {
                                                     if (url && typeof url === 'string' && url.indexOf('http') === 0) {
-                                                        if (!url.match(/\.(exe|apk|dmg|pkg|deb|zip|rar)(\?.*)?$/i)) {
+                                                        var isCurrentSite = (url === window.location.href || url.replace(/\/+$/, '') === window.location.origin);
+                                                        var isMedia = url.match(/\.(mp4|m4a|webm|flv|m3u8|mp3)(\?.*)?$/i) ||
+                                                                      url.indexOf('googlevideo.com') !== -1 ||
+                                                                      url.indexOf('twimg.com/video') !== -1 ||
+                                                                      url.indexOf('snapcdn.app') !== -1 ||
+                                                                      url.indexOf('/api/video/download') !== -1 ||
+                                                                      url.indexOf('token=') !== -1;
+                                                        if (!isCurrentSite && isMedia) {
                                                             console.log('[OmniSilent] Intercepted window.open url:', url);
                                                             if (!window.__omniDone && window.OmniBridge) {
                                                                 window.__omniDone = true;

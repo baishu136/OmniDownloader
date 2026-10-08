@@ -108,13 +108,10 @@ fun RelaySiteCard(
                     }
                 }
 
-                val faviconUrl = remember(site.iconUrl, domain) {
-                    when {
-                        site.iconUrl.isNotBlank() && !site.iconUrl.endsWith(".ico", ignoreCase = true) -> site.iconUrl
-                        domain.isNotBlank() -> "https://icon.horse/icon/$domain"
-                        site.iconUrl.isNotBlank() -> site.iconUrl
-                        else -> ""
-                    }
+                val faviconUrl = remember(site.iconUrl) {
+                    if (site.iconUrl.isNotBlank() && !site.iconUrl.contains("icon.horse", ignoreCase = true) && !site.iconUrl.endsWith(".ico", ignoreCase = true)) {
+                        site.iconUrl
+                    } else ""
                 }
 
                 Box(

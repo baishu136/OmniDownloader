@@ -75,7 +75,6 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestHighRefreshRate()
         checkAndRequestPermissions()
         handleIntent(intent)
 
@@ -217,32 +216,6 @@ private fun MainTabContent(
         }
     }
 }
-
-    override fun onResume() {
-        super.onResume()
-        requestHighRefreshRate()
-    }
-
-    private fun requestHighRefreshRate() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            try {
-                val currentDisplay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    display
-                } else {
-                    @Suppress("DEPRECATION")
-                    windowManager.defaultDisplay
-                }
-                val modes = currentDisplay?.supportedModes ?: emptyArray()
-                val maxMode = modes.maxByOrNull { it.refreshRate }
-                val lp = window.attributes
-                if (maxMode != null && maxMode.refreshRate > 60f) {
-                    lp.preferredDisplayModeId = maxMode.modeId
-                    lp.preferredRefreshRate = maxMode.refreshRate
-                    window.attributes = lp
-                }
-            } catch (_: Exception) {}
-        }
-    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)

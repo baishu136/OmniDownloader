@@ -408,6 +408,14 @@ object DownloadEngine {
             if (directResult.isSuccess) {
                 return@withContext directResult
             }
+
+            // 中转直链任务（或显式直链URL）若下载失败，绝对严禁降级到 yt-dlp，防止报出 Unsupported URL 并掩盖真实错误
+            if (task.selectedResolution == "中转直链" || task.selectedResolution.startsWith("http")) {
+                val err = directResult.exceptionOrNull() ?: Exception("中转直链下载失败")
+                Log.e(TAG, "中转直链任务彻底失败: ${err.message}")
+                return@withContext Result.failure(err)
+            }
+
             Log.w(TAG, "直链极速下载失败，尝试降级通用规则引擎: ${directResult.exceptionOrNull()?.message}")
         }
 

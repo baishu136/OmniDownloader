@@ -110,9 +110,11 @@ fun LazyListScope.relaySitesItems(
         val isCurrentResolving = relayState.resolvingSiteId == site.id
         val currentStatus = if (isCurrentResolving) relayState.resolvingStatus else ""
 
-        val onStartResolveCard = remember(site, globalInputUrl, context) {
+        val currentInputUrl by rememberUpdatedState(globalInputUrl)
+
+        val onStartResolveCard = remember(site.id, relayState, context) {
             { targetSite: RelaySite, targetUrl: String ->
-                val finalUrl = targetUrl.ifBlank { globalInputUrl }.trim()
+                val finalUrl = targetUrl.ifBlank { currentInputUrl }.trim()
                 if (finalUrl.isBlank()) {
                     Toast.makeText(context, "请先输入或粘贴待中转下载的视频链接", Toast.LENGTH_SHORT).show()
                 } else {
@@ -123,9 +125,9 @@ fun LazyListScope.relaySitesItems(
         val onCancelResolveCard = remember(relayState) {
             { relayState.cancelResolve() }
         }
-        val onOpenManualBrowserCard = remember(relayState, globalInputUrl) {
+        val onOpenManualBrowserCard = remember(site.id, relayState) {
             { targetSite: RelaySite, targetUrl: String ->
-                relayState.openManualBrowser(targetSite, targetUrl.ifBlank { globalInputUrl }.trim())
+                relayState.openManualBrowser(targetSite, targetUrl.ifBlank { currentInputUrl }.trim())
             }
         }
         val onDeleteSiteCard = remember(site.id, relayState, onDeleteSite) {

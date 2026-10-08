@@ -43,18 +43,27 @@ private sealed class TaskDisplayItem {
 }
 
 private fun aggregateTasks(tasks: List<DownloadTask>): List<TaskDisplayItem> {
+    if (tasks.isEmpty()) return emptyList()
+    val collectionsMap = LinkedHashMap<String, MutableList<DownloadTask>>()
     val result = mutableListOf<TaskDisplayItem>()
-    val processedCollectionIds = mutableSetOf<String>()
 
-    tasks.forEach { task ->
+    // 线性单次统计合集成员，消除 O(N^2) 重复过滤
+    for (task in tasks) {
         val colId = task.collectionId
         if (colId != null) {
-            if (colId !in processedCollectionIds) {
-                processedCollectionIds.add(colId)
-                val groupTasks = tasks.filter { it.collectionId == colId }
-                    .sortedBy { if (it.episodeIndex > 0) it.episodeIndex else Int.MAX_VALUE }
-                val title = task.collectionTitle ?: groupTasks.firstOrNull()?.title ?: "视频合集"
-                result.add(TaskDisplayItem.Collection(colId, title, groupTasks))
+            collectionsMap.getOrPut(colId) { mutableListOf() }.add(task)
+        }
+    }
+
+    val addedCols = HashSet<String>()
+    for (task in tasks) {
+        val colId = task.collectionId
+        if (colId != null) {
+            if (addedCols.add(colId)) {
+                val group = collectionsMap[colId] ?: emptyList()
+                val sortedGroup = if (group.size <= 1) group else group.sortedBy { if (it.episodeIndex > 0) it.episodeIndex else Int.MAX_VALUE }
+                val title = task.collectionTitle ?: sortedGroup.firstOrNull()?.title ?: "视频合集"
+                result.add(TaskDisplayItem.Collection(colId, title, sortedGroup))
             }
         } else {
             result.add(TaskDisplayItem.Single(task))

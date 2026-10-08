@@ -263,18 +263,11 @@ fun AddRelaySiteDialog(
                         cleanUrl = "https://$cleanUrl"
                     }
 
-                    val domain = try {
-                        android.net.Uri.parse(cleanUrl).host ?: ""
-                    } catch (e: Exception) {
-                        ""
-                    }
-                    val safeIconUrl = if (domain.isNotBlank()) "https://icon.horse/icon/$domain" else ""
-
                     val site = RelaySite(
                         id = UUID.randomUUID().toString().replace("-", "").take(8),
                         name = cleanName,
                         url = cleanUrl,
-                        iconUrl = safeIconUrl
+                        iconUrl = "" // 默认采用高效本地品牌首字母矢量徽章，避免境外 icon.horse 服务超时挂起网络线程
                     )
                     onAddSite(site)
                     onDismiss()

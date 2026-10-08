@@ -204,8 +204,12 @@ fun RelayBrowserDialog(
                                 @JavascriptInterface
                                 fun onCaptured(url: String, title: String) {
                                     if (url.isNotBlank()) {
+                                        val (cleanUrl, cleanTitle) = com.omni.downloader.engine.UrlSniffer.unpackDirectMediaUrl(url, title.ifBlank { "${site.name} 中转视频" })
+                                        if (cleanUrl.equals(site.url, ignoreCase = true) || cleanUrl.trimEnd('/') == site.url.trimEnd('/') ||
+                                            !com.omni.downloader.engine.UrlSniffer.isDirectMediaUrl(cleanUrl)) {
+                                            return
+                                        }
                                         post {
-                                            val (cleanUrl, cleanTitle) = com.omni.downloader.engine.UrlSniffer.unpackDirectMediaUrl(url, title.ifBlank { "${site.name} 中转视频" })
                                             Toast.makeText(context, "成功捕获中转下载地址，已加入下载队列！", Toast.LENGTH_SHORT).show()
                                             onCapturedDownload(cleanUrl, cleanTitle)
                                             onDismiss()
@@ -284,7 +288,14 @@ fun RelayBrowserDialog(
                                                             var href = this.href || this.getAttribute('href') || '';
                                                             var filename = this.download || this.title || document.title || '';
                                                             if (href && typeof href === 'string' && href.indexOf('http') === 0) {
-                                                                if (!href.match(/\.(exe|apk|dmg|pkg|deb|zip|rar)(\?.*)?$/i)) {
+                                                                var isCurrentSite = (href === window.location.href || href.replace(/\/+$/, '') === window.location.origin);
+                                                                var isMedia = href.match(/\.(mp4|m4a|webm|flv|m3u8|mp3)(\?.*)?$/i) ||
+                                                                              href.indexOf('googlevideo.com') !== -1 ||
+                                                                              href.indexOf('twimg.com/video') !== -1 ||
+                                                                              href.indexOf('snapcdn.app') !== -1 ||
+                                                                              href.indexOf('/api/video/download') !== -1 ||
+                                                                              href.indexOf('token=') !== -1;
+                                                                if (!isCurrentSite && isMedia) {
                                                                     if (window.OmniDialogBridge) {
                                                                         window.OmniDialogBridge.onCaptured(href, filename);
                                                                     }
@@ -305,7 +316,14 @@ fun RelayBrowserDialog(
                                                     window.open = function(url) {
                                                         try {
                                                             if (url && typeof url === 'string' && url.indexOf('http') === 0) {
-                                                                if (!url.match(/\.(exe|apk|dmg|pkg|deb|zip|rar)(\?.*)?$/i)) {
+                                                                var isCurrentSite = (url === window.location.href || url.replace(/\/+$/, '') === window.location.origin);
+                                                                var isMedia = url.match(/\.(mp4|m4a|webm|flv|m3u8|mp3)(\?.*)?$/i) ||
+                                                                              url.indexOf('googlevideo.com') !== -1 ||
+                                                                              url.indexOf('twimg.com/video') !== -1 ||
+                                                                              url.indexOf('snapcdn.app') !== -1 ||
+                                                                              url.indexOf('/api/video/download') !== -1 ||
+                                                                              url.indexOf('token=') !== -1;
+                                                                if (!isCurrentSite && isMedia) {
                                                                     if (window.OmniDialogBridge) {
                                                                         window.OmniDialogBridge.onCaptured(url, document.title || '');
                                                                     }
@@ -406,6 +424,10 @@ fun RelayBrowserDialog(
                                         return@setDownloadListener
                                     }
                                     val (cleanUrl, cleanTitle) = com.omni.downloader.engine.UrlSniffer.unpackDirectMediaUrl(downloadUrl, "${site.name} 中转视频")
+                                    if (cleanUrl.equals(site.url, ignoreCase = true) || cleanUrl.trimEnd('/') == site.url.trimEnd('/') ||
+                                        !com.omni.downloader.engine.UrlSniffer.isDirectMediaUrl(cleanUrl)) {
+                                        return@setDownloadListener
+                                    }
                                     Toast.makeText(context, "成功捕获中转下载地址，已加入下载队列！", Toast.LENGTH_SHORT).show()
                                     onCapturedDownload(cleanUrl, cleanTitle)
                                     onDismiss()

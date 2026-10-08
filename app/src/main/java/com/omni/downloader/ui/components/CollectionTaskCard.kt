@@ -105,9 +105,27 @@ fun CollectionTaskCard(
                         .size(width = 92.dp, height = 58.dp)
                         .clip(RoundedCornerShape(6.dp))
                 ) {
-                    if (coverUrl.isNotBlank()) {
+                    val coverRequest = remember(coverUrl, context) {
+                        if (coverUrl.isBlank()) null
+                        else {
+                            coil.request.ImageRequest.Builder(context)
+                                .data(coverUrl)
+                                .size(276, 174)
+                                .crossfade(false)
+                                .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                                .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                                .apply {
+                                    if (coverUrl.contains("bilibili") || coverUrl.contains("hdslb")) {
+                                        setHeader("Referer", "https://www.bilibili.com/")
+                                    }
+                                }
+                                .build()
+                        }
+                    }
+
+                    if (coverRequest != null) {
                         AsyncImage(
-                            model = coverUrl,
+                            model = coverRequest,
                             contentDescription = "合集封面",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
@@ -331,7 +349,8 @@ fun CollectionTaskCard(
                     )
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    tasks.forEach { subTask ->
+                    val displaySubTasks = if (tasks.size > 20) tasks.take(15) else tasks
+                    displaySubTasks.forEach { subTask ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -418,6 +437,15 @@ fun CollectionTaskCard(
                                 }
                             }
                         }
+                    }
+
+                    if (tasks.size > 20) {
+                        Text(
+                            text = "已折叠其余 ${tasks.size - 15} 集，可在顶部点击播放查看",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)
+                        )
                     }
                 }
             }

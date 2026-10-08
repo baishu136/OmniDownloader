@@ -170,35 +170,14 @@ fun TaskCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 进度条与速度
+            // 进度条与速度（提取至独立微组件，阻断对整卡与封面按钮的重组污染）
             if (task.status == TaskStatus.DOWNLOADING || task.status == TaskStatus.PROCESSING) {
-                LinearProgressIndicator(
-                    progress = { (task.progress / 100f).coerceIn(0f, 1f) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp)),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                TaskDownloadingProgressSection(
+                    status = task.status,
+                    progress = task.progress,
+                    speedText = task.speedText,
+                    etaText = task.etaText
                 )
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = if (task.status == TaskStatus.PROCESSING) "正在合并音视频轨..." else "${task.progress.toInt()}% · ${task.speedText}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (task.etaText.isNotEmpty()) {
-                        Text(
-                            text = "剩余 ${task.etaText}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
             } else if (task.status == TaskStatus.FAILED && task.errorMessage.isNotEmpty()) {
                 var showErrorDetailDialog by remember { mutableStateOf(false) }
 
@@ -454,6 +433,44 @@ private fun TaskActionBtn(
                 fontWeight = FontWeight.Medium,
                 color = if (isPrimary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
             )
+        }
+    }
+}
+
+@Composable
+private fun TaskDownloadingProgressSection(
+    status: TaskStatus,
+    progress: Float,
+    speedText: String,
+    etaText: String
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        LinearProgressIndicator(
+            progress = { (progress / 100f).coerceIn(0f, 1f) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp)),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = if (status == TaskStatus.PROCESSING) "正在合并音视频轨..." else "${progress.toInt()}% · $speedText",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (etaText.isNotEmpty()) {
+                Text(
+                    text = "剩余 $etaText",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

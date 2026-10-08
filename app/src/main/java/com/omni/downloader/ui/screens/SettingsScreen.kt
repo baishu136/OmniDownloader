@@ -448,12 +448,22 @@ fun SettingsScreen(
                                     val color = palette[kotlin.math.abs(site.name.hashCode()) % palette.size]
                                     initial to color
                                 }
-                                val faviconUrl = remember(site.iconUrl, domain) {
-                                    when {
-                                        site.iconUrl.isNotBlank() && !site.iconUrl.endsWith(".ico", ignoreCase = true) -> site.iconUrl
-                                        domain.isNotBlank() -> "https://icon.horse/icon/$domain"
-                                        site.iconUrl.isNotBlank() -> site.iconUrl
-                                        else -> ""
+                                val faviconUrl = remember(site.iconUrl) {
+                                    if (site.iconUrl.isNotBlank() && !site.iconUrl.contains("icon.horse", ignoreCase = true) && !site.iconUrl.endsWith(".ico", ignoreCase = true)) {
+                                        site.iconUrl
+                                    } else ""
+                                }
+
+                                val faviconRequest = remember(faviconUrl, context) {
+                                    if (faviconUrl.isBlank()) null
+                                    else {
+                                        ImageRequest.Builder(context)
+                                            .data(faviconUrl)
+                                            .size(56, 56)
+                                            .crossfade(false)
+                                            .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                                            .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                                            .build()
                                     }
                                 }
 
@@ -481,13 +491,9 @@ fun SettingsScreen(
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 12.sp
                                             )
-                                            if (faviconUrl.isNotBlank()) {
+                                            if (faviconRequest != null) {
                                                 AsyncImage(
-                                                    model = ImageRequest.Builder(context)
-                                                        .data(faviconUrl)
-                                                        .size(56, 56)
-                                                        .crossfade(false)
-                                                        .build(),
+                                                    model = faviconRequest,
                                                     contentDescription = site.name,
                                                     modifier = Modifier
                                                         .size(18.dp)

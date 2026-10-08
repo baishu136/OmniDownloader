@@ -194,6 +194,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
+        // 前置防呆：防止误将中转解析站本身网址当成视频源解析
+        val isRelaySiteHome = settingsRepository.relaySites.value.any { site ->
+            val siteHost = try { android.net.Uri.parse(site.url).host } catch (_: Exception) { null }
+            val inputHost = try { android.net.Uri.parse(extracted).host } catch (_: Exception) { null }
+            inputHost != null && siteHost != null && inputHost.equals(siteHost, ignoreCase = true)
+        } || extracted.contains("greenvideo.cc", ignoreCase = true) ||
+             extracted.contains("x2twitter.com", ignoreCase = true) ||
+             extracted.contains("snapany.com", ignoreCase = true)
+
+        if (isRelaySiteHome && !UrlSniffer.isDirectMediaUrl(extracted)) {
+            _message.value = "提示：此为中转网站地址，请粘贴具体视频链接"
+            _errorDialogDetail.value = "检测到您输入的是中转解析站地址 ($extracted)。\n\n请在输入框粘贴欲下载的真实视频链接（如 Bilibili、YouTube、TikTok、X 等平台的分享链接），或在下方中转站卡片内输入视频链接进行解析。"
+            return
+        }
+
         viewModelScope.launch {
             _isAnalyzing.value = true
             val proxy = settingsRepository.proxyUrl.value
