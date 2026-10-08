@@ -1,6 +1,7 @@
 package com.omni.downloader.ui.components
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -11,35 +12,54 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.omni.downloader.data.model.RelaySite
 
 /**
- * 中转站嗅探浏览器状态持有者：
- * 隔离浏览器弹窗与列表状态，实现零冗余重组。
+ * 中转站全局操作与状态持有者：
+ * 隔离就地解析状态与浏览器弹窗状态，实现零冗余重组。
  */
 @Stable
 class RelaySitesState {
-    var browserSite by mutableStateOf<RelaySite?>(null)
-    var browserInitialUrl by mutableStateOf("")
+    var resolvingSiteId by mutableStateOf<String?>(null)
+    var resolvingSite by mutableStateOf<RelaySite?>(null)
+    var resolvingVideoUrl by mutableStateOf("")
+    var resolvingStatus by mutableStateOf("")
+
+    var manualBrowserSite by mutableStateOf<RelaySite?>(null)
+    var manualBrowserUrl by mutableStateOf("")
 
     var isExpanded by mutableStateOf(false)
 
-    fun openBrowser(site: RelaySite, initialUrl: String = "") {
-        browserSite = site
-        browserInitialUrl = initialUrl
+    fun startResolve(site: RelaySite, url: String) {
+        resolvingSiteId = site.id
+        resolvingSite = site
+        resolvingVideoUrl = url
+        resolvingStatus = "正在连接中转站..."
     }
 
-    fun dismissBrowser() {
-        browserSite = null
-        browserInitialUrl = ""
+    fun updateResolvingStatus(status: String) {
+        resolvingStatus = status
     }
 
-    // 兼容旧签名
-    fun openManualBrowser(site: RelaySite, url: String) = openBrowser(site, url)
-    fun dismissManualBrowser() = dismissBrowser()
-    fun cancelResolve() = dismissBrowser()
+    fun cancelResolve() {
+        resolvingSiteId = null
+        resolvingSite = null
+        resolvingVideoUrl = ""
+        resolvingStatus = ""
+    }
+
+    fun openManualBrowser(site: RelaySite, url: String = "") {
+        manualBrowserSite = site
+        manualBrowserUrl = url
+    }
+
+    fun dismissManualBrowser() {
+        manualBrowserSite = null
+        manualBrowserUrl = ""
+    }
 }
 
 @Composable
@@ -74,11 +94,26 @@ fun LazyListScope.relaySitesItems(
         contentType = { "relay_card" }
     ) { site ->
         val currentInputUrl by rememberUpdatedState(globalInputUrl)
+        val isCurrentResolving = relayState.resolvingSiteId == site.id
+        val currentStatus = if (isCurrentResolving) relayState.resolvingStatus else ""
 
         RelaySiteCard(
             site = site,
-            onOpenSite = { targetSite ->
-                relayState.openBrowser(targetSite, currentInputUrl.trim())
+            isResolving = isCurrentResolving,
+            resolvingStatus = currentStatus,
+            onStartResolve = { targetSite ->
+                val finalUrl = currentInputUrl.trim()
+                if (finalUrl.isBlank()) {
+                    Toast.makeText(context, "请先在上方输入框粘贴欲解析的视频链接", Toast.LENGTH_SHORT).show()
+                } else {
+                    relayState.startResolve(targetSite, finalUrl)
+                }
+            },
+            onCancelResolve = {
+                relayState.cancelResolve()
+            },
+            onOpenManualBrowser = { targetSite ->
+                relayState.openManualBrowser(targetSite, currentInputUrl.trim())
             },
             onDeleteSite = onDeleteSite
         )
@@ -108,22 +143,51 @@ fun LazyListScope.relaySitesItems(
 }
 
 /**
- * 中转站的智能嗅探浏览器弹窗（挂载在屏幕外层，不参与 LazyColumn 的任何滑动测量）
+ * 中转站的后台静默解析引擎与备用排查弹窗（挂载在屏幕外层，不参与 LazyColumn 的任何滑动测量）
  */
 @Composable
 fun RelaySitesOverlays(
     relayState: RelaySitesState,
     onStartDirectDownload: (directUrl: String, title: String) -> Unit
 ) {
-    val activeSite = relayState.browserSite
-    if (activeSite != null) {
+    val context = LocalContext.current
+    val resolvingSite = relayState.resolvingSite
+    val resolvingVideoUrl = relayState.resolvingVideoUrl
+
+    // 核心流转 1：就地后台静默解析（用户点击“直接解析”后自动提取并入队下载，完全不弹窗跳网页）
+    if (resolvingSite != null && resolvingVideoUrl.isNotBlank()) {
+        SilentRelayEngine(
+            site = resolvingSite,
+            videoUrl = resolvingVideoUrl,
+            onSuccess = { directUrl: String, title: String ->
+                val siteName = resolvingSite.name
+                relayState.cancelResolve()
+                Toast.makeText(context, "中转解析成功，已自动加入本地下载队列！", Toast.LENGTH_SHORT).show()
+                onStartDirectDownload(
+                    directUrl,
+                    title.ifBlank { "中转下载_${siteName}" }
+                )
+            },
+            onError = { errorMsg: String ->
+                relayState.cancelResolve()
+                Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+            },
+            onProgress = { statusMsg: String ->
+                relayState.updateResolvingStatus(statusMsg)
+            }
+        )
+    }
+
+    // 核心流转 2：备用窗口排查弹窗（当且仅当用户主动点击“窗口排查”图标时打开）
+    val manualBrowserSite = relayState.manualBrowserSite
+    if (manualBrowserSite != null) {
         RelayBrowserDialog(
-            site = activeSite,
-            initialVideoUrl = relayState.browserInitialUrl,
-            onDismiss = { relayState.dismissBrowser() },
+            site = manualBrowserSite,
+            initialVideoUrl = relayState.manualBrowserUrl,
+            onDismiss = { relayState.dismissManualBrowser() },
             onCapturedDownload = { directUrl, title ->
                 onStartDirectDownload(directUrl, title)
-                relayState.dismissBrowser()
+                relayState.dismissManualBrowser()
             }
         )
     }
@@ -145,6 +209,7 @@ fun RelaySitesSection(
         return
     }
 
+    val context = LocalContext.current
     val relayState = rememberRelaySitesState()
     val visibleSites = if (relayState.isExpanded || relaySites.size <= 3) {
         relaySites
@@ -158,10 +223,26 @@ fun RelaySitesSection(
     ) {
         visibleSites.forEach { site ->
             key(site.id) {
+                val isCurrentResolving = relayState.resolvingSiteId == site.id
+                val currentStatus = if (isCurrentResolving) relayState.resolvingStatus else ""
+
                 RelaySiteCard(
                     site = site,
-                    onOpenSite = { targetSite ->
-                        relayState.openBrowser(targetSite, globalInputUrl.trim())
+                    isResolving = isCurrentResolving,
+                    resolvingStatus = currentStatus,
+                    onStartResolve = { targetSite ->
+                        val finalUrl = globalInputUrl.trim()
+                        if (finalUrl.isBlank()) {
+                            Toast.makeText(context, "请先在上方输入框粘贴欲解析的视频链接", Toast.LENGTH_SHORT).show()
+                        } else {
+                            relayState.startResolve(targetSite, finalUrl)
+                        }
+                    },
+                    onCancelResolve = {
+                        relayState.cancelResolve()
+                    },
+                    onOpenManualBrowser = { targetSite ->
+                        relayState.openManualBrowser(targetSite, globalInputUrl.trim())
                     },
                     onDeleteSite = onDeleteSite
                 )
