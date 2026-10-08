@@ -258,11 +258,18 @@ object UrlSniffer {
                 lower.contains("dl.snapcdn.app") ||
                 lower.contains("video.twimg.com") ||
                 lower.contains("snapany.com/api/download") ||
-                lower.contains("greenvideo.cc/api/video/download") ||
+                lower.contains("snapany.com/api/video") ||
+                lower.contains("greenvideo.cc/api/video/") ||
+                lower.contains("greenvideo.cc/api/download") ||
                 lower.contains("googlevideo.com/videoplayback") ||
                 lower.contains("byteoversea.com") ||
                 lower.contains("ibytedtos.com") ||
                 lower.contains("tiktokcdn.com") ||
+                lower.contains("douyinvod.com") ||
+                lower.contains("snssdk.com") ||
+                lower.contains("yximgs.com") ||
+                lower.contains("xhscdn.com") ||
+                lower.contains("fbcdn.net") ||
                 lower.contains("twcdn.net")
     }
 }

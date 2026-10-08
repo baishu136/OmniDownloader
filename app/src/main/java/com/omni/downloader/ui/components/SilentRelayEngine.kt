@@ -371,14 +371,19 @@ fun SilentRelayEngine(
                                                 inputEl.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: targetUrl }));
                                             }
 
-                                            // 同步 Nuxt 3 Pinia
+                                            // 同步 Nuxt 3 Pinia 并直调 extractVideoUrl
                                             try {
                                                 var nuxtRoot = document.querySelector('#__nuxt');
                                                 var vueApp = nuxtRoot ? nuxtRoot.__vue_app__ : window.__nuxt_app__;
-                                                var pinia = vueApp ? ((vueApp.config && vueApp.config.globalProperties && vueApp.config.globalProperties["\x24pinia"]) || (vueApp._context && vueApp._context.provides && vueApp._context.provides.pinia)) : null;
+                                                var pinia = vueApp ? ((vueApp.config && vueApp.config.globalProperties && vueApp.config.globalProperties["\x24pinia"]) || (vueApp._context && vueApp._context.provides && vueApp._context.provides.pinia) || vueApp["\x24pinia"]) : null;
                                                 if (pinia && pinia._s && pinia._s.get('video')) {
                                                     var videoStore = pinia._s.get('video');
                                                     videoStore.inputUrl = targetUrl;
+                                                    if (typeof videoStore.extractVideoUrl === 'function' && !videoStore.__omniExtracting) {
+                                                        videoStore.__omniExtracting = true;
+                                                        console.log('[OmniSilent] Pinia directly invoking extractVideoUrl');
+                                                        videoStore.extractVideoUrl({ url: targetUrl }).catch(function(e){ console.error(e); });
+                                                    }
                                                 }
                                             } catch(e) {}
 
@@ -453,14 +458,86 @@ fun SilentRelayEngine(
                                             }
                                         }, 400);
 
-                                        // 扫描页面 DOM 视频直链
+                                        // 扫描页面 DOM 视频直链与清晰度下载按钮
                                         function scanDomMedia() {
                                             if (window.__omniDone) return;
+
+                                            // 1. 深度检测 Nuxt Pinia videoStore 中的解析完成状态与直链
+                                            try {
+                                                var nuxtApp = window.__nuxt_app__ || (document.querySelector('#__nuxt') ? document.querySelector('#__nuxt').__vue_app__ : null);
+                                                var pinia = nuxtApp ? ((nuxtApp.config && nuxtApp.config.globalProperties && nuxtApp.config.globalProperties["\x24pinia"]) || (nuxtApp._context && nuxtApp._context.provides && nuxtApp._context.provides.pinia) || nuxtApp["\x24pinia"]) : null;
+                                                if (pinia && pinia._s && pinia._s.get('video')) {
+                                                    var vs = pinia._s.get('video');
+                                                    if (vs.videoExtractInfo && vs.videoExtractInfo.vid) {
+                                                        var list = vs.videoExtractInfo.videoItemVoList || [];
+                                                        if (vs.videoExtractInfo.videoInfoVoList && vs.videoExtractInfo.videoInfoVoList.length > 0) {
+                                                            vs.videoExtractInfo.videoInfoVoList.forEach(function(item) {
+                                                                if (item.videoItemVoList) list = list.concat(item.videoItemVoList);
+                                                            });
+                                                        }
+                                                        // 优先提取已有的 baseUrl
+                                                        for (var idx = 0; idx < list.length; idx++) {
+                                                            var vItem = list[idx];
+                                                            if (vItem && vItem.baseUrl && (vItem.baseUrl.match(/\.(mp4|m4a|webm|flv|m3u8)(\?.*)?$/i) || vItem.baseUrl.indexOf('douyinvod.com') !== -1 || vItem.baseUrl.indexOf('twimg.com') !== -1 || vItem.baseUrl.indexOf('/api/video/download') !== -1)) {
+                                                                window.__omniDone = true;
+                                                                if (window.OmniBridge) window.OmniBridge.onResolved(vItem.baseUrl, vs.videoExtractInfo.displayTitle || '视频');
+                                                                return;
+                                                            }
+                                                        }
+                                                        // 触发 doDownloadVideo 生成下载直链
+                                                        if (!vs.__omniDownloaded && typeof vs.doDownloadVideo === 'function') {
+                                                            vs.__omniDownloaded = true;
+                                                            var firstQuality = (list[0] && list[0].quality) || '1080P';
+                                                            vs.doDownloadVideo({ host: vs.videoExtractInfo.host, vid: vs.videoExtractInfo.vid, quality: firstQuality }).then(function(res) {
+                                                                if (res && res.data && res.data.status === 2) {
+                                                                    vs.getDownloadVideoInfo({ host: vs.videoExtractInfo.host, vid: vs.videoExtractInfo.vid, quality: firstQuality }).then(function(info) {
+                                                                        if (info && info.data && info.data.downloadUrl) {
+                                                                            window.__omniDone = true;
+                                                                            if (window.OmniBridge) window.OmniBridge.onResolved(info.data.downloadUrl, vs.videoExtractInfo.displayTitle || '视频');
+                                                                        }
+                                                                    });
+                                                                }
+                                                            }).catch(function(e){ console.error(e); });
+                                                        }
+                                                    }
+                                                }
+                                            } catch(e) {}
+
+                                            // 2. 扫描并模拟点击清晰度按钮 (如 1080P, 720P, 下载等)
+                                            var buttons = Array.from(document.querySelectorAll('button, a, div[role="button"]'));
+                                            for (var bIdx = 0; bIdx < buttons.length; bIdx++) {
+                                                var btn = buttons[bIdx];
+                                                if (btn.__omniClicked || btn.disabled) continue;
+                                                var txt = (btn.innerText || btn.value || '').trim();
+                                                if (txt === '开始' || txt.indexOf('客户端') !== -1 || txt.indexOf('App') !== -1 || txt.indexOf('VIP') !== -1) continue;
+
+                                                var isQualityBtn = (
+                                                    txt.indexOf('1080') !== -1 || txt.indexOf('720') !== -1 || txt.indexOf('480') !== -1 ||
+                                                    txt.indexOf('360') !== -1 || txt.indexOf('超清') !== -1 || txt.indexOf('高清') !== -1 ||
+                                                    txt.indexOf('原画') !== -1 || txt.indexOf('下载') !== -1 || txt.indexOf('Download') !== -1 ||
+                                                    txt.indexOf('无水印') !== -1 || txt.indexOf('点击下载') !== -1
+                                                );
+
+                                                if (isQualityBtn) {
+                                                    btn.__omniClicked = true;
+                                                    console.log('[OmniSilent] Triggering quality button:', txt);
+                                                    if (window.OmniBridge) window.OmniBridge.onStatus('已捕获清晰度选项 (' + txt + ')，正在提取直链...');
+                                                    try {
+                                                        btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                                                        btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+                                                        btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                                                    } catch(e) {}
+                                                    btn.click();
+                                                    break;
+                                                }
+                                            }
+
+                                            // 3. 扫描已生成的 a[href] 链接
                                             var links = Array.from(document.querySelectorAll('a[href]'));
                                             for (var k = 0; k < links.length; k++) {
                                                 var a = links[k];
                                                 var href = a.getAttribute('href') || '';
-                                                if (href.indexOf('http') === 0) {
+                                                if (href.indexOf('http') === 0 && href !== window.location.href && href.replace(/\/+$/, '') !== window.location.origin) {
                                                     if (href.match(/\.(mp4|m4a|m3u8|webm|flv|mp3)(\?.*)?$/i) ||
                                                         (href.indexOf('googlevideo.com') !== -1 || href.indexOf('twimg.com/video') !== -1 || href.indexOf('snapcdn.app') !== -1 || href.indexOf('/api/video/download') !== -1)) {
                                                         window.__omniDone = true;
@@ -469,6 +546,8 @@ fun SilentRelayEngine(
                                                     }
                                                 }
                                             }
+
+                                            // 4. 扫描 video 元素
                                             var videos = document.querySelectorAll('video, source');
                                             for (var vIdx = 0; vIdx < videos.length; vIdx++) {
                                                 var v = videos[vIdx];
@@ -481,7 +560,7 @@ fun SilentRelayEngine(
                                             }
                                         }
 
-                                        setInterval(scanDomMedia, 800);
+                                        setInterval(scanDomMedia, 500);
 
                                     } catch(e) {}
                                 })();
@@ -525,7 +604,19 @@ fun SilentRelayEngine(
                         }
                     }
 
-                    loadUrl(site.url)
+                    val initialUrl = when {
+                        site.url.contains("greenvideo.cc", ignoreCase = true) && videoUrl.isNotBlank() -> {
+                            val sep = if (site.url.contains("?")) "&" else "?"
+                            "${site.url}${sep}url=${Uri.encode(videoUrl)}"
+                        }
+                        site.url.contains("snapany.com", ignoreCase = true) && videoUrl.isNotBlank() -> {
+                            val sep = if (site.url.contains("?")) "&" else "?"
+                            "${site.url}${sep}url=${Uri.encode(videoUrl)}"
+                        }
+                        else -> site.url
+                    }
+
+                    loadUrl(initialUrl)
                     webViewInstance = this
                 }
             },

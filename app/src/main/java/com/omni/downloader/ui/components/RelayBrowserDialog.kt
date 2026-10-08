@@ -448,7 +448,19 @@ fun RelayBrowserDialog(
                                 }
                             }
 
-                            loadUrl(site.url)
+                            val initialUrl = when {
+                                site.url.contains("greenvideo.cc", ignoreCase = true) && initialVideoUrl.isNotBlank() -> {
+                                    val sep = if (site.url.contains("?")) "&" else "?"
+                                    "${site.url}${sep}url=${Uri.encode(initialVideoUrl)}"
+                                }
+                                site.url.contains("snapany.com", ignoreCase = true) && initialVideoUrl.isNotBlank() -> {
+                                    val sep = if (site.url.contains("?")) "&" else "?"
+                                    "${site.url}${sep}url=${Uri.encode(initialVideoUrl)}"
+                                }
+                                else -> site.url
+                            }
+
+                            loadUrl(initialUrl)
                             webViewInstance = this
                         }
                     },

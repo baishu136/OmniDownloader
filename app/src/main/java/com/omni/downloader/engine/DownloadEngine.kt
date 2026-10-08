@@ -755,6 +755,7 @@ object DownloadEngine {
                 host.contains("kuaishou.com") || host.contains("kwai.com") || host.contains("yximgs.com") -> "https://www.kuaishou.com/"
                 host.contains("bilibili.com") || host.contains("hdslb.com") || host.contains("bilivideo.com") -> "https://www.bilibili.com/"
                 host.contains("snapcdn.app") -> "https://x2twitter.com/"
+                host.contains("greenvideo.cc") -> "https://greenvideo.cc/"
                 host.isNotBlank() -> "${uri.scheme ?: "https"}://$host/"
                 else -> ""
             }
@@ -855,6 +856,7 @@ object DownloadEngine {
             headersSb.append("User-Agent: Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36\r\n")
             if (referer.isNotBlank()) headersSb.append("Referer: $referer\r\n")
             if (cookie.isNotBlank()) headersSb.append("Cookie: $cookie\r\n")
+            if (m3u8Url.contains("greenvideo.cc")) headersSb.append("KdSystem: GreenVideo\r\n")
 
             val commands = mutableListOf(
                 ffmpeg.absolutePath,
@@ -1020,10 +1022,16 @@ object DownloadEngine {
 
                 // 核心凭证注入：同步 WebView 累积的 Session Cookie，彻底防止防盗链 403 导致下载假文件
                 val cookie = try {
-                    CookieManager.getInstance().getCookie(targetUrl)
+                    CookieManager.getInstance().getCookie(targetUrl) ?: (
+                        if (targetUrl.contains("greenvideo")) CookieManager.getInstance().getCookie("https://greenvideo.cc/") else null
+                    )
                 } catch (_: Exception) { null }
                 if (!cookie.isNullOrBlank()) {
                     reqBuilder.header("Cookie", cookie)
+                }
+
+                if (targetUrl.contains("greenvideo.cc")) {
+                    reqBuilder.header("KdSystem", "GreenVideo")
                 }
 
                 // 支持 HTTP Range 断点续传
