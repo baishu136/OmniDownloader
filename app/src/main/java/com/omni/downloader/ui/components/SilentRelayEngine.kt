@@ -178,10 +178,7 @@ fun SilentRelayEngine(
                                         return true
                                     }
                                     if (!isCompleted && target.isNotBlank()) {
-                                        if (target.contains(".mp4") || target.contains(".m4a") || target.contains(".webm") ||
-                                            target.contains("download") || target.contains("googlevideo") ||
-                                            target.contains("twimg.com/video") || target.contains("twcdn.net") ||
-                                            target.contains("snapcdn") || target.contains("greenvideo")) {
+                                        if (UrlSniffer.isDirectMediaUrl(target)) {
                                             isCompleted = true
                                             val (cleanUrl, cleanTitle) = UrlSniffer.unpackDirectMediaUrl(target, "")
                                             mainHandler.post {
@@ -587,17 +584,9 @@ fun SilentRelayEngine(
                                                 if (txt.indexOf('客户端') !== -1 || txt.indexOf('App') !== -1 || txt.indexOf('应用') !== -1 || txt.indexOf('软件') !== -1) continue;
 
                                                 if (href.indexOf('http') === 0) {
-                                                    // 视频/音频格式直链 或 视频CDN域名
+                                                    // 视频/音频格式直链 或 严格视频CDN域名
                                                     if (href.match(/\.(mp4|m4a|m3u8|webm|flv|mp3)(\?.*)?$/i) ||
-                                                        (href.indexOf('googlevideo') !== -1 || href.indexOf('twimg.com/video') !== -1 || href.indexOf('byteoversea.com') !== -1 || href.indexOf('snapany.com/api/download') !== -1 || href.indexOf('twcdn.net') !== -1 || href.indexOf('dl.snapcdn.app') !== -1 || href.indexOf('greenvideo.cc/api/video/download') !== -1)) {
-                                                        window.__omniDone = true;
-                                                        if (window.OmniBridge) window.OmniBridge.onResolved(href, document.title || '视频');
-                                                        return;
-                                                    }
-
-                                                    // 结果卡片内的下载按钮链接
-                                                    if ((a.classList.contains('btn-download') || a.classList.contains('dl-action') || txt.indexOf('下载') !== -1 || txt.indexOf('Download') !== -1 || txt.indexOf('MP4') !== -1) &&
-                                                        href.indexOf('javascript:') !== 0 && href.indexOf('#') !== 0) {
+                                                        (href.indexOf('googlevideo.com') !== -1 || href.indexOf('twimg.com/video') !== -1 || href.indexOf('byteoversea.com') !== -1 || href.indexOf('snapany.com/api/download') !== -1 || href.indexOf('twcdn.net') !== -1 || href.indexOf('dl.snapcdn.app') !== -1 || href.indexOf('greenvideo.cc/api/video/download') !== -1)) {
                                                         window.__omniDone = true;
                                                         if (window.OmniBridge) window.OmniBridge.onResolved(href, document.title || '视频');
                                                         return;
@@ -666,9 +655,7 @@ fun SilentRelayEngine(
                             if (target.endsWith(".exe", true) || target.endsWith(".apk", true) || target.endsWith(".dmg", true)) {
                                 return true
                             }
-                            if (target.contains(".mp4") || target.contains(".m4a") || target.contains("googlevideo") ||
-                                target.contains("twcdn.net") || target.contains("twimg.com/video") || target.contains("snapcdn.app") ||
-                                (target.contains("download") && !target.contains("client") && !target.contains("app") && !target.contains("desktop"))) {
+                            if (UrlSniffer.isDirectMediaUrl(target)) {
                                 if (!isCompleted) {
                                     isCompleted = true
                                     val (cleanUrl, cleanTitle) = UrlSniffer.unpackDirectMediaUrl(target, "")

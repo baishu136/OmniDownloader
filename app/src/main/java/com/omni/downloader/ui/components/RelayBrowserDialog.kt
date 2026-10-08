@@ -241,10 +241,7 @@ fun RelayBrowserDialog(
                                                 return true
                                             }
                                             if (target.isNotBlank()) {
-                                                if (target.contains(".mp4") || target.contains(".m4a") || target.contains(".webm") ||
-                                                    target.contains("download") || target.contains("googlevideo") ||
-                                                    target.contains("twimg.com/video") || target.contains("twcdn.net") ||
-                                                    target.contains("snapcdn") || target.contains("greenvideo")) {
+                                                if (com.omni.downloader.engine.UrlSniffer.isDirectMediaUrl(target)) {
                                                     val (cleanUrl, cleanTitle) = com.omni.downloader.engine.UrlSniffer.unpackDirectMediaUrl(target, "${site.name} 中转视频")
                                                     Toast.makeText(context, "成功捕获中转下载地址，已加入下载队列！", Toast.LENGTH_SHORT).show()
                                                     onCapturedDownload(cleanUrl, cleanTitle)
@@ -386,10 +383,8 @@ fun RelayBrowserDialog(
                                     if (target.endsWith(".exe", true) || target.endsWith(".apk", true) || target.endsWith(".dmg", true)) {
                                         return true
                                     }
-                                    // 拦截媒体流直链
-                                    if (target.contains(".mp4") || target.contains(".m4a") || target.contains("googlevideo") ||
-                                        target.contains("twcdn.net") || target.contains("twimg.com/video") || target.contains("snapcdn.app") ||
-                                        (target.contains("download") && !target.contains("client") && !target.contains("app") && !target.contains("desktop"))) {
+                                    // 拦截媒体流直链（严格按音视频格式与已知可信下载路由判断，杜绝误捕获网页与广告）
+                                    if (com.omni.downloader.engine.UrlSniffer.isDirectMediaUrl(target)) {
                                         val (cleanUrl, cleanTitle) = com.omni.downloader.engine.UrlSniffer.unpackDirectMediaUrl(target, "${site.name} 中转视频")
                                         Toast.makeText(context, "成功捕获中转下载地址，已加入下载队列！", Toast.LENGTH_SHORT).show()
                                         onCapturedDownload(cleanUrl, cleanTitle)

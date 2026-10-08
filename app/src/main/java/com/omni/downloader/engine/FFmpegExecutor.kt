@@ -157,7 +157,7 @@ object FFmpegExecutor {
         executeCommand(context, fallbackCommands)
     }
 
-    private fun executeCommand(context: Context, commands: List<String>): Result<Unit> {
+    internal fun executeCommand(context: Context, commands: List<String>): Result<Unit> {
         try {
             val nativeDir = File(context.applicationInfo.nativeLibraryDir)
             val packagesDir = File(context.noBackupFilesDir, "youtubedl-android/packages")

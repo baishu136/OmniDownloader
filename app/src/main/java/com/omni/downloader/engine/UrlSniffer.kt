@@ -217,7 +217,13 @@ object UrlSniffer {
                         val title = if (filename.isNotBlank()) {
                             filename.substringBeforeLast(".")
                         } else defaultTitle
+
+                        // 关键处理：如果 token 内的 realUrl 是 m3u8 切片列表，而原始链接是 dl.snapcdn.app 等中转转码地址，
+                        // 则必须优先请求 snapcdn 的转码地址（其服务端会合成完整 MP4），绝不能直接抓取未合并的 m3u8 纯文本列表！
                         if (realUrl.isNotBlank() && realUrl.startsWith("http")) {
+                            if (isM3u8Url(realUrl) && (trimmed.contains("snapcdn") || trimmed.contains("get?token"))) {
+                                return Pair(trimmed, title)
+                            }
                             return Pair(realUrl, title)
                         }
                     }
@@ -226,6 +232,16 @@ object UrlSniffer {
         } catch (ignored: Exception) {
         }
         return Pair(trimmed, defaultTitle)
+    }
+
+    /**
+     * 判断是否属于 M3U8 (HLS 分片索引流)
+     */
+    fun isM3u8Url(url: String): Boolean {
+        val lower = url.lowercase()
+        return lower.endsWith(".m3u8") || lower.contains(".m3u8?") ||
+                lower.contains("/hls/") || lower.contains("format=m3u8") ||
+                lower.contains(".m3u8/")
     }
 
     /**
@@ -243,6 +259,10 @@ object UrlSniffer {
                 lower.contains("video.twimg.com") ||
                 lower.contains("snapany.com/api/download") ||
                 lower.contains("greenvideo.cc/api/video/download") ||
-                lower.contains("googlevideo.com/videoplayback")
+                lower.contains("googlevideo.com/videoplayback") ||
+                lower.contains("byteoversea.com") ||
+                lower.contains("ibytedtos.com") ||
+                lower.contains("tiktokcdn.com") ||
+                lower.contains("twcdn.net")
     }
 }

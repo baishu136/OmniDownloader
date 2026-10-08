@@ -2,9 +2,11 @@ package com.omni.downloader.engine
 
 import android.content.Context
 import android.media.MediaScannerConnection
+import android.net.Uri
 import android.os.Environment
 import android.os.SystemClock
 import android.util.Log
+import android.webkit.CookieManager
 import com.omni.downloader.data.model.AudioFormat
 import com.omni.downloader.data.model.DownloadTask
 import com.omni.downloader.data.model.DownloadType
@@ -24,6 +26,7 @@ import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.InetSocketAddress
@@ -371,7 +374,7 @@ object DownloadEngine {
                 task.url.ifBlank { cleanUrl }
             }
             Log.d(TAG, "命中直链下载规则: targetUrl=$targetStreamUrl, title=${task.title}")
-            val directResult = downloadDirectMediaStream(
+            var directResult = downloadDirectMediaStream(
                 context = context,
                 task = task,
                 targetUrl = targetStreamUrl,
@@ -380,6 +383,28 @@ object DownloadEngine {
                 publicDir = publicDir,
                 onProgressUpdate = onProgressUpdate
             )
+
+            // 如果首次下载失败且存在备用地址（如 selectedResolution 与 task.url 不一致），尝试备用地址
+            if (directResult.isFailure) {
+                val fallbackUrl = when {
+                    task.selectedResolution.startsWith("http") && task.url.isNotBlank() && task.url != task.selectedResolution -> task.url
+                    !task.selectedResolution.startsWith("http") && cleanUrl.isNotBlank() && cleanUrl != targetStreamUrl -> cleanUrl
+                    else -> null
+                }
+                if (fallbackUrl != null) {
+                    Log.d(TAG, "直链下载失败，正在尝试备用地址: $fallbackUrl")
+                    directResult = downloadDirectMediaStream(
+                        context = context,
+                        task = task,
+                        targetUrl = fallbackUrl,
+                        proxyUrl = proxyUrl,
+                        stagingDir = stagingDir,
+                        publicDir = publicDir,
+                        onProgressUpdate = onProgressUpdate
+                    )
+                }
+            }
+
             if (directResult.isSuccess) {
                 return@withContext directResult
             }
@@ -661,7 +686,10 @@ object DownloadEngine {
                     }
                 }
             } else {
-                File(publicDir, "${task.title}.mp4")
+                val errMsg = "通用引擎未能拉取到有效视频文件，请检查链接或网络代理"
+                Log.e(TAG, errMsg)
+                onProgressUpdate(0f, "", "", TaskStatus.FAILED)
+                return@withContext Result.failure(Exception(errMsg))
             }
 
             // 广播通知系统相册媒体库刷新新生成的文件，显式指定 image/gif 等标准 MIME 类型
@@ -706,6 +734,192 @@ object DownloadEngine {
     }
 
     /**
+     * 根据目标链接自适应提取并匹配合法防盗链 Referer
+     */
+    private fun getRefererForUrl(url: String): String {
+        return try {
+            val uri = Uri.parse(url)
+            val host = uri.host?.lowercase(Locale.ROOT) ?: ""
+            when {
+                host.contains("twimg.com") || host.contains("twitter.com") || host.contains("x.com") -> "https://x.com/"
+                host.contains("tiktok.com") || host.contains("byteoversea.com") || host.contains("ibytedtos.com") -> "https://www.tiktok.com/"
+                host.contains("douyin.com") || host.contains("snssdk.com") || host.contains("iesdouyin.com") -> "https://www.douyin.com/"
+                host.contains("kuaishou.com") || host.contains("kwai.com") || host.contains("yximgs.com") -> "https://www.kuaishou.com/"
+                host.contains("bilibili.com") || host.contains("hdslb.com") || host.contains("bilivideo.com") -> "https://www.bilibili.com/"
+                host.contains("snapcdn.app") -> "https://x2twitter.com/"
+                host.isNotBlank() -> "${uri.scheme ?: "https"}://$host/"
+                else -> ""
+            }
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
+    /**
+     * 校验下载完成的临时文件是否为真实可播放的音视频文件（通过 Magic Bytes 特征头与最小尺寸判断）
+     * 彻底拦截因防盗链、Cloudflare 拦截或接口报错导致将 HTML 网页或 JSON 错误保存为 MP4 的问题（防 MT 管理器 source error）
+     */
+    fun isValidMediaFile(file: File): Boolean {
+        if (!file.exists() || file.length() < 1024) return false
+        val header = ByteArray(32)
+        val readBytes = try {
+            FileInputStream(file).use { it.read(header) }
+        } catch (_: Exception) {
+            return false
+        }
+        if (readBytes < 12) return false
+
+        // 检查是否是纯文本（HTML、JSON、XML、M3U8）
+        val headerStr = String(header, 0, minOf(readBytes, 32), Charsets.ISO_8859_1).lowercase(Locale.ROOT)
+        if (headerStr.startsWith("<!doctype") || headerStr.startsWith("<html") ||
+            headerStr.startsWith("<?xml") || headerStr.startsWith("{\"") ||
+            headerStr.startsWith("[{\"") || headerStr.startsWith("#extm3u")
+        ) {
+            return false
+        }
+
+        // 检查常见媒体文件 Magic Bytes:
+        // 1. MP4 / M4A / MOV: offset 4-7 为 "ftyp", "moov", "mdat", "wide", "skip"
+        val isMp4 = (header[4] == 0x66.toByte() && header[5] == 0x74.toByte() && header[6] == 0x79.toByte() && header[7] == 0x70.toByte()) ||
+                (header[4] == 0x6D.toByte() && header[5] == 0x6F.toByte() && header[6] == 0x6F.toByte() && header[7] == 0x76.toByte()) ||
+                (header[4] == 0x6D.toByte() && header[5] == 0x64.toByte() && header[6] == 0x61.toByte() && header[7] == 0x74.toByte())
+
+        // 2. WebM / MKV: 0x1A 0x45 0xDF 0xA3
+        val isWebm = header[0] == 0x1A.toByte() && header[1] == 0x45.toByte() && header[2] == 0xDF.toByte() && header[3] == 0xA3.toByte()
+
+        // 3. FLV: "FLV"
+        val isFlv = header[0] == 'F'.code.toByte() && header[1] == 'L'.code.toByte() && header[2] == 'V'.code.toByte()
+
+        // 4. MPEG-TS: 0x47
+        val isTs = header[0] == 0x47.toByte()
+
+        // 5. MP3: "ID3" 或 0xFF 0xFB/F3/F2
+        val isMp3 = (header[0] == 'I'.code.toByte() && header[1] == 'D'.code.toByte() && header[2] == '3'.code.toByte()) ||
+                (header[0] == 0xFF.toByte() && (header[1].toInt() and 0xE0) == 0xE0)
+
+        // 6. OGG: "OggS"
+        val isOgg = header[0] == 'O'.code.toByte() && header[1] == 'g'.code.toByte() && header[2] == 'g'.code.toByte() && header[3] == 'S'.code.toByte()
+
+        // 7. RIFF (AVI / WAV)
+        val isRiff = header[0] == 'R'.code.toByte() && header[1] == 'I'.code.toByte() && header[2] == 'F'.code.toByte() && header[3] == 'F'.code.toByte()
+
+        return isMp4 || isWebm || isFlv || isTs || isMp3 || isOgg || isRiff
+    }
+
+    /**
+     * M3U8 (HLS 分片切片流) 专用拉取与封装管线：
+     * 利用 FFmpeg 或 yt-dlp 完整拉取所有分片并合成包含标准 ftyp box 的原片 MP4 文件
+     */
+    private suspend fun downloadM3u8Stream(
+        context: Context,
+        task: DownloadTask,
+        m3u8Url: String,
+        proxyUrl: String = "",
+        stagingDir: File,
+        publicDir: File,
+        onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit
+    ): Result<String> = withContext(Dispatchers.IO) {
+        onProgressUpdate(10f, "", "检测到 HLS/M3U8 分片流，正在拉取分片并合成 MP4...", TaskStatus.DOWNLOADING)
+
+        val cleanTitle = task.title
+            .replace(Regex("""[\\/:*?"<>|]"""), "_")
+            .trim()
+            .ifBlank { "OmniVideo_${System.currentTimeMillis()}" }
+        val safeTitle = if (cleanTitle.length > 60) cleanTitle.take(60) else cleanTitle
+        val tempFile = File(stagingDir, "m3u8_${task.id}.mp4")
+
+        var destFile = File(publicDir, "$safeTitle.mp4")
+        var counter = 1
+        while (destFile.exists()) {
+            destFile = File(publicDir, "${safeTitle}_$counter.mp4")
+            counter++
+        }
+
+        // 优先使用本地 FFmpeg 组件直转
+        val ffmpeg = FFmpegExecutor.getFFmpegBinary(context)
+        if (ffmpeg != null) {
+            val referer = getRefererForUrl(m3u8Url)
+            val cookie = try {
+                CookieManager.getInstance().getCookie(m3u8Url) ?: ""
+            } catch (_: Exception) { "" }
+
+            val headersSb = StringBuilder()
+            headersSb.append("User-Agent: Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36\r\n")
+            if (referer.isNotBlank()) headersSb.append("Referer: $referer\r\n")
+            if (cookie.isNotBlank()) headersSb.append("Cookie: $cookie\r\n")
+
+            val commands = mutableListOf(
+                ffmpeg.absolutePath,
+                "-y",
+                "-headers", headersSb.toString()
+            )
+            if (proxyUrl.isNotBlank()) {
+                val cleanProxy = proxyUrl.trim()
+                if (cleanProxy.startsWith("http")) {
+                    commands.add("-http_proxy")
+                    commands.add(cleanProxy)
+                }
+            }
+            commands.addAll(listOf(
+                "-i", m3u8Url,
+                "-c", "copy",
+                "-bsf:a", "aac_adtstoasc",
+                "-movflags", "+faststart",
+                tempFile.absolutePath
+            ))
+
+            val ffmpegRes = FFmpegExecutor.executeCommand(context, commands)
+            if (ffmpegRes.isSuccess && tempFile.exists() && tempFile.length() > 4096) {
+                tempFile.copyTo(destFile, overwrite = true)
+                tempFile.delete()
+                try {
+                    MediaScannerConnection.scanFile(context, arrayOf(destFile.absolutePath), arrayOf("video/mp4"), null)
+                } catch (_: Exception) {}
+                onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
+                return@withContext Result.success(destFile.absolutePath)
+            }
+            Log.w(TAG, "FFmpeg 直接拉取 M3U8 未完成，尝试 yt-dlp 原生通道: ${ffmpegRes.exceptionOrNull()?.message}")
+        }
+
+        // 备选通道：yt-dlp 原生 HLS 解析下载
+        val initRes = ensureInitialized(context)
+        if (initRes.isSuccess) {
+            val request = YoutubeDLRequest(m3u8Url).apply {
+                addOption("-o", "${stagingDir.absolutePath}/m3u8_${task.id}.%(ext)s")
+                addOption("--no-playlist")
+                addOption("--no-check-certificate")
+                addOption("--no-warnings")
+                addOption("--ignore-config")
+                addOption("--no-cache-dir")
+                addOption("--no-mtime")
+                addOption("--retries", "10")
+                if (proxyUrl.isNotBlank()) addOption("--proxy", proxyUrl.trim())
+            }
+            try {
+                YoutubeDL.getInstance().execute(request, task.id) { progress, etaInSeconds, line ->
+                    val etaStr = if (etaInSeconds > 0) "${etaInSeconds}秒" else ""
+                    val speed = parseSpeedFromLine(line)
+                    onProgressUpdate(progress, speed, etaStr, TaskStatus.DOWNLOADING)
+                }
+                val staged = findGeneratedFile(stagingDir, task.id, null)
+                if (staged != null && staged.exists() && staged.length() > 4096) {
+                    staged.copyTo(destFile, overwrite = true)
+                    staged.delete()
+                    try {
+                        MediaScannerConnection.scanFile(context, arrayOf(destFile.absolutePath), arrayOf("video/mp4"), null)
+                    } catch (_: Exception) {}
+                    onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
+                    return@withContext Result.success(destFile.absolutePath)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "yt-dlp 拉取 M3U8 失败: ${e.message}", e)
+            }
+        }
+
+        Result.failure(Exception("未能从 M3U8 切片流合成完整视频文件"))
+    }
+
+    /**
      * 直接通过 OkHttp 执行网络音视频直链的高速流式下载 (跳过 yt-dlp，支持断点/平滑速率/避免超长文件名报错)
      */
     private suspend fun downloadDirectMediaStream(
@@ -717,6 +931,20 @@ object DownloadEngine {
         publicDir: File,
         onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit
     ): Result<String> = withContext(Dispatchers.IO) {
+        // 前置判定：如果是 M3U8 流，直接重定向至 M3U8 专业下载管线，绝不以原始文本落盘！
+        if (UrlSniffer.isM3u8Url(targetUrl)) {
+            Log.d(TAG, "目标直链已判定为 M3U8 切片流，切换至 M3U8 合成管线: $targetUrl")
+            return@withContext downloadM3u8Stream(
+                context = context,
+                task = task,
+                m3u8Url = targetUrl,
+                proxyUrl = proxyUrl,
+                stagingDir = stagingDir,
+                publicDir = publicDir,
+                onProgressUpdate = onProgressUpdate
+            )
+        }
+
         val isAudio = task.downloadType == DownloadType.AUDIO_ONLY
         val ext = if (isAudio) "mp3" else "mp4"
 
@@ -728,7 +956,14 @@ object DownloadEngine {
         val safeTitle = if (cleanTitle.length > 60) cleanTitle.take(60) else cleanTitle
 
         val tempFile = File(stagingDir, "direct_${task.id}.$ext")
-        val finalFile = File(publicDir, "$safeTitle.$ext")
+
+        var finalFile = File(publicDir, "$safeTitle.$ext")
+        var counter = 1
+        while (finalFile.exists()) {
+            finalFile = File(publicDir, "${safeTitle}_$counter.$ext")
+            counter++
+        }
+
         cancelledTaskIds.remove(task.id)
 
         val clientBuilder = OkHttpClient.Builder()
@@ -765,12 +1000,22 @@ object DownloadEngine {
 
                 val reqBuilder = Request.Builder()
                     .url(targetUrl)
-                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .header("User-Agent", "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36")
+                    .header("Accept", "*/*")
+                    .header("Accept-Encoding", "identity")
+                    .header("Connection", "keep-alive")
 
-                if (targetUrl.contains("twimg.com") || targetUrl.contains("twitter.com")) {
-                    reqBuilder.header("Referer", "https://twitter.com/")
-                } else if (targetUrl.contains("snapcdn.app")) {
-                    reqBuilder.header("Referer", "https://x2twitter.com/")
+                val referer = getRefererForUrl(targetUrl)
+                if (referer.isNotBlank()) {
+                    reqBuilder.header("Referer", referer)
+                }
+
+                // 核心凭证注入：同步 WebView 累积的 Session Cookie，彻底防止防盗链 403 导致下载假文件
+                val cookie = try {
+                    CookieManager.getInstance().getCookie(targetUrl)
+                } catch (_: Exception) { null }
+                if (!cookie.isNullOrBlank()) {
+                    reqBuilder.header("Cookie", cookie)
                 }
 
                 // 支持 HTTP Range 断点续传
@@ -794,6 +1039,32 @@ object DownloadEngine {
 
                 if (!response.isSuccessful && responseCode != 206) {
                     throw IOException("HTTP 错误: $responseCode")
+                }
+
+                val contentType = response.header("Content-Type", "")?.lowercase(Locale.ROOT) ?: ""
+
+                // 识别 M3U8 响应
+                if (contentType.contains("mpegurl") || contentType.contains("m3u8")) {
+                    response.close()
+                    Log.d(TAG, "响应 Content-Type 显示为 M3U8 播放列表，切换至 M3U8 合成管线: $contentType")
+                    return@withContext downloadM3u8Stream(
+                        context = context,
+                        task = task,
+                        m3u8Url = targetUrl,
+                        proxyUrl = proxyUrl,
+                        stagingDir = stagingDir,
+                        publicDir = publicDir,
+                        onProgressUpdate = onProgressUpdate
+                    )
+                }
+
+                // 严禁将网页、JSON 错误信息写入视频文件（杜绝 MT 管理器 source error）
+                if (contentType.contains("text/html") || contentType.contains("application/json") || contentType.contains("application/xml")) {
+                    val errorSnippet = try {
+                        response.body?.string()?.take(500) ?: ""
+                    } catch (_: Exception) { "" }
+                    response.close()
+                    throw IOException("直链返回内容为网页/错误响应 ($contentType)，非媒体流: $errorSnippet")
                 }
 
                 val isPartial = (responseCode == 206)
@@ -888,6 +1159,37 @@ object DownloadEngine {
             val msg = formatDetailedError(lastException)
             onProgressUpdate(0f, "", "", TaskStatus.FAILED)
             return@withContext Result.failure(Exception(msg, lastException))
+        }
+
+        // 检查下载到的文件是否以 #EXTM3U 开头
+        val isM3u8Content = try {
+            val headerBytes = ByteArray(16)
+            FileInputStream(tempFile).use { it.read(headerBytes) }
+            String(headerBytes, Charsets.ISO_8859_1).startsWith("#EXTM3U", ignoreCase = true)
+        } catch (_: Exception) { false }
+
+        if (isM3u8Content) {
+            tempFile.delete()
+            Log.d(TAG, "下载文件内容为 #EXTM3U 列表，重新调度至 M3U8 合成管线")
+            return@withContext downloadM3u8Stream(
+                context = context,
+                task = task,
+                m3u8Url = targetUrl,
+                proxyUrl = proxyUrl,
+                stagingDir = stagingDir,
+                publicDir = publicDir,
+                onProgressUpdate = onProgressUpdate
+            )
+        }
+
+        // 核心防御：媒体文件特征码严格校验！
+        if (!isValidMediaFile(tempFile)) {
+            val size = tempFile.length()
+            tempFile.delete()
+            val errMsg = "下载文件未通过媒体有效性校验 (大小: ${size} 字节)，可能是防盗链拦截或失效网页"
+            Log.e(TAG, errMsg)
+            onProgressUpdate(0f, "", "", TaskStatus.FAILED)
+            return@withContext Result.failure(Exception(errMsg))
         }
 
         try {
@@ -1177,8 +1479,8 @@ object DownloadEngine {
         return regex.find(line)?.groupValues?.get(1) ?: ""
     }
 
-    private fun findGeneratedFile(dir: File, taskId: String, hintPath: String): File? {
-        if (hintPath.isNotEmpty()) {
+    private fun findGeneratedFile(dir: File, taskId: String, hintPath: String? = null): File? {
+        if (!hintPath.isNullOrEmpty()) {
             val f = File(hintPath)
             if (f.exists() && f.length() > 0) return f
         }
