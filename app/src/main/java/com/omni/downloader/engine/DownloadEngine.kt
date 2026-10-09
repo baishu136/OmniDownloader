@@ -1054,7 +1054,13 @@ object DownloadEngine {
                 }
 
                 if (!response.isSuccessful && responseCode != 206) {
-                    throw IOException("HTTP 错误: $responseCode")
+                    val customMsg = when (responseCode) {
+                        405 -> "该地址为接口路由 (HTTP 405 Method Not Allowed)，并非可直接下载的媒体文件，请尝试「窗口排查」"
+                        403 -> "服务器拒绝访问 (HTTP 403 Forbidden)，可能受到防盗链限制或链接已失效"
+                        404 -> "资源不存在或已失效 (HTTP 404 Not Found)"
+                        else -> "HTTP 错误: $responseCode"
+                    }
+                    throw IOException(customMsg)
                 }
 
                 val contentType = response.header("Content-Type", "")?.lowercase(Locale.ROOT) ?: ""

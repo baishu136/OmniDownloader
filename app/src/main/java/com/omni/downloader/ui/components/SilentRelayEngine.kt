@@ -216,13 +216,17 @@ fun SilentRelayEngine(
                                                     var filename = this.download || this.title || document.title || '视频';
                                                     if (href && typeof href === 'string' && href.indexOf('http') === 0) {
                                                         var isCurrentSite = (href === window.location.href || href.replace(/\/+$/, '') === window.location.origin);
+                                                        var isApiRoute = (href.indexOf('/api/') !== -1 || href.indexOf('/extract/') !== -1);
                                                         var isMedia = href.match(/\.(mp4|m4a|webm|flv|m3u8|mp3)(\?.*)?$/i) ||
                                                                       href.indexOf('googlevideo.com') !== -1 ||
                                                                       href.indexOf('twimg.com/video') !== -1 ||
                                                                       href.indexOf('snapcdn.app') !== -1 ||
-                                                                      href.indexOf('/api/video/download') !== -1 ||
+                                                                      href.indexOf('douyinvod.com') !== -1 ||
+                                                                      href.indexOf('byteoversea.com') !== -1 ||
+                                                                      href.indexOf('tiktokcdn.com') !== -1 ||
+                                                                      href.indexOf('twcdn.net') !== -1 ||
                                                                       href.indexOf('token=') !== -1;
-                                                        if (!isCurrentSite && isMedia) {
+                                                        if (!isCurrentSite && !isApiRoute && isMedia) {
                                                             if (!window.__omniDone && window.OmniBridge) {
                                                                 window.__omniDone = true;
                                                                 window.OmniBridge.onResolved(href, filename);
@@ -245,13 +249,17 @@ fun SilentRelayEngine(
                                                 try {
                                                     if (url && typeof url === 'string' && url.indexOf('http') === 0) {
                                                         var isCurrentSite = (url === window.location.href || url.replace(/\/+$/, '') === window.location.origin);
+                                                        var isApiRoute = (url.indexOf('/api/') !== -1 || url.indexOf('/extract/') !== -1);
                                                         var isMedia = url.match(/\.(mp4|m4a|webm|flv|m3u8|mp3)(\?.*)?$/i) ||
                                                                       url.indexOf('googlevideo.com') !== -1 ||
                                                                       url.indexOf('twimg.com/video') !== -1 ||
                                                                       url.indexOf('snapcdn.app') !== -1 ||
-                                                                      url.indexOf('/api/video/download') !== -1 ||
+                                                                      url.indexOf('douyinvod.com') !== -1 ||
+                                                                      url.indexOf('byteoversea.com') !== -1 ||
+                                                                      url.indexOf('tiktokcdn.com') !== -1 ||
+                                                                      url.indexOf('twcdn.net') !== -1 ||
                                                                       url.indexOf('token=') !== -1;
-                                                        if (!isCurrentSite && isMedia) {
+                                                        if (!isCurrentSite && !isApiRoute && isMedia) {
                                                             if (!window.__omniDone && window.OmniBridge) {
                                                                 window.__omniDone = true;
                                                                 window.OmniBridge.onResolved(url, document.title || '视频');
@@ -297,20 +305,22 @@ fun SilentRelayEngine(
                                             if (!item || window.__omniDone) return;
                                             if (typeof item === 'string') {
                                                 if (item.match(/\.(exe|apk|dmg|pkg|deb|zip|rar)(\?.*)?$/i)) return;
+                                                if (item.indexOf('/api/') !== -1 || item.indexOf('/extract/') !== -1) return;
                                                 if (item.match(/^https?:\/\/.+\.(mp4|m4a|m3u8|webm|flv|mp3)(\?.*)?$/i) ||
                                                     (item.indexOf('http') === 0 && (
                                                         item.indexOf('googlevideo.com') !== -1 ||
                                                         item.indexOf('twimg.com/video') !== -1 ||
                                                         item.indexOf('byteoversea.com') !== -1 ||
+                                                        item.indexOf('douyinvod.com') !== -1 ||
+                                                        item.indexOf('tiktokcdn.com') !== -1 ||
                                                         item.indexOf('twcdn.net') !== -1 ||
-                                                        item.indexOf('dl.snapcdn.app') !== -1 ||
-                                                        item.indexOf('greenvideo.cc/api/video/download') !== -1
+                                                        item.indexOf('dl.snapcdn.app') !== -1
                                                     ))) {
                                                     window.__omniDone = true;
                                                     if (window.OmniBridge) window.OmniBridge.onResolved(item, document.title || '视频');
                                                 }
                                             } else if (typeof item === 'object') {
-                                                if (item.downloadUrl && typeof item.downloadUrl === 'string' && item.downloadUrl.indexOf('http') === 0) {
+                                                if (item.downloadUrl && typeof item.downloadUrl === 'string' && item.downloadUrl.indexOf('http') === 0 && item.downloadUrl.indexOf('/api/') === -1) {
                                                     window.__omniDone = true;
                                                     if (window.OmniBridge) window.OmniBridge.onResolved(item.downloadUrl, item.displayTitle || item.fileName || document.title || '视频');
                                                     return;
@@ -478,26 +488,37 @@ fun SilentRelayEngine(
                                                         // 优先提取已有的 baseUrl
                                                         for (var idx = 0; idx < list.length; idx++) {
                                                             var vItem = list[idx];
-                                                            if (vItem && vItem.baseUrl && (vItem.baseUrl.match(/\.(mp4|m4a|webm|flv|m3u8)(\?.*)?$/i) || vItem.baseUrl.indexOf('douyinvod.com') !== -1 || vItem.baseUrl.indexOf('twimg.com') !== -1 || vItem.baseUrl.indexOf('/api/video/download') !== -1)) {
+                                                            if (vItem && vItem.baseUrl && vItem.baseUrl.indexOf('/api/') === -1 && (vItem.baseUrl.match(/\.(mp4|m4a|webm|flv|m3u8)(\?.*)?$/i) || vItem.baseUrl.indexOf('douyinvod.com') !== -1 || vItem.baseUrl.indexOf('twimg.com') !== -1)) {
                                                                 window.__omniDone = true;
                                                                 if (window.OmniBridge) window.OmniBridge.onResolved(vItem.baseUrl, vs.videoExtractInfo.displayTitle || '视频');
                                                                 return;
                                                             }
                                                         }
                                                         // 触发 doDownloadVideo 生成下载直链
-                                                        if (!vs.__omniDownloaded && typeof vs.doDownloadVideo === 'function') {
-                                                            vs.__omniDownloaded = true;
+                                                        if (!vs.__omniPolling && typeof vs.doDownloadVideo === 'function') {
+                                                            vs.__omniPolling = true;
                                                             var firstQuality = (list[0] && list[0].quality) || '1080P';
-                                                            vs.doDownloadVideo({ host: vs.videoExtractInfo.host, vid: vs.videoExtractInfo.vid, quality: firstQuality }).then(function(res) {
-                                                                if (res && res.data && res.data.status === 2) {
-                                                                    vs.getDownloadVideoInfo({ host: vs.videoExtractInfo.host, vid: vs.videoExtractInfo.vid, quality: firstQuality }).then(function(info) {
-                                                                        if (info && info.data && info.data.downloadUrl) {
-                                                                            window.__omniDone = true;
-                                                                            if (window.OmniBridge) window.OmniBridge.onResolved(info.data.downloadUrl, vs.videoExtractInfo.displayTitle || '视频');
+                                                            function checkAndDownload() {
+                                                                if (window.__omniDone) return;
+                                                                vs.doDownloadVideo({ host: vs.videoExtractInfo.host, vid: vs.videoExtractInfo.vid, quality: firstQuality }).then(function(res) {
+                                                                    if (res && res.data) {
+                                                                        if (res.data.status === 2 && res.data.progress === 100) {
+                                                                            vs.getDownloadVideoInfo({ host: vs.videoExtractInfo.host, vid: vs.videoExtractInfo.vid, quality: firstQuality }).then(function(info) {
+                                                                                if (info && info.data && info.data.downloadUrl) {
+                                                                                    var dUrl = info.data.downloadUrl;
+                                                                                    if (dUrl.indexOf('http') === 0 && dUrl.indexOf('/api/') === -1) {
+                                                                                        window.__omniDone = true;
+                                                                                        if (window.OmniBridge) window.OmniBridge.onResolved(dUrl, vs.videoExtractInfo.displayTitle || '视频');
+                                                                                    }
+                                                                                }
+                                                                            });
+                                                                        } else if (res.data.status !== 3 && res.data.status !== 4 && res.data.status !== 5) {
+                                                                            setTimeout(checkAndDownload, 2500);
                                                                         }
-                                                                    });
-                                                                }
-                                                            }).catch(function(e){ console.error(e); });
+                                                                    }
+                                                                }).catch(function(e){ console.error(e); });
+                                                            }
+                                                            checkAndDownload();
                                                         }
                                                     }
                                                 }
@@ -538,8 +559,9 @@ fun SilentRelayEngine(
                                                 var a = links[k];
                                                 var href = a.getAttribute('href') || '';
                                                 if (href.indexOf('http') === 0 && href !== window.location.href && href.replace(/\/+$/, '') !== window.location.origin) {
+                                                    if (href.indexOf('/api/') !== -1 || href.indexOf('/extract/') !== -1) continue;
                                                     if (href.match(/\.(mp4|m4a|m3u8|webm|flv|mp3)(\?.*)?$/i) ||
-                                                        (href.indexOf('googlevideo.com') !== -1 || href.indexOf('twimg.com/video') !== -1 || href.indexOf('snapcdn.app') !== -1 || href.indexOf('/api/video/download') !== -1)) {
+                                                        (href.indexOf('googlevideo.com') !== -1 || href.indexOf('twimg.com/video') !== -1 || href.indexOf('snapcdn.app') !== -1 || href.indexOf('douyinvod.com') !== -1)) {
                                                         window.__omniDone = true;
                                                         if (window.OmniBridge) window.OmniBridge.onResolved(href, document.title || '视频');
                                                         return;
@@ -569,13 +591,14 @@ fun SilentRelayEngine(
                             view?.evaluateJavascript(automationScript, null)
                         }
 
-                        // 核心拦截 3：网络层深度拦截 (shouldInterceptRequest)
+                        // 核心拦截 3：网络层深度拦截 (shouldInterceptRequest，仅拦截真正的 GET 媒体流，绝不拦截 POST 接口)
                         override fun shouldInterceptRequest(
                             view: WebView?,
                             request: WebResourceRequest?
                         ): WebResourceResponse? {
                             val reqUrl = request?.url?.toString() ?: return null
-                            if (UrlSniffer.isDirectMediaUrl(reqUrl)) {
+                            val method = request.method?.uppercase() ?: "GET"
+                            if (method == "GET" && UrlSniffer.isDirectMediaUrl(reqUrl)) {
                                 view?.post {
                                     handleFoundMedia(reqUrl, "")
                                 }

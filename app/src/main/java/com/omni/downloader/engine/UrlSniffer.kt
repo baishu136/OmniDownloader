@@ -249,18 +249,27 @@ object UrlSniffer {
      */
     fun isDirectMediaUrl(url: String): Boolean {
         val lower = url.lowercase()
-        return lower.endsWith(".mp4") || lower.contains(".mp4?") ||
+
+        // 核心防御：严禁将网站内部的 API 接口调用误判为媒体直链（防止向仅支持 POST 的接口发 GET 导致 405 报错）
+        val isApiRoute = lower.contains("/api/") || lower.contains("/ajax/") ||
+                lower.contains("/extract/") || lower.contains("/video-tool") ||
+                lower.contains("cnsimpleextract") || lower.contains("dodownload") ||
+                lower.contains("getdownloadinfo")
+        val isExplicitMediaExt = lower.endsWith(".mp4") || lower.contains(".mp4?") ||
                 lower.endsWith(".m4a") || lower.contains(".m4a?") ||
                 lower.endsWith(".mp3") || lower.contains(".mp3?") ||
                 lower.endsWith(".webm") || lower.contains(".webm?") ||
                 lower.endsWith(".flv") || lower.contains(".flv?") ||
-                lower.endsWith(".m3u8") || lower.contains(".m3u8?") ||
+                lower.endsWith(".m3u8") || lower.contains(".m3u8?")
+
+        if (isApiRoute && !isExplicitMediaExt) {
+            return false
+        }
+
+        return isExplicitMediaExt ||
                 lower.contains("dl.snapcdn.app") ||
                 lower.contains("video.twimg.com") ||
                 lower.contains("snapany.com/api/download") ||
-                lower.contains("snapany.com/api/video") ||
-                lower.contains("greenvideo.cc/api/video/") ||
-                lower.contains("greenvideo.cc/api/download") ||
                 lower.contains("googlevideo.com/videoplayback") ||
                 lower.contains("byteoversea.com") ||
                 lower.contains("ibytedtos.com") ||

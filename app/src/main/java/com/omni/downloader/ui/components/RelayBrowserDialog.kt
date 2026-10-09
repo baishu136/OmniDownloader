@@ -399,8 +399,9 @@ fun RelayBrowserDialog(
                                     request: WebResourceRequest?
                                 ): WebResourceResponse? {
                                     val reqUrl = request?.url?.toString() ?: return null
-                                    // 核心网络嗅探：拦截所有媒体直链数据流
-                                    if (UrlSniffer.isDirectMediaUrl(reqUrl)) {
+                                    val method = request.method?.uppercase() ?: "GET"
+                                    // 核心网络嗅探：仅拦截真正的 GET 媒体数据流，绝不拦截 POST 接口
+                                    if (method == "GET" && UrlSniffer.isDirectMediaUrl(reqUrl)) {
                                         view?.post {
                                             handleCapturedMedia(reqUrl, "${site.name} 视频", autoClose = false)
                                         }
