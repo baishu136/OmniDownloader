@@ -20,7 +20,7 @@ import re
 import urllib.parse
 import asyncio
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Literal, Optional, Dict, Any
 
 from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, FileResponse, Response
@@ -86,7 +86,7 @@ class UpdateSettingsRequest(BaseModel):
     proxy_url: Optional[str] = Field(None, alias="proxyUrl")
     bilibili_cookie: Optional[str] = Field(None, alias="bilibiliCookie")
     max_concurrent_tasks: Optional[int] = Field(None, alias="maxConcurrentTasks")
-    theme: Optional[str] = None
+    theme: Optional[Literal["auto", "light", "dark"]] = None
     auto_start: Optional[bool] = Field(None, alias="autoStart")
 
 class AddRelaySiteRequest(BaseModel):
