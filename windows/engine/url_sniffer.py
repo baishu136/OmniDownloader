@@ -4,8 +4,10 @@ OmniDownloader 链接嗅探器 (Windows 移植版)
 """
 
 import re
+import json
+import base64
 import asyncio
-from typing import Optional
+from typing import Optional, Tuple
 import requests
 
 URL_REGEX = re.compile(
@@ -113,3 +115,89 @@ class UrlSniffer:
                 return clean_url
 
         return await asyncio.to_thread(_resolve)
+
+    @classmethod
+    def unpack_direct_media_url(cls, raw_url: str, default_title: str = "中转下载视频") -> Tuple[str, str]:
+        """
+        解析中转站提取的直链或携带 JWT Payload (如 SnapCDN/X2Twitter/TwitterSaver) 的长链接
+        解码出真实的视频直链与规范的文件名，若无法解码则原样返回
+        """
+        trimmed = raw_url.strip()
+        try:
+            token_idx = trimmed.find("token=")
+            if token_idx != -1:
+                token_val = trimmed[token_idx + 6:]
+                amp_idx = token_val.find("&")
+                if amp_idx != -1:
+                    token_val = token_val[:amp_idx]
+                if token_val.startswith("eyJ") and "." in token_val:
+                    parts = token_val.split(".")
+                    if len(parts) >= 2:
+                        payload = parts[1]
+                        # 补齐 Base64 padding
+                        padding = len(payload) % 4
+                        if padding:
+                            payload += "=" * (4 - padding)
+                        decoded_bytes = base64.urlsafe_b64decode(payload.encode("utf-8"))
+                        data = json.loads(decoded_bytes.decode("utf-8"))
+                        real_url = data.get("url", "")
+                        filename = data.get("filename", "")
+                        title = filename.rsplit(".", 1)[0] if filename else default_title
+                        if real_url and real_url.startswith("http"):
+                            if cls.is_m3u8_url(real_url) and ("snapcdn" in trimmed or "get?token" in trimmed):
+                                return trimmed, title
+                            return real_url, title
+        except Exception:
+            pass
+        return trimmed, default_title
+
+    @classmethod
+    def is_m3u8_url(cls, url: str) -> bool:
+        """判断是否属于 M3U8 (HLS 分片索引流)"""
+        lower = url.lower()
+        return (
+            lower.endswith(".m3u8") or ".m3u8?" in lower or
+            "/hls/" in lower or "format=m3u8" in lower or
+            ".m3u8/" in lower
+        )
+
+    @classmethod
+    def is_direct_media_url(cls, url: str) -> bool:
+        """判断是否属于网络媒体直链"""
+        lower = url.lower()
+
+        # 核心防御：严禁将网站内部的 API 接口调用误判为媒体直链（防止向仅支持 POST 的接口发 GET 导致 405 报错）
+        is_api_route = (
+            "/api/" in lower or "/ajax/" in lower or
+            "/extract/" in lower or "/video-tool" in lower or
+            "cnsimpleextract" in lower or "dodownload" in lower or
+            "getdownloadinfo" in lower
+        )
+        is_explicit_media_ext = (
+            lower.endswith(".mp4") or ".mp4?" in lower or
+            lower.endswith(".m4a") or ".m4a?" in lower or
+            lower.endswith(".mp3") or ".mp3?" in lower or
+            lower.endswith(".webm") or ".webm?" in lower or
+            lower.endswith(".flv") or ".flv?" in lower or
+            lower.endswith(".m3u8") or ".m3u8?" in lower
+        )
+
+        if is_api_route and not is_explicit_media_ext:
+            return False
+
+        return is_explicit_media_ext or any(domain in lower for domain in [
+            "dl.snapcdn.app",
+            "video.twimg.com",
+            "snapany.com/api/download",
+            "googlevideo.com/videoplayback",
+            "byteoversea.com",
+            "ibytedtos.com",
+            "tiktokcdn.com",
+            "douyinvod.com",
+            "snssdk.com",
+            "yximgs.com",
+            "xhscdn.com",
+            "fbcdn.net",
+            "twcdn.net"
+        ])
+

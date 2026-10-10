@@ -15,6 +15,9 @@ if sys.stdin is None:
     sys.stdin = open(os.devnull, "r", encoding="utf-8")
 
 import json
+import html
+import re
+import urllib.parse
 import asyncio
 from pathlib import Path
 from typing import List, Optional, Dict, Any
@@ -127,6 +130,85 @@ async def confirm_relay_compat_tip():
     return {"status": "success", "hasShownRelayCompatTip": True}
 
 
+def _fetch_web_title_sync(raw_url: str, proxy_url: str = "") -> str:
+    """流式拉取网页头部前 64KB 解析 title 标签（对齐 Android 端 WebTitleFetcher）"""
+    trimmed = raw_url.strip()
+    if not trimmed:
+        return ""
+    if not trimmed.startswith("http://") and not trimmed.startswith("https://"):
+        trimmed = f"https://{trimmed}"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"
+    }
+    proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+
+    def _fallback_host():
+        try:
+            parsed = urllib.parse.urlparse(trimmed)
+            host = (parsed.hostname or "").lower()
+            if host.startswith("www."):
+                host = host[4:]
+            if host:
+                parts = host.split(".")
+                return parts[0].capitalize() if parts else "备用网站"
+        except Exception:
+            pass
+        return "备用网站"
+
+    try:
+        import requests
+        with requests.get(trimmed, headers=headers, proxies=proxies, timeout=6, stream=True, allow_redirects=True) as resp:
+            if not resp.ok:
+                return _fallback_host()
+
+            raw_bytes = bytearray()
+            max_bytes = 64 * 1024
+            for chunk in resp.iter_content(chunk_size=4096):
+                raw_bytes.extend(chunk)
+                if len(raw_bytes) >= max_bytes:
+                    break
+                preview = raw_bytes.decode("utf-8", errors="ignore").lower()
+                if "</title>" in preview or "</head>" in preview:
+                    break
+
+            encoding = resp.encoding or "utf-8"
+            if not resp.encoding or resp.encoding.lower() == "iso-8859-1":
+                meta_match = re.search(r'charset=["\']?([a-zA-Z0-9_\-]+)', raw_bytes[:4096].decode("latin-1", errors="ignore"), re.I)
+                if meta_match:
+                    encoding = meta_match.group(1).strip()
+
+            try:
+                html_text = raw_bytes.decode(encoding, errors="replace")
+            except Exception:
+                html_text = raw_bytes.decode("utf-8", errors="replace")
+
+            title_match = re.search(r'<title[^>]*>(.*?)</title>', html_text, re.IGNORECASE | re.DOTALL)
+            if title_match:
+                extracted = title_match.group(1).strip()
+                clean_title = html.unescape(extracted)
+                clean_title = re.sub(r'[\r\n\t]+', ' ', clean_title).strip()
+                lower_t = clean_title.lower()
+                if not clean_title or any(bad in lower_t for bad in ["404 not found", "attention required", "just a moment", "security check", "robot check"]):
+                    return _fallback_host()
+                return clean_title[:50]
+            return _fallback_host()
+    except Exception:
+        return _fallback_host()
+
+
+@app.get("/api/relay-sites/fetch-title")
+async def fetch_relay_site_title(url: str):
+    """异步抓取并解析目标网页的 Title，用于添加中转网站时自动回填名称"""
+    if not url or not url.strip():
+        raise HTTPException(status_code=400, detail="URL 不能为空")
+    title = await asyncio.to_thread(_fetch_web_title_sync, url.strip(), config.proxy_url)
+    return {"status": "success", "title": title}
+
+
+
 @app.post("/api/analyze", response_model=VideoMetadata)
 async def analyze_url(req: AnalyzeRequest):
     """解析任意平台媒体链接，返回视频标题、封面、清晰度列表与分P分集"""
@@ -137,6 +219,41 @@ async def analyze_url(req: AnalyzeRequest):
     extracted_url = UrlSniffer.extract_url(raw_url) or raw_url
     clean_url = await UrlSniffer.sanitize_and_resolve_url(extracted_url, config.proxy_url)
     site = UrlSniffer.identify_site(clean_url)
+
+    # 0. 前置防呆：防止误将中转解析站本身网址当成视频源解析
+    lower_clean = clean_url.lower()
+    is_relay_site_home = any(
+        site_item.get("url", "").lower().rstrip("/") == lower_clean.rstrip("/")
+        for site_item in config.relay_sites
+    ) or any(
+        k in lower_clean for k in ["greenvideo.cc", "x2twitter.com", "snapany.com"]
+    )
+    if is_relay_site_home and not UrlSniffer.is_direct_media_url(clean_url):
+        raise HTTPException(
+            status_code=400,
+            detail="检测到您输入的是中转解析网站主页，请粘贴欲解析的具体视频链接，或在中转站板块中使用该站点。"
+        )
+
+    # 0.1 若为中转直链或直接音视频媒体流，解包后直接生成元数据
+    unpacked_url, unpacked_title = UrlSniffer.unpack_direct_media_url(clean_url, "中转视频")
+    if UrlSniffer.is_direct_media_url(unpacked_url):
+        from core.models import FormatOption
+        return VideoMetadata(
+            url=unpacked_url,
+            title=unpacked_title,
+            author="中转直链",
+            thumbnail_url="",
+            site_name="网络直链",
+            is_gif=False,
+            available_video_formats=[
+                FormatOption(
+                    format_id="direct",
+                    resolution_label="中转直链",
+                    ext="mp4",
+                    note="中转提取高清原片"
+                )
+            ]
+        )
 
     print(f"[OmniServer] 开始解析链接: site={site}, url={clean_url}")
 

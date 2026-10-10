@@ -197,3 +197,23 @@ public enum TaskDisplayItem: Identifiable {
         }
     }
 }
+
+/// 第三方备用中转解析网站模型 (对齐 Android / Windows 端)
+public struct RelaySite: Identifiable, Codable, Equatable {
+    public let id: String
+    public var name: String
+    public var url: String
+    public var iconUrl: String
+
+    public init(
+        id: String = String(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(8)).lowercased(),
+        name: String,
+        url: String,
+        iconUrl: String = ""
+    ) {
+        self.id = id
+        self.name = name
+        self.url = url
+        self.iconUrl = iconUrl
+    }
+}

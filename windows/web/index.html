@@ -183,8 +183,8 @@
         </div>
       </div>
 
-      <!-- 备用中转解析站板块 (Relay Sites Section) -->
-      <div class="bg-white rounded-3xl p-6 shadow-sm border border-indigo-100/80 space-y-4">
+      <!-- 备用中转解析站板块 (仅在已添加中转网站时展示) -->
+      <div id="relay-sites-section" class="hidden bg-white rounded-3xl p-6 shadow-sm border border-indigo-100/80 space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2.5">
             <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
@@ -195,9 +195,9 @@
               <p class="text-[11px] text-slate-400">当直连解析遇防爬或失效时，可利用备用网站提取直链</p>
             </div>
           </div>
-          <button onclick="handleOpenAddRelaySite()" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 shadow-xs">
-            <i class="fa-solid fa-plus text-[11px]"></i>
-            <span>添加网址</span>
+          <button onclick="switchTab('settings')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 shadow-xs">
+            <i class="fa-solid fa-gear text-[11px]"></i>
+            <span>管理</span>
           </button>
         </div>
 
@@ -387,6 +387,24 @@
           <label class="block text-xs font-bold text-slate-700 uppercase">网络代理 (HTTP / SOCKS5)</label>
           <input type="text" id="setting-proxy" placeholder="例如: http://127.0.0.1:7890 或 socks5://127.0.0.1:1080" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-600" />
           <p class="text-[11px] text-slate-400">用于顺畅解析与下载海外受限平台资源（YouTube, TikTok, Twitter/X 等），留空表示直连</p>
+        </div>
+
+        <!-- 2.5 第三方中转解析网站 (Relay Sites 管理) -->
+        <div class="space-y-3 pt-1">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <label class="block text-xs font-bold text-slate-700 uppercase">第三方中转解析网站</label>
+              <span id="settings-relay-count" class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full">0 个</span>
+            </div>
+            <button onclick="handleOpenAddRelaySite()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 shadow-sm shadow-indigo-500/20">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>添加网站</span>
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400">自定义添加备用解析站点，在直连解析遇防爬或失效时使用</p>
+          <div id="settings-relay-sites-container" class="space-y-2">
+            <!-- 动态渲染中转站管理列表 -->
+          </div>
         </div>
 
         <!-- 3. B站 Cookie 授权 -->
@@ -686,16 +704,34 @@
         </button>
       </div>
 
-      <p class="text-xs text-slate-500">请输入您需要添加的第三方网页名称与网址：</p>
+      <p class="text-xs text-slate-500">输入网址后将自动检索网站名称，也可手动修改：</p>
 
       <div class="space-y-3">
+        <!-- 1. 网站完整网址 (置顶) -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-[11px] font-bold text-slate-700">网站完整网址</label>
+            <span id="fetch-title-status" class="text-[10px] text-indigo-600 hidden font-medium flex items-center">
+              <i class="fa-solid fa-circle-notch fa-spin mr-1"></i>正在检索名称...
+            </span>
+          </div>
+          <div class="relative flex items-center">
+            <input type="text" id="input-site-url" oninput="handleUrlInputWithDebounce()" placeholder="https://..." class="w-full pl-3.5 pr-20 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 rounded-xl outline-none text-xs transition" />
+            <div class="absolute right-2 flex items-center space-x-1">
+              <button type="button" onclick="triggerManualFetchTitle()" title="重新获取名称" class="w-6 h-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-200/50 transition text-xs">
+                <i class="fa-solid fa-arrows-rotate"></i>
+              </button>
+              <button type="button" onclick="clearUrlInput()" title="清空" class="w-6 h-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 transition text-xs">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 网站名称 (第二位) -->
         <div>
           <label class="block text-[11px] font-bold text-slate-700 mb-1">网站名称</label>
-          <input type="text" id="input-site-name" placeholder="例如：备用解析工具" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 rounded-xl outline-none text-xs transition" />
-        </div>
-        <div>
-          <label class="block text-[11px] font-bold text-slate-700 mb-1">网站完整网址</label>
-          <input type="text" id="input-site-url" placeholder="https://..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 rounded-xl outline-none text-xs transition" />
+          <input type="text" id="input-site-name" oninput="markNameManuallyEdited()" placeholder="例如：备用解析工具" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 rounded-xl outline-none text-xs transition" />
         </div>
       </div>
 
@@ -721,6 +757,9 @@
     let allTasks = [];
     let relaySites = [];
     let hasShownRelayCompatTip = false;
+    let fetchTitleTimer = null;
+    let isNameManuallyEdited = false;
+    let lastFetchedTitle = '';
 
     // 获取并渲染备用中转站
     async function fetchRelaySites() {
@@ -738,52 +777,83 @@
     }
 
     function renderRelaySites() {
-      const container = document.getElementById('relay-sites-container');
-      if (!container) return;
+      const homeSection = document.getElementById('relay-sites-section');
+      const homeContainer = document.getElementById('relay-sites-container');
+      const settingsContainer = document.getElementById('settings-relay-sites-container');
+      const settingsCount = document.getElementById('settings-relay-count');
 
-      if (!relaySites || relaySites.length === 0) {
-        container.innerHTML = `
-          <div onclick="handleOpenAddRelaySite()" class="col-span-full border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/30 hover:bg-indigo-50/60 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition text-indigo-600 group">
-            <div class="w-10 h-10 rounded-full bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center mb-2 transition">
-              <i class="fa-solid fa-plus text-sm"></i>
-            </div>
-            <span class="text-xs font-bold">添加网址</span>
-            <span class="text-[11px] text-slate-400 mt-0.5">自主配置您信赖的第三方备用中转解析服务</span>
-          </div>
-        `;
-        return;
+      if (settingsCount) {
+        settingsCount.textContent = `${relaySites.length} 个`;
       }
 
-      container.innerHTML = relaySites.map(site => {
-        const safeName = site.name || '备用站点';
-        const safeUrl = site.url || '#';
-        const initial = safeName.charAt(0).toUpperCase();
-        const iconHtml = site.iconUrl ?
-          `<img src="${site.iconUrl}" onerror="this.outerHTML='<div class=\\'w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center text-xs\\'>${initial}</div>'" class="w-8 h-8 rounded-xl object-contain border border-slate-100 bg-white" />` :
-          `<div class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center text-xs">${initial}</div>`;
+      // 1. 主页部分：若无中转站，主页完全不占位展示
+      if (homeSection) {
+        if (!relaySites || relaySites.length === 0) {
+          homeSection.classList.add('hidden');
+        } else {
+          homeSection.classList.remove('hidden');
+          if (homeContainer) {
+            homeContainer.innerHTML = relaySites.map(site => {
+              const safeName = site.name || '备用站点';
+              const safeUrl = site.url || '#';
+              const initial = safeName.charAt(0).toUpperCase();
+              return `
+                <div class="p-3.5 bg-slate-50/80 hover:bg-indigo-50/40 border border-slate-200/80 hover:border-indigo-200 rounded-2xl transition flex items-center justify-between group shadow-xs">
+                  <div class="flex items-center space-x-3 overflow-hidden cursor-pointer" onclick="openRelaySite('${safeUrl}')">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center text-xs flex-shrink-0">
+                      ${initial}
+                    </div>
+                    <div class="overflow-hidden">
+                      <h4 class="text-xs font-bold text-slate-800 truncate" title="${safeName}">${safeName}</h4>
+                      <span class="text-[10px] text-slate-400 hover:text-indigo-600 truncate block mt-0.5" title="${safeUrl}">
+                        ${safeUrl.replace(/^https?:\/\//, '')}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-1 flex-shrink-0">
+                    <button onclick="openRelaySite('${safeUrl}')" title="访问此网站" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-white transition">
+                      <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+      }
 
-        return `
-          <div class="p-3.5 bg-slate-50/80 hover:bg-indigo-50/40 border border-slate-200/80 hover:border-indigo-200 rounded-2xl transition flex items-center justify-between group shadow-xs">
-            <div class="flex items-center space-x-3 overflow-hidden cursor-pointer" onclick="openRelaySite('${safeUrl}')">
-              ${iconHtml}
-              <div class="overflow-hidden">
-                <h4 class="text-xs font-bold text-slate-800 truncate" title="${safeName}">${safeName}</h4>
-                <span class="text-[10px] text-slate-400 hover:text-indigo-600 truncate block mt-0.5" title="${safeUrl}">
-                  ${safeUrl.replace(/^https?:\/\//, '')}
-                </span>
+      // 2. 设置页部分：管理列表展示
+      if (settingsContainer) {
+        if (!relaySites || relaySites.length === 0) {
+          settingsContainer.innerHTML = `
+            <div class="p-4 bg-slate-50 border border-dashed border-slate-200 rounded-2xl text-center text-slate-400 text-xs">
+              暂未配置任何备用中转网站，点击右上角「添加网站」快速录入
+            </div>
+          `;
+        } else {
+          settingsContainer.innerHTML = relaySites.map(site => {
+            const safeName = site.name || '备用站点';
+            const safeUrl = site.url || '#';
+            const initial = safeName.charAt(0).toUpperCase();
+            return `
+              <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between hover:bg-indigo-50/30 transition">
+                <div class="flex items-center space-x-3 overflow-hidden">
+                  <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center text-xs flex-shrink-0">
+                    ${initial}
+                  </div>
+                  <div class="overflow-hidden">
+                    <div class="text-xs font-bold text-slate-800 truncate">${safeName}</div>
+                    <div class="text-[10px] text-slate-400 truncate">${safeUrl}</div>
+                  </div>
+                </div>
+                <button onclick="deleteRelaySite('${site.id}')" title="删除此网站" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition flex-shrink-0">
+                  <i class="fa-regular fa-trash-can text-xs"></i>
+                </button>
               </div>
-            </div>
-            <div class="flex items-center space-x-1 flex-shrink-0">
-              <button onclick="openRelaySite('${safeUrl}')" title="访问此网站" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-white transition">
-                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-              </button>
-              <button onclick="deleteRelaySite('${site.id}')" title="删除此网站" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-white transition">
-                <i class="fa-regular fa-trash-can text-xs"></i>
-              </button>
-            </div>
-          </div>
-        `;
-      }).join('');
+            `;
+          }).join('');
+        }
+      }
     }
 
     function handleOpenAddRelaySite() {
@@ -812,11 +882,84 @@
     function openAddRelaySiteModal() {
       document.getElementById('input-site-name').value = '';
       document.getElementById('input-site-url').value = '';
+      isNameManuallyEdited = false;
+      lastFetchedTitle = '';
+      const statusEl = document.getElementById('fetch-title-status');
+      if (statusEl) statusEl.classList.add('hidden');
+
       const modal = document.getElementById('add-relay-site-modal');
       if (modal) modal.classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('input-site-url')?.focus();
+      }, 100);
     }
 
     function closeAddRelaySiteModal() {
+      const modal = document.getElementById('add-relay-site-modal');
+      if (modal) modal.classList.add('hidden');
+      if (fetchTitleTimer) {
+        clearTimeout(fetchTitleTimer);
+        fetchTitleTimer = null;
+      }
+    }
+
+    function markNameManuallyEdited() {
+      isNameManuallyEdited = true;
+    }
+
+    function clearUrlInput() {
+      document.getElementById('input-site-url').value = '';
+      if (!isNameManuallyEdited) {
+        document.getElementById('input-site-name').value = '';
+      }
+      const statusEl = document.getElementById('fetch-title-status');
+      if (statusEl) statusEl.classList.add('hidden');
+    }
+
+    function handleUrlInputWithDebounce() {
+      if (fetchTitleTimer) clearTimeout(fetchTitleTimer);
+      const url = document.getElementById('input-site-url').value.trim();
+      if (!url || url.length < 5 || !url.includes('.')) return;
+
+      fetchTitleTimer = setTimeout(() => {
+        executeFetchTitle(url);
+      }, 700);
+    }
+
+    function triggerManualFetchTitle() {
+      const url = document.getElementById('input-site-url').value.trim();
+      if (!url) {
+        showToast('请先输入网址', true);
+        return;
+      }
+      executeFetchTitle(url);
+    }
+
+    async function executeFetchTitle(rawUrl) {
+      const statusEl = document.getElementById('fetch-title-status');
+      if (statusEl) statusEl.classList.remove('hidden');
+
+      try {
+        const res = await fetch(`/api/relay-sites/fetch-title?url=${encodeURIComponent(rawUrl)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.title) {
+            const nameInput = document.getElementById('input-site-name');
+            if (nameInput) {
+              if (!isNameManuallyEdited || !nameInput.value || nameInput.value === lastFetchedTitle) {
+                nameInput.value = data.title;
+                lastFetchedTitle = data.title;
+                isNameManuallyEdited = false;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('获取网站标题失败:', e);
+      } finally {
+        if (statusEl) statusEl.classList.add('hidden');
+      }
+    }
       const modal = document.getElementById('add-relay-site-modal');
       if (modal) modal.classList.add('hidden');
     }
