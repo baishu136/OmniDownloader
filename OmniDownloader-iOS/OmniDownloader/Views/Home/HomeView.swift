@@ -416,15 +416,25 @@ struct HomeView: View {
 
 import WebKit
 
-/// iOS 端原生媒体嗅探浏览器弹窗 (对应 Android RelayBrowserDialog)
+/// 嗅探到的媒体流资源条目 (对齐专业级嗅探猫 Cat Catch 数据结构)
+struct SniffedMediaItem: Identifiable, Equatable {
+    let id: String = UUID().uuidString
+    let url: String
+    let title: String
+    let format: String // "MP4", "M3U8", "音频", "WebM", "FLV"
+    let host: String
+    let timestamp: Date = Date()
+}
+
+/// iOS 端原生媒体嗅探浏览器弹窗 (集成类似“嗅探猫”的专业媒体嗅探与多资源管理体系)
 struct RelayBrowserSheet: View {
     let site: RelaySite
     let initialVideoUrl: String
     @Environment(\.presentationMode) private var presentationMode
     @EnvironmentObject var downloadManager: DownloadManager
 
-    @State private var sniffedUrl: String = ""
-    @State private var sniffedTitle: String = ""
+    @State private var sniffedMediaList: [SniffedMediaItem] = []
+    @State private var showSnifferSheet: Bool = false
     @State private var webTitle: String = ""
     @State private var canGoBack: Bool = false
     @State private var webView: WKWebView? = nil
@@ -443,8 +453,8 @@ struct RelayBrowserSheet: View {
                 )
                 .ignoresSafeArea(edges: .bottom)
 
-                // 底部浮动高亮一键下载胶囊
-                if !sniffedUrl.isEmpty {
+                // 底部浮动高亮胶囊：提示已捕获数量，支持查看列表与下载最新资源
+                if !sniffedMediaList.isEmpty {
                     VStack(spacing: 8) {
                         HStack(spacing: 10) {
                             ZStack {
@@ -457,31 +467,37 @@ struct RelayBrowserSheet: View {
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("已嗅探到视频资源！")
+                                Text("🐱 嗅探猫已捕获 \(sniffedMediaList.count) 个媒体")
                                     .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(.primary)
-                                Text(sniffedUrl)
-                                    .font(.system(size: 11))
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(1)
+                                if let first = sniffedMediaList.first {
+                                    Text("最新: [\(first.format)] \(first.host.isEmpty ? "直链 CDN" : first.host)")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(1)
+                                }
                             }
 
                             Spacer()
 
-                            Button(action: startDownloadSniffed) {
-                                Text("立即下载")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 7)
-                                    .background(Color.blue)
+                            Button(action: { showSnifferSheet = true }) {
+                                Text("列表")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(.blue)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Color.blue.opacity(0.12))
                                     .cornerRadius(8)
                             }
 
-                            Button(action: { sniffedUrl = "" }) {
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.secondary)
+                            Button(action: startDownloadLatest) {
+                                Text("下载最新")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Color.blue)
+                                    .cornerRadius(8)
                             }
                         }
                         .padding(12)
@@ -503,10 +519,35 @@ struct RelayBrowserSheet: View {
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { webView?.reload() }) {
-                        Image(systemName: "arrow.clockwise")
+                    HStack(spacing: 8) {
+                        Button(action: { showSnifferSheet = true }) {
+                            HStack(spacing: 4) {
+                                Text("🐱 \(sniffedMediaList.count)")
+                                    .font(.system(size: 12, weight: .bold))
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(sniffedMediaList.isEmpty ? Color.gray.opacity(0.15) : Color.blue.opacity(0.15))
+                            .foregroundColor(sniffedMediaList.isEmpty ? .secondary : .blue)
+                            .cornerRadius(12)
+                        }
+
+                        Button(action: { webView?.reload() }) {
+                            Image(systemName: "arrow.clockwise")
+                        }
                     }
                 }
+            }
+            .sheet(isPresented: $showSnifferSheet) {
+                SnifferManagerSheet(
+                    items: $sniffedMediaList,
+                    onDownloadItem: { item in
+                        startDownload(item: item)
+                    },
+                    onTriggerDeepSearch: {
+                        triggerDeepSearch()
+                    }
+                )
             }
         }
     }
@@ -520,29 +561,215 @@ struct RelayBrowserSheet: View {
         return URL(string: clean) ?? URL(string: site.url)!
     }
 
+    private func detectMediaFormat(url: String) -> String {
+        let lower = url.lowercased()
+        if lower.contains(".m3u8") { return "M3U8" }
+        if lower.contains(".mp4") { return "MP4" }
+        if lower.contains(".m4a") || lower.contains(".mp3") || lower.contains(".aac") || lower.contains(".flac") { return "音频" }
+        if lower.contains(".webm") { return "WebM" }
+        if lower.contains(".flv") { return "FLV" }
+        return "视频"
+    }
+
     private func handleSniffedMedia(url: String, title: String) {
         let (unpackedUrl, unpackedTitle) = UrlSniffer.unpackDirectMediaUrl(rawUrl: url, defaultTitle: title.isEmpty ? "\(site.name) 视频" : title)
         guard UrlSniffer.isDirectMediaUrl(urlString: unpackedUrl) else { return }
-        withAnimation {
-            self.sniffedUrl = unpackedUrl
-            self.sniffedTitle = unpackedTitle
+
+        let host = URL(string: unpackedUrl)?.host ?? ""
+        let format = detectMediaFormat(url: unpackedUrl)
+
+        DispatchQueue.main.async {
+            if !self.sniffedMediaList.contains(where: { $0.url.lowercased() == unpackedUrl.lowercased() }) {
+                let newItem = SniffedMediaItem(
+                    url: unpackedUrl,
+                    title: unpackedTitle,
+                    format: format,
+                    host: host
+                )
+                withAnimation {
+                    self.sniffedMediaList.insert(newItem, at: 0)
+                }
+            }
         }
     }
 
-    private func startDownloadSniffed() {
-        guard !sniffedUrl.isEmpty else { return }
+    private func startDownloadLatest() {
+        guard let first = sniffedMediaList.first else { return }
+        startDownload(item: first)
+    }
+
+    private func startDownload(item: SniffedMediaItem) {
         let task = DownloadTask(
-            url: sniffedUrl,
-            title: sniffedTitle.isEmpty ? "\(site.name) 视频" : sniffedTitle,
+            url: item.url,
+            title: item.title.isEmpty ? "\(site.name) 视频" : item.title,
             downloadType: .videoWithAudio,
             selectedResolution: "中转提取原画"
         )
         downloadManager.addTask(task)
+        showSnifferSheet = false
         presentationMode.wrappedValue.dismiss()
+    }
+
+    private func triggerDeepSearch() {
+        webView?.evaluateJavaScript("if (window.__omniDeepSearch) { window.__omniDeepSearch(); } else { 0; }", completionHandler: nil)
     }
 }
 
-/// 基于 WKWebView 的媒体嗅探桥接
+/// 🐱 嗅探猫 · 媒体资源管理器弹窗面板
+struct SnifferManagerSheet: View {
+    @Binding var items: [SniffedMediaItem]
+    let onDownloadItem: (SniffedMediaItem) -> Void
+    let onTriggerDeepSearch: () -> Void
+    @Environment(\.presentationMode) private var presentationMode
+    @State private var copiedNotice: Bool = false
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                // 顶部工具控制栏
+                HStack(spacing: 12) {
+                    Button(action: {
+                        onTriggerDeepSearch()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "magnifyingglass")
+                            Text("深度搜索")
+                        }
+                        .font(.system(size: 13, weight: .medium))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.blue.opacity(0.12))
+                        .foregroundColor(.blue)
+                        .cornerRadius(8)
+                    }
+
+                    Button(action: copyAllUrls) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "doc.on.doc")
+                            Text("复制全部")
+                        }
+                        .font(.system(size: 13, weight: .medium))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.gray.opacity(0.12))
+                        .foregroundColor(.primary)
+                        .cornerRadius(8)
+                    }
+
+                    Spacer()
+
+                    Button(action: { items.removeAll() }) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 14))
+                            .foregroundColor(.red)
+                    }
+                }
+                .padding(14)
+                .background(Color(UIColor.secondarySystemGroupedBackground))
+
+                Divider()
+
+                if items.isEmpty {
+                    VStack(spacing: 12) {
+                        Spacer()
+                        Image(systemName: "waveform.badge.magnifyingglass")
+                            .font(.system(size: 40))
+                            .foregroundColor(.secondary)
+                        Text("暂未嗅探到媒体流")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.primary)
+                        Text("播放视频或点击上方「深度搜索」主动挖掘隐藏媒体")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List {
+                        ForEach(items) { item in
+                            HStack(spacing: 10) {
+                                // 格式彩标
+                                Text(item.format)
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 3)
+                                    .background(badgeColor(for: item.format))
+                                    .cornerRadius(6)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(item.title)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .lineLimit(1)
+                                    Text("来源: \(item.host.isEmpty ? "直链 CDN" : item.host)")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary)
+                                    Text(item.url)
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.blue.opacity(0.8))
+                                        .lineLimit(1)
+                                }
+
+                                Spacer()
+
+                                Button(action: {
+                                    UIPasteboard.general.string = item.url
+                                }) {
+                                    Image(systemName: "doc.on.doc")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(.secondary)
+                                        .padding(6)
+                                }
+                                .buttonStyle(BorderlessButtonStyle())
+
+                                Button(action: {
+                                    onDownloadItem(item)
+                                }) {
+                                    Text("下载")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 5)
+                                        .background(Color.blue)
+                                        .cornerRadius(6)
+                                }
+                                .buttonStyle(BorderlessButtonStyle())
+                            }
+                            .padding(.vertical, 2)
+                        }
+                    }
+                    .listStyle(PlainListStyle())
+                }
+            }
+            .navigationTitle("🐱 嗅探猫 (\(items.count))")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完成") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    private func copyAllUrls() {
+        guard !items.isEmpty else { return }
+        UIPasteboard.general.string = items.map { $0.url }.joined(separator: "\n")
+    }
+
+    private func badgeColor(for format: String) -> Color {
+        switch format {
+        case "M3U8": return .orange
+        case "MP4": return .blue
+        case "音频": return .green
+        case "WebM": return .purple
+        default: return .gray
+        }
+    }
+}
+
+/// 基于 WKWebView 的媒体嗅探桥接 (全面注入嗅探猫 Fetch/XHR/MediaElement 钩子脚本)
 struct RelayWebViewRepresentable: UIViewRepresentable {
     let url: URL
     let videoUrlToInject: String
@@ -591,7 +818,7 @@ struct RelayWebViewRepresentable: UIViewRepresentable {
             if let title = webView.title {
                 parent.onTitleChanged(title)
             }
-            injectSniffScript(webView)
+            injectCatCatchSniffScript(webView)
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
@@ -605,18 +832,95 @@ struct RelayWebViewRepresentable: UIViewRepresentable {
             decisionHandler(.allow)
         }
 
-        private func injectSniffScript(_ webView: WKWebView) {
+        private func injectCatCatchSniffScript(_ webView: WKWebView) {
             let js = """
             (function() {
-                function report(url) {
-                    if (url && url.startsWith('http')) {
-                        window.webkit.messageHandlers.OmniSniffer.postMessage({ url: url, title: document.title || '' });
+                if (window.__omniCatCatchInjected) return;
+                window.__omniCatCatchInjected = true;
+
+                function report(url, title) {
+                    if (url && typeof url === 'string' && url.startsWith('http')) {
+                        var lower = url.toLowerCase();
+                        var isMedia = lower.includes('.mp4') || lower.includes('.m3u8') ||
+                                      lower.includes('.m4a') || lower.includes('.mp3') ||
+                                      lower.includes('.webm') || lower.includes('.flv') ||
+                                      lower.includes('dl.snapcdn.app') || lower.includes('video.twimg.com') ||
+                                      lower.includes('googlevideo.com/videoplayback') || lower.includes('byteoversea.com') ||
+                                      lower.includes('ibytedtos.com') || lower.includes('tiktokcdn.com') ||
+                                      lower.includes('douyinvod.com') || lower.includes('snssdk.com') ||
+                                      lower.includes('yximgs.com') || lower.includes('xhscdn.com');
+                        var isApi = lower.includes('/api/') || lower.includes('/ajax/') || lower.includes('/extract/') || lower.includes('cnsimpleextract');
+                        if (isMedia && !isApi) {
+                            window.webkit.messageHandlers.OmniSniffer.postMessage({ url: url, title: title || document.title || '' });
+                        }
                     }
                 }
-                var videos = document.querySelectorAll('video, source');
-                for (var i = 0; i < videos.length; i++) {
-                    if (videos[i].src) report(videos[i].src);
+
+                // 1. Hook Fetch
+                try {
+                    var origFetch = window.fetch;
+                    if (origFetch) {
+                        window.fetch = function() {
+                            try {
+                                var reqUrl = typeof arguments[0] === 'string' ? arguments[0] : (arguments[0] && arguments[0].url ? arguments[0].url : '');
+                                if (reqUrl) report(reqUrl);
+                            } catch(e) {}
+                            return origFetch.apply(this, arguments);
+                        };
+                    }
+                } catch(e) {}
+
+                // 2. Hook XMLHttpRequest
+                try {
+                    var origOpen = XMLHttpRequest.prototype.open;
+                    XMLHttpRequest.prototype.open = function(method, url) {
+                        try {
+                            if (url && typeof url === 'string') report(url);
+                        } catch(e) {}
+                        return origOpen.apply(this, arguments);
+                    };
+                } catch(e) {}
+
+                // 3. Hook HTMLMediaElement
+                try {
+                    var origPlay = HTMLMediaElement.prototype.play;
+                    HTMLMediaElement.prototype.play = function() {
+                        try {
+                            var src = this.currentSrc || this.src;
+                            if (src) report(src);
+                        } catch(e) {}
+                        return origPlay.apply(this, arguments);
+                    };
+                } catch(e) {}
+
+                // 4. 定时扫描 DOM
+                function scanDOM() {
+                    try {
+                        var videos = document.querySelectorAll('video, audio, source');
+                        for (var i = 0; i < videos.length; i++) {
+                            var src = videos[i].src || videos[i].getAttribute('src') || videos[i].getAttribute('data-src') || '';
+                            if (src) report(src);
+                        }
+                    } catch(e) {}
                 }
+                scanDOM();
+                setInterval(scanDOM, 1500);
+
+                // 5. 挂载深度搜索函数
+                window.__omniDeepSearch = function() {
+                    scanDOM();
+                    var count = 0;
+                    try {
+                        var html = document.documentElement.innerHTML;
+                        var regex = /(https?:\/\/[^"'\s\\]+?\.(mp4|m3u8|m4a|mp3|flv|webm)(\?[^"'\s\\]*)?)/gi;
+                        var match;
+                        while ((match = regex.exec(html)) !== null) {
+                            report(match[1]);
+                            count++;
+                        }
+                    } catch(e) {}
+                    return count;
+                };
             })();
             """
             webView.evaluateJavaScript(js, completionHandler: nil)

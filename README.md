@@ -57,6 +57,11 @@
 
 ## 📝 Recent Changelog (v1.4.8)
 
+- **[NEW] 🐱 "Cat Catch" (嗅探猫) Professional Multi-Stream Sniffer Integration**:
+  - **Deep Network Hooks**: Injected Fetch, XMLHttpRequest, and HTMLMediaElement listeners into the built-in browser to automatically capture asynchronous media streams, M3U8 playlists, and direct CDN links.
+  - **Multi-Media Resource Drawer**: Replaced single-stream overwrite with an interactive Cat Catch resource manager panel, supporting badge counts, categorized format badges (MP4, M3U8, Audio, WebM, FLV), and batch copy.
+  - **Toolbox Features**: Integrated Deep Search (`__omniDeepSearch`) to probe hidden DOM nodes and inline scripts, one-click copy of all URLs, and per-item direct download queues.
+  - **Full Cross-Platform Alignment**: Implemented in both Android (`RelayBrowserDialog`) and Apple iOS (`RelayBrowserSheet`).
 - **[NEW] Relay Sites Architecture Revamp**:
   - Moved relay site management into the Settings tab; empty placeholder cards are cleanly hidden from the Home tab when no sites are configured.
   - Prioritized URL input with 700ms debounce asynchronous web title detection to auto-populate site names via low-bandwidth stream truncation.
@@ -70,8 +75,8 @@
   - Extracted 250ms progress and speed updates into isolated micro-composables.
   - Flattened `HomeScreen` to native `LazyColumn`, optimizing card measurement from 15ms to 0.2ms, and replaced off-screen tab keeping with `rememberSaveableStateHolder` to eliminate LTPO dynamic refresh rate conflicts.
 - **[ALIGN] Full Cross-Platform Alignment**:
-  - **Windows Desktop & Web**: Added `/api/relay-sites/fetch-title` endpoint, centralized settings UI, debounce title fetching, and direct stream decryption.
-  - **iOS Native**: Added `RelaySite` UserDefaults persistence in `CookieStore`, async stream title extraction in `UrlSniffer`, and synchronized Settings/Home views.
+  - **Windows Desktop & Web**: Added `/api/relay-sites/fetch-title` endpoint, centralized settings UI, debounce title fetching, direct stream decryption, and fixed button click responsiveness in web frontend.
+  - **iOS Native**: Added `RelaySite` UserDefaults persistence in `CookieStore`, async stream title extraction in `UrlSniffer`, and synchronized Settings/Home views with Cat Catch sniffer sheet.
 
 ---
 
