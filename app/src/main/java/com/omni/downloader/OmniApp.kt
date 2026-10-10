@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 class OmniApp : Application(), ImageLoaderFactory {
 
     companion object {
-        var appVersion: String = "1.4.7"
+        var appVersion: String = "1.4.8"
             private set
     }
 
@@ -54,7 +54,7 @@ class OmniApp : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         try {
-            appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "1.4.7"
+            appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "1.4.8"
         } catch (_: Exception) {}
 
         // 后台异步预热初始化核心下载引擎，避免阻塞启动并提前解压
