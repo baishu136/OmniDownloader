@@ -10,7 +10,7 @@
 </p>
 
 [![Release](https://img.shields.io/github/v/release/baishu136/OmniDownloader?color=blue&label=Release)](https://github.com/baishu136/OmniDownloader/releases)
-[![Android](https://img.shields.io/badge/Android-v1.4.7-green.svg)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-v1.4.8-green.svg)](https://developer.android.com)
 [![iOS](https://img.shields.io/badge/iOS-SwiftUI%20Native-orange.svg)](OmniDownloader-iOS)
 [![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
@@ -25,7 +25,7 @@
 
 | 平台形态 | 适用设备 | 核心技术栈 | 获取与安装方式 |
 | :--- | :--- | :--- | :--- |
-| **🤖 Android 原生版** | Android 手机 / 平板 / 车机 / 电视 (Android 8.0+) | Kotlin + Jetpack Compose + FFmpegKit + Aria2c | [下载最新 APK (v1.4.7)](OmniDownloader_LATEST.apk) 或 Releases 页面 |
+| **🤖 Android 原生版** | Android 手机 / 平板 / 车机 / 电视 (Android 8.0+) | Kotlin + Jetpack Compose + FFmpegKit + Aria2c | [下载最新 APK (v1.4.8)](OmniDownloader_LATEST.apk) 或 Releases 页面 |
 | **🍎 iOS 原生版** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + AVFoundation 原生硬件混流 + Photos 相簿 | 源码工程在 [`OmniDownloader-iOS`](OmniDownloader-iOS)，支持 GitHub Actions 免费打包 IPA 并通过 TrollStore 巨魔或自签侧载 |
 | **💻 Windows 桌面版** | Windows 10 / 11 (64位) | Python 3 + FastAPI + Edge WebView2 原生独立窗口 + 内置 FFmpeg | 下载 [`windows/release/OmniDownloader_桌面独立版.zip`](windows/release/)，免环境解压即用，附带多国语言说明 |
 | **🌐 Web 网页纯后台版** | Windows 电脑，支持局域网内任意手机/平板浏览器访问 | 轻量托盘守护进程 + 本地 Web 服务 + 内置 FFmpeg | 下载 [`windows/release/OmniDownloader_网页纯后台版.zip`](windows/release/)，静默常驻托盘，支持浏览器原生接管下载 |
@@ -68,7 +68,7 @@
 ## 📲 快速下载安装
 
 ### Android 安装包
-- 📦 **[`OmniDownloader_LATEST.apk`](OmniDownloader_LATEST.apk)**（或最新版 [`OmniDownloader-v1.4.7-debug.apk`](OmniDownloader-v1.4.7-debug.apk)）：直接安装至安卓手机。
+- 📦 **[`OmniDownloader_LATEST.apk`](OmniDownloader_LATEST.apk)**（或最新版 [`OmniDownloader-v1.4.8-debug.apk`](OmniDownloader-v1.4.8-debug.apk)）：直接安装至安卓手机。
 - 📦 **[`OmniDownloader_Source_LATEST.zip`](OmniDownloader_Source_LATEST.zip)**：完整工程源码归档。
 
 ### iOS 原生工程与打包
@@ -82,7 +82,27 @@
 
 ---
 
-## 📝 最近更新日志 (v1.4.7)
+## 📝 最近更新日志 (v1.4.8)
+
+- **[NEW] 备用中转解析站体验与架构重构**：
+  - 添加入口规范迁移至【设置】中心集中管理，主页未添加中转站时完全移除空卡片占位；
+  - 添加中转站时【网址输入框】置顶，支持 700ms 防抖自动异步拉取网页 `<title>` 并智能回填网站名称；
+  - 恢复旧版“就地静默解析直接下载”主通道，同时保留“窗口排查（浏览器）”作为处理人机验证的逃生通道；
+  - 针对 `greenvideo.cc` 等 SPA 架构站点实现 URL 参数原生注入与 Pinia 状态树自动化触发。
+- **[SEC & FIX] 网络嗅探与下载引擎深度防御**：
+  - **彻底修复 HTTP 405 (Method Not Allowed) 报错**：严格排除内部 API 接口路由，严禁向仅支持 POST 的接口发 GET 下载请求；
+  - **彻底修复 MT 管理器等播放器报 source error 无法播放问题**：增加二进制 Magic Bytes 文件头核验，杜绝将 HTML/JSON 保存为 MP4；支持 HLS/M3U8 自动检测并调度 FFmpeg 高速无损封装为 MP4；支持 JWT Base64 直链深度解包。
+- **[PERF] 列表渲染与滑动 120fps/60fps 满帧性能治理**：
+  - `DownloadTask` 全面重构为完全不可变 Stable 数据类，达成 100% 重组跳过（Recomposition Skip）；
+  - 任务下载进度高频（250ms）刷新独立抽离为微组件隔离，杜绝整屏卡片连带重绘；
+  - 主页重构为扁平化原生 `LazyColumn`，中转卡片单项测量由 15ms 极致精简至 0.2ms；移除非标准负坐标伪保活，完美契合系统 LTPO 动态高刷新率调度。
+- **[ALIGN] Windows 端与 iOS 端全面对齐**：
+  - **Windows 客户端**：后端新增 `/api/relay-sites/fetch-title` 异步流式标题探测路由；前端设置页集中管理中转站与防抖自动抓取标题；同步引入 JWT 直链解密与防 405 拦截。
+  - **iOS 原生客户端**：`CookieStore` 支持中转站持久化，`UrlSniffer` 扩展异步流式标题提取与媒体格式判定，设置页与主页对齐中转站管理与原生嗅探弹窗。
+
+---
+
+## 📝 历史更新日志 (v1.4.7)
 
 - **[NEW] 全新发布 Apple iOS 原生版**：SwiftUI + 纯原生 AVFoundation 硬件加速音视频混流，自动存入系统照片相簿，支持后台持久下载与 Actions 免费云端打包。
 - **[NEW] 网页版与桌面 EXE 版多国语言指南**：界面新增多语言使用说明模态框，打包压缩包内集成中/繁/英/日 4 国语言离线使用手册。
