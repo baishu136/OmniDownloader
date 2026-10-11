@@ -71,6 +71,7 @@ class DownloadService : Service() {
         createNotificationChannel()
     }
 
+    @Synchronized
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action
         when (action) {
@@ -92,6 +93,7 @@ class DownloadService : Service() {
                 repository.updateTaskProgress(taskId, 0f, "", "", TaskStatus.CANCELLED)
                 if (taskQueue.isEmpty() && currentRunningTaskId == null) {
                     releaseWakeLock()
+                    stopForeground(STOP_FOREGROUND_REMOVE)
                 }
             }
             ACTION_CANCEL_ALL -> {
@@ -100,19 +102,20 @@ class DownloadService : Service() {
                     currentRunningTaskId = null
                 }
                 taskQueue.clear()
-                isProcessing = false
+                // 保留工作协程的占用状态，等待取消退出后再启动新任务。
                 releaseWakeLock()
-                stopForeground(STOP_FOREGROUND_DETACH)
+                stopForeground(STOP_FOREGROUND_REMOVE)
             }
         }
         return START_NOT_STICKY
     }
 
+    @Synchronized
     private fun processNextTask() {
         if (isProcessing) return
         val next = taskQueue.poll() ?: run {
             releaseWakeLock()
-            stopForeground(STOP_FOREGROUND_DETACH)
+            stopForeground(STOP_FOREGROUND_REMOVE)
             return
         }
 
@@ -127,42 +130,51 @@ class DownloadService : Service() {
             var lastProgressUpdateTime = 0L
 
             val result = DownloadEngine.executeDownload(applicationContext, next, proxy) { progress, speed, eta, status ->
-                val now = android.os.SystemClock.elapsedRealtime()
+                synchronized(this@DownloadService) {
+                    // 取消后忽略引擎迟到的回调，避免重新挂上已移除的进度通知。
+                    if (currentRunningTaskId != next.id) return@executeDownload
+                    val now = android.os.SystemClock.elapsedRealtime()
 
-                // 1. UI 状态节流：至少间隔 250ms 更新一次，消除高频重组争抢主线程算力（每秒4次，视觉平滑且降低60%布局测量耗时）
-                if (now - lastProgressUpdateTime >= 250 || status != TaskStatus.DOWNLOADING) {
-                    lastProgressUpdateTime = now
-                    repository.updateTaskProgress(next.id, progress, speed, eta, status)
-                }
-
-                // 2. 系统通知 Binder 节流：至少间隔 600ms 更新一次，彻底消除跨进程 IPC 造成的全局掉帧
-                if (now - lastNotificationTime >= 600 || status != TaskStatus.DOWNLOADING) {
-                    lastNotificationTime = now
-                    val statusText = if (status == TaskStatus.PROCESSING) {
-                        "正在合并音视频..."
-                    } else {
-                        "$speed ${if (eta.isNotEmpty()) "· 剩余 $eta" else ""}"
+                    // UI 状态节流；处理与终态立即更新。
+                    if (now - lastProgressUpdateTime >= 250 || status != TaskStatus.DOWNLOADING) {
+                        lastProgressUpdateTime = now
+                        repository.updateTaskProgress(next.id, progress, speed, eta, status)
                     }
-                    notificationManager.notify(NOTIFICATION_ID, buildProgressNotification(next, progress, statusText))
+
+                    // 只为进行中的任务发布进度通知，完成回调不再写入“正在下载”。
+                    if ((status == TaskStatus.DOWNLOADING || status == TaskStatus.PROCESSING) &&
+                        (now - lastNotificationTime >= 600 || status != TaskStatus.DOWNLOADING)) {
+                        lastNotificationTime = now
+                        val statusText = if (status == TaskStatus.PROCESSING) {
+                            eta.ifBlank { "正在处理媒体..." }
+                        } else {
+                            "$speed ${if (eta.isNotEmpty()) "· 剩余 $eta" else ""}"
+                        }
+                        notificationManager.notify(NOTIFICATION_ID, buildProgressNotification(next, progress, statusText, status))
+                    }
                 }
             }
 
-            result.onSuccess { finalPath ->
-                repository.markCompleted(next.id, finalPath)
-                // 通知系统媒体库扫描索引该文件
-                MediaScannerConnection.scanFile(
-                    applicationContext,
-                    arrayOf(finalPath),
-                    null
-                ) { _, _ -> }
-                showCompletedNotification(next)
-            }.onFailure { err ->
-                repository.markFailed(next.id, err.message ?: "下载过程中遇到错误")
-            }
+            synchronized(this@DownloadService) {
+                // 已取消的任务不再发布完成通知，也不覆盖 CANCELLED 状态。
+                if (currentRunningTaskId == next.id) {
+                    result.onSuccess { finalPath ->
+                        repository.markCompleted(next.id, finalPath)
+                        MediaScannerConnection.scanFile(
+                            applicationContext,
+                            arrayOf(finalPath),
+                            null
+                        ) { _, _ -> }
+                        showCompletedNotification(next)
+                    }.onFailure { err ->
+                        repository.markFailed(next.id, err.message ?: "下载过程中遇到错误")
+                    }
+                }
 
-            isProcessing = false
-            currentRunningTaskId = null
-            processNextTask()
+                isProcessing = false
+                currentRunningTaskId = null
+                processNextTask()
+            }
         }
     }
 
@@ -180,10 +192,15 @@ class DownloadService : Service() {
         }
     }
 
-    private fun buildProgressNotification(task: DownloadTask, progress: Float, subText: String) =
+    private fun buildProgressNotification(
+        task: DownloadTask,
+        progress: Float,
+        subText: String,
+        status: TaskStatus = TaskStatus.DOWNLOADING
+    ) =
         NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("正在下载: ${task.title}")
+            .setContentTitle("${if (status == TaskStatus.PROCESSING) "正在处理" else "正在下载"}: ${task.title}")
             .setContentText(subText)
             .setProgress(100, progress.toInt(), progress <= 0f)
             .setOngoing(true)
