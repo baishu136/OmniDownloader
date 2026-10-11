@@ -162,7 +162,7 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     supportedPlatforms.forEach { (name, color) ->
-                        PlatformChip(name = name, color = color)
+                        PlatformChip(name = name, color = if (name == "抖音") MaterialTheme.colorScheme.onSurface else color)
                     }
                 }
             }

@@ -46,6 +46,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val proxyUrl: StateFlow<String> = settingsRepository.proxyUrl
     val downloadPath: StateFlow<String> = settingsRepository.downloadPath
     val appLanguage: StateFlow<String> = settingsRepository.appLanguage
+    val themeMode: StateFlow<String> = settingsRepository.themeMode
+
+    fun setThemeMode(mode: String) = settingsRepository.setThemeMode(mode)
     val bilibiliCookie: StateFlow<String> = settingsRepository.bilibiliCookie
     val hasPromptedBilibiliLogin: StateFlow<Boolean> = settingsRepository.hasPromptedBilibiliLogin
     val hasShownRelayCompatTip: StateFlow<Boolean> = settingsRepository.hasShownRelayCompatTip
