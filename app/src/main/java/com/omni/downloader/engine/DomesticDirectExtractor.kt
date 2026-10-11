@@ -1,23 +1,21 @@
 package com.omni.downloader.engine
 
 import android.content.Context
-import android.os.SystemClock
 import android.util.Log
 import com.omni.downloader.data.model.DownloadTask
-import com.omni.downloader.data.model.DownloadType
 import com.omni.downloader.data.model.FormatOption
 import com.omni.downloader.data.model.TaskStatus
 import com.omni.downloader.data.model.VideoMetadata
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import okhttp3.Cookie
+import okhttp3.CookieJar
+import okhttp3.HttpUrl
 import okhttp3.Request
 import org.json.JSONObject
 import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
 import java.net.URLDecoder
-import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
@@ -36,6 +34,17 @@ object DomesticDirectExtractor {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
     private val httpClient = OkHttpClient.Builder()
+        .cookieJar(object : CookieJar {
+            private val sessionCookies = mutableListOf<Cookie>()
+            @Synchronized
+            override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+                sessionCookies.removeAll { old -> old.expiresAt <= System.currentTimeMillis() || cookies.any { it.name == old.name && it.domain == old.domain && it.path == old.path } }
+                sessionCookies.addAll(cookies)
+            }
+            @Synchronized
+            override fun loadForRequest(url: HttpUrl): List<Cookie> =
+                sessionCookies.filter { it.expiresAt > System.currentTimeMillis() && it.matches(url) }
+        })
         .followRedirects(true)
         .followSslRedirects(true)
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -121,8 +130,10 @@ object DomesticDirectExtractor {
                 .url(apiUrl)
                 .header("User-Agent", MOBILE_UA)
                 .build()
-            val resp = httpClient.newCall(req).execute()
-            val body = resp.body?.string() ?: return null
+            val body = httpClient.newCall(req).execute().use { response ->
+                if (!response.isSuccessful) return null
+                response.body?.string()
+            } ?: return null
             val json = JSONObject(body)
             val awemeList = json.optJSONArray("aweme_list") ?: return null
 
@@ -238,7 +249,7 @@ object DomesticDirectExtractor {
 
         val routerMatcher = Pattern.compile("""window\._ROUTER_DATA\s*=\s*(\{.*?\});\s*</script>""").matcher(html)
         if (routerMatcher.find()) {
-            val jsonStr = routerMatcher.group(1)
+            val jsonStr = routerMatcher.group(1).orEmpty()
             try {
                 val playMatcher = Pattern.compile(""""play_addr"\s*:\s*\{[^}]*?"url_list"\s*:\s*\[\s*"([^"]+)"""").matcher(jsonStr)
                 if (playMatcher.find()) {
@@ -479,108 +490,26 @@ object DomesticDirectExtractor {
         task: DownloadTask,
         stagingDir: File,
         publicDir: File,
-        onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit
+        onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit,
+        proxyUrl: String = ""
     ): Result<String> = withContext(Dispatchers.IO) {
         val cleanUrl = UrlSniffer.sanitizeAndResolveUrl(task.url)
-        val streamInfo = directStreamCache[cleanUrl] ?: directStreamCache[task.url]
-
-        val targetDownloadUrl = if (streamInfo != null && streamInfo.videoUrl.isNotEmpty()) {
-            streamInfo.videoUrl
-        } else if (task.selectedResolution.startsWith("http")) {
-            task.selectedResolution
-        } else {
-            // 如果缓存丢失，尝试重新解析一次
-            val site = UrlSniffer.identifySite(cleanUrl)
-            val reExtract = extract(cleanUrl, site)
-            if (reExtract.isSuccess) {
-                val meta = reExtract.getOrNull()
-                meta?.availableVideoFormats?.firstOrNull()?.formatId ?: ""
-            } else {
-                ""
-            }
+        val site = UrlSniffer.identifySite(cleanUrl)
+        val cached = directStreamCache[cleanUrl] ?: directStreamCache[task.url]
+        val mediaUrl = task.directMediaUrl.ifBlank {
+            task.selectedResolution.takeIf { it.startsWith("http") }
+                ?: cached?.videoUrl?.takeIf { it.isNotBlank() }
+                ?: extract(cleanUrl, site).getOrElse { return@withContext Result.failure(it) }
+                    .availableVideoFormats.firstOrNull()?.formatId.orEmpty()
         }
-
-        if (targetDownloadUrl.isEmpty() || !targetDownloadUrl.startsWith("http")) {
-            return@withContext Result.failure(Exception("未找到有效的直接下载链接"))
+        if (!mediaUrl.startsWith("http")) {
+            return@withContext Result.failure(Exception("未找到有效的国内媒体直链，请重新解析链接"))
         }
-
-        val cleanTitle = task.title.replace(Regex("""[\\/:*?"<>|]"""), "_").trim()
-        val isAudio = task.downloadType == DownloadType.AUDIO_ONLY
-        val ext = if (isAudio) "mp3" else "mp4"
-        val tempFile = File(stagingDir, "domestic_${task.id}.$ext")
-        val finalFile = File(publicDir, "$cleanTitle.$ext")
-
-        try {
-            onProgressUpdate(5f, "", "准备极速下载...", TaskStatus.DOWNLOADING)
-
-            val reqBuilder = Request.Builder().url(targetDownloadUrl)
-            streamInfo?.headers?.forEach { (k, v) ->
-                reqBuilder.header(k, v)
-            }
-            if (streamInfo?.headers?.containsKey("User-Agent") != true) {
-                reqBuilder.header("User-Agent", MOBILE_UA)
-            }
-
-            val response = httpClient.newCall(reqBuilder.build()).execute()
-            if (!response.isSuccessful) {
-                return@withContext Result.failure(IOException("HTTP 请求失败: ${response.code}"))
-            }
-
-            val body = response.body ?: return@withContext Result.failure(IOException("响应体为空"))
-            val totalBytes = body.contentLength()
-            var downloadedBytes = 0L
-
-            var lastReportTime = SystemClock.elapsedRealtime()
-            var bytesSinceLastReport = 0L
-
-            body.byteStream().use { input ->
-                FileOutputStream(tempFile).use { output ->
-                    val buffer = ByteArray(64 * 1024)
-                    var read: Int
-                    while (input.read(buffer).also { read = it } != -1) {
-                        output.write(buffer, 0, read)
-                        downloadedBytes += read
-                        bytesSinceLastReport += read
-
-                        val now = SystemClock.elapsedRealtime()
-                        if (now - lastReportTime >= 400) {
-                            val timeDiffSec = (now - lastReportTime) / 1000f
-                            val speedBytesPerSec = if (timeDiffSec > 0) bytesSinceLastReport / timeDiffSec else 0f
-                            val speedStr = formatSpeed(speedBytesPerSec)
-
-                            val progress = if (totalBytes > 0) {
-                                (downloadedBytes.toFloat() / totalBytes * 100f).coerceIn(0f, 99f)
-                            } else 50f
-
-                            val etaStr = if (totalBytes > downloadedBytes && speedBytesPerSec > 0) {
-                                val remainingSec = ((totalBytes - downloadedBytes) / speedBytesPerSec).toLong()
-                                formatEta(remainingSec)
-                            } else ""
-
-                            onProgressUpdate(progress, speedStr, etaStr, TaskStatus.DOWNLOADING)
-                            lastReportTime = now
-                            bytesSinceLastReport = 0L
-                        }
-                    }
-                    output.flush()
-                }
-            }
-
-            onProgressUpdate(99f, "", "正在保存到媒体库...", TaskStatus.PROCESSING)
-            tempFile.copyTo(finalFile, overwrite = true)
-            tempFile.delete()
-
-            try {
-                android.media.MediaScannerConnection.scanFile(context, arrayOf(finalFile.absolutePath), null, null)
-            } catch (ignored: Exception) {}
-
-            onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
-            Result.success(finalFile.absolutePath)
-        } catch (e: Exception) {
-            tempFile.delete()
-            onProgressUpdate(0f, "", "", TaskStatus.FAILED)
-            Result.failure(e)
-        }
+        val headers = DomesticMediaSource.headers(site) + cached?.headers.orEmpty() + task.directMediaHeaders
+        // 共用已有的取消、重试、媒体校验和后处理，不能将视频简单改名为音频。
+        DownloadEngine.downloadDirectMediaStream(
+            context, task, mediaUrl, proxyUrl, stagingDir, publicDir, onProgressUpdate, headers
+        )
     }
 
     private fun followRedirects(startUrl: String, userAgent: String): String {
@@ -589,8 +518,7 @@ object DomesticDirectExtractor {
                 .url(startUrl)
                 .header("User-Agent", userAgent)
                 .build()
-            val resp = httpClient.newCall(req).execute()
-            resp.request.url.toString()
+            httpClient.newCall(req).execute().use { it.request.url.toString() }
         } catch (e: Exception) {
             startUrl
         }
@@ -602,25 +530,10 @@ object DomesticDirectExtractor {
                 .url(url)
                 .header("User-Agent", userAgent)
                 .build()
-            val resp = httpClient.newCall(req).execute()
-            resp.body?.string() ?: ""
+            httpClient.newCall(req).execute().use { if (it.isSuccessful) it.body?.string().orEmpty() else "" }
         } catch (e: Exception) {
             ""
         }
     }
 
-    private fun formatSpeed(bytesPerSec: Float): String {
-        return when {
-            bytesPerSec >= 1024 * 1024 -> String.format(Locale.getDefault(), "%.1f MB/s", bytesPerSec / (1024 * 1024))
-            bytesPerSec >= 1024 -> String.format(Locale.getDefault(), "%.1f KB/s", bytesPerSec / 1024)
-            else -> String.format(Locale.getDefault(), "%d B/s", bytesPerSec.toInt())
-        }
-    }
-
-    private fun formatEta(seconds: Long): String {
-        if (seconds <= 0) return ""
-        val m = seconds / 60
-        val s = seconds % 60
-        return if (m > 0) "${m}分${s}秒" else "${s}秒"
-    }
 }

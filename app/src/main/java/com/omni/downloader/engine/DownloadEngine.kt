@@ -115,6 +115,7 @@ object DownloadEngine {
         rawUrl: String,
         proxyUrl: String = ""
     ): Result<VideoMetadata> = withContext(Dispatchers.IO) {
+        var nativeFailure: String? = null
         val cleanUrl = UrlSniffer.sanitizeAndResolveUrl(rawUrl)
         val site = UrlSniffer.identifySite(cleanUrl)
 
@@ -147,6 +148,7 @@ object DownloadEngine {
                 return@withContext domesticResult
             }
             Log.w(TAG, "$site 原生解析未命中，将降级尝试通用规则引擎: ${domesticResult.exceptionOrNull()?.message}")
+            nativeFailure = domesticResult.exceptionOrNull()?.message
         }
 
         // 4. 通用与海外平台走健壮版 yt-dlp 引擎
@@ -198,6 +200,8 @@ object DownloadEngine {
                     "抖音" -> {
                         addOption("--add-header", "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15")
                         addOption("--add-header", "Referer:https://www.douyin.com/")
+                        val cookie = try { CookieManager.getInstance().getCookie("https://www.douyin.com/") } catch (_: Exception) { null }
+                        if (!cookie.isNullOrBlank()) addOption("--add-header", "Cookie:$cookie")
                     }
                     "快手" -> {
                         addOption("--add-header", "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15")
@@ -221,7 +225,7 @@ object DownloadEngine {
         } catch (e: Exception) {
             val errorMsg = formatDetailedError(e)
             Log.e(TAG, "yt-dlp 解析报错: $errorMsg", e)
-            Result.failure(Exception(errorMsg, e))
+            Result.failure(Exception(nativeFailure?.let { "原生解析失败: $it；通用引擎失败: $errorMsg" } ?: errorMsg, e))
         }
     }
 
@@ -341,11 +345,13 @@ object DownloadEngine {
         proxyUrl: String = "",
         onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit
     ): Result<String> = withContext(Dispatchers.IO) {
+        cancelledTaskIds.remove(task.id)
         val cleanUrl = UrlSniffer.sanitizeAndResolveUrl(task.url)
         val site = UrlSniffer.identifySite(cleanUrl)
 
         val publicDir = getDownloadDir(context).apply { mkdirs() }
         val stagingDir = File(context.cacheDir, "staging").apply { mkdirs() }
+        var domesticFailure: String? = null
 
         // 0. 保存封面专属逻辑
         if (task.downloadType == DownloadType.COVER) {
@@ -358,6 +364,20 @@ object DownloadEngine {
                 publicDir = publicDir,
                 onProgressUpdate = onProgressUpdate
             )
+        }
+
+        // 国内平台先复用任务中的完整媒体源，所有导出类型走同一下载/后处理链。
+        if (DomesticDirectExtractor.isSupported(site)) {
+            val result = DomesticDirectExtractor.download(
+                context, task, stagingDir, publicDir, onProgressUpdate, proxyUrl
+            )
+            if (result.isSuccess) return@withContext result
+            domesticFailure = result.exceptionOrNull()?.message
+            if (task.directMediaUrl.isNotBlank() || task.selectedResolution.startsWith("http")) {
+                // 已经拿到媒体源时保留下载/转码的真实错误，不能重新解析页面掩盖它。
+                return@withContext result
+            }
+            Log.w(TAG, "$site 原生通道失败，尝试通用引擎: $domesticFailure")
         }
 
         // 0.5 中转站直链或媒体直接下载链接，优先走 OkHttp 高速流式下载 (彻底避免 yt-dlp 启动开销与超长文件名报错)
@@ -452,21 +472,6 @@ object DownloadEngine {
             Log.w(TAG, "TikTok 原生直连下载失败，尝试通用规则引擎下载: ${tiktokResult.exceptionOrNull()?.message}")
         }
 
-        // 3. 国内短视频平台（抖音、快手、小红书）原生极速下载
-        if (DomesticDirectExtractor.isSupported(site) && (task.selectedResolution.startsWith("http") || task.selectedResolution.contains("原画") || task.downloadType == DownloadType.AUDIO_ONLY)) {
-            val domesticResult = DomesticDirectExtractor.download(
-                context = context,
-                task = task,
-                stagingDir = stagingDir,
-                publicDir = publicDir,
-                onProgressUpdate = onProgressUpdate
-            )
-            if (domesticResult.isSuccess) {
-                return@withContext domesticResult
-            }
-            Log.w(TAG, "$site 原生直接下载失败，尝试通用规则引擎下载: ${domesticResult.exceptionOrNull()?.message}")
-        }
-
         // 4. 通用与海外媒体走 yt-dlp 引擎
         val initResult = ensureInitialized(context)
         if (initResult.isFailure) {
@@ -518,6 +523,8 @@ object DownloadEngine {
                     "抖音" -> {
                         addOption("--add-header", "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15")
                         addOption("--add-header", "Referer:https://www.douyin.com/")
+                        val cookie = try { CookieManager.getInstance().getCookie("https://www.douyin.com/") } catch (_: Exception) { null }
+                        if (!cookie.isNullOrBlank()) addOption("--add-header", "Cookie:$cookie")
                     }
                     "快手" -> {
                         addOption("--add-header", "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15")
@@ -725,7 +732,7 @@ object DownloadEngine {
         } catch (e: Exception) {
             val errorMsg = formatDetailedError(e)
             onProgressUpdate(0f, "", "", TaskStatus.FAILED)
-            Result.failure(Exception(errorMsg, e))
+            Result.failure(Exception(domesticFailure?.let { "原生通道失败: $it；通用引擎失败: $errorMsg" } ?: errorMsg, e))
         }
     }
 
@@ -826,23 +833,12 @@ object DownloadEngine {
         proxyUrl: String = "",
         stagingDir: File,
         publicDir: File,
-        onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit
+        onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit,
+        requestHeaders: Map<String, String> = emptyMap()
     ): Result<String> = withContext(Dispatchers.IO) {
         onProgressUpdate(10f, "", "检测到 HLS/M3U8 分片流，正在拉取分片并合成 MP4...", TaskStatus.DOWNLOADING)
 
-        val cleanTitle = task.title
-            .replace(Regex("""[\\/:*?"<>|]"""), "_")
-            .trim()
-            .ifBlank { "OmniVideo_${System.currentTimeMillis()}" }
-        val safeTitle = if (cleanTitle.length > 60) cleanTitle.take(60) else cleanTitle
         val tempFile = File(stagingDir, "m3u8_${task.id}.mp4")
-
-        var destFile = File(publicDir, "$safeTitle.mp4")
-        var counter = 1
-        while (destFile.exists()) {
-            destFile = File(publicDir, "${safeTitle}_$counter.mp4")
-            counter++
-        }
 
         // 优先使用本地 FFmpeg 组件直转
         val ffmpeg = FFmpegExecutor.getFFmpegBinary(context)
@@ -852,16 +848,17 @@ object DownloadEngine {
                 CookieManager.getInstance().getCookie(m3u8Url) ?: ""
             } catch (_: Exception) { "" }
 
-            val headersSb = StringBuilder()
-            headersSb.append("User-Agent: Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36\r\n")
-            if (referer.isNotBlank()) headersSb.append("Referer: $referer\r\n")
-            if (cookie.isNotBlank()) headersSb.append("Cookie: $cookie\r\n")
-            if (m3u8Url.contains("greenvideo.cc")) headersSb.append("KdSystem: GreenVideo\r\n")
+            val headers = mutableMapOf("User-Agent" to "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36")
+            if (referer.isNotBlank()) headers["Referer"] = referer
+            if (cookie.isNotBlank()) headers["Cookie"] = cookie
+            if (m3u8Url.contains("greenvideo.cc")) headers["KdSystem"] = "GreenVideo"
+            headers.putAll(requestHeaders)
+            val headersText = headers.entries.joinToString("") { "${it.key}: ${it.value}\r\n" }
 
             val commands = mutableListOf(
                 ffmpeg.absolutePath,
                 "-y",
-                "-headers", headersSb.toString()
+                "-headers", headersText
             )
             if (proxyUrl.isNotBlank()) {
                 val cleanProxy = proxyUrl.trim()
@@ -880,13 +877,7 @@ object DownloadEngine {
 
             val ffmpegRes = FFmpegExecutor.executeCommand(context, commands)
             if (ffmpegRes.isSuccess && tempFile.exists() && tempFile.length() > 4096) {
-                tempFile.copyTo(destFile, overwrite = true)
-                tempFile.delete()
-                try {
-                    MediaScannerConnection.scanFile(context, arrayOf(destFile.absolutePath), arrayOf("video/mp4"), null)
-                } catch (_: Exception) {}
-                onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
-                return@withContext Result.success(destFile.absolutePath)
+                return@withContext finishDirectMedia(context, task, tempFile, stagingDir, publicDir, onProgressUpdate)
             }
             Log.w(TAG, "FFmpeg 直接拉取 M3U8 未完成，尝试 yt-dlp 原生通道: ${ffmpegRes.exceptionOrNull()?.message}")
         }
@@ -904,6 +895,7 @@ object DownloadEngine {
                 addOption("--no-mtime")
                 addOption("--retries", "10")
                 if (proxyUrl.isNotBlank()) addOption("--proxy", proxyUrl.trim())
+                requestHeaders.forEach { (name, value) -> addOption("--add-header", "$name:$value") }
             }
             try {
                 YoutubeDL.getInstance().execute(request, task.id) { progress, etaInSeconds, line ->
@@ -913,13 +905,7 @@ object DownloadEngine {
                 }
                 val staged = findGeneratedFile(stagingDir, task.id, null)
                 if (staged != null && staged.exists() && staged.length() > 4096) {
-                    staged.copyTo(destFile, overwrite = true)
-                    staged.delete()
-                    try {
-                        MediaScannerConnection.scanFile(context, arrayOf(destFile.absolutePath), arrayOf("video/mp4"), null)
-                    } catch (_: Exception) {}
-                    onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
-                    return@withContext Result.success(destFile.absolutePath)
+                    return@withContext finishDirectMedia(context, task, staged, stagingDir, publicDir, onProgressUpdate)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "yt-dlp 拉取 M3U8 失败: ${e.message}", e)
@@ -932,14 +918,15 @@ object DownloadEngine {
     /**
      * 直接通过 OkHttp 执行网络音视频直链的高速流式下载 (跳过 yt-dlp，支持断点/平滑速率/避免超长文件名报错)
      */
-    private suspend fun downloadDirectMediaStream(
+    internal suspend fun downloadDirectMediaStream(
         context: Context,
         task: DownloadTask,
         targetUrl: String,
         proxyUrl: String = "",
         stagingDir: File,
         publicDir: File,
-        onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit
+        onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit,
+        requestHeaders: Map<String, String> = emptyMap()
     ): Result<String> = withContext(Dispatchers.IO) {
         // 前置判定：如果是 M3U8 流，直接重定向至 M3U8 专业下载管线，绝不以原始文本落盘！
         if (UrlSniffer.isM3u8Url(targetUrl)) {
@@ -951,30 +938,13 @@ object DownloadEngine {
                 proxyUrl = proxyUrl,
                 stagingDir = stagingDir,
                 publicDir = publicDir,
-                onProgressUpdate = onProgressUpdate
+                onProgressUpdate = onProgressUpdate,
+                requestHeaders = requestHeaders
             )
         }
 
-        val isAudio = task.downloadType == DownloadType.AUDIO_ONLY
-        val ext = if (isAudio) "mp3" else "mp4"
-
-        // 规范化文件名，截断为安全长度（小于60字符，彻底杜绝 Linux 文件系统 255 字节超长报错）
-        val cleanTitle = task.title
-            .replace(Regex("""[\\/:*?"<>|]"""), "_")
-            .trim()
-            .ifBlank { "OmniVideo_${System.currentTimeMillis()}" }
-        val safeTitle = if (cleanTitle.length > 60) cleanTitle.take(60) else cleanTitle
-
-        val tempFile = File(stagingDir, "direct_${task.id}.$ext")
-
-        var finalFile = File(publicDir, "$safeTitle.$ext")
-        var counter = 1
-        while (finalFile.exists()) {
-            finalFile = File(publicDir, "${safeTitle}_$counter.$ext")
-            counter++
-        }
-
-        cancelledTaskIds.remove(task.id)
+        // 先保存源媒体，实际输出扩展名由后处理决定。
+        val tempFile = File(stagingDir, "direct_${task.id}.media")
 
         val clientBuilder = OkHttpClient.Builder()
             .followRedirects(true)
@@ -1033,6 +1003,7 @@ object DownloadEngine {
                 if (targetUrl.contains("greenvideo.cc")) {
                     reqBuilder.header("KdSystem", "GreenVideo")
                 }
+                requestHeaders.forEach { (name, value) -> reqBuilder.header(name, value) }
 
                 // 支持 HTTP Range 断点续传
                 if (existingBytes > 0) {
@@ -1176,9 +1147,11 @@ object DownloadEngine {
             }
         }
 
-        if (lastException != null && (!tempFile.exists() || tempFile.length() == 0L)) {
-            Log.e(TAG, "直链下载彻底失败: ${lastException.message}", lastException)
-            val msg = formatDetailedError(lastException)
+        if (lastException != null || cancelledTaskIds.contains(task.id)) {
+            tempFile.delete()
+            val failure = lastException ?: IOException("下载已取消")
+            Log.e(TAG, "直链下载彻底失败: ${failure.message}", failure)
+            val msg = formatDetailedError(failure)
             onProgressUpdate(0f, "", "", TaskStatus.FAILED)
             return@withContext Result.failure(Exception(msg, lastException))
         }
@@ -1200,7 +1173,8 @@ object DownloadEngine {
                 proxyUrl = proxyUrl,
                 stagingDir = stagingDir,
                 publicDir = publicDir,
-                onProgressUpdate = onProgressUpdate
+                onProgressUpdate = onProgressUpdate,
+                requestHeaders = requestHeaders
             )
         }
 
@@ -1214,24 +1188,57 @@ object DownloadEngine {
             return@withContext Result.failure(Exception(errMsg))
         }
 
+        finishDirectMedia(context, task, tempFile, stagingDir, publicDir, onProgressUpdate)
+    }
+
+    private suspend fun finishDirectMedia(
+        context: Context,
+        task: DownloadTask,
+        source: File,
+        stagingDir: File,
+        publicDir: File,
+        onProgressUpdate: (Float, String, String, TaskStatus) -> Unit
+    ): Result<String> {
+        val ext = when (task.downloadType) {
+            DownloadType.AUDIO_ONLY -> task.audioFormat.ext
+            DownloadType.GIF -> "gif"
+            else -> "mp4"
+        }
+        val title = task.title.replace(Regex("""[\\/:*?"<>|]"""), "_").trim()
+            .ifBlank { "OmniVideo_${task.id}" }.take(60)
+        val processed = File(stagingDir, "processed_${task.id}.$ext")
+        var destination = File(publicDir, "$title.$ext")
+        var counter = 1
+        while (destination.exists()) destination = File(publicDir, "${title}_${counter++}.$ext")
+        var ownsDestination = false
         try {
-            onProgressUpdate(99f, "", "正在保存到媒体库...", TaskStatus.PROCESSING)
-            tempFile.copyTo(finalFile, overwrite = true)
-            tempFile.delete()
-
+            if (cancelledTaskIds.contains(task.id)) throw IOException("下载已取消")
+            onProgressUpdate(95f, "", "正在处理并保存媒体...", TaskStatus.PROCESSING)
+            val conversion = when (task.downloadType) {
+                DownloadType.AUDIO_ONLY -> FFmpegExecutor.extractAudio(context, source, processed, task.audioFormat.ext, forceEncode = true)
+                DownloadType.VIDEO_ONLY -> FFmpegExecutor.stripAudio(context, source, processed)
+                DownloadType.GIF -> FFmpegExecutor.convertToGif(context, source, processed)
+                else -> Result.success(Unit)
+            }
+            conversion.getOrThrow()
+            if (cancelledTaskIds.contains(task.id)) throw IOException("下载已取消")
+            val output = if (task.downloadType in setOf(DownloadType.AUDIO_ONLY, DownloadType.VIDEO_ONLY, DownloadType.GIF)) processed else source
+            if (!output.exists() || output.length() == 0L) throw IOException("媒体处理未生成有效文件")
+            if (!destination.createNewFile()) throw IOException("目标文件已存在，请重试")
+            ownsDestination = true
+            output.copyTo(destination, overwrite = true)
             try {
-                val mimeType = if (isAudio) "audio/mpeg" else "video/mp4"
-                MediaScannerConnection.scanFile(context, arrayOf(finalFile.absolutePath), arrayOf(mimeType), null)
-            } catch (ignored: Exception) {}
-
+                MediaScannerConnection.scanFile(context, arrayOf(destination.absolutePath), null, null)
+            } catch (_: Exception) {}
             onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
-            Result.success(finalFile.absolutePath)
+            return Result.success(destination.absolutePath)
         } catch (e: Exception) {
-            val msg = formatDetailedError(e)
+            if (ownsDestination) destination.delete()
             onProgressUpdate(0f, "", "", TaskStatus.FAILED)
-            Result.failure(Exception(msg, e))
+            return Result.failure(e)
         } finally {
-            cancelledTaskIds.remove(task.id)
+            source.delete()
+            processed.delete()
         }
     }
 

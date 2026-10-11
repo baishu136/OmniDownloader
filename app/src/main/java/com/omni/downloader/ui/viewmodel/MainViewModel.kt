@@ -15,6 +15,7 @@ import com.omni.downloader.data.model.VideoMetadata
 import com.omni.downloader.data.repository.SettingsRepository
 import com.omni.downloader.data.repository.TaskRepository
 import com.omni.downloader.engine.DownloadEngine
+import com.omni.downloader.engine.DomesticMediaSource
 import com.omni.downloader.engine.UrlSniffer
 import com.omni.downloader.service.DownloadService
 import kotlinx.coroutines.Dispatchers
@@ -271,7 +272,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             thumbnailUrl = currentMeta.thumbnailUrl,
             downloadType = type,
             selectedResolution = resolutionLabel,
-            audioFormat = audioFormat
+            audioFormat = audioFormat,
+            directMediaUrl = DomesticMediaSource.url(currentMeta, format),
+            directMediaHeaders = DomesticMediaSource.headers(currentMeta.siteName)
         )
 
         repository.addTask(task)
@@ -423,7 +426,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 collectionId = collectionId,
                 collectionTitle = if (isCollection) collectionTitle else null,
                 episodeIndex = if (isCollection) index + 1 else 0,
-                episodeTotal = if (isCollection) totalEpisodes else 0
+                episodeTotal = if (isCollection) totalEpisodes else 0,
+                directMediaUrl = DomesticMediaSource.url(sub, format),
+                directMediaHeaders = DomesticMediaSource.headers(sub.siteName)
             )
             tasksToAdd.add(task)
 

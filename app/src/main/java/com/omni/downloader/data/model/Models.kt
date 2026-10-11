@@ -99,5 +99,8 @@ data class DownloadTask(
     val collectionId: String? = null,
     val collectionTitle: String? = null,
     val episodeIndex: Int = 0,
-    val episodeTotal: Int = 0
+    val episodeTotal: Int = 0,
+    // 已解析的国内媒体源与请求头，独立于 UI 清晰度标签，并随任务持久化。
+    val directMediaUrl: String = "",
+    val directMediaHeaders: Map<String, String> = emptyMap()
 )
