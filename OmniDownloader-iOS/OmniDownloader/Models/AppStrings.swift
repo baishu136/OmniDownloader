@@ -6,6 +6,10 @@ public struct AppStrings {
     
     // MARK: - 通用
     public let appName = "OmniDownloader"
+    public let appearanceSection = "外观"
+    public let appearanceSystem = "跟随系统"
+    public let appearanceLight = "浅色"
+    public let appearanceDark = "深色"
     public let confirm = "确定"
     public let cancel = "取消"
     public let delete = "删除"

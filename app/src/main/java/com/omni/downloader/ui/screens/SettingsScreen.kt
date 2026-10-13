@@ -42,6 +42,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
     val appLanguage by viewModel.appLanguage.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
     val isUpdatingEngine by viewModel.isUpdatingEngine.collectAsState()
     val savedProxyUrl by viewModel.proxyUrl.collectAsState()
     var proxyInput by remember(savedProxyUrl) { mutableStateOf(savedProxyUrl) }
@@ -188,6 +189,54 @@ fun SettingsScreen(
                                             )
                                         }
                                     } else null
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            var expanded by remember { mutableStateOf(false) }
+            val options = listOf(
+                "system" to strings.appearanceSystem,
+                "light" to strings.appearanceLight,
+                "dark" to strings.appearanceDark
+            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Palette, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(strings.appearanceSection, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    }
+                    Box {
+                        OutlinedButton(
+                            onClick = { expanded = true },
+                            modifier = Modifier.height(34.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(options.firstOrNull { it.first == themeMode }?.second ?: strings.appearanceSystem, fontSize = 12.5.sp)
+                            Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(16.dp))
+                        }
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            options.forEach { (mode, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(label, color = if (mode == themeMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface) },
+                                    onClick = {
+                                        viewModel.setThemeMode(mode)
+                                        expanded = false
+                                    }
                                 )
                             }
                         }

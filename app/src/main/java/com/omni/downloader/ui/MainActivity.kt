@@ -80,10 +80,16 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val currentLanguage by viewModel.appLanguage.collectAsState()
+            val themeMode by viewModel.themeMode.collectAsState()
+            val darkTheme = when (themeMode) {
+                "light" -> false
+                "dark" -> true
+                else -> androidx.compose.foundation.isSystemInDarkTheme()
+            }
             val appStrings = remember(currentLanguage) { resolveAppStrings(currentLanguage) }
 
             CompositionLocalProvider(LocalAppStrings provides appStrings) {
-                OmniDownloaderTheme {
+                OmniDownloaderTheme(darkTheme = darkTheme) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         val snackbarHostState = remember { SnackbarHostState() }
                         val message by viewModel.message.collectAsState()

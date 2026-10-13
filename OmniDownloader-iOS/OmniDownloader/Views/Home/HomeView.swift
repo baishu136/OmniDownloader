@@ -18,7 +18,7 @@ struct HomeView: View {
     // 支持的平台胶囊列表
     private let supportedPlatforms = [
         ("哔哩哔哩", "play.rectangle.fill", Color.blue),
-        ("抖音", "music.note", Color.black),
+        ("抖音", "music.note", Color.primary),
         ("快手", "video.fill", Color.orange),
         ("小红书", "bookmark.fill", Color.red)
     ]

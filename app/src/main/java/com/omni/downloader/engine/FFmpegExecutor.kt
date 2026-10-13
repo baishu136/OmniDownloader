@@ -91,7 +91,8 @@ object FFmpegExecutor {
         context: Context,
         rawAudioFile: File,
         outputFile: File,
-        format: String
+        format: String,
+        forceEncode: Boolean = false
     ): Result<Unit> = withContext(Dispatchers.IO) {
         val ffmpeg = getFFmpegBinary(context)
             ?: return@withContext Result.failure(Exception("未能找到 FFmpeg 核心执行组件"))
@@ -102,9 +103,8 @@ object FFmpegExecutor {
                 "-y",
                 "-i", rawAudioFile.absolutePath,
                 "-vn",
-                "-c:a", "copy",
-                outputFile.absolutePath
-            )
+                "-c:a", if (forceEncode) "aac" else "copy"
+            ) + (if (forceEncode) listOf("-b:a", "192k") else emptyList()) + outputFile.absolutePath
             else -> listOf(
                 ffmpeg.absolutePath,
                 "-y",

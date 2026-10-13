@@ -15,6 +15,7 @@ import com.omni.downloader.data.model.VideoMetadata
 import com.omni.downloader.data.repository.SettingsRepository
 import com.omni.downloader.data.repository.TaskRepository
 import com.omni.downloader.engine.DownloadEngine
+import com.omni.downloader.engine.DomesticMediaSource
 import com.omni.downloader.engine.UrlSniffer
 import com.omni.downloader.service.DownloadService
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +46,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val proxyUrl: StateFlow<String> = settingsRepository.proxyUrl
     val downloadPath: StateFlow<String> = settingsRepository.downloadPath
     val appLanguage: StateFlow<String> = settingsRepository.appLanguage
+    val themeMode: StateFlow<String> = settingsRepository.themeMode
+
+    fun setThemeMode(mode: String) = settingsRepository.setThemeMode(mode)
     val bilibiliCookie: StateFlow<String> = settingsRepository.bilibiliCookie
     val hasPromptedBilibiliLogin: StateFlow<Boolean> = settingsRepository.hasPromptedBilibiliLogin
     val hasShownRelayCompatTip: StateFlow<Boolean> = settingsRepository.hasShownRelayCompatTip
@@ -271,7 +275,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             thumbnailUrl = currentMeta.thumbnailUrl,
             downloadType = type,
             selectedResolution = resolutionLabel,
-            audioFormat = audioFormat
+            audioFormat = audioFormat,
+            directMediaUrl = DomesticMediaSource.url(currentMeta, format),
+            directMediaHeaders = DomesticMediaSource.headers(currentMeta.siteName)
         )
 
         repository.addTask(task)
@@ -423,7 +429,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 collectionId = collectionId,
                 collectionTitle = if (isCollection) collectionTitle else null,
                 episodeIndex = if (isCollection) index + 1 else 0,
-                episodeTotal = if (isCollection) totalEpisodes else 0
+                episodeTotal = if (isCollection) totalEpisodes else 0,
+                directMediaUrl = DomesticMediaSource.url(sub, format),
+                directMediaHeaders = DomesticMediaSource.headers(sub.siteName)
             )
             tasksToAdd.add(task)
 

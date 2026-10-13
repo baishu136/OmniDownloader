@@ -3,6 +3,7 @@ import Photos
 
 /// 设置视图：B站账号安全登录授权、自动存入系统相册配置、缓存清理与关于说明
 struct SettingsView: View {
+    @AppStorage("com.omni.downloader.appearance") private var appearance = "system"
     @ObservedObject private var cookieStore = CookieStore.shared
     @State private var isLoggedIn: Bool = false
     @State private var sessdataMasked: String = ""
@@ -19,6 +20,13 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
+                Section(header: Text(strings.appearanceSection)) {
+                    Picker(strings.appearanceSection, selection: $appearance) {
+                        Text(strings.appearanceSystem).tag("system")
+                        Text(strings.appearanceLight).tag("light")
+                        Text(strings.appearanceDark).tag("dark")
+                    }
+                }
                 // MARK: - 哔哩哔哩账号登录
                 Section(header: Text(strings.bilibiliSection), footer: Text(strings.bilibiliLoginDesc)) {
                     if isLoggedIn {
