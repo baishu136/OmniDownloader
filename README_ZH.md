@@ -118,5 +118,15 @@
 
 ---
 
+## ☕ 赞助与支持
+
+如果您觉得本项目对您有所帮助，欢迎赞助支持作者！您的支持是持续维护与迭代的最大动力。
+
+| 微信支付 (WeChat Pay) | 支付宝 (Alipay) |
+| :---: | :---: |
+| <img src="docs/images/sponsor_wechat.jpg" width="240" alt="微信支付" /> | <img src="docs/images/sponsor_alipay.jpg" width="240" alt="支付宝" /> |
+
+---
+
 ## 📄 授权与免责声明
 本项目仅供编程学习与个人个人影音离线归档使用，解析下载音视频之著作权归各平台及原作者所有。遵循 MIT 开源许可协议。
