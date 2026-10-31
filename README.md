@@ -80,5 +80,15 @@
 
 ---
 
+## ☕ Sponsorship & Support
+
+If you find this project helpful, feel free to buy the author a coffee! Your support is the greatest motivation to maintain and improve this project.
+
+| 微信支付 (WeChat Pay) | 支付宝 (Alipay) |
+| :---: | :---: |
+| <img src="docs/images/sponsor_wechat.jpg" width="240" alt="WeChat Pay" /> | <img src="docs/images/sponsor_alipay.jpg" width="240" alt="Alipay" /> |
+
+---
+
 ## 📄 License
 This project is licensed under the MIT License.
