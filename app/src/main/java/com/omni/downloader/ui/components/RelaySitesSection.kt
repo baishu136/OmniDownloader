@@ -7,8 +7,8 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -69,7 +69,9 @@ fun rememberRelaySitesState(): RelaySitesState = remember { RelaySitesState() }
  * 顶级 LazyColumn 平铺扩展函数：
  * 将中转站轻量卡片直接作为 LazyColumn 的子项进行惰性渲染，
  * 每次仅测量视口内单张卡片（~0.2ms），彻底消除了旧版内嵌输入框的卡顿。
+ * 展开/收起时使用位置动画，新增或删除站点也有自然的位移动画。
  */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 fun LazyListScope.relaySitesItems(
     relaySites: List<RelaySite>,
     relayState: RelaySitesState,
@@ -98,6 +100,7 @@ fun LazyListScope.relaySitesItems(
         val currentStatus = if (isCurrentResolving) relayState.resolvingStatus else ""
 
         RelaySiteCard(
+            modifier = Modifier.animateItemPlacement(),
             site = site,
             isResolving = isCurrentResolving,
             resolvingStatus = currentStatus,
@@ -124,10 +127,10 @@ fun LazyListScope.relaySitesItems(
             TextButton(
                 onClick = { relayState.isExpanded = !relayState.isExpanded },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
+
             ) {
                 Icon(
-                    imageVector = if (relayState.isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    imageVector = if (relayState.isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
@@ -180,7 +183,7 @@ fun RelaySitesOverlays(
 
     // 核心流转 2：备用窗口排查弹窗（当且仅当用户主动点击“窗口排查”图标时打开）
     val manualBrowserSite = relayState.manualBrowserSite
-    if (manualBrowserSite != null) {
+    if (com.omni.downloader.ui.design.LocalTabActive.current && manualBrowserSite != null) {
         RelayBrowserDialog(
             site = manualBrowserSite,
             initialVideoUrl = relayState.manualBrowserUrl,
@@ -253,10 +256,10 @@ fun RelaySitesSection(
             TextButton(
                 onClick = { relayState.isExpanded = !relayState.isExpanded },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
+
             ) {
                 Icon(
-                    imageVector = if (relayState.isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    imageVector = if (relayState.isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )

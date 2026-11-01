@@ -1305,20 +1305,16 @@ object DownloadEngine {
             }
 
             if (validEntries.size > 1) {
-                val subList = validEntries.mapIndexed { index, entryJson ->
-                    val childUrl = when {
-                        entryJson.optString("webpage_url").isNotEmpty() && entryJson.optString("webpage_url").contains("/video/") ->
-                            entryJson.optString("webpage_url")
-                        else -> {
-                            val baseWithoutVideo = url.replace(Regex("/video/\\d+/?$"), "").trimEnd('/')
-                            "$baseWithoutVideo/video/${index + 1}"
-                        }
-                    }
+                val subList = validEntries.mapIndexedNotNull { index, entryJson ->
+                    val childUrl = MediaSelection.childUrl(url, site, index,
+                        entryJson.optString("webpage_url"), entryJson.optString("original_url"),
+                        entryJson.optString("url"), entryJson.optString("id")) ?: return@mapIndexedNotNull null
                     parseSingleVideoMetadata(entryJson, childUrl, site, videoIndex = index + 1, totalVideos = validEntries.size)
                 }
-                val firstMeta = subList.first()
-                return firstMeta.copy(
-                    title = "${json.optString("title", firstMeta.title)} (共${subList.size}个独立视频)",
+                require(subList.isNotEmpty()) { "合集没有返回可定位的分集链接，请使用具体视频链接" }
+                val selected = MediaSelection.initialIndex(url, url, subList.map { it.url })
+                val currentMeta = subList.getOrElse(selected) { parseSingleVideoMetadata(json, url, site) }
+                return currentMeta.copy(
                     multiMediaList = subList
                 )
             } else if (validEntries.size == 1) {

@@ -1,0 +1,79 @@
+{
+  "frozenAt": "2026-11-01T10:16:32.5252554+00:00",
+  "version": "1.5.10",
+  "reason": "Bound native bridge URL before token decoding",
+  "files": [
+    {
+      "path": "app/build.gradle.kts",
+      "sha256": "F815071BD9ED598D5CDB5C19F10BDED18CAB788A9D9B1BBA5DD1682CBA381948"
+    },
+    {
+      "path": "app/src/main/java/com/omni/downloader/ui/design/OmniComponents.kt",
+      "sha256": "843E0D13CB87228C12F4999E35F8E44C08C2C7EC83A9A22088B4DBD1658F846F"
+    },
+    {
+      "path": "app/src/main/java/com/omni/downloader/ui/screens/SettingsScreen.kt",
+      "sha256": "6ABE72EA5B23BE9F7FA837F3BC691C6CA6DF46DDD36BE9EA4508E4B97F37E36B"
+    },
+    {
+      "path": "app/src/main/java/com/omni/downloader/ui/components/RelayAutomation.kt",
+      "sha256": "58604E0037EA815E29D83574EF0583DD39E76946A15C2A1E337EF6AD198744DB"
+    },
+    {
+      "path": "app/src/main/java/com/omni/downloader/ui/components/RelayBrowserDialog.kt",
+      "sha256": "25243FE15BB434042BA7A3A776B01158772B85FE8713CFE0974D2AD8A421E568"
+    },
+    {
+      "path": "app/src/main/java/com/omni/downloader/ui/components/SilentRelayEngine.kt",
+      "sha256": "E5D20A2466D75A06A0B55356033031DD4B75D92706BB6548A1285875B77A4688"
+    },
+    {
+      "path": "app/src/main/java/com/omni/downloader/ui/viewmodel/MainViewModel.kt",
+      "sha256": "4E90A496740C781EFCBB52B21793B2D66925396C2B4DDF61304F66635A1E748C"
+    },
+    {
+      "path": "app/src/main/java/com/omni/downloader/engine/MediaSelection.kt",
+      "sha256": "8FDAA8AD6986E7316FD8B0507099FD5ECAD05A1D708B4DC74170F40BBDD616C3"
+    },
+    {
+      "path": "app/src/main/java/com/omni/downloader/engine/RelayCapturePolicy.kt",
+      "sha256": "3D310F22995414925E87AC51F02ADBCEFF96DEAAF219781788758E3F3157BFB9"
+    },
+    {
+      "path": "app/src/main/java/com/omni/downloader/engine/DownloadEngine.kt",
+      "sha256": "3745884FD1C2F03F166AD0BD02D16177ED20CC99D4AE9BA66BE605082859E640"
+    },
+    {
+      "path": "app/src/main/java/com/omni/downloader/engine/BilibiliDirectExtractor.kt",
+      "sha256": "8BD5B86377F8833AF853E16BFC7873584A334A031E2659FF86FC8C30859AB4E4"
+    },
+    {
+      "path": "app/src/main/assets/relay_capture.js",
+      "sha256": "52AFAC722C3BEBA4940D6F753711B44D8DF5A47D2A0AB22A710D649A01E117AB"
+    },
+    {
+      "path": "app/src/test/java/com/omni/downloader/engine/MediaSelectionTest.kt",
+      "sha256": "7D5F4E6C6E83E8A4D4D0C1BB84F678DBA30B673B3510ACC7E584EBADB511AEAB"
+    },
+    {
+      "path": "app/src/test/java/com/omni/downloader/engine/RelayCapturePolicyTest.kt",
+      "sha256": "A177298128CE717A1CB61882498B904B714DB6902CC4967E7DAD713C9C5039E7"
+    },
+    {
+      "path": "app/src/androidTest/java/com/omni/downloader/ui/design/SegmentedTabsTest.kt",
+      "sha256": "C67BD9985DD5F9775103CC251EA3AC9CD147ADDEF750C728AA262AB998475A09"
+    },
+    {
+      "path": "app/src/androidTest/java/com/omni/downloader/ui/components/RelayCaptureTest.kt",
+      "sha256": "387E08613BD7D486D95BC36F824B15AB2461B1460ECFEFD1326EC17B8AC946D4"
+    },
+    {
+      "path": "app/src/androidTest/java/com/omni/downloader/InterfaceLayoutTest.kt",
+      "sha256": "7F13279250F010D49E96CAE6F7F43BB0C06487BCB5DA58535AE4AD86F17D6E58"
+    },
+    {
+      "path": "docs/RELAY_AND_COLLECTION_1.5.10.md",
+      "sha256": "BF02F4591A3291A9D8C2EBA53B5ADE7D5290A16E9341F9377C0DF6F6A4EB77A7"
+    }
+  ]
+}

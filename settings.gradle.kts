@@ -24,3 +24,5 @@ dependencyResolutionManagement {
 rootProject.name = "OmniDownloader"
 include(":app")
 include(":cleaner")
+
+include(":release-smoke")

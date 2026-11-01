@@ -1,76 +1,59 @@
 package com.omni.downloader.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DeleteSweep
-import androidx.compose.material.icons.filled.Inbox
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Inbox
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.omni.downloader.data.model.DownloadTask
-import com.omni.downloader.data.model.TaskStatus
 import com.omni.downloader.ui.components.CollectionTaskCard
 import com.omni.downloader.ui.components.TaskCard
+import com.omni.downloader.ui.design.OmniEmptyState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.omni.downloader.ui.model.TaskDisplayItem
+import com.omni.downloader.ui.design.RetainedTabHost
+import com.omni.downloader.ui.design.OmniMotion
+import com.omni.downloader.ui.design.OmniSegmentedTabs
+import com.omni.downloader.ui.localization.LocalAppStrings
 import com.omni.downloader.ui.viewmodel.MainViewModel
-import kotlinx.coroutines.launch
-import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.ui.graphics.graphicsLayer
-
-// 舒缓吸附视觉缓冲曲线：起步平滑柔顺、中段快速推进、终段以零斜率阻尼自然贴合靠岸
-private val MotionCushionEasing = CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)
-
-@androidx.compose.runtime.Immutable
-private sealed class TaskDisplayItem {
-    @androidx.compose.runtime.Immutable
-    data class Single(val task: DownloadTask) : TaskDisplayItem()
-    @androidx.compose.runtime.Immutable
-    data class Collection(
-        val collectionId: String,
-        val collectionTitle: String,
-        val tasks: List<DownloadTask>
-    ) : TaskDisplayItem()
-}
-
-private fun aggregateTasks(tasks: List<DownloadTask>): List<TaskDisplayItem> {
-    if (tasks.isEmpty()) return emptyList()
-    val collectionsMap = LinkedHashMap<String, MutableList<DownloadTask>>()
-    val result = mutableListOf<TaskDisplayItem>()
-
-    // 线性单次统计合集成员，消除 O(N^2) 重复过滤
-    for (task in tasks) {
-        val colId = task.collectionId
-        if (colId != null) {
-            collectionsMap.getOrPut(colId) { mutableListOf() }.add(task)
-        }
-    }
-
-    val addedCols = HashSet<String>()
-    for (task in tasks) {
-        val colId = task.collectionId
-        if (colId != null) {
-            if (addedCols.add(colId)) {
-                val group = collectionsMap[colId] ?: emptyList()
-                val sortedGroup = if (group.size <= 1) group else group.sortedBy { if (it.episodeIndex > 0) it.episodeIndex else Int.MAX_VALUE }
-                val title = task.collectionTitle ?: sortedGroup.firstOrNull()?.title ?: "视频合集"
-                result.add(TaskDisplayItem.Collection(colId, title, sortedGroup))
-            }
-        } else {
-            result.add(TaskDisplayItem.Single(task))
-        }
-    }
-    return result
-}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -78,79 +61,55 @@ fun TasksScreen(
     viewModel: MainViewModel
 ) {
     val context = LocalContext.current
-    val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
-    val tasks by viewModel.tasks.collectAsState()
-
-    // 将底层任务根据合集维度进行聚合，不再逐一堆叠
-    val allDisplayItems = remember(tasks) { aggregateTasks(tasks) }
-
-    // 0: 全部, 1: 下载中, 2: 已完成
-    var selectedSubTab by androidx.compose.runtime.saveable.rememberSaveable { mutableIntStateOf(0) }
+    val strings = LocalAppStrings.current
+    val taskListState by viewModel.taskListState.collectAsStateWithLifecycle()
+    var selectedSubTab by rememberSaveable { mutableIntStateOf(0) }
     var showClearDialog by remember { mutableStateOf(false) }
-
-    val downloadingCount = remember(allDisplayItems) {
-        allDisplayItems.count { item ->
-            when (item) {
-                is TaskDisplayItem.Single -> item.task.status == TaskStatus.DOWNLOADING || item.task.status == TaskStatus.PROCESSING || item.task.status == TaskStatus.PENDING
-                is TaskDisplayItem.Collection -> item.tasks.any { it.status == TaskStatus.DOWNLOADING || it.status == TaskStatus.PROCESSING || it.status == TaskStatus.PENDING }
-            }
-        }
-    }
-    val completedCount = remember(allDisplayItems) {
-        allDisplayItems.count { item ->
-            when (item) {
-                is TaskDisplayItem.Single -> item.task.status == TaskStatus.COMPLETED
-                is TaskDisplayItem.Collection -> item.tasks.isNotEmpty() && item.tasks.all { it.status == TaskStatus.COMPLETED }
-            }
-        }
-    }
-
-    val tabs = remember(strings, allDisplayItems.size, downloadingCount, completedCount) {
+    val tabListStates = List(3) { rememberSaveable(saver = LazyListState.Saver) { LazyListState() } }
+    val downloadingCount = taskListState.pages[1].size
+    val completedCount = taskListState.pages[2].size
+    val tabs = remember(strings, taskListState.pages[0].size, downloadingCount, completedCount) {
         listOf(
-            "${strings.tabAll} (${allDisplayItems.size})",
+            "${strings.tabAll} (${taskListState.pages[0].size})",
             "${strings.tabDownloading} ($downloadingCount)",
             "${strings.tabCompleted} ($completedCount)"
         )
     }
-
-    // 判断是否有可以清除的任务：在「下载中」只要有未完成任务即可清除；在其他页面有结束记录即可清除
-    val hasClearableTasks = remember(tasks, selectedSubTab) {
-        when (selectedSubTab) {
-            2 -> tasks.any { it.status == TaskStatus.COMPLETED }
-            1 -> tasks.any {
-                it.status == TaskStatus.DOWNLOADING ||
-                it.status == TaskStatus.PROCESSING ||
-                it.status == TaskStatus.PENDING ||
-                it.status == TaskStatus.FAILED ||
-                it.status == TaskStatus.CANCELLED
-            }
-            else -> tasks.isNotEmpty()
-        }
-    }
+    val hasClearableTasks = taskListState.hasClearableTasks[selectedSubTab]
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // 顶部标题与清除操作（固定 64dp 高度与右侧 48dp 恒定占位，彻底消除上下浮动）
+        // 顶部大标题 + 清除操作（右侧恒定占位，避免按钮显隐导致标题抖动）
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp)
-                .padding(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .padding(start = 20.dp, end = 12.dp, top = 16.dp, bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = strings.tasksTitle,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = strings.tasksTitle,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "${strings.tabDownloading} $downloadingCount",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Box(
                 modifier = Modifier.size(48.dp),
                 contentAlignment = Alignment.Center
             ) {
-                if (hasClearableTasks) {
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = hasClearableTasks,
+                    enter = fadeIn(tween(OmniMotion.NORMAL)) + scaleIn(initialScale = 0.8f),
+                    exit = fadeOut(tween(OmniMotion.FAST)) + scaleOut(targetScale = 0.8f)
+                ) {
                     IconButton(onClick = { showClearDialog = true }) {
                         Icon(
-                            imageVector = Icons.Default.DeleteSweep,
+                            imageVector = Icons.Outlined.DeleteSweep,
                             contentDescription = strings.clearCompleted,
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -159,155 +118,26 @@ fun TasksScreen(
             }
         }
 
-        // 标签切换栏，点击瞬时即响应启动，零感知延迟
-        TabRow(
-            selectedTabIndex = selectedSubTab,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.primary
-        ) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedSubTab == index,
-                    onClick = {
-                        if (selectedSubTab != index) {
-                            selectedSubTab = index
-                        }
-                    },
-                    text = {
-                        Text(
-                            text = title,
-                            fontWeight = if (selectedSubTab == index) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-                )
-            }
-        }
+        OmniSegmentedTabs(
+            titles = tabs,
+            selectedIndex = selectedSubTab,
+            onSelect = { selectedSubTab = it },
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
 
-        // 列表展示区：直通 LazyColumn，无双层 Pager 手势拦截开销，手势与测量直达 60fps 满帧
-        val pageItems = remember(allDisplayItems, selectedSubTab) {
-            when (selectedSubTab) {
-                1 -> allDisplayItems.filter { item ->
-                    when (item) {
-                        is TaskDisplayItem.Single -> item.task.status == TaskStatus.DOWNLOADING || item.task.status == TaskStatus.PROCESSING || item.task.status == TaskStatus.PENDING
-                        is TaskDisplayItem.Collection -> item.tasks.any { it.status == TaskStatus.DOWNLOADING || it.status == TaskStatus.PROCESSING || it.status == TaskStatus.PENDING }
-                    }
-                }
-                2 -> allDisplayItems.filter { item ->
-                    when (item) {
-                        is TaskDisplayItem.Single -> item.task.status == TaskStatus.COMPLETED
-                        is TaskDisplayItem.Collection -> item.tasks.isNotEmpty() && item.tasks.all { it.status == TaskStatus.COMPLETED }
-                    }
-                }
-                else -> allDisplayItems
-            }
-        }
+        Spacer(modifier = Modifier.height(6.dp))
 
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        ) {
-            if (pageItems.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.Inbox,
-                            contentDescription = null,
-                            modifier = Modifier.size(56.dp),
-                            tint = MaterialTheme.colorScheme.outlineVariant
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = when (selectedSubTab) {
-                                1 -> strings.emptyDownloading
-                                2 -> strings.emptyCompleted
-                                else -> strings.emptyAll
-                            },
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            } else {
-                val onCancelTask = remember(viewModel, context) {
-                    { taskId: String -> viewModel.cancelTask(context, taskId) }
-                }
-                val onDeleteTask = remember(viewModel) {
-                    { taskId: String, deleteFile: Boolean -> viewModel.deleteTask(taskId, deleteFile) }
-                }
-                val onRetryTask = remember(viewModel) {
-                    { url: String -> viewModel.startAnalyze(url) }
-                }
-
-                val onCancelCollection = remember(viewModel, context) {
-                    { colId: String -> viewModel.cancelCollection(context, colId) }
-                }
-                val onDeleteCollection = remember(viewModel) {
-                    { colId: String, deleteFile: Boolean -> viewModel.deleteCollection(colId, deleteFile) }
-                }
-                val onRetryCollection = remember(viewModel, context) {
-                    { colId: String -> viewModel.retryCollection(context, colId) }
-                }
-                val onRetryEpisode = remember(context) {
-                    { taskId: String -> com.omni.downloader.service.DownloadService.startDownload(context, taskId) }
-                }
-
-                val listState = rememberLazyListState()
-
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(
-                        items = pageItems,
-                        key = { item ->
-                            when (item) {
-                                is TaskDisplayItem.Single -> "single_${item.task.id}"
-                                is TaskDisplayItem.Collection -> "col_${item.collectionId}"
-                            }
-                        },
-                        contentType = { item ->
-                            when (item) {
-                                is TaskDisplayItem.Single -> 0
-                                is TaskDisplayItem.Collection -> 1
-                            }
-                        }
-                    ) { item ->
-                        when (item) {
-                            is TaskDisplayItem.Single -> {
-                                val currentId = item.task.id
-                                val currentUrl = item.task.url
-                                TaskCard(
-                                    task = item.task,
-                                    onCancel = remember(currentId) { { onCancelTask(currentId) } },
-                                    onDelete = remember(currentId) { { deleteFile -> onDeleteTask(currentId, deleteFile) } },
-                                    onRetry = remember(currentUrl) { { onRetryTask(currentUrl) } }
-                                )
-                            }
-                            is TaskDisplayItem.Collection -> {
-                                val currentColId = item.collectionId
-                                CollectionTaskCard(
-                                    collectionTitle = item.collectionTitle,
-                                    tasks = item.tasks,
-                                    onCancelCollection = remember(currentColId) { { onCancelCollection(currentColId) } },
-                                    onDeleteCollection = remember(currentColId) { { deleteFile -> onDeleteCollection(currentColId, deleteFile) } },
-                                    onRetryCollection = remember(currentColId) { { onRetryCollection(currentColId) } },
-                                    onRetryEpisode = onRetryEpisode
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+        RetainedTabHost(
+            selectedTab = selectedSubTab,
+            tabCount = 3,
+            modifier = Modifier.weight(1f).fillMaxWidth()
+        ) { subTab ->
+            TaskListPane(
+                subTab = subTab,
+                pageItems = taskListState.pages[subTab],
+                viewModel = viewModel,
+                listState = tabListStates[subTab]
+            )
         }
     }
 
@@ -356,5 +186,116 @@ fun TasksScreen(
                 }
             }
         )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun TaskListPane(
+    subTab: Int,
+    pageItems: List<TaskDisplayItem>,
+    viewModel: MainViewModel,
+    listState: LazyListState
+) {
+    val context = LocalContext.current
+    val strings = LocalAppStrings.current
+
+    if (pageItems.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            OmniEmptyState(
+                icon = when (subTab) {
+                    1 -> Icons.Outlined.Download
+                    2 -> Icons.Outlined.CheckCircle
+                    else -> Icons.Outlined.Inbox
+                },
+                title = when (subTab) {
+                    1 -> strings.emptyDownloading
+                    2 -> strings.emptyCompleted
+                    else -> strings.emptyAll
+                },
+                modifier = Modifier.padding(32.dp)
+            )
+        }
+        return
+    }
+
+    val onCancelTask = remember(viewModel, context) {
+        { taskId: String -> viewModel.cancelTask(context, taskId) }
+    }
+    val onDeleteTask = remember(viewModel) {
+        { taskId: String, deleteFile: Boolean -> viewModel.deleteTask(taskId, deleteFile) }
+    }
+    val onRetryTask = remember(viewModel) {
+        { url: String -> viewModel.startAnalyze(url) }
+    }
+
+    val onCancelCollection = remember(viewModel, context) {
+        { colId: String -> viewModel.cancelCollection(context, colId) }
+    }
+    val onDeleteCollection = remember(viewModel) {
+        { colId: String, deleteFile: Boolean -> viewModel.deleteCollection(colId, deleteFile) }
+    }
+    val onRetryCollection = remember(viewModel, context) {
+        { colId: String -> viewModel.retryCollection(context, colId) }
+    }
+    val onRetryEpisode = remember(context) {
+        { taskId: String -> com.omni.downloader.service.DownloadService.startDownload(context, taskId) }
+    }
+
+    val progressFlowProvider = remember(viewModel) { { id: String -> viewModel.getTaskProgress(id) } }
+
+    LazyColumn(
+        state = listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(top = 10.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        items(
+            items = pageItems,
+            key = { item ->
+                when (item) {
+                    is TaskDisplayItem.Single -> "single_${item.task.id}"
+                    is TaskDisplayItem.Collection -> "col_${item.collectionId}"
+                }
+            },
+            contentType = { item ->
+                when (item) {
+                    is TaskDisplayItem.Single -> 0
+                    is TaskDisplayItem.Collection -> 1
+                }
+            }
+        ) { item ->
+            val placementModifier = Modifier
+            when (item) {
+                is TaskDisplayItem.Single -> {
+                    TaskCard(
+                        task = item.task,
+                        onCancel = onCancelTask,
+                        onDelete = onDeleteTask,
+                        onRetry = onRetryTask,
+                        progressFlowProvider = progressFlowProvider,
+                        modifier = placementModifier
+                    )
+                }
+                is TaskDisplayItem.Collection -> {
+                    CollectionTaskCard(
+                        collectionId = item.collectionId,
+                        collectionTitle = item.collectionTitle,
+                        tasks = item.tasks,
+                        onCancelCollection = onCancelCollection,
+                        onDeleteCollection = onDeleteCollection,
+                        onRetryCollection = onRetryCollection,
+                        onRetryEpisode = onRetryEpisode,
+                        progressFlowProvider = progressFlowProvider,
+                        modifier = placementModifier
+                    )
+                }
+            }
+        }
     }
 }

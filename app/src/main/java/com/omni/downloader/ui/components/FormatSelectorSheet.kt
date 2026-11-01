@@ -11,10 +11,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Audiotrack
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Videocam
-import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.outlined.Audiotrack
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.material.icons.outlined.VolumeOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,11 +40,11 @@ import com.omni.downloader.data.model.VideoMetadata
 
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.DownloadForOffline
-import androidx.compose.material.icons.filled.Gif
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.DownloadForOffline
+import androidx.compose.material.icons.outlined.Gif
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.VideoLibrary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,7 +123,7 @@ fun FormatSelectorSheet(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Image,
+                                    imageVector = Icons.Outlined.Image,
                                     contentDescription = null,
                                     modifier = Modifier.size(10.dp),
                                     tint = MaterialTheme.colorScheme.primary
@@ -223,7 +223,7 @@ fun FormatSelectorSheet(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Videocam,
+                                imageVector = Icons.Outlined.Videocam,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp),
                                 tint = if (!isCollectionMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -252,7 +252,7 @@ fun FormatSelectorSheet(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = Icons.Default.VideoLibrary,
+                                imageVector = Icons.Outlined.VideoLibrary,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp),
                                 tint = if (isCollectionMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -441,28 +441,28 @@ fun FormatSelectorSheet(
                 ModeTabChip(
                     modifier = Modifier.weight(1f),
                     title = strings.tabVideo,
-                    icon = Icons.Default.Videocam,
+                    icon = Icons.Outlined.Videocam,
                     isSelected = selectedType == DownloadType.VIDEO_WITH_AUDIO,
                     onClick = { onSelectType(DownloadType.VIDEO_WITH_AUDIO) }
                 )
                 ModeTabChip(
                     modifier = Modifier.weight(1f),
                     title = strings.tabMute,
-                    icon = Icons.Default.VolumeOff,
+                    icon = Icons.Outlined.VolumeOff,
                     isSelected = selectedType == DownloadType.VIDEO_ONLY,
                     onClick = { onSelectType(DownloadType.VIDEO_ONLY) }
                 )
                 ModeTabChip(
                     modifier = Modifier.weight(1f),
                     title = strings.tabAudio,
-                    icon = Icons.Default.Audiotrack,
+                    icon = Icons.Outlined.Audiotrack,
                     isSelected = selectedType == DownloadType.AUDIO_ONLY,
                     onClick = { onSelectType(DownloadType.AUDIO_ONLY) }
                 )
                 ModeTabChip(
                     modifier = Modifier.weight(1f),
                     title = strings.tabGif,
-                    icon = Icons.Default.Gif,
+                    icon = Icons.Outlined.Gif,
                     isSelected = selectedType == DownloadType.GIF,
                     onClick = { onSelectType(DownloadType.GIF) }
                 )
@@ -538,7 +538,7 @@ fun FormatSelectorSheet(
                         Column(modifier = Modifier.padding(14.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
+                                    imageVector = Icons.Outlined.AutoAwesome,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp)
@@ -601,10 +601,10 @@ fun FormatSelectorSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
+
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Icon(imageVector = Icons.Default.DownloadForOffline, contentDescription = null)
+                            Icon(imageVector = Icons.Outlined.DownloadForOffline, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = if (selectedEpisodes.isNotEmpty()) batchBtnText else strings.pleaseSelectEpisode,
@@ -621,9 +621,9 @@ fun FormatSelectorSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(42.dp),
-                            shape = RoundedCornerShape(12.dp)
+
                         ) {
-                            Icon(imageVector = Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(imageVector = Icons.Outlined.Download, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = String.format(strings.downloadAllCount, metadata.multiMediaList.size) + coverSuffix,
@@ -637,10 +637,10 @@ fun FormatSelectorSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
+
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Icon(imageVector = Icons.Default.Download, contentDescription = null)
+                            Icon(imageVector = Icons.Outlined.Download, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             val resLabel = selectedVideoFormat?.resolutionLabel ?: ""
                             val currentEpLabel = if (currentMedia.title.contains(" - P")) {
@@ -669,9 +669,9 @@ fun FormatSelectorSheet(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(42.dp),
-                                shape = RoundedCornerShape(12.dp)
+
                             ) {
-                                Icon(imageVector = Icons.Default.VideoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(imageVector = Icons.Outlined.VideoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = String.format(strings.switchToCollectionMode, metadata.multiMediaList.size),

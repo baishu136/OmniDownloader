@@ -5,82 +5,96 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
+import android.view.View
+import android.view.animation.PathInterpolator
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.omni.downloader.R
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
-import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import com.omni.downloader.ui.design.LocalTabActive
+import com.omni.downloader.ui.design.RetainedTabHost
 import com.omni.downloader.engine.UrlSniffer
+import com.omni.downloader.ui.localization.AppStrings
+import com.omni.downloader.ui.localization.LocalAppStrings
+import com.omni.downloader.ui.localization.resolveAppStrings
 import com.omni.downloader.ui.screens.HomeScreen
 import com.omni.downloader.ui.screens.SettingsScreen
 import com.omni.downloader.ui.screens.TasksScreen
 import com.omni.downloader.ui.theme.OmniDownloaderTheme
 import com.omni.downloader.ui.viewmodel.MainViewModel
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
-import com.omni.downloader.ui.localization.LocalAppStrings
-import com.omni.downloader.ui.localization.resolveAppStrings
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
-// 主页面视差转场柔和缓冲阻尼曲线
-private val TransitionCushionEasing = CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)
-
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
-    // 申请必要通知权限与存储权限
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ -> }
 
-    @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        val launchTime = SystemClock.uptimeMillis()
+        val launchSplash = if (savedInstanceState == null) installSplashScreen() else {
+            setTheme(R.style.Theme_OmniDownloader)
+            null
+        }
         super.onCreate(savedInstanceState)
+        launchSplash?.setKeepOnScreenCondition { SystemClock.uptimeMillis() - launchTime < 500L }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            launchSplash?.setOnExitAnimationListener { provider ->
+                val content = findViewById<View>(android.R.id.content)
+                provider.iconView.translationY = 0f
+                content.translationY = 16f * resources.displayMetrics.density
+                content.animate().translationY(0f).setDuration(400L)
+                    .setInterpolator(PathInterpolator(0f, 0f, 0.2f, 1f)).start()
+                provider.view.animate().alpha(0f).setDuration(400L)
+                    .setInterpolator(PathInterpolator(0.4f, 0f, 0.2f, 1f))
+                    .withEndAction { provider.remove(); content.translationY = 0f }.start()
+            }
+        }
+
+        // 内容延伸到系统栏之下，配合 Scaffold 的 Insets 消费实现沉浸式布局
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         checkAndRequestPermissions()
         handleIntent(intent)
 
         setContent {
-            val currentLanguage by viewModel.appLanguage.collectAsState()
-            val themeMode by viewModel.themeMode.collectAsState()
+            val currentLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+            val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
             val darkTheme = when (themeMode) {
                 "light" -> false
                 "dark" -> true
@@ -90,138 +104,117 @@ class MainActivity : ComponentActivity() {
 
             CompositionLocalProvider(LocalAppStrings provides appStrings) {
                 OmniDownloaderTheme(darkTheme = darkTheme) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        val snackbarHostState = remember { SnackbarHostState() }
-                        val message by viewModel.message.collectAsState()
-                        var currentTab by remember { mutableIntStateOf(0) }
+                    val snackbarHostState = remember { SnackbarHostState() }
+                    val message by viewModel.message.collectAsStateWithLifecycle()
+                    var currentTab by rememberSaveable { mutableStateOf(0) }
+                    BackHandler(enabled = currentTab != 0) { currentTab = 0 }
 
-                        LaunchedEffect(message) {
-                            message?.let {
-                                snackbarHostState.showSnackbar(it)
-                                viewModel.clearMessage()
-                            }
-                        }
-
-                        Scaffold(
-                            modifier = Modifier.fillMaxSize(),
-                            snackbarHost = { SnackbarHost(snackbarHostState) },
-                            bottomBar = {
-                                OmniBottomBar(
-                                    currentTab = currentTab,
-                                    onTabSelected = { currentTab = it },
-                                    appStrings = appStrings
-                                )
-                            }
-                        ) { innerPadding ->
-                            MainTabContent(
-                                currentTab = currentTab,
-                                onSelectTab = { currentTab = it },
-                                viewModel = viewModel,
-                                modifier = Modifier.padding(innerPadding)
-                            )
+                    LaunchedEffect(message) {
+                        message?.let {
+                            snackbarHostState.showSnackbar(it)
+                            viewModel.clearMessage()
                         }
                     }
-                }
-            }
-        }
-    }
 
-@Composable
-private fun OmniBottomBar(
-    currentTab: Int,
-    onTabSelected: (Int) -> Unit,
-    appStrings: com.omni.downloader.ui.localization.AppStrings
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val navItems = remember(appStrings) {
-                listOf(
-                    Triple(0, Icons.Default.Home, appStrings.navHome),
-                    Triple(1, Icons.Default.Download, appStrings.navTasks),
-                    Triple(2, Icons.Default.Settings, appStrings.navSettings)
-                )
-            }
-            navItems.forEach { (tabIndex, icon, desc) ->
-                val isSelected = currentTab == tabIndex
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            if (currentTab != tabIndex) {
-                                onTabSelected(tabIndex)
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
+                    Scaffold(
                         modifier = Modifier
-                            .size(width = 58.dp, height = 34.dp)
-                            .clip(RoundedCornerShape(17.dp))
-                            .background(
-                                if (isSelected) MaterialTheme.colorScheme.secondaryContainer
-                                else Color.Transparent
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = desc,
-                            modifier = Modifier.size(26.dp),
-                            tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
-                            else MaterialTheme.colorScheme.onSurfaceVariant
+                            .fillMaxSize()
+                            .imePadding(),
+                        containerColor = MaterialTheme.colorScheme.background,
+                        snackbarHost = {
+                            SnackbarHost(
+                                hostState = snackbarHostState,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        },
+                        bottomBar = {
+                            OmniNavigationBar(
+                                currentTab = currentTab,
+                                onTabSelected = { currentTab = it },
+                                appStrings = appStrings
+                            )
+                        }
+                    ) { innerPadding ->
+                        MainTabContent(
+                            currentTab = currentTab,
+                            onSelectTab = { currentTab = it },
+                            viewModel = viewModel,
+                            modifier = Modifier.padding(innerPadding)
                         )
                     }
                 }
             }
         }
     }
-}
 
-@Composable
-private fun MainTabContent(
-    currentTab: Int,
-    onSelectTab: (Int) -> Unit,
-    viewModel: MainViewModel,
-    modifier: Modifier = Modifier
-) {
-    val saveableStateHolder = rememberSaveableStateHolder()
-    val onNavTasks = remember(onSelectTab) { { onSelectTab(1) } }
-    val onNavSettings = remember(onSelectTab) { { onSelectTab(2) } }
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+    /**
+     * 底栏直接使用 M3 NavigationBar / NavigationBarItem（与 Mihon 手机端一致）：
+     * 选中指示器、涟漪与文字动画全部交给 M3 原生实现，页面侧不再维护自定义动画。
+     */
+    @Composable
+    private fun OmniNavigationBar(
+        currentTab: Int,
+        onTabSelected: (Int) -> Unit,
+        appStrings: AppStrings
     ) {
-        saveableStateHolder.SaveableStateProvider(currentTab) {
-            when (currentTab) {
-                0 -> HomeScreen(
-                    viewModel = viewModel,
-                    onNavigateToTasks = onNavTasks,
-                    onNavigateToSettings = onNavSettings
+        val navItems = remember(appStrings) {
+            listOf(
+                NavItem(0, Icons.Outlined.Home, appStrings.navHome),
+                NavItem(1, Icons.Outlined.Download, appStrings.navTasks),
+                NavItem(2, Icons.Outlined.Settings, appStrings.navSettings)
+            )
+        }
+
+        NavigationBar(
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 0.dp
+        ) {
+            navItems.forEach { item ->
+                val selected = currentTab == item.index
+                NavigationBarItem(
+                    selected = selected,
+                    onClick = {
+                        if (!selected) {
+                            onTabSelected(item.index)
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = item.label
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = item.label,
+                            style = MaterialTheme.typography.labelMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    alwaysShowLabel = true
                 )
-                1 -> TasksScreen(viewModel = viewModel)
-                2 -> SettingsScreen(viewModel = viewModel)
             }
         }
     }
-}
+
+    @Composable
+    private fun MainTabContent(
+        currentTab: Int,
+        onSelectTab: (Int) -> Unit,
+        viewModel: MainViewModel,
+        modifier: Modifier = Modifier
+    ) {
+        val onNavTasks = remember(onSelectTab) { { onSelectTab(1) } }
+        val onNavSettings = remember(onSelectTab) { { onSelectTab(2) } }
+        RetainedTabHost(currentTab, 3, modifier.fillMaxSize()) { tab ->
+            when (tab) {
+                0 -> HomeScreen(viewModel, onNavTasks, onNavSettings, isActive = LocalTabActive.current)
+                1 -> TasksScreen(viewModel)
+                2 -> SettingsScreen(viewModel)
+            }
+        }
+    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -255,4 +248,10 @@ private fun MainTabContent(
             requestPermissionLauncher.launch(permissions.toTypedArray())
         }
     }
+
+    private data class NavItem(
+        val index: Int,
+        val icon: ImageVector,
+        val label: String
+    )
 }

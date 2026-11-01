@@ -1,18 +1,42 @@
 package com.omni.downloader.ui.components
 
 import android.net.Uri
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.OpenInBrowser
-import androidx.compose.material3.*
+import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.OpenInBrowser
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import com.omni.downloader.ui.design.TabProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,11 +50,9 @@ import com.omni.downloader.data.model.RelaySite
 import java.util.Locale
 
 /**
- * 原生就地直接解析与极致流畅卡片：
- * 1. 支持旧版本的“直接就地解析下载”，不默认跳出全屏网页打扰用户
- * 2. 剥离了沉重的内嵌输入框，单卡片测量耗时从 15ms 降至 0.2ms，彻底消解列表滑动卡顿
- * 3. 正在解析时就地展示旋转指示器与状态文本，支持一键取消
- * 4. 保留右侧【窗口排查】作为遇到人机验证时的备选逃生通道
+ * 中转站卡片：
+ * 保持「就地直接解析」的核心交互，视觉上收敛为一行图标 + 名称 + 两个操作，
+ * 解析中的状态条以展开动画呈现，不改变卡片静态部分的测量。
  */
 @Composable
 fun RelaySiteCard(
@@ -73,41 +95,41 @@ fun RelaySiteCard(
         }
     }
 
+    val borderColor by animateColorAsState(
+        targetValue = if (isResolving) MaterialTheme.colorScheme.primary
+        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+        animationSpec = tween(220),
+        label = "relayBorder"
+    )
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(18.dp))
             .clickable {
-                if (isResolving) {
-                    onCancelResolve()
-                } else {
-                    onStartResolve(site)
-                }
+                if (isResolving) onCancelResolve() else onStartResolve(site)
             },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(
-            if (isResolving) 1.5.dp else 1.dp,
-            if (isResolving) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-        )
+        border = BorderStroke(if (isResolving) 1.4.dp else 1.dp, borderColor),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 11.dp)
+                .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
-            // 第一行：[品牌徽标] + [名称/域名] + [⚡ 直接解析 / 取消] + [窗口排查]
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 网站品牌徽标（常驻矢量首字母，零网络开销、零延迟、零灰块）
+                // 品牌徽标：纯矢量首字母，零网络请求
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(brandColor.copy(alpha = 0.15f)),
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(brandColor.copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -120,19 +142,18 @@ fun RelaySiteCard(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // 网站名称与域名展示
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = site.name,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(1.dp))
                     Text(
                         text = domain.ifBlank { site.url },
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -141,32 +162,33 @@ fun RelaySiteCard(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // 原生就地直接解析主按钮
                 Button(
                     onClick = {
-                        if (isResolving) {
-                            onCancelResolve()
-                        } else {
-                            onStartResolve(site)
-                        }
+                        if (isResolving) onCancelResolve() else onStartResolve(site)
                     },
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                    modifier = Modifier.height(34.dp),
-                    colors = if (isResolving) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                             else ButtonDefaults.buttonColors()
+
+                    contentPadding = PaddingValues(horizontal = 11.dp, vertical = 0.dp),
+                    modifier = Modifier.height(40.dp),
+                    colors = if (isResolving) {
+                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    } else {
+                        ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 ) {
                     if (isResolving) {
-                        CircularProgressIndicator(
+                        TabProgressIndicator(
                             modifier = Modifier.size(13.dp),
                             strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.onError
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(5.dp))
                         Text(text = "取消", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     } else {
                         Icon(
-                            imageVector = Icons.Default.Bolt,
+                            imageVector = Icons.Outlined.Bolt,
                             contentDescription = null,
                             modifier = Modifier.size(15.dp)
                         )
@@ -179,29 +201,27 @@ fun RelaySiteCard(
                     }
                 }
 
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(2.dp))
 
-                // 备用：窗口排查入口（供需要手动通过人机验证或自定义清晰度时使用）
                 IconButton(
                     onClick = { onOpenManualBrowser(site) },
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.OpenInBrowser,
+                        imageVector = Icons.Outlined.OpenInBrowser,
                         contentDescription = "窗口排查",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
                         modifier = Modifier.size(18.dp)
                     )
                 }
 
-                // 删除按钮（仅在设置页等提供回调时展示）
                 if (onDeleteSite != null) {
                     IconButton(
                         onClick = { onDeleteSite(site.id) },
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            imageVector = Icons.Outlined.Close,
                             contentDescription = "删除",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                             modifier = Modifier.size(16.dp)
@@ -210,25 +230,25 @@ fun RelaySiteCard(
                 }
             }
 
-            // 第二行：解析中动态状态条 (平滑展开)
+            // 解析中动态状态条（平滑展开）
             AnimatedVisibility(
                 visible = isResolving,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
+                enter = expandVertically(animationSpec = tween(240)) + fadeIn(tween(180)),
+                exit = shrinkVertically(animationSpec = tween(180)) + fadeOut(tween(140))
             ) {
                 Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
-                        shape = RoundedCornerShape(6.dp)
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                                .padding(horizontal = 10.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            CircularProgressIndicator(
+                            TabProgressIndicator(
                                 modifier = Modifier.size(12.dp),
                                 strokeWidth = 1.5.dp,
                                 color = MaterialTheme.colorScheme.primary
@@ -236,9 +256,8 @@ fun RelaySiteCard(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = resolvingStatus.ifBlank { "正在后台自动提取视频直链并加入下载..." },
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                fontSize = 11.5.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f)

@@ -10,7 +10,7 @@
 </p>
 
 [![Release](https://img.shields.io/github/v/release/baishu136/OmniDownloader?color=blue&label=Release)](https://github.com/baishu136/OmniDownloader/releases)
-[![Android](https://img.shields.io/badge/Android-v1.4.8-green.svg)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-v1.5.10-green.svg)](https://developer.android.com)
 [![iOS](https://img.shields.io/badge/iOS-SwiftUI%20Native-orange.svg)](OmniDownloader-iOS)
 [![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
@@ -25,7 +25,7 @@
 
 | Platform | Target Devices | Core Tech Stack | Installation & Download |
 | :--- | :--- | :--- | :--- |
-| **🤖 Android Native** | Android Phones / Tablets / TV (Android 8.0+) | Kotlin + Jetpack Compose + FFmpegKit + Aria2c | [Download Latest APK (v1.4.8)](OmniDownloader_LATEST.apk) or via Releases |
+| **🤖 Android Native** | Android Phones / Tablets / TV (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [Download Latest APK (v1.5.10)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) or via Releases |
 | **🍎 iOS Native** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + AVFoundation hardware-accelerated muxing | Source code in [`OmniDownloader-iOS`](OmniDownloader-iOS); Free cloud build via GitHub Actions for TrollStore / AltStore sideloading |
 | **💻 Windows Desktop** | Windows 10 / 11 (64-bit) | Python 3 + FastAPI + Edge WebView2 standalone window + Built-in FFmpeg | Download [`windows/release/OmniDownloader_桌面独立版.zip`](windows/release/); Standalone portable app with multilingual guides |
 | **🌐 Web Background** | Windows PC, accessible by any browser across LAN | Lightweight system tray daemon + Local web service + Built-in FFmpeg | Download [`windows/release/OmniDownloader_网页纯后台版.zip`](windows/release/); Silent tray app with browser download takeover |
@@ -49,13 +49,25 @@
 
 ## 📲 Quick Downloads
 
-- **Android Latest APK**: [`OmniDownloader_LATEST.apk`](OmniDownloader_LATEST.apk) (or [`OmniDownloader-v1.4.8-debug.apk`](OmniDownloader-v1.4.8-debug.apk))
+- **Android Latest APK**: [`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) (or [`OmniDownloader-v1.5.10-release.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-v1.5.10-release.apk))
 - **iOS Sideload Guide**: See [`OmniDownloader-iOS/README_IOS.md`](OmniDownloader-iOS/README_IOS.md)
 - **Windows Portable ZIPs**: Located in [`windows/release/`](windows/release/)
 
 ---
 
-## 📝 Recent Changelog (v1.4.8)
+## Android v1.5.10
+
+- Correctly select the original video or Bilibili part in collections; retain playlist order and real video URLs.
+- Share bounded media capture between silent relay parsing and the manual browser; remove the browser resource panel and deep-scan controls.
+- Use one moving selection indicator on the download page and add the project link under Settings → About.
+- Includes the compact home screen, seven settings categories, Material 3 interactions, retained-page performance fixes, and R8/resource shrinking introduced in 1.5.7–1.5.9.
+- Android 8.0+, ARM64 APK: **53.35 MiB**. Verification: **27 JVM tests, 8 emulator device cases**, optimized release checks; physical ARM64 media execution remains unverified.
+
+[Release and APK](https://github.com/baishu136/OmniDownloader/releases/tag/v1.5.10) · [Change details](docs/RELAY_AND_COLLECTION_1.5.10.md) · [Recovered verification record](docs/RELEASE_VERIFICATION_1.5.10.md)
+
+---
+
+## 📝 Historical Changelog (v1.4.8)
 
 - **[NEW] 🐱 "Cat Catch" (嗅探猫) Professional Multi-Stream Sniffer Integration**:
   - **Deep Network Hooks**: Injected Fetch, XMLHttpRequest, and HTMLMediaElement listeners into the built-in browser to automatically capture asynchronous media streams, M3U8 playlists, and direct CDN links.

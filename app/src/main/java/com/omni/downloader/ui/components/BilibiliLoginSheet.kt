@@ -13,8 +13,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -93,7 +93,7 @@ fun BilibiliLoginSheet(
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Security,
+                            imageVector = Icons.Outlined.Security,
                             contentDescription = null,
                             tint = SuccessGreen,
                             modifier = Modifier.size(20.dp)
@@ -115,7 +115,7 @@ fun BilibiliLoginSheet(
                     }
                     IconButton(onClick = onDismissRequest) {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            imageVector = Icons.Outlined.Close,
                             contentDescription = strings.bilibiliCloseDialog
                         )
                     }

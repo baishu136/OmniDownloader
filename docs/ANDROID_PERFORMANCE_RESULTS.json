@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-01",
+  "baseline": "1.5.6 release",
+  "fixed": "1.5.7 release",
+  "device": "Android 15 API 35 x86_64, arm64 translation, NVIDIA RTX 4060 Ti GLES host for hardware cases",
+  "fixture": "700 history tasks, local JPG covers, synthetic progress every 80ms; 12 tab switches and 24 swipes per run",
+  "hardwareStress80Sites": [
+    {
+      "Case": "baseline_hardware_1",
+      "Frames": "11-01 05:07:50.828  3505  3519 I OmniPerf: frames=176 p50Ms=17.296876 p95Ms=19.455682 uiP95Ms=5.083416 measureP95Ms=0.1637 over32ms=6 over100ms=1",
+      "Test": "OK (1 test)"
+    },
+    {
+      "Case": "fixed_hardware_1",
+      "Frames": "11-01 05:08:03.549  3623  3636 I OmniPerf: frames=139 p50Ms=17.399148 p95Ms=86.126208 uiP95Ms=7.257768 measureP95Ms=0.1526 over32ms=23 over100ms=5",
+      "Test": "OK (1 test)"
+    },
+    {
+      "Case": "baseline_hardware_2",
+      "Frames": "11-01 05:08:16.928  3751  3764 I OmniPerf: frames=175 p50Ms=17.236742 p95Ms=25.930124 uiP95Ms=5.54541 measureP95Ms=0.1276 over32ms=6 over100ms=1",
+      "Test": "OK (1 test)"
+    },
+    {
+      "Case": "fixed_hardware_2",
+      "Frames": "11-01 05:08:29.399  3866  3879 I OmniPerf: frames=135 p50Ms=17.34871 p95Ms=50.778558 uiP95Ms=7.340076 measureP95Ms=0.1675 over32ms=27 over100ms=3",
+      "Test": "OK (1 test)"
+    }
+  ],
+  "hardwareEquivalent3Sites150msPause": [
+    {
+      "Case": "baseline_equivalent",
+      "Frames": "11-01 05:11:09.688  4106  4120 I OmniPerf: frames=454 p50Ms=17.494916 p95Ms=29.144796 uiP95Ms=7.301018 measureP95Ms=0.1112 over32ms=20 over100ms=0",
+      "Test": "OK (1 test)"
+    },
+    {
+      "Case": "fixed_equivalent",
+      "Frames": "11-01 05:11:28.824  4245  4258 I OmniPerf: frames=446 p50Ms=17.486214 p95Ms=27.431284 uiP95Ms=5.9982 measureP95Ms=0.1283 over32ms=14 over100ms=3",
+      "Test": "OK (1 test)"
+    }
+  ],
+  "softwareRendererExploratory": [
+    {
+      "case": "baseline",
+      "log": "--------- beginning of main\r\n11-01 04:57:51.592  4775  4789 I OmniPerf: frames=153 p50Ms=137.308824 p95Ms=229.663352 uiP95Ms=10.4477 measureP95Ms=0.2628 over32ms=150 over100ms=128"
+    },
+    {
+      "case": "fixed",
+      "log": "--------- beginning of main\r\n11-01 04:58:53.262  4921  4936 I OmniPerf: frames=148 p50Ms=17.352558 p95Ms=55.668938 uiP95Ms=6.579222 measureP95Ms=0.1603 over32ms=42 over100ms=1"
+    },
+    {
+      "case": "baseline-repeat",
+      "log": "--------- beginning of main\r\n11-01 05:00:30.791  5088  5109 I OmniPerf: frames=149 p50Ms=34.350376 p95Ms=101.171194 uiP95Ms=9.526548 measureP95Ms=0.3164 over32ms=95 over100ms=10"
+    },
+    {
+      "case": "fixed-repeat",
+      "log": "--------- beginning of main\r\n11-01 05:01:53.839  5233  5247 I OmniPerf: frames=126 p50Ms=120.456012 p95Ms=175.989876 uiP95Ms=17.3211 measureP95Ms=0.2108 over32ms=126 over100ms=93"
+    }
+  ],
+  "interpretation": "Functional isolation and state correctness are tested independently. Equivalent-content UI P95 improved 7.301018 -> 5.9982 ms in one paired run. Stress results include different visible content because the baseline clips relay rows. Software GPU measurements vary heavily. These are diagnostic emulator samples, not a statistical guarantee or device FPS promise."
+}

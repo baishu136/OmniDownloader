@@ -4,24 +4,68 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.Error
+import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import com.omni.downloader.ui.design.TabProgressIndicator
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
@@ -30,49 +74,63 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omni.downloader.data.model.RelaySite
-import com.omni.downloader.data.model.TaskStatus
 import com.omni.downloader.ui.components.FormatSelectorSheet
 import com.omni.downloader.ui.components.RelaySitesOverlays
-import com.omni.downloader.ui.components.RelaySitesSection
+import com.omni.downloader.ui.components.TaskCard
 import com.omni.downloader.ui.components.relaySitesItems
 import com.omni.downloader.ui.components.rememberRelaySitesState
-import com.omni.downloader.ui.components.TaskCard
-import com.omni.downloader.ui.theme.*
+import com.omni.downloader.ui.design.OmniCard
+import com.omni.downloader.ui.design.OmniMotion
+import com.omni.downloader.ui.design.OmniSectionHeader
+import com.omni.downloader.ui.localization.LocalAppStrings
+import com.omni.downloader.ui.theme.BilibiliPink
+import com.omni.downloader.ui.theme.DouyinBlack
+import com.omni.downloader.ui.theme.ErrorRed
+import com.omni.downloader.ui.theme.FacebookBlue
+import com.omni.downloader.ui.theme.InstagramPink
+import com.omni.downloader.ui.theme.KuaishouOrange
+import com.omni.downloader.ui.theme.PinterestRed
+import com.omni.downloader.ui.theme.TikTokCyan
+import com.omni.downloader.ui.theme.TwitterBlue
+import com.omni.downloader.ui.theme.XiaohongshuRed
+import com.omni.downloader.ui.theme.YouTubeRed
 import com.omni.downloader.ui.viewmodel.MainViewModel
 
 @Composable
 fun HomeScreen(
     viewModel: MainViewModel,
     onNavigateToTasks: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    isActive: Boolean = true
 ) {
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    val inputUrl by viewModel.inputUrl.collectAsState()
-    val isAnalyzing by viewModel.isAnalyzing.collectAsState()
-    val metadata by viewModel.metadata.collectAsState()
-    val showSheet by viewModel.showFormatSheet.collectAsState()
-    val errorDialogDetail by viewModel.errorDialogDetail.collectAsState()
-    val selectedMultiMediaIndex by viewModel.selectedMultiMediaIndex.collectAsState()
-    val selectedType by viewModel.selectedDownloadType.collectAsState()
-    val selectedVideoFormat by viewModel.selectedVideoFormat.collectAsState()
-    val selectedAudioFormat by viewModel.selectedAudioFormat.collectAsState()
-    val hasPromptedBilibiliLogin by viewModel.hasPromptedBilibiliLogin.collectAsState()
-    val bilibiliCookie by viewModel.bilibiliCookie.collectAsState()
-    val relaySites by viewModel.relaySites.collectAsState()
+    val inputUrl by viewModel.inputUrl.collectAsStateWithLifecycle()
+    val isAnalyzing by viewModel.isAnalyzing.collectAsStateWithLifecycle()
+    val metadata by viewModel.metadata.collectAsStateWithLifecycle()
+    val showSheet by viewModel.showFormatSheet.collectAsStateWithLifecycle()
+    val errorDialogDetail by viewModel.errorDialogDetail.collectAsStateWithLifecycle()
+    val selectedMultiMediaIndex by viewModel.selectedMultiMediaIndex.collectAsStateWithLifecycle()
+    val selectedType by viewModel.selectedDownloadType.collectAsStateWithLifecycle()
+    val selectedVideoFormat by viewModel.selectedVideoFormat.collectAsStateWithLifecycle()
+    val selectedAudioFormat by viewModel.selectedAudioFormat.collectAsStateWithLifecycle()
+    val hasPromptedBilibiliLogin by viewModel.hasPromptedBilibiliLogin.collectAsStateWithLifecycle()
+    val bilibiliCookie by viewModel.bilibiliCookie.collectAsStateWithLifecycle()
+    val relaySites by viewModel.relaySites.collectAsStateWithLifecycle()
 
     var showBilibiliGuideDialog by remember { mutableStateOf(false) }
     var showBilibiliLoginSheet by remember { mutableStateOf(false) }
 
-    LaunchedEffect(hasPromptedBilibiliLogin, bilibiliCookie) {
-        if (!hasPromptedBilibiliLogin && bilibiliCookie.isEmpty()) {
+    // 首页常驻组合在后台时不应弹出引导弹窗，只有当前页面可见时才触发
+    LaunchedEffect(hasPromptedBilibiliLogin, bilibiliCookie, isActive) {
+        if (isActive && !hasPromptedBilibiliLogin && bilibiliCookie.isEmpty()) {
             kotlinx.coroutines.delay(600)
             showBilibiliGuideDialog = true
         }
     }
 
-    val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
+    val strings = LocalAppStrings.current
     val onStartDirectDownloadAction = remember(viewModel, context) {
         { directUrl: String, title: String ->
             viewModel.startDirectDownload(context = context, directUrl = directUrl, title = title)
@@ -85,218 +143,31 @@ fun HomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // 顶部品牌区
-            item(key = "home_brand_header", contentType = "brand_header") {
-                Column(modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CloudDownload,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "OmniDownloader",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        val appVer = com.omni.downloader.OmniApp.appVersion
-                        Surface(
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                            shape = RoundedCornerShape(4.dp)
-                        ) {
-                            Text(
-                                text = "v$appVer",
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = strings.appSubtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            item(key = "home_hero", contentType = "hero") {
+                HomeHero()
             }
 
-            // 平台支持标签直接铺开展示
-            item(key = "home_platforms_row", contentType = "platforms_row") {
-                val supportedPlatforms = remember {
-                    listOf(
-                        "哔哩哔哩" to BilibiliPink,
-                        "抖音" to DouyinBlack,
-                        "快手" to KuaishouOrange,
-                        "小红书" to XiaohongshuRed,
-                        "YouTube" to YouTubeRed,
-                        "TikTok" to TikTokCyan,
-                        "X (Twitter)" to TwitterBlue,
-                        "Instagram" to InstagramPink,
-                        "Facebook" to FacebookBlue,
-                        "Pinterest" to PinterestRed
-                    )
-                }
-                @OptIn(ExperimentalLayoutApi::class)
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    supportedPlatforms.forEach { (name, color) ->
-                        PlatformChip(name = name, color = if (name == "抖音") MaterialTheme.colorScheme.onSurface else color)
-                    }
-                }
+            item(key = "home_platforms", contentType = "platforms") {
+                HomePlatformChips()
             }
 
-            // 输入与操作面板
             item(key = "home_input_panel", contentType = "input_panel") {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = inputUrl,
-                    onValueChange = { viewModel.updateInputUrl(it) },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = {
-                        Text(
-                            text = strings.inputPlaceholder,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            fontSize = 13.5.sp
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.Link, contentDescription = null)
-                    },
-                    trailingIcon = {
-                        if (inputUrl.isNotEmpty()) {
-                            IconButton(onClick = { viewModel.updateInputUrl("") }) {
-                                Icon(imageVector = Icons.Default.Clear, contentDescription = strings.clear)
-                            }
-                        } else {
-                            IconButton(onClick = { viewModel.checkClipboardAndPaste(context, autoDownload = false) }) {
-                                Icon(imageVector = Icons.Default.ContentPaste, contentDescription = strings.paste)
-                            }
-                        }
-                    },
-                    singleLine = false,
-                    minLines = 3,
-                    maxLines = 3,
-                    shape = RoundedCornerShape(12.dp),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = {
+                HomeInputPanel(
+                    viewModel = viewModel,
+                    inputUrl = inputUrl,
+                    isAnalyzing = isAnalyzing,
+                    onAnalyze = {
                         keyboardController?.hide()
                         viewModel.startAnalyze()
-                    })
+                    }
                 )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = { viewModel.checkClipboardAndPaste(context, autoDownload = true) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(46.dp),
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ContentPaste,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = strings.pasteClipboard,
-                                fontSize = 12.5.sp,
-                                maxLines = 1,
-                                softWrap = false,
-                                overflow = TextOverflow.Ellipsis,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-
-                    Button(
-                        onClick = {
-                            keyboardController?.hide()
-                            viewModel.startAnalyze()
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(46.dp),
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        enabled = !isAnalyzing && inputUrl.isNotBlank()
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            if (isAnalyzing) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = strings.analyzing,
-                                    fontSize = 12.5.sp,
-                                    maxLines = 1,
-                                    softWrap = false,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.Bolt,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = strings.startAnalyze,
-                                    fontSize = 12.5.sp,
-                                    maxLines = 1,
-                                    softWrap = false,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                        }
-                    }
-                }
             }
-        }
 
-        // 备用中转解析站区域（平铺为独立 items，享受懒加载与按需测量，彻底消除卡顿）
-        relaySitesItems(
+            relaySitesItems(
                 relaySites = relaySites,
                 relayState = relayState,
                 globalInputUrl = inputUrl,
@@ -304,7 +175,6 @@ fun HomeScreen(
                 context = context
             )
 
-            // 正在进行的任务提示条
             item(key = "home_active_tasks_section", contentType = "active_tasks") {
                 HomeActiveTasksSection(
                     viewModel = viewModel,
@@ -321,11 +191,11 @@ fun HomeScreen(
     }
 
     // 详细错误弹窗
-    if (errorDialogDetail != null) {
+    if (isActive && errorDialogDetail != null) {
         AlertDialog(
             onDismissRequest = { viewModel.dismissErrorDialog() },
             icon = {
-                Icon(imageVector = Icons.Default.ErrorOutline, contentDescription = null, tint = ErrorRed)
+                Icon(imageVector = Icons.Outlined.Error, contentDescription = null, tint = ErrorRed)
             },
             title = {
                 Text(text = strings.analyzeFailedTitle, fontWeight = FontWeight.Bold)
@@ -372,7 +242,7 @@ fun HomeScreen(
     }
 
     // 解析结果配置弹窗
-    if (showSheet && metadata != null) {
+    if (isActive && showSheet && metadata != null) {
         FormatSelectorSheet(
             metadata = metadata!!,
             selectedMultiMediaIndex = selectedMultiMediaIndex,
@@ -392,7 +262,7 @@ fun HomeScreen(
     }
 
     // 首次启动 B站画质解锁引导弹窗
-    if (showBilibiliGuideDialog) {
+    if (isActive && showBilibiliGuideDialog) {
         com.omni.downloader.ui.components.BilibiliGuideDialog(
             onLoginClick = {
                 showBilibiliGuideDialog = false
@@ -407,7 +277,7 @@ fun HomeScreen(
     }
 
     // 内置网页安全登录弹窗（自动截获 Cookie）
-    if (showBilibiliLoginSheet) {
+    if (isActive && showBilibiliLoginSheet) {
         com.omni.downloader.ui.components.BilibiliLoginSheet(
             onDismissRequest = {
                 showBilibiliLoginSheet = false
@@ -421,36 +291,291 @@ fun HomeScreen(
     }
 }
 
+/**
+ * 顶部品牌区：图标底板使用主色渐变，标题与版本号同一基线，
+ * 标题仅保留应用名与版本，平台范围由下方标签说明。
+ */
 @Composable
-private fun PlatformChip(name: String, color: Color) {
-    Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(20.dp)
+private fun HomeHero() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.tertiary
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(color)
+            Icon(
+                imageVector = Icons.Outlined.CloudDownload,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(23.dp)
             )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = name,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = color
-            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "OmniDownloader",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                val appVer = com.omni.downloader.OmniApp.appVersion
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = "v$appVer",
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
         }
     }
 }
 
 /**
+ * 链接输入面板：将输入框与两个主操作收进同一张卡片，
+ * 视觉上形成「一屏内完成主流程」的聚焦区。
+ */
+@Composable
+private fun HomeInputPanel(
+    viewModel: MainViewModel,
+    inputUrl: String,
+    isAnalyzing: Boolean,
+    onAnalyze: () -> Unit
+) {
+    val context = LocalContext.current
+    val strings = LocalAppStrings.current
+
+    OmniCard(contentPadding = PaddingValues(14.dp)) {
+        TextField(
+            value = inputUrl,
+            onValueChange = { viewModel.updateInputUrl(it) },
+            modifier = Modifier.fillMaxWidth().testTag("home_link_input"),
+            placeholder = {
+                Text(
+                    text = strings.inputPlaceholder,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Link,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            trailingIcon = {
+                if (inputUrl.isNotEmpty()) {
+                    IconButton(onClick = { viewModel.updateInputUrl("") }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Clear,
+                            contentDescription = strings.clear,
+                            modifier = Modifier.size(19.dp)
+                        )
+                    }
+                } else {
+                    IconButton(onClick = { viewModel.checkClipboardAndPaste(context, autoDownload = false) }) {
+                        Icon(
+                            imageVector = Icons.Outlined.ContentPaste,
+                            contentDescription = strings.paste,
+                            modifier = Modifier.size(19.dp)
+                        )
+                    }
+                }
+            },
+            singleLine = true,
+            maxLines = 1,
+            shape = RoundedCornerShape(14.dp),
+            textStyle = MaterialTheme.typography.bodyLarge,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.28f),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                cursorColor = MaterialTheme.colorScheme.primary
+            ),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                if (inputUrl.isNotBlank() && !isAnalyzing) onAnalyze()
+            })
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            FilledTonalButton(
+                onClick = { viewModel.checkClipboardAndPaste(context, autoDownload = true) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(46.dp),
+
+                contentPadding = PaddingValues(horizontal = 8.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.ContentPaste,
+                    contentDescription = null,
+                    modifier = Modifier.size(17.dp)
+                )
+                Spacer(modifier = Modifier.width(5.dp))
+                Text(
+                    text = strings.pasteClipboard,
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Button(
+                onClick = onAnalyze,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(46.dp),
+
+                contentPadding = PaddingValues(horizontal = 8.dp),
+                enabled = !isAnalyzing && inputUrl.isNotBlank()
+            ) {
+                // 状态切换用短促淡入淡出，避免文字与图标瞬间跳变
+                Crossfade(
+                    targetState = isAnalyzing,
+                    animationSpec = tween(150, easing = OmniMotion.Standard),
+                    label = "analyzeButtonState"
+                ) { analyzing ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (analyzing) {
+                            TabProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = strings.analyzing,
+                                style = MaterialTheme.typography.labelLarge,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Outlined.Bolt,
+                                contentDescription = null,
+                                modifier = Modifier.size(17.dp)
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = strings.startAnalyze,
+                                style = MaterialTheme.typography.labelLarge,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 支持平台：以低饱和圆点 + 标签铺开，避免使用彩色整块背景造成视觉噪音。
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun HomePlatformChips() {
+    val supportedPlatforms = remember {
+        listOf(
+            "哔哩哔哩" to BilibiliPink,
+            "抖音" to DouyinBlack,
+            "快手" to KuaishouOrange,
+            "小红书" to XiaohongshuRed,
+            "YouTube" to YouTubeRed,
+            "TikTok" to TikTokCyan,
+            "X (Twitter)" to TwitterBlue,
+            "Instagram" to InstagramPink,
+            "Facebook" to FacebookBlue,
+            "Pinterest" to PinterestRed
+        )
+    }
+    FlowRow(
+        modifier = Modifier
+            .testTag("home_platforms")
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        verticalArrangement = Arrangement.spacedBy(7.dp)
+    ) {
+        supportedPlatforms.forEach { (name, color) ->
+            PlatformChip(
+                name = name,
+                color = if (name == "抖音") MaterialTheme.colorScheme.onSurfaceVariant else color
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlatformChip(name: String, color: Color) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f))
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(color)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = name,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
  * 局部隔离的正在进行任务展示区：
- * 仅该独立 Composable 订阅 activeTasks 状态，下载进度高频刷新时完全不触发主屏输入框、中转卡片与平台标签重组
+ * 仅该独立 Composable 订阅 activeTasks 状态，下载进度高频刷新时完全不触发主屏输入框、中转卡片与平台标签重组。
  */
 @Composable
 private fun HomeActiveTasksSection(
@@ -458,38 +583,54 @@ private fun HomeActiveTasksSection(
     onNavigateToTasks: () -> Unit
 ) {
     val context = LocalContext.current
-    val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
-    val activeTasks by viewModel.activeTasks.collectAsState()
+    val strings = LocalAppStrings.current
+    val activeTasks by viewModel.activeTasks.collectAsStateWithLifecycle()
 
-    if (activeTasks.isNotEmpty()) {
+    AnimatedVisibility(
+        visible = activeTasks.isNotEmpty(),
+        enter = fadeIn(tween(OmniMotion.NORMAL)) + expandVertically(
+            animationSpec = tween(OmniMotion.MEDIUM, easing = OmniMotion.Emphasized)
+        ),
+        exit = fadeOut(tween(OmniMotion.FAST)) + shrinkVertically(
+            animationSpec = tween(OmniMotion.FAST)
+        )
+    ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 6.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "${strings.activeTasksTitle} (${activeTasks.size})",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                TextButton(onClick = onNavigateToTasks) {
-                    Text(strings.viewAll)
+            OmniSectionHeader(
+                title = "${strings.activeTasksTitle} (${activeTasks.size})",
+                action = {
+                    TextButton(onClick = onNavigateToTasks) {
+                        Text(
+                            text = strings.viewAll,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
                 }
+            )
+
+            val onCancelHomeTask = remember(viewModel, context) {
+                { id: String -> viewModel.cancelTask(context, id) }
+            }
+            val onDeleteHomeTask = remember(viewModel) {
+                { id: String, deleteFile: Boolean -> viewModel.deleteTask(id, deleteFile) }
+            }
+            val onRetryHomeTask = remember(viewModel) {
+                { url: String -> viewModel.startAnalyze(url) }
             }
 
             activeTasks.take(2).forEach { task ->
-                val taskId = task.id
-                val taskUrl = task.url
-                key(taskId) {
+                key(task.id) {
                     TaskCard(
                         task = task,
-                        onCancel = remember(taskId) { { viewModel.cancelTask(context, taskId) } },
-                        onDelete = remember(taskId) { { deleteFile -> viewModel.deleteTask(taskId, deleteFile) } },
-                        onRetry = remember(taskUrl) { { viewModel.startAnalyze(taskUrl) } }
+                        onCancel = onCancelHomeTask,
+                        onDelete = onDeleteHomeTask,
+                        onRetry = onRetryHomeTask,
+                        progressFlowProvider = viewModel::getTaskProgress
                     )
                 }
             }

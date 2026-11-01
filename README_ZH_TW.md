@@ -10,7 +10,7 @@
 </p>
 
 [![Release](https://img.shields.io/github/v/release/baishu136/OmniDownloader?color=blue&label=Release)](https://github.com/baishu136/OmniDownloader/releases)
-[![Android](https://img.shields.io/badge/Android-v1.4.8-green.svg)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-v1.5.10-green.svg)](https://developer.android.com)
 [![iOS](https://img.shields.io/badge/iOS-SwiftUI%20Native-orange.svg)](OmniDownloader-iOS)
 [![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
@@ -25,7 +25,7 @@
 
 | 平台型態 | 適用裝置 | 核心技術棧 | 取得與安裝方式 |
 | :--- | :--- | :--- | :--- |
-| **🤖 Android 原生版** | Android 手機 / 平板 / 電視盒 (Android 8.0+) | Kotlin + Jetpack Compose + FFmpegKit + Aria2c | [下載最新 APK (v1.4.8)](OmniDownloader_LATEST.apk) 或 Releases 頁面 |
+| **🤖 Android 原生版** | Android 手機 / 平板 / 電視盒 (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [下載最新 APK (v1.5.10)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) 或 Releases 頁面 |
 | **🍎 iOS 原生版** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + AVFoundation 原生硬體混流 + Photos 相簿 | 原始碼工程位於 [`OmniDownloader-iOS`](OmniDownloader-iOS)，支援 GitHub Actions 免費打包 IPA 並透過 TrollStore 巨魔或自簽側載 |
 | **💻 Windows 桌面版** | Windows 10 / 11 (64位元) | Python 3 + FastAPI + Edge WebView2 原生獨立視窗 + 內建 FFmpeg | 下載 [`windows/release/OmniDownloader_桌面独立版.zip`](windows/release/)，免環境解壓即用，附帶多國語言說明 |
 | **🌐 Web 網頁純後台版** | Windows 電腦，支援區域網路內任意手機/平板瀏覽器存取 | 輕量系統列托盤常駐 + 本地 Web 服務 + 內建 FFmpeg | 下載 [`windows/release/OmniDownloader_网页纯后台版.zip`](windows/release/)，靜默常駐托盤，支援瀏覽器原生接管下載 |
@@ -49,13 +49,25 @@
 
 ## 📲 快速下載安裝
 
-- **Android 最新版**：[`OmniDownloader_LATEST.apk`](OmniDownloader_LATEST.apk)（或 [`OmniDownloader-v1.4.8-debug.apk`](OmniDownloader-v1.4.8-debug.apk)）
+- **Android 最新版**：[`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk)（或 [`OmniDownloader-v1.5.10-release.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-v1.5.10-release.apk)）
 - **iOS 側載指南**：參考 [`OmniDownloader-iOS/README_IOS.md`](OmniDownloader-iOS/README_IOS.md)
 - **Windows 發行包**：位於 [`windows/release/`](windows/release/)
 
 ---
 
-## 📝 最近更新日誌 (v1.4.8)
+## Android v1.5.10
+
+- 修正合集預設選取原影片與 Bilibili 分P定位，保留合集順序與真實影片網址。
+- 靜默解析與視窗排查共用有界媒體捕獲管線，移除網頁資源面板與深度掃描控制項。
+- 下載頁使用單一連續移動的選取背景，設定 → 關於新增 GitHub 專案入口。
+- 包含 1.5.7–1.5.9 的切頁與清單最佳化、精簡首頁、七類設定子頁、Material 3 互動及程式碼/資源裁剪。
+- Android 8.0+、ARM64，安裝包 **53.35 MiB**。已有 **27 項 JVM 測試、8 項模擬器裝置案例**及最佳化正式包驗收紀錄；ARM64 實機原生命令尚未驗證。
+
+[發行頁與安裝包](https://github.com/baishu136/OmniDownloader/releases/tag/v1.5.10) · [變更詳情](docs/RELAY_AND_COLLECTION_1.5.10.md) · [恢復的驗收紀錄](docs/RELEASE_VERIFICATION_1.5.10.md)
+
+---
+
+## 📝 歷史更新日誌 (v1.4.8)
 
 - **[NEW] 備用中轉解析站體驗與架構重構**：
   - 添加入口規範遷移至【設定】中心集中管理，首頁未配置中轉站時完全隱藏空白佔位卡片；

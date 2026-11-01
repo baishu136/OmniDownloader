@@ -77,7 +77,7 @@ class DownloadService : Service() {
         when (action) {
             ACTION_START_TASK -> {
                 val taskId = intent.getStringExtra(EXTRA_TASK_ID) ?: return START_NOT_STICKY
-                val task = repository.tasks.value.find { it.id == taskId }
+                val task = repository.getTask(taskId)
                 if (task != null && !taskQueue.contains(task)) {
                     taskQueue.offer(task)
                     processNextTask()
@@ -128,25 +128,34 @@ class DownloadService : Service() {
             val proxy = com.omni.downloader.data.repository.SettingsRepository.getInstance(applicationContext).proxyUrl.value
             var lastNotificationTime = 0L
             var lastProgressUpdateTime = 0L
+            var lastStatus: TaskStatus? = null
+            var lastReportedProgress = -1f
+            var lastReportedSpeed = ""
 
             val result = DownloadEngine.executeDownload(applicationContext, next, proxy) { progress, speed, eta, status ->
                 synchronized(this@DownloadService) {
-                    // 取消后忽略引擎迟到的回调，避免重新挂上已移除的进度通知。
                     if (currentRunningTaskId != next.id) return@executeDownload
                     val now = android.os.SystemClock.elapsedRealtime()
+                    val isStatusChanged = status != lastStatus
 
-                    // UI 状态节流；处理与终态立即更新。
-                    if (now - lastProgressUpdateTime >= 250 || status != TaskStatus.DOWNLOADING) {
+                    // 1. UI 状态节流：状态发生转换时立即可靠送达；同状态内至少间隔 300ms 且有有效进度/速度变动才更新
+                    val isProgressEffective = kotlin.math.abs(progress - lastReportedProgress) >= 0.5f ||
+                            speed != lastReportedSpeed ||
+                            progress >= 100f
+                    if (isStatusChanged || (now - lastProgressUpdateTime >= 300 && isProgressEffective)) {
                         lastProgressUpdateTime = now
+                        lastStatus = status
+                        lastReportedProgress = progress
+                        lastReportedSpeed = speed
                         repository.updateTaskProgress(next.id, progress, speed, eta, status)
                     }
 
-                    // 只为进行中的任务发布进度通知，完成回调不再写入“正在下载”。
+                    // 2. 系统通知 Binder 节流：状态转换立即更新；同状态内至少间隔 800ms，彻底消除 IPC 造成的全局掉帧
                     if ((status == TaskStatus.DOWNLOADING || status == TaskStatus.PROCESSING) &&
-                        (now - lastNotificationTime >= 600 || status != TaskStatus.DOWNLOADING)) {
+                        (isStatusChanged || now - lastNotificationTime >= 800)) {
                         lastNotificationTime = now
                         val statusText = if (status == TaskStatus.PROCESSING) {
-                            eta.ifBlank { "正在处理媒体..." }
+                            eta.ifBlank { "正在合并音视频..." }
                         } else {
                             "$speed ${if (eta.isNotEmpty()) "· 剩余 $eta" else ""}"
                         }

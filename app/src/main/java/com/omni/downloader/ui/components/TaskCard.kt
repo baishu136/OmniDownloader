@@ -2,22 +2,58 @@ package com.omni.downloader.ui.components
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.outlined.VolumeOff
+import androidx.compose.material.icons.outlined.Audiotrack
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Error
+import androidx.compose.material.icons.outlined.Gif
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -26,95 +62,79 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.omni.downloader.data.model.DownloadTask
 import com.omni.downloader.data.model.DownloadType
 import com.omni.downloader.data.model.TaskStatus
+import com.omni.downloader.data.repository.TaskProgress
+import com.omni.downloader.ui.design.LocalTabActive
+import com.omni.downloader.ui.design.OmniPillButton
 import com.omni.downloader.ui.localization.LocalAppStrings
-import com.omni.downloader.ui.theme.ErrorRed
-import com.omni.downloader.ui.theme.SuccessGreen
-import com.omni.downloader.ui.theme.WarningOrange
+import com.omni.downloader.ui.theme.LocalStatusColors
+import kotlinx.coroutines.flow.StateFlow
 import java.io.File
 
+/** Static card content is separated from the lifecycle-aware progress leaf. */
 @Composable
 fun TaskCard(
     task: DownloadTask,
-    onCancel: () -> Unit,
-    onDelete: (deleteFile: Boolean) -> Unit,
-    onRetry: () -> Unit
+    onCancel: (taskId: String) -> Unit,
+    onDelete: (taskId: String, deleteFile: Boolean) -> Unit,
+    onRetry: (url: String) -> Unit,
+    progressFlowProvider: ((String) -> StateFlow<TaskProgress>)? = null,
+    progressFlow: StateFlow<TaskProgress>? = null,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val strings = LocalAppStrings.current
+    val statusColors = LocalStatusColors.current
     val isGifTask = task.downloadType == DownloadType.GIF || task.localFilePath.endsWith(".gif", ignoreCase = true)
     var showGifPreviewDialog by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(
+    val resolvedProgressFlow = remember(task.id, progressFlow, progressFlowProvider) {
+        progressFlow ?: progressFlowProvider?.invoke(task.id)
+    }
+
+    val targetStatusColor = when (task.status) {
+        TaskStatus.COMPLETED -> statusColors.success
+        TaskStatus.DOWNLOADING, TaskStatus.PROCESSING -> MaterialTheme.colorScheme.primary
+        TaskStatus.FAILED -> statusColors.error
+        else -> statusColors.warning
+    }
+    val statusColor by animateColorAsState(
+        targetValue = targetStatusColor,
+        animationSpec = tween(220),
+        label = "taskStatusColor"
+    )
+
+    val statusText = when (task.status) {
+        TaskStatus.PENDING -> strings.statusPending
+        TaskStatus.DOWNLOADING -> strings.statusDownloading
+        TaskStatus.PROCESSING -> strings.statusProcessing
+        TaskStatus.COMPLETED -> strings.statusCompleted
+        TaskStatus.FAILED -> strings.statusFailed
+        TaskStatus.CANCELLED -> strings.statusCancelled
+    }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
         ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            // 头部：封面、标题与状态
+            // 头部：封面、标题与状态（在下载进度变动时完全不参与重组）
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top
             ) {
-                val mediaCoverModel = remember(task.thumbnailUrl) {
-                    task.thumbnailUrl.ifBlank { null }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .size(width = 90.dp, height = 54.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // 底层：轻量级静态占位图标，零动画开销
-                    Icon(
-                        imageVector = when (task.downloadType) {
-                            DownloadType.AUDIO_ONLY -> Icons.Default.Audiotrack
-                            DownloadType.VIDEO_ONLY -> Icons.Default.VolumeOff
-                            DownloadType.GIF -> Icons.Default.Gif
-                            DownloadType.COVER -> Icons.Default.Image
-                            else -> Icons.Default.Videocam
-                        },
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        modifier = Modifier.size(24.dp)
-                    )
-
-                    val imageRequest = remember(mediaCoverModel, context) {
-                        if (mediaCoverModel == null) null
-                        else {
-                            coil.request.ImageRequest.Builder(context)
-                                .data(mediaCoverModel)
-                                .size(270, 162)
-                                .crossfade(false)
-                                .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
-                                .diskCachePolicy(coil.request.CachePolicy.ENABLED)
-                                .apply {
-                                    if (mediaCoverModel.contains("bilibili") || mediaCoverModel.contains("hdslb")) {
-                                        setHeader("Referer", "https://www.bilibili.com/")
-                                    }
-                                }
-                                .build()
-                        }
-                    }
-
-                    // 顶层：普通 AsyncImage 异步解码淡入覆盖，彻底移除 SubcomposeAsyncImage 延迟子组合与无限循环动画
-                    if (imageRequest != null) {
-                        AsyncImage(
-                            model = imageRequest,
-                            contentDescription = "封面",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                }
+                TaskCover(task = task)
 
                 Spacer(modifier = Modifier.width(12.dp))
 
@@ -124,11 +144,11 @@ fun TaskCard(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
-                    // 模式与清晰度徽章
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -143,23 +163,6 @@ fun TaskCard(
                             },
                             color = MaterialTheme.colorScheme.primary
                         )
-
-                        val statusColor = when (task.status) {
-                            TaskStatus.COMPLETED -> SuccessGreen
-                            TaskStatus.DOWNLOADING, TaskStatus.PROCESSING -> MaterialTheme.colorScheme.primary
-                            TaskStatus.FAILED -> ErrorRed
-                            else -> WarningOrange
-                        }
-
-                        val statusText = when (task.status) {
-                            TaskStatus.PENDING -> strings.statusPending
-                            TaskStatus.DOWNLOADING -> strings.statusDownloading
-                            TaskStatus.PROCESSING -> strings.statusProcessing
-                            TaskStatus.COMPLETED -> strings.statusCompleted
-                            TaskStatus.FAILED -> strings.statusFailed
-                            TaskStatus.CANCELLED -> strings.statusCancelled
-                        }
-
                         BadgeChip(
                             text = statusText,
                             color = statusColor
@@ -168,82 +171,24 @@ fun TaskCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 进度条与速度（提取至独立微组件，阻断对整卡与封面按钮的重组污染）
+            // 进度条与速度区域：高频 StateFlow 读取完全隔离在该独立微组件内
             if (task.status == TaskStatus.DOWNLOADING || task.status == TaskStatus.PROCESSING) {
+                Spacer(modifier = Modifier.height(12.dp))
                 TaskDownloadingProgressSection(
-                    status = task.status,
-                    progress = task.progress,
-                    speedText = task.speedText,
-                    etaText = task.etaText
+                    fallbackStatus = task.status,
+                    fallbackProgress = task.progress,
+                    fallbackSpeedText = task.speedText,
+                    fallbackEtaText = task.etaText,
+                    progressFlow = resolvedProgressFlow
                 )
             } else if (task.status == TaskStatus.FAILED && task.errorMessage.isNotEmpty()) {
-                var showErrorDetailDialog by remember { mutableStateOf(false) }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(6.dp))
-                        .clickable { showErrorDetailDialog = true }
-                        .padding(vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "错误: ${task.errorMessage}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = ErrorRed,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "查看详情",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                if (showErrorDetailDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showErrorDetailDialog = false },
-                        icon = { Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = ErrorRed) },
-                        title = { Text("下载失败详细日志", fontWeight = FontWeight.Bold) },
-                        text = {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                androidx.compose.foundation.text.selection.SelectionContainer {
-                                    Text(
-                                        text = task.errorMessage,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                                    )
-                                }
-                            }
-                        },
-                        confirmButton = {
-                            Button(onClick = {
-                                val clip = android.content.ClipData.newPlainText("ErrorLog", task.errorMessage)
-                                (context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager)?.setPrimaryClip(clip)
-                                Toast.makeText(context, "已复制错误日志", Toast.LENGTH_SHORT).show()
-                                showErrorDetailDialog = false
-                            }) {
-                                Text("复制日志")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showErrorDetailDialog = false }) {
-                                Text("关闭")
-                            }
-                        }
-                    )
-                }
+                Spacer(modifier = Modifier.height(10.dp))
+                TaskErrorSection(errorMessage = task.errorMessage)
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // 底部操作区（使用高性能轻量按钮，彻底消除 Material3 Button 的深层图层与 CompositionLocal 开销）
+            // 底部操作区（仅在任务状态变更时被调用，下载推进时 100% 保持跳过）
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
@@ -251,23 +196,23 @@ fun TaskCard(
             ) {
                 when (task.status) {
                     TaskStatus.DOWNLOADING, TaskStatus.PROCESSING, TaskStatus.PENDING -> {
-                        TaskActionBtn(
-                            icon = Icons.Default.Close,
+                        OmniPillButton(
                             text = strings.cancel,
-                            isPrimary = false,
-                            onClick = onCancel
+                            icon = Icons.Outlined.Close,
+                            primary = false,
+                            onClick = { onCancel(task.id) }
                         )
                     }
+
                     TaskStatus.COMPLETED -> {
-                        // 播放 / 查看动图与封面按钮
-                        TaskActionBtn(
-                            icon = when (task.downloadType) {
-                                DownloadType.COVER -> Icons.Default.Image
-                                DownloadType.GIF -> Icons.Default.Visibility
-                                else -> Icons.Default.PlayArrow
-                            },
+                        OmniPillButton(
                             text = if (task.downloadType == DownloadType.GIF || task.downloadType == DownloadType.COVER) "查看" else strings.play,
-                            isPrimary = true,
+                            icon = when (task.downloadType) {
+                                DownloadType.COVER -> Icons.Outlined.Image
+                                DownloadType.GIF -> Icons.Outlined.Visibility
+                                else -> Icons.Outlined.PlayArrow
+                            },
+                            primary = true,
                             onClick = {
                                 if (isGifTask) {
                                     showGifPreviewDialog = true
@@ -277,33 +222,31 @@ fun TaskCard(
                             }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        // 分享按钮
-                        TaskActionBtn(
-                            icon = Icons.Default.Share,
-                            text = "分享",
-                            isPrimary = false,
+                        TaskIconBtn(
+                            icon = Icons.Outlined.Share,
+                            contentDescription = "分享",
                             onClick = { shareMediaFile(context, task.localFilePath, task.title) }
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        // 删除按钮
+                        Spacer(modifier = Modifier.width(4.dp))
                         TaskIconBtn(
-                            icon = Icons.Default.DeleteOutline,
+                            icon = Icons.Outlined.Delete,
                             contentDescription = strings.delete,
-                            onClick = { onDelete(true) }
+                            onClick = { onDelete(task.id, true) }
                         )
                     }
+
                     TaskStatus.FAILED, TaskStatus.CANCELLED -> {
-                        TaskActionBtn(
-                            icon = Icons.Default.Refresh,
+                        OmniPillButton(
                             text = strings.retry,
-                            isPrimary = true,
-                            onClick = onRetry
+                            icon = Icons.Outlined.Refresh,
+                            primary = true,
+                            onClick = { onRetry(task.url) }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         TaskIconBtn(
-                            icon = Icons.Default.DeleteOutline,
+                            icon = Icons.Outlined.Delete,
                             contentDescription = strings.delete,
-                            onClick = { onDelete(false) }
+                            onClick = { onDelete(task.id, false) }
                         )
                     }
                 }
@@ -338,24 +281,14 @@ fun TaskCard(
                         ) {
                             AsyncImage(
                                 model = targetFile,
-                                contentDescription = "GIF 循环动图",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .wrapContentHeight(),
+                                contentDescription = "GIF预览",
+                                modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Fit
                             )
                         }
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "${task.title}\n(${String.format(java.util.Locale.getDefault(), "%.1f MB", targetFile.length() / (1024.0 * 1024.0))})",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
                     } else {
                         Text(
-                            text = "动图文件不存在或已被移动",
+                            text = "动图文件不存在或已被删除",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -385,71 +318,184 @@ fun TaskCard(
     }
 }
 
+/**
+ * 封面：90x56dp 展示区，对应 180x112 物理像素的单一解码尺寸。
+ */
 @Composable
-internal fun BadgeChip(text: String, color: Color) {
-    Box(
-        modifier = Modifier
-            .background(color.copy(alpha = 0.12f), RoundedCornerShape(4.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = color,
-            fontWeight = FontWeight.Medium
-        )
+private fun TaskCover(task: DownloadTask) {
+    val context = LocalContext.current
+    val mediaCoverModel = remember(task.thumbnailUrl) {
+        task.thumbnailUrl.ifBlank { null }
     }
-}
-
-@Composable
-private fun TaskActionBtn(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    text: String,
-    isPrimary: Boolean,
-    onClick: () -> Unit
-) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(
-                if (isPrimary) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .size(width = 92.dp, height = 58.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = if (isPrimary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = text,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = if (isPrimary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+        Icon(
+            imageVector = when (task.downloadType) {
+                DownloadType.AUDIO_ONLY -> Icons.Outlined.Audiotrack
+                DownloadType.VIDEO_ONLY -> Icons.AutoMirrored.Outlined.VolumeOff
+                DownloadType.GIF -> Icons.Outlined.Gif
+                DownloadType.COVER -> Icons.Outlined.Image
+                else -> Icons.Outlined.Videocam
+            },
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
+            modifier = Modifier.size(24.dp)
+        )
+
+        val imageRequest = remember(mediaCoverModel, context) {
+            if (mediaCoverModel == null) null
+            else {
+                ImageRequest.Builder(context)
+                    .data(mediaCoverModel)
+                    .size(184, 116)
+                    .bitmapConfig(android.graphics.Bitmap.Config.RGB_565)
+                    .crossfade(false)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .apply {
+                        if (mediaCoverModel.contains("bilibili") || mediaCoverModel.contains("hdslb")) {
+                            setHeader("Referer", "https://www.bilibili.com/")
+                        }
+                    }
+                    .build()
+            }
+        }
+
+        if (imageRequest != null) {
+            AsyncImage(
+                model = imageRequest,
+                contentDescription = "封面",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
             )
         }
     }
 }
 
+/**
+ * 失败信息条：点击查看完整日志。
+ */
+@Composable
+private fun TaskErrorSection(errorMessage: String) {
+    val context = LocalContext.current
+    var showErrorDetailDialog by remember { mutableStateOf(false) }
+    val statusColors = LocalStatusColors.current
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(statusColors.error.copy(alpha = 0.08f))
+            .clickable { showErrorDetailDialog = true }
+            .padding(horizontal = 10.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "错误: $errorMessage",
+            style = MaterialTheme.typography.bodySmall,
+            color = statusColors.error,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = "查看详情",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+    }
+
+    if (showErrorDetailDialog) {
+        AlertDialog(
+            onDismissRequest = { showErrorDetailDialog = false },
+            icon = { Icon(Icons.Outlined.Error, contentDescription = null, tint = statusColors.error) },
+            title = { Text("下载失败详细日志", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    androidx.compose.foundation.text.selection.SelectionContainer {
+                        Text(
+                            text = errorMessage,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    val clip = android.content.ClipData.newPlainText("ErrorLog", errorMessage)
+                    (context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager)?.setPrimaryClip(clip)
+                    Toast.makeText(context, "已复制错误日志", Toast.LENGTH_SHORT).show()
+                    showErrorDetailDialog = false
+                }) {
+                    Text("复制日志")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showErrorDetailDialog = false }) {
+                    Text("关闭")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+internal fun BadgeChip(text: String, color: Color) {
+    Box(
+        modifier = Modifier
+            .background(color.copy(alpha = 0.12f), RoundedCornerShape(999.dp))
+            .padding(horizontal = 8.dp, vertical = 3.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1
+        )
+    }
+}
+
+/**
+ * 局部隔离的下载进度微组件：
+ * 高频进度变动的观察作用域被严格限制在当前函数内部，上层 TaskCard 完全不受重组污染。
+ */
 @Composable
 private fun TaskDownloadingProgressSection(
-    status: TaskStatus,
-    progress: Float,
-    speedText: String,
-    etaText: String
+    fallbackStatus: TaskStatus,
+    fallbackProgress: Float,
+    fallbackSpeedText: String,
+    fallbackEtaText: String,
+    progressFlow: StateFlow<TaskProgress>? = null
 ) {
+    // 页面不可见时不再订阅高频进度流：隐藏页常驻在组合树中，
+    // 继续收集会让进度动画持续占用帧，拖慢当前可见页面的滚动。
+    val isActive = LocalTabActive.current
+    val fallbackState = remember(fallbackProgress, fallbackStatus, fallbackSpeedText, fallbackEtaText) {
+        TaskProgress(fallbackProgress, fallbackSpeedText, fallbackEtaText, fallbackStatus)
+    }
+    val liveProgress = if (isActive && progressFlow != null) {
+        progressFlow.collectAsStateWithLifecycle().value
+    } else {
+        fallbackState
+    }
+
     Column(modifier = Modifier.fillMaxWidth()) {
+        // 进度直接使用最新值，不做插值动画：
+        // 下载回调本身已是连续更新，额外的 tween 会在滚动时持续产生动画帧。
         LinearProgressIndicator(
-            progress = { (progress / 100f).coerceIn(0f, 1f) },
+            progress = { (liveProgress.progress / 100f).coerceIn(0f, 1f) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(6.dp)
+                .height(5.dp)
                 .clip(RoundedCornerShape(3.dp)),
             color = MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant
@@ -460,13 +506,17 @@ private fun TaskDownloadingProgressSection(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = if (status == TaskStatus.PROCESSING) "正在合并音视频轨..." else "${progress.toInt()}% · $speedText",
+                text = if (liveProgress.status == TaskStatus.PROCESSING) {
+                    "正在合并音视频轨..."
+                } else {
+                    "${liveProgress.progress.toInt()}% · ${liveProgress.speedText}"
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            if (etaText.isNotEmpty()) {
+            if (liveProgress.etaText.isNotEmpty()) {
                 Text(
-                    text = "剩余 $etaText",
+                    text = "剩余 ${liveProgress.etaText}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -477,99 +527,70 @@ private fun TaskDownloadingProgressSection(
 
 @Composable
 private fun TaskIconBtn(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     contentDescription: String?,
     onClick: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .size(32.dp)
-            .clip(CircleShape)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            modifier = Modifier.size(20.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+    androidx.compose.material3.IconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
+        Icon(icon, contentDescription, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
-internal fun openMediaFile(context: Context, filePath: String, downloadType: DownloadType) {
-    val file = File(filePath)
-    if (!file.exists()) {
-        Toast.makeText(context, "文件不存在或已被移动", Toast.LENGTH_SHORT).show()
-        return
-    }
+private fun openMediaFile(context: Context, filePath: String, downloadType: DownloadType) {
     try {
-        val uri: Uri = FileProvider.getUriForFile(
+        val file = File(filePath)
+        if (!file.exists()) {
+            Toast.makeText(context, "文件不存在或已被移动", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
             file
         )
-        val isImage = downloadType == DownloadType.COVER || file.name.endsWith(".jpg", true) || file.name.endsWith(".png", true) || file.name.endsWith(".webp", true)
-        val mimeType = when {
-            isImage -> "image/*"
-            downloadType == DownloadType.AUDIO_ONLY -> "audio/*"
-            downloadType == DownloadType.GIF || file.name.endsWith(".gif", ignoreCase = true) -> "image/gif"
+
+        val mimeType = when (downloadType) {
+            DownloadType.AUDIO_ONLY -> "audio/*"
+            DownloadType.COVER -> "image/*"
+            DownloadType.GIF -> "image/gif"
             else -> "video/*"
         }
+
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, mimeType)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        val chooserTitle = when {
-            isImage -> "查看封面图片"
-            downloadType == DownloadType.GIF || file.name.endsWith(".gif", ignoreCase = true) -> "选择相册或看图应用查看动图"
-            else -> "选择播放器播放"
-        }
-        try {
-            context.startActivity(Intent.createChooser(intent, chooserTitle))
-        } catch (e: Exception) {
-            val isGif = downloadType == DownloadType.GIF || file.name.endsWith(".gif", ignoreCase = true)
-            if (isGif) {
-                val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(uri, "image/*")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                context.startActivity(Intent.createChooser(fallbackIntent, "选择相册或看图应用查看动图"))
-            } else {
-                throw e
-            }
-        }
+        context.startActivity(intent)
     } catch (e: Exception) {
-        Toast.makeText(context, "无法打开媒体文件: ${e.message}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "未找到可打开此文件的播放器或相册", Toast.LENGTH_SHORT).show()
     }
 }
 
 private fun shareMediaFile(context: Context, filePath: String, title: String) {
-    val file = File(filePath)
-    if (!file.exists()) {
-        Toast.makeText(context, "文件不存在", Toast.LENGTH_SHORT).show()
-        return
-    }
     try {
-        val uri: Uri = FileProvider.getUriForFile(
+        val file = File(filePath)
+        if (!file.exists()) {
+            Toast.makeText(context, "文件不存在或已被移动", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
             file
         )
-        val isImage = file.name.endsWith(".jpg", true) || file.name.endsWith(".png", true) || file.name.endsWith(".webp", true) || file.name.endsWith(".gif", true)
+
         val intent = Intent(Intent.ACTION_SEND).apply {
-            type = when {
-                isImage -> "image/*"
-                file.name.endsWith(".mp3") || file.name.endsWith(".m4a") || file.name.endsWith(".flac") -> "audio/*"
-                else -> "video/*"
-            }
+            type = if (filePath.endsWith(".mp3") || filePath.endsWith(".m4a") || filePath.endsWith(".flac")) "audio/*" else "video/*"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, title)
+            putExtra(Intent.EXTRA_TITLE, title)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(intent, "分享到..."))
+        context.startActivity(Intent.createChooser(intent, "分享视频").apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        })
     } catch (e: Exception) {
         Toast.makeText(context, "分享失败: ${e.message}", Toast.LENGTH_SHORT).show()
     }

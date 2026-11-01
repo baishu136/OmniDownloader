@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-01",
+  "version": "1.5.9",
+  "versionCode": 50,
+  "abi": "arm64-v8a",
+  "releaseBytes": 55956894,
+  "releaseMiB": 53.36,
+  "increaseFrom1_5_8": 31640,
+  "releaseSha256": "3ABFED821AD4EF5C7513BF05C819CD9AABC9257D0C25410DE986C55CE555070C",
+  "checks": {
+    "releaseBuild": "passed: R8 and resource shrinking",
+    "releaseLintErrors": 0,
+    "signature": "verified",
+    "jvmTests": 14,
+    "debugDeviceMethods": 5,
+    "releaseBlackBoxMethods": 1
+  },
+  "device": {
+    "api": 35,
+    "android": "15",
+    "environment": "Dedicated x86_64 emulator with NVIDIA GLES hardware acceleration"
+  },
+  "stress": {
+    "historyItems": 700,
+    "relaySites": 80,
+    "progressIntervalMs": 80,
+    "sampledFrames": 166,
+    "frameP95Ms": 26.353524,
+    "uiP95Ms": 5.572846,
+    "framesOver100Ms": 0
+  },
+  "nativePayloadComparisonTo1_5_8": [
+    {
+      "Entry": "lib/arm64-v8a/libffmpeg.so",
+      "Size": 317120,
+      "Identical": true,
+      "SHA256": "1B8D5C371EA79E6E7A1930B31F2AD6A2731E48D75CEDDC9C36DFFDA6E0092401"
+    },
+    {
+      "Entry": "lib/arm64-v8a/libffmpeg.zip.so",
+      "Size": 35624931,
+      "Identical": true,
+      "SHA256": "4664A895283F9F31786BE39B0C484C1F96631F02C7C7F9C70A4A4A2DA324A092"
+    },
+    {
+      "Entry": "lib/arm64-v8a/libffprobe.so",
+      "Size": 233664,
+      "Identical": true,
+      "SHA256": "A4D4A6D1562AA87934E99EE1A43F8090EC1040659CEDB667D6EDF3AA08408C5E"
+    },
+    {
+      "Entry": "lib/arm64-v8a/libpython.so",
+      "Size": 4384,
+      "Identical": true,
+      "SHA256": "58BA29CFC5A6D88281C07B2B480FB1D8CCE1B78F280B002347F792CFD9CF5901"
+    },
+    {
+      "Entry": "lib/arm64-v8a/libpython.zip.so",
+      "Size": 14305904,
+      "Identical": true,
+      "SHA256": "7EDECB6C9BD3A94456168D44911D8AEA9F917BEDEF90C320A29500D92AC3EB62"
+    },
+    {
+      "Entry": "lib/arm64-v8a/libqjs.so",
+      "Size": 916104,
+      "Identical": true,
+      "SHA256": "A0FE160A8CD76EEC34132F945664856E96687D701E3B1FF28DFF44EA1FAD13BC"
+    }
+  ],
+  "limitations": [
+    "ARM64 native media execution not tested on ARM64 hardware in this run; ARM64 package UI and cold extraction tested.",
+    "Android 8–11 splash exit implemented but not device-tested.",
+    "Emulator synthetic frame data is not a guarantee of performance on physical phones."
+  ]
+}

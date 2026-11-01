@@ -1,21 +1,26 @@
 package com.omni.downloader.ui.components
 
 import android.content.Context
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,30 +31,37 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.omni.downloader.data.model.DownloadTask
 import com.omni.downloader.data.model.DownloadType
 import com.omni.downloader.data.model.TaskStatus
+import com.omni.downloader.data.repository.TaskProgress
+import com.omni.downloader.ui.design.LocalTabActive
+import com.omni.downloader.ui.localization.AppStrings
 import com.omni.downloader.ui.localization.LocalAppStrings
 import com.omni.downloader.ui.theme.ErrorRed
 import com.omni.downloader.ui.theme.SuccessGreen
 import com.omni.downloader.ui.theme.WarningOrange
+import kotlinx.coroutines.flow.StateFlow
 import java.io.File
 
-/**
- * 专为多视频/合集下载打造的聚合展示卡片
- * 在下载页面统一呈现总进度条、当前分集子进度与可折叠明细
- */
+/** Collection card with bounded lazy episode details and isolated live progress. */
 @Composable
 fun CollectionTaskCard(
+    collectionId: String,
     collectionTitle: String,
     tasks: List<DownloadTask>,
-    onCancelCollection: () -> Unit,
-    onDeleteCollection: (deleteFile: Boolean) -> Unit,
-    onRetryCollection: () -> Unit,
-    onRetryEpisode: (taskId: String) -> Unit
+    onCancelCollection: (colId: String) -> Unit,
+    onDeleteCollection: (colId: String, deleteFile: Boolean) -> Unit,
+    onRetryCollection: (colId: String) -> Unit,
+    onRetryEpisode: (taskId: String) -> Unit,
+    progressFlowProvider: ((String) -> StateFlow<TaskProgress>)? = null,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val strings = LocalAppStrings.current
+    val statusColors = com.omni.downloader.ui.theme.LocalStatusColors.current
 
     val totalCount = tasks.size
     val completedCount = tasks.count { it.status == TaskStatus.COMPLETED }
@@ -60,39 +72,24 @@ fun CollectionTaskCard(
     val isPending = tasks.any { it.status == TaskStatus.PENDING } && !isDownloading
     val hasFailed = tasks.any { it.status == TaskStatus.FAILED || it.status == TaskStatus.CANCELLED }
 
-    // 加权总进度百分比
-    val overallProgress = remember(tasks) {
-        if (totalCount == 0) 0f
-        else {
-            var sum = 0f
-            tasks.forEach { t ->
-                sum += when (t.status) {
-                    TaskStatus.COMPLETED -> 100f
-                    TaskStatus.DOWNLOADING, TaskStatus.PROCESSING -> t.progress.coerceIn(0f, 100f)
-                    else -> 0f
-                }
-            }
-            (sum / totalCount).coerceIn(0f, 100f)
-        }
-    }
-
     val coverUrl = remember(tasks) {
         tasks.firstOrNull { it.thumbnailUrl.isNotBlank() }?.thumbnailUrl ?: ""
     }
 
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by rememberSaveable(collectionId) { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var deleteLocalFiles by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
         ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             // 头部：合集封面、合集标题与状态徽章
@@ -103,17 +100,18 @@ fun CollectionTaskCard(
                 Box(
                     modifier = Modifier
                         .size(width = 92.dp, height = 58.dp)
-                        .clip(RoundedCornerShape(6.dp))
+                        .clip(RoundedCornerShape(10.dp))
                 ) {
                     val coverRequest = remember(coverUrl, context) {
                         if (coverUrl.isBlank()) null
                         else {
-                            coil.request.ImageRequest.Builder(context)
+                            ImageRequest.Builder(context)
                                 .data(coverUrl)
-                                .size(276, 174)
+                                .size(184, 116)
+                                .bitmapConfig(android.graphics.Bitmap.Config.RGB_565)
                                 .crossfade(false)
-                                .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
-                                .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                                .memoryCachePolicy(CachePolicy.ENABLED)
+                                .diskCachePolicy(CachePolicy.ENABLED)
                                 .apply {
                                     if (coverUrl.contains("bilibili") || coverUrl.contains("hdslb")) {
                                         setHeader("Referer", "https://www.bilibili.com/")
@@ -138,7 +136,7 @@ fun CollectionTaskCard(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.VideoLibrary,
+                                imageVector = Icons.Outlined.VideoLibrary,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
                             )
@@ -184,10 +182,10 @@ fun CollectionTaskCard(
                         )
 
                         val statusColor = when {
-                            isAllCompleted -> SuccessGreen
+                            isAllCompleted -> statusColors.success
                             isDownloading -> MaterialTheme.colorScheme.primary
-                            hasFailed -> ErrorRed
-                            else -> WarningOrange
+                            hasFailed -> statusColors.error
+                            else -> statusColors.warning
                         }
 
                         val statusText = when {
@@ -208,107 +206,18 @@ fun CollectionTaskCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 1. 总进度条 (Overall Progress)
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = String.format(strings.collectionTotalProgress, completedCount, totalCount, overallProgress.toInt()),
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "${overallProgress.toInt()}%",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isAllCompleted) SuccessGreen else MaterialTheme.colorScheme.primary
-                    )
-                }
+            // 进度条与子任务进度微组件：隔离高频 StateFlow 读取
+            CollectionProgressSection(
+                tasks = tasks,
+                completedCount = completedCount,
+                totalCount = totalCount,
+                isAllCompleted = isAllCompleted,
+                activeTask = activeTask,
+                strings = strings,
+                progressFlowProvider = progressFlowProvider
+            )
 
-                Spacer(modifier = Modifier.height(6.dp))
-
-                LinearProgressIndicator(
-                    progress = { (overallProgress / 100f).coerceIn(0f, 1f) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(7.dp)
-                        .clip(RoundedCornerShape(3.5.dp)),
-                    color = if (isAllCompleted) SuccessGreen else MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            }
-
-            // 2. 当前分集子进度 (Sub-Progress，在下载中或处理中时动态展示)
-            if (activeTask != null) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Downloading,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(15.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = String.format(strings.collectionCurrentSubTask, activeTask.episodeIndex, totalCount, activeTask.title),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        LinearProgressIndicator(
-                            progress = { (activeTask.progress / 100f).coerceIn(0f, 1f) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(4.dp)
-                                .clip(RoundedCornerShape(2.dp)),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "${activeTask.progress.toInt()}% · ${activeTask.speedText.ifBlank { "准备中" }}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Medium
-                            )
-                            if (activeTask.etaText.isNotBlank()) {
-                                Text(
-                                    text = "剩余 ${activeTask.etaText}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 3. 可折叠分集明细列表
+            // 可折叠分集明细列表
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier
@@ -326,31 +235,19 @@ fun CollectionTaskCard(
                     fontWeight = FontWeight.SemiBold
                 )
                 Icon(
-                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    imageVector = if (expanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )
             }
 
-            AnimatedVisibility(
-                visible = expanded,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp)
+            if (expanded) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp).heightIn(max = 280.dp)
                 ) {
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                        thickness = 0.6.dp
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
+                    items(tasks, key = { it.id }, contentType = { "episode" }) { subTask ->
 
-                    val displaySubTasks = if (tasks.size > 20) tasks.take(15) else tasks
-                    displaySubTasks.forEach { subTask ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -393,7 +290,7 @@ fun CollectionTaskCard(
                                         modifier = Modifier.size(28.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.PlayCircleOutline,
+                                            imageVector = Icons.Outlined.PlayCircleOutline,
                                             contentDescription = "播放",
                                             tint = SuccessGreen,
                                             modifier = Modifier.size(20.dp)
@@ -402,7 +299,7 @@ fun CollectionTaskCard(
                                 }
                                 TaskStatus.DOWNLOADING, TaskStatus.PROCESSING -> {
                                     Text(
-                                        text = "${subTask.progress.toInt()}%",
+                                        text = "${episodeProgress(subTask, progressFlowProvider).toInt()}%",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Bold
@@ -414,7 +311,7 @@ fun CollectionTaskCard(
                                         modifier = Modifier.size(28.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.Refresh,
+                                            imageVector = Icons.Outlined.Refresh,
                                             contentDescription = "重试",
                                             tint = ErrorRed,
                                             modifier = Modifier.size(18.dp)
@@ -439,118 +336,82 @@ fun CollectionTaskCard(
                         }
                     }
 
-                    if (tasks.size > 20) {
-                        Text(
-                            text = "已折叠其余 ${tasks.size - 15} 集，可在顶部点击播放查看",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)
-                        )
-                    }
+
                 }
             }
 
-            // 4. 底部操作栏
             Spacer(modifier = Modifier.height(10.dp))
+
+            // 底部操作栏
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (isDownloading || isPending) {
-                    OutlinedButton(
-                        onClick = { showCancelDialog = true },
-                        modifier = Modifier.height(34.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = null, modifier = Modifier.size(15.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = strings.collectionCancelAll, fontSize = 12.sp)
-                    }
-                }
-
-                if (hasFailed && !isDownloading) {
-                    Button(
-                        onClick = onRetryCollection,
-                        modifier = Modifier.height(34.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(15.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = strings.collectionRetryFailed, fontSize = 12.sp)
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    CollectionActionBtn(
+                        icon = Icons.Outlined.Close,
+                        text = strings.collectionCancelAll,
+                        isPrimary = false,
+                        onClick = { showCancelDialog = true }
+                    )
                 }
 
                 if (isAllCompleted) {
-                    val firstPlayable = tasks.firstOrNull { it.localFilePath.isNotBlank() && File(it.localFilePath).exists() }
-                    if (firstPlayable != null) {
-                        Button(
-                            onClick = {
-                                openMediaFile(context, firstPlayable.localFilePath, firstPlayable.downloadType)
-                            },
-                            modifier = Modifier.height(34.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = strings.collectionPlayFirst, fontSize = 12.sp)
-                        }
+                    val firstCompleted = tasks.firstOrNull { it.status == TaskStatus.COMPLETED && it.localFilePath.isNotEmpty() }
+                    if (firstCompleted != null) {
+                        CollectionActionBtn(
+                            icon = Icons.Outlined.PlayArrow,
+                            text = strings.collectionPlayFirst,
+                            isPrimary = true,
+                            onClick = { openMediaFile(context, firstCompleted.localFilePath, firstCompleted.downloadType) }
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
                 }
 
-                // 删除按钮
-                OutlinedButton(
-                    onClick = { showDeleteDialog = true },
-                    modifier = Modifier.height(34.dp),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(15.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = strings.collectionDelete, fontSize = 12.sp)
+                if (hasFailed && !isDownloading) {
+                    CollectionActionBtn(
+                        icon = Icons.Outlined.Refresh,
+                        text = strings.collectionRetryFailed,
+                        isPrimary = true,
+                        onClick = { onRetryCollection(collectionId) }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+
+                if (isAllCompleted || hasFailed) {
+                    IconButton(
+                        onClick = { showDeleteDialog = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.DeleteOutline,
+                            contentDescription = strings.delete,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }
     }
 
-    // 取消确认弹窗
-    if (showCancelDialog) {
-        AlertDialog(
-            onDismissRequest = { showCancelDialog = false },
-            title = { Text(text = strings.collectionCancelConfirmTitle, fontWeight = FontWeight.Bold) },
-            text = { Text(text = strings.collectionCancelConfirmMessage) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showCancelDialog = false
-                        onCancelCollection()
-                    }
-                ) {
-                    Text(text = strings.confirmStopAndClean, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCancelDialog = false }) {
-                    Text(text = strings.cancel)
-                }
-            }
-        )
-    }
-
-    // 删除确认弹窗
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text(text = strings.collectionDeleteConfirmTitle, fontWeight = FontWeight.Bold) },
+            title = {
+                Text(
+                    text = strings.collectionDeleteConfirmTitle,
+                    fontWeight = FontWeight.Bold
+                )
+            },
             text = {
                 Column {
-                    Text(text = String.format(strings.collectionDeleteConfirmMessage, totalCount))
+                    Text(
+                        text = String.format(strings.collectionDeleteConfirmMessage, totalCount),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -561,25 +422,253 @@ fun CollectionTaskCard(
                             onCheckedChange = { deleteLocalFiles = it }
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "同时删除已下载的本地视频文件", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = "同时删除已下载的本地视频文件",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
+                        onDeleteCollection(collectionId, deleteLocalFiles)
                         showDeleteDialog = false
-                        onDeleteCollection(deleteLocalFiles)
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text(text = strings.delete, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                    Text(strings.delete)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text(text = strings.cancel)
+                    Text(strings.cancel)
                 }
             }
         )
     }
+
+    if (showCancelDialog) {
+        AlertDialog(
+            onDismissRequest = { showCancelDialog = false },
+            title = {
+                Text(
+                    text = strings.collectionCancelConfirmTitle,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = String.format(strings.collectionCancelConfirmMessage, collectionTitle),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onCancelCollection(collectionId)
+                        showCancelDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(strings.confirmStopAndClean)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCancelDialog = false }) {
+                    Text(strings.cancel)
+                }
+            }
+        )
+    }
+}
+
+/**
+ * 局部隔离的合集进度微组件：
+ * 高频子任务进度的监听严格限制在当前函数内部，使得上层 CollectionTaskCard 完全不受重组污染
+ */
+@Composable
+private fun CollectionProgressSection(
+    tasks: List<DownloadTask>,
+    completedCount: Int,
+    totalCount: Int,
+    isAllCompleted: Boolean,
+    activeTask: DownloadTask?,
+    strings: AppStrings,
+    progressFlowProvider: ((String) -> StateFlow<TaskProgress>)?
+) {
+    // 隐藏页面中不再订阅高频子任务进度，避免后台动画与可见页滚动抢帧
+    val isActive = LocalTabActive.current
+    val activeProgressState = if (isActive && activeTask != null && progressFlowProvider != null) {
+        progressFlowProvider(activeTask.id).collectAsStateWithLifecycle().value
+    } else null
+    val currentProgress = activeProgressState?.progress ?: (activeTask?.progress ?: 0f)
+    val currentSpeed = activeProgressState?.speedText ?: (activeTask?.speedText ?: "")
+    val currentEta = activeProgressState?.etaText ?: (activeTask?.etaText ?: "")
+
+    // Only the active episode changes per tick; sum the fixed portion once.
+    val fixedProgress = remember(tasks, activeTask?.id) {
+        tasks.sumOf { task ->
+            when {
+                task.id == activeTask?.id -> 0.0
+                task.status == TaskStatus.COMPLETED -> 100.0
+                task.status == TaskStatus.DOWNLOADING || task.status == TaskStatus.PROCESSING -> task.progress.coerceIn(0f, 100f).toDouble()
+                else -> 0.0
+            }
+        }.toFloat()
+    }
+    val overallProgress = if (totalCount == 0) 0f else
+        ((fixedProgress + currentProgress.coerceIn(0f, 100f)) / totalCount).coerceIn(0f, 100f)
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // 1. 总进度条
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = String.format(strings.collectionTotalProgress, completedCount, totalCount, overallProgress.toInt()),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "${overallProgress.toInt()}%",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isAllCompleted) SuccessGreen else MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            LinearProgressIndicator(
+                progress = { (overallProgress / 100f).coerceIn(0f, 1f) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(7.dp)
+                    .clip(RoundedCornerShape(3.5.dp)),
+                color = if (isAllCompleted) SuccessGreen else MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        }
+
+        // 2. 当前分集子进度
+        if (activeTask != null) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Downloading,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = String.format(strings.collectionCurrentSubTask, activeTask.episodeIndex, totalCount, activeTask.title),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    LinearProgressIndicator(
+                        progress = { (currentProgress / 100f).coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp)),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "${currentProgress.toInt()}% · ${currentSpeed.ifBlank { "准备中" }}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                        if (currentEta.isNotBlank()) {
+                            Text(
+                                text = "剩余 $currentEta",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CollectionActionBtn(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    isPrimary: Boolean,
+    onClick: () -> Unit
+) {
+    com.omni.downloader.ui.design.OmniPillButton(
+        text = text, icon = icon, primary = isPrimary, onClick = onClick
+    )
+}
+
+private fun openMediaFile(context: Context, filePath: String, downloadType: DownloadType) {
+    try {
+        val file = File(filePath)
+        if (!file.exists()) {
+            Toast.makeText(context, "文件不存在或已被移动", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val uri = androidx.core.content.FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+
+        val mimeType = when (downloadType) {
+            DownloadType.AUDIO_ONLY -> "audio/*"
+            DownloadType.COVER -> "image/*"
+            DownloadType.GIF -> "image/gif"
+            else -> "video/*"
+        }
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, mimeType)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        Toast.makeText(context, "未找到可打开此文件的播放器或相册", Toast.LENGTH_SHORT).show()
+    }
+}
+
+@Composable
+private fun episodeProgress(task: DownloadTask, provider: ((String) -> StateFlow<TaskProgress>)?): Float {
+    val flow = remember(task.id, provider) { provider?.invoke(task.id) }
+    return if (LocalTabActive.current && flow != null) flow.collectAsStateWithLifecycle().value.progress else task.progress
 }

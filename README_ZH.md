@@ -10,7 +10,7 @@
 </p>
 
 [![Release](https://img.shields.io/github/v/release/baishu136/OmniDownloader?color=blue&label=Release)](https://github.com/baishu136/OmniDownloader/releases)
-[![Android](https://img.shields.io/badge/Android-v1.4.8-green.svg)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-v1.5.10-green.svg)](https://developer.android.com)
 [![iOS](https://img.shields.io/badge/iOS-SwiftUI%20Native-orange.svg)](OmniDownloader-iOS)
 [![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
@@ -25,7 +25,7 @@
 
 | 平台形态 | 适用设备 | 核心技术栈 | 获取与安装方式 |
 | :--- | :--- | :--- | :--- |
-| **🤖 Android 原生版** | Android 手机 / 平板 / 车机 / 电视 (Android 8.0+) | Kotlin + Jetpack Compose + FFmpegKit + Aria2c | [下载最新 APK (v1.4.8)](OmniDownloader_LATEST.apk) 或 Releases 页面 |
+| **🤖 Android 原生版** | Android 手机 / 平板 / 车机 / 电视 (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [下载最新 APK (v1.5.10)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) 或 Releases 页面 |
 | **🍎 iOS 原生版** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + AVFoundation 原生硬件混流 + Photos 相簿 | 源码工程在 [`OmniDownloader-iOS`](OmniDownloader-iOS)，支持 GitHub Actions 免费打包 IPA 并通过 TrollStore 巨魔或自签侧载 |
 | **💻 Windows 桌面版** | Windows 10 / 11 (64位) | Python 3 + FastAPI + Edge WebView2 原生独立窗口 + 内置 FFmpeg | 下载 [`windows/release/OmniDownloader_桌面独立版.zip`](windows/release/)，免环境解压即用，附带多国语言说明 |
 | **🌐 Web 网页纯后台版** | Windows 电脑，支持局域网内任意手机/平板浏览器访问 | 轻量托盘守护进程 + 本地 Web 服务 + 内置 FFmpeg | 下载 [`windows/release/OmniDownloader_网页纯后台版.zip`](windows/release/)，静默常驻托盘，支持浏览器原生接管下载 |
@@ -68,8 +68,8 @@
 ## 📲 快速下载安装
 
 ### Android 安装包
-- 📦 **[`OmniDownloader_LATEST.apk`](OmniDownloader_LATEST.apk)**（或最新版 [`OmniDownloader-v1.4.8-debug.apk`](OmniDownloader-v1.4.8-debug.apk)）：直接安装至安卓手机。
-- 📦 **[`OmniDownloader_Source_LATEST.zip`](OmniDownloader_Source_LATEST.zip)**：完整工程源码归档。
+- 📦 **[`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk)**（或最新版 [`OmniDownloader-v1.5.10-release.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-v1.5.10-release.apk)）：直接安装至安卓手机。
+- 📦 **[`OmniDownloader_Source_LATEST.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Source_LATEST.zip)**：完整工程源码归档。
 
 ### iOS 原生工程与打包
 - 源码工程位于 [`OmniDownloader-iOS/`](OmniDownloader-iOS/)；
@@ -82,7 +82,19 @@
 
 ---
 
-## 📝 最近更新日志 (v1.4.8)
+## Android v1.5.10
+
+- 修正合集默认选中原视频、Bilibili 分P定位，保留合集顺序和真实视频地址。
+- 静默解析与窗口排查共用有界媒体捕获管线，移除网页资源面板和深度扫描控件。
+- 下载页改为单个连续移动的选中背景，设置 → 关于增加 GitHub 项目入口。
+- 包含 1.5.7–1.5.9 的切页与列表优化、紧凑首页、七类设置子页、Material 3 交互及代码/资源裁剪。
+- Android 8.0+、ARM64，安装包 **53.35 MiB**。已有 **27 项 JVM 测试、8 项模拟器设备用例**及优化正式包验收记录；ARM64 真机原生命令尚未验证。
+
+[发行页与安装包](https://github.com/baishu136/OmniDownloader/releases/tag/v1.5.10) · [修改详情](docs/RELAY_AND_COLLECTION_1.5.10.md) · [恢复的验收记录](docs/RELEASE_VERIFICATION_1.5.10.md)
+
+---
+
+## 📝 历史更新日志 (v1.4.8)
 
 - **[NEW] 🐱 全面集成“嗅探猫”(Cat Catch) 专业多媒体嗅探体系**：
   - **深度网络监听注入**：内置浏览器全面注入 Fetch Hook、XHR Hook 与 HTMLMediaElement 监听钩子，自动捕获页面异步调用的所有视频、音频、分段 M3U8 流与直链 CDN；

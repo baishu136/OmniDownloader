@@ -148,7 +148,11 @@ object BilibiliDirectExtractor {
             val pic = data.optString("pic", "")
             val duration = data.optInt("duration", 0)
             val owner = data.optJSONObject("owner")?.optString("name", "B站UP主") ?: "B站UP主"
-            val cid = data.optLong("cid", 0)
+            val requestedPage = Regex("[?&]p=(\\d+)").find(resolvedUrl)?.groupValues?.get(1)?.toIntOrNull() ?: 1
+            val sourcePages = data.optJSONArray("pages")
+            val sourcePageCount = sourcePages?.length() ?: 0
+            require(requestedPage >= 1 && (if (sourcePageCount > 0) requestedPage <= sourcePageCount else requestedPage == 1)) { "指定的分P不存在" }
+            val cid = sourcePages?.optJSONObject(requestedPage - 1)?.optLong("cid", 0) ?: data.optLong("cid", 0)
 
             // 2. 获取清晰度格式 (qn=120, fnval=4048 支持 4K/1080P/HDR 等全清晰度流)
             val playApiUrl = "https://api.bilibili.com/x/player/playurl?bvid=$bvid&cid=$cid&qn=120&fnval=4048&fnver=0&fourk=1"
@@ -326,7 +330,8 @@ object BilibiliDirectExtractor {
 
             val finalTitle = if (updatedMultiMediaList.size > 1) "$title (共${updatedMultiMediaList.size}集)" else title
             val meta = VideoMetadata(
-                url = "https://www.bilibili.com/video/$bvid",
+                url = "https://www.bilibili.com/video/$bvid" +
+                    (Regex("[?&]p=(\\d+)").find(resolvedUrl)?.groupValues?.get(1)?.let { "?p=$it" } ?: ""),
                 title = finalTitle,
                 author = owner,
                 durationText = formatDuration(duration),

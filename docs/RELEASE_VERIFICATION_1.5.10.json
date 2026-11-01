@@ -1,0 +1,92 @@
+{
+  "version": "1.5.10",
+  "versionCode": 51,
+  "originalVerificationCompletedAt": "2026-11-01T22:04:57.3869571+08:00",
+  "recoveredOn": "2026-11-01",
+  "sourceFrozenFiles": 18,
+  "sourceSnapshotRevalidated": true,
+  "apk": "OmniDownloader-v1.5.10-release.apk",
+  "apkSHA256": "736140D712BFD06A9BF8F0A92D13AB5A67A7F6DCFFFDC035050459BB63CBFD27",
+  "apkBytes": 55944655,
+  "unitTestsPassed": 27,
+  "unitSuites": [
+    {
+      "suite": "com.omni.downloader.data.repository.TaskRepositoryTest",
+      "tests": 6,
+      "failures": 0
+    },
+    {
+      "suite": "com.omni.downloader.engine.DomesticMediaSourceTest",
+      "tests": 6,
+      "failures": 0
+    },
+    {
+      "suite": "com.omni.downloader.engine.MediaSelectionTest",
+      "tests": 8,
+      "failures": 0
+    },
+    {
+      "suite": "com.omni.downloader.engine.RelayCapturePolicyTest",
+      "tests": 5,
+      "failures": 0
+    },
+    {
+      "suite": "com.omni.downloader.ui.model.TaskListStateTest",
+      "tests": 2,
+      "failures": 0
+    }
+  ],
+  "deviceTests": {
+    "environment": "Android 15 / API35 dedicated x86_64 emulator",
+    "total": 8,
+    "classes": [
+      {
+        "class": "com.omni.downloader.InterfaceLayoutTest",
+        "tests": 1,
+        "passed": true
+      },
+      {
+        "class": "com.omni.downloader.ui.components.RelayCaptureTest",
+        "tests": 2,
+        "passed": true
+      },
+      {
+        "class": "com.omni.downloader.ui.design.SegmentedTabsTest",
+        "tests": 1,
+        "passed": true
+      },
+      {
+        "class": "com.omni.downloader.ui.design.RetainedTabHostTest",
+        "tests": 2,
+        "passed": true
+      },
+      {
+        "class": "com.omni.downloader.ui.design.CollectionTaskCardTest",
+        "tests": 1,
+        "passed": true
+      },
+      {
+        "class": "com.omni.downloader.AppInteractionTest",
+        "tests": 1,
+        "passed": true
+      }
+    ]
+  },
+  "releaseChecks": {
+    "x86_64FullNativeMediaSmokePassed": true,
+    "arm64UiAndColdExtractionPassed": true,
+    "arm64NativeHardwareVerified": false,
+    "signatureVerified": true,
+    "signingCertificate": "Existing Android Debug certificate; unchanged project signing configuration",
+    "lintErrors": 0,
+    "lintWarnings": 40,
+    "nativePayloadsUnchanged": 6,
+    "captureAssetMatchesSource": true
+  },
+  "limitations": [
+    "No physical ARM64 device; full ARM64 native-command attempt failed in x86_64 translation and is retained. UI/cold-extraction profile is separate.",
+    "No original failing collection URL was supplied. Selection is covered by representative Bilibili/YouTube/X cases, not live verification of that unknown URL.",
+    "GreenVideo is the user reference; the user reported no capture failures in their small sample. No claim of fixing a reproduced GreenVideo failure or universal third-party compatibility.",
+    "DASH MPD, DRM/blob-only sources and unknown login/captcha flows are not claimed supported."
+  ]
+}

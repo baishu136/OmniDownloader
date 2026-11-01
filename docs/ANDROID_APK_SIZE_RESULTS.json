@@ -1,0 +1,115 @@
+{
+  "date": "2026-11-01",
+  "version": "1.5.8",
+  "versionCode": 49,
+  "baseline": "1.5.7",
+  "sizes": [
+    {
+      "APK": "OmniDownloader-v1.5.7-release.apk",
+      "Bytes": 71799009,
+      "Groups": [
+        {
+          "Group": "DEX",
+          "Entries": 3,
+          "Raw": 45149040,
+          "Compressed": 12113655
+        },
+        {
+          "Group": "Native",
+          "Entries": 8,
+          "Raw": 58238944,
+          "Compressed": 55328259
+        },
+        {
+          "Group": "Other",
+          "Entries": 19,
+          "Raw": 91306,
+          "Compressed": 64931
+        },
+        {
+          "Group": "Resources",
+          "Entries": 403,
+          "Raw": 4328143,
+          "Compressed": 4238442
+        }
+      ]
+    },
+    {
+      "APK": "OmniDownloader-v1.5.8-release.apk",
+      "Bytes": 55925254,
+      "Groups": [
+        {
+          "Group": "DEX",
+          "Entries": 1,
+          "Raw": 3793564,
+          "Compressed": 1838963
+        },
+        {
+          "Group": "Native",
+          "Entries": 6,
+          "Raw": 51402107,
+          "Compressed": 50147242
+        },
+        {
+          "Group": "Other",
+          "Entries": 19,
+          "Raw": 85873,
+          "Compressed": 59528
+        },
+        {
+          "Group": "Resources",
+          "Entries": 262,
+          "Raw": 3897928,
+          "Compressed": 3841639
+        }
+      ]
+    }
+  ],
+  "savedBytes": 15873755,
+  "savedPercent": 22.11,
+  "arm64NativePayloads": [
+    {
+      "Entry": "lib/arm64-v8a/libffmpeg.so",
+      "Size": 317120,
+      "Identical": true,
+      "SHA256": "1B8D5C371EA79E6E7A1930B31F2AD6A2731E48D75CEDDC9C36DFFDA6E0092401"
+    },
+    {
+      "Entry": "lib/arm64-v8a/libffmpeg.zip.so",
+      "Size": 35624931,
+      "Identical": true,
+      "SHA256": "4664A895283F9F31786BE39B0C484C1F96631F02C7C7F9C70A4A4A2DA324A092"
+    },
+    {
+      "Entry": "lib/arm64-v8a/libffprobe.so",
+      "Size": 233664,
+      "Identical": true,
+      "SHA256": "A4D4A6D1562AA87934E99EE1A43F8090EC1040659CEDB667D6EDF3AA08408C5E"
+    },
+    {
+      "Entry": "lib/arm64-v8a/libpython.so",
+      "Size": 4384,
+      "Identical": true,
+      "SHA256": "58BA29CFC5A6D88281C07B2B480FB1D8CCE1B78F280B002347F792CFD9CF5901"
+    },
+    {
+      "Entry": "lib/arm64-v8a/libpython.zip.so",
+      "Size": 14305904,
+      "Identical": true,
+      "SHA256": "7EDECB6C9BD3A94456168D44911D8AEA9F917BEDEF90C320A29500D92AC3EB62"
+    },
+    {
+      "Entry": "lib/arm64-v8a/libqjs.so",
+      "Size": 916104,
+      "Identical": true,
+      "SHA256": "A0FE160A8CD76EEC34132F945664856E96687D701E3B1FF28DFF44EA1FAD13BC"
+    }
+  ],
+  "checks": {
+    "unitTests": "14 passed",
+    "releaseLint": "passed, no errors",
+    "deliveredArm64": "Cold runtime extraction, history restoration, navigation: OK (1 test); native execution not tested on ARM64 hardware",
+    "x86_64Qa": "Identical optimized application code with ABI-matched upstream native payloads: Python/yt-dlp versions, generated MP4, MP3 extraction, GIF, audio removal/ffprobe and byte-equal local HTTP download: OK (1 test)"
+  },
+  "releaseSha256": "33B7455043FC43D4F788B6FB0ED15F16F84E13D8ACDF6C9AB5C49FCAC437F079"
+}

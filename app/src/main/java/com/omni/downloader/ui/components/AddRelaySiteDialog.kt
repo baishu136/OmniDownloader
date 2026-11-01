@@ -4,12 +4,12 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -91,7 +91,7 @@ fun AddRelaySiteDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.Add,
+                    imageVector = Icons.Outlined.Add,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
@@ -124,7 +124,7 @@ fun AddRelaySiteDialog(
                     label = { Text("网站完整网址") },
                     placeholder = { Text("https://...") },
                     leadingIcon = {
-                        Icon(imageVector = Icons.Default.Link, contentDescription = null)
+                        Icon(imageVector = Icons.Outlined.Link, contentDescription = null)
                     },
                     trailingIcon = {
                         when {
@@ -142,7 +142,7 @@ fun AddRelaySiteDialog(
                                         modifier = Modifier.size(28.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.Refresh,
+                                            imageVector = Icons.Outlined.Refresh,
                                             contentDescription = "重新检索名称",
                                             tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(18.dp)
@@ -158,7 +158,7 @@ fun AddRelaySiteDialog(
                                         modifier = Modifier.size(28.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.Clear,
+                                            imageVector = Icons.Outlined.Clear,
                                             contentDescription = "清除网址",
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(16.dp)
@@ -178,7 +178,7 @@ fun AddRelaySiteDialog(
                                         modifier = Modifier.size(28.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.ContentPaste,
+                                            imageVector = Icons.Outlined.ContentPaste,
                                             contentDescription = "粘贴剪贴板",
                                             tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(18.dp)
@@ -203,7 +203,7 @@ fun AddRelaySiteDialog(
                     label = { Text("网站名称") },
                     placeholder = { Text("例如：备用解析工具") },
                     leadingIcon = {
-                        Icon(imageVector = Icons.Default.Language, contentDescription = null)
+                        Icon(imageVector = Icons.Outlined.Language, contentDescription = null)
                     },
                     trailingIcon = {
                         if (nameInput.isNotBlank()) {
@@ -215,7 +215,7 @@ fun AddRelaySiteDialog(
                                 modifier = Modifier.size(28.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Clear,
+                                    imageVector = Icons.Outlined.Clear,
                                     contentDescription = "清空名称",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(16.dp)
@@ -272,7 +272,7 @@ fun AddRelaySiteDialog(
                     onAddSite(site)
                     onDismiss()
                 },
-                shape = RoundedCornerShape(8.dp)
+
             ) {
                 Text("确认添加")
             }

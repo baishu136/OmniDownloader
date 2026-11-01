@@ -23,6 +23,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOn
+import com.omni.downloader.ui.model.TaskListState
+import com.omni.downloader.ui.model.buildTaskListState
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -35,12 +38,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val settingsRepository = SettingsRepository.getInstance(application)
 
     val tasks: StateFlow<List<DownloadTask>> = repository.tasks
-    val activeTasks: StateFlow<List<DownloadTask>> = repository.tasks
+    val taskStructure: StateFlow<List<DownloadTask>> = repository.taskStructure
+    internal val taskListState = repository.taskStructure
+        .map(::buildTaskListState)
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, TaskListState())
+    fun getTaskProgress(taskId: String) = repository.getTaskProgressFlow(taskId)
+
+    val activeTasks: StateFlow<List<DownloadTask>> = repository.taskStructure
         .map { list ->
             list.filter {
                 it.status == TaskStatus.DOWNLOADING || it.status == TaskStatus.PROCESSING || it.status == TaskStatus.PENDING
             }
         }
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val proxyUrl: StateFlow<String> = settingsRepository.proxyUrl
@@ -221,8 +232,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             result.onSuccess { data ->
                 _metadata.value = data
-                _selectedMultiMediaIndex.value = 0
-                val activeMeta = if (data.multiMediaList.isNotEmpty()) data.multiMediaList[0] else data
+                _selectedMultiMediaIndex.value = com.omni.downloader.engine.MediaSelection.initialIndex(
+                    extracted, data.url, data.multiMediaList.map { it.url }
+                )
+                val activeMeta = data.multiMediaList.getOrElse(_selectedMultiMediaIndex.value) { data }
                 _selectedVideoFormat.value = activeMeta.availableVideoFormats.firstOrNull()
                 // 默认下载类型始终锁定为原画视频 (VIDEO_WITH_AUDIO)，
                 // 彻底杜绝普通视频或短动效在粘贴自动下载时被私自执行 GIF 转码
@@ -498,10 +511,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * 删除整个合集记录及可选本地文件
      */
     fun deleteCollection(collectionId: String, deleteFile: Boolean) {
-        val allTasks = repository.tasks.value.filter { it.collectionId == collectionId }
-        allTasks.forEach { task ->
-            repository.removeTask(task.id, deleteFile)
-        }
+        repository.clearTasks({ it.collectionId == collectionId }, deleteLocalFiles = deleteFile)
         _message.value = if (deleteFile) "已删除合集记录与本地文件" else "已从列表移除合集"
     }
 

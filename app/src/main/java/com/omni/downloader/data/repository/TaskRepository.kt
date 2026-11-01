@@ -1,10 +1,15 @@
 package com.omni.downloader.data.repository
 
 import android.content.Context
+import androidx.compose.runtime.Immutable
 import com.omni.downloader.data.model.DownloadTask
 import com.omni.downloader.data.model.TaskStatus
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,187 +17,190 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
-class TaskRepository private constructor(private val context: Context) {
+@Immutable
+data class TaskProgress(
+    val progress: Float = 0f,
+    val speedText: String = "",
+    val etaText: String = "",
+    val status: TaskStatus = TaskStatus.PENDING
+)
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        prettyPrint = true
-    }
-
+/** ID-indexed current state; lists are published only for structural changes or a
+ * coalesced compatibility snapshot. JSON and file operations never hold the UI lock.
+ */
+class TaskRepository internal constructor(
+    private val storageFile: File,
+    private val repositoryScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+) {
+    private val json = Json { ignoreUnknownKeys = true }
+    private val lock = Any()
+    private var current = linkedMapOf<String, DownloadTask>()
+    private val progressFlows = HashMap<String, MutableStateFlow<TaskProgress>>()
     private val _tasks = MutableStateFlow<List<DownloadTask>>(emptyList())
-    val tasks: StateFlow<List<DownloadTask>> = _tasks.asStateFlow()
-
-    private val storageFile by lazy {
-        File(context.filesDir, "download_tasks_v1.json")
-    }
-
-    private val repositoryScope = CoroutineScope(Dispatchers.IO)
+    val tasks = _tasks.asStateFlow()
+    private val _taskStructure = MutableStateFlow<List<DownloadTask>>(emptyList())
+    val taskStructure = _taskStructure.asStateFlow()
+    private val loaded = CompletableDeferred<Unit>()
+    private val saveRequests = Channel<Unit>(Channel.CONFLATED)
+    private val snapshotRequests = Channel<Unit>(Channel.CONFLATED)
+    // Replay operations issued during asynchronous hydration, preserving new tasks,
+    // deletes, and cancellation instead of overwriting them with older disk data.
+    private var startupChanges: MutableList<(LinkedHashMap<String, DownloadTask>) -> Unit>? = mutableListOf()
 
     init {
-        loadTasksFromDisk()
-    }
-
-    private fun loadTasksFromDisk() {
-        try {
-            if (storageFile.exists()) {
-                val content = storageFile.readText()
-                if (content.isNotBlank()) {
-                    val list = json.decodeFromString<List<DownloadTask>>(content)
-                    // 处于进行中的任务若因上次退出未完成，标记为已中断或取消
-                    val sanitized = list.map { task ->
-                        if (task.status == TaskStatus.DOWNLOADING || task.status == TaskStatus.PROCESSING || task.status == TaskStatus.PENDING) {
-                            task.copy(status = TaskStatus.CANCELLED, errorMessage = "任务因应用退出已中止")
-                        } else task
-                    }
-                    _tasks.value = sanitized
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun saveTasksToDisk() {
         repositoryScope.launch {
-            try {
-                val data = json.encodeToString(_tasks.value)
-                storageFile.writeText(data)
+            val restored = try {
+                val data = if (storageFile.exists()) storageFile.readText() else ""
+                if (data.isBlank()) emptyList() else json.decodeFromString<List<DownloadTask>>(data)
             } catch (e: Exception) {
                 e.printStackTrace()
+                emptyList()
+            }
+            synchronized(lock) {
+                val merged = linkedMapOf<String, DownloadTask>()
+                restored.forEach { task ->
+                    merged[task.id] = if (task.status.isActive()) {
+                        task.copy(status = TaskStatus.CANCELLED, errorMessage = "任务因应用退出已中止")
+                    } else task
+                }
+                startupChanges?.forEach { it(merged) }
+                startupChanges = null
+                current = merged
+                publishStructureLocked()
+            }
+            loaded.complete(Unit)
+        }
+        // Exactly one writer. A request during a write guarantees another pass with
+        // the newest snapshot. Atomic replacement also survives process interruption.
+        repositoryScope.launch {
+            loaded.await()
+            for (request in saveRequests) {
+                try {
+                    val data = json.encodeToString(snapshot())
+                    val temp = File(storageFile.path + ".tmp")
+                    temp.writeText(data)
+                    try {
+                        Files.move(temp.toPath(), storageFile.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+                    } catch (_: AtomicMoveNotSupportedException) {
+                        Files.move(temp.toPath(), storageFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                    }
+                } catch (e: Exception) { e.printStackTrace() }
+            }
+        }
+        repositoryScope.launch {
+            for (request in snapshotRequests) {
+                delay(250)
+                synchronized(lock) { _tasks.value = current.values.toList() }
             }
         }
     }
 
-    fun addTask(task: DownloadTask) {
-        val current = _tasks.value.toMutableList()
-        current.add(0, task)
-        _tasks.value = current
-        saveTasksToDisk()
+    suspend fun awaitLoaded() = loaded.await()
+    fun getTask(taskId: String): DownloadTask? = synchronized(lock) { current[taskId] }
+    private fun snapshot() = synchronized(lock) { current.values.toList() }
+
+    fun getTaskProgressFlow(taskId: String): StateFlow<TaskProgress> = synchronized(lock) {
+        progressFlows.getOrPut(taskId) { MutableStateFlow(current[taskId].toProgress()) }
     }
+
+    private fun DownloadTask?.toProgress() = TaskProgress(
+        this?.progress ?: 0f, this?.speedText ?: "", this?.etaText ?: "", this?.status ?: TaskStatus.PENDING
+    )
+
+    private fun publishStructureLocked() {
+        val snapshot = current.values.toList()
+        _tasks.value = snapshot
+        _taskStructure.value = snapshot
+        current.forEach { (id, task) ->
+            progressFlows[id]?.value = task.toProgress()
+        }
+        progressFlows.keys.retainAll(current.keys)
+    }
+
+    private fun change(action: (LinkedHashMap<String, DownloadTask>) -> Unit) {
+        synchronized(lock) {
+            action(current)
+            startupChanges?.add(action)
+            publishStructureLocked()
+        }
+        saveRequests.trySend(Unit)
+    }
+
+    fun addTask(task: DownloadTask) = addTasks(listOf(task))
 
     fun addTasks(newTasks: List<DownloadTask>) {
         if (newTasks.isEmpty()) return
-        val current = _tasks.value.toMutableList()
-        current.addAll(0, newTasks)
-        _tasks.value = current
-        saveTasksToDisk()
-    }
-
-    fun updateTaskProgress(
-        taskId: String,
-        progress: Float,
-        speed: String,
-        eta: String,
-        status: TaskStatus
-    ) {
-        val current = _tasks.value.toMutableList()
-        val index = current.indexOfFirst { it.id == taskId }
-        if (index != -1) {
-            val old = current[index]
-            current[index] = old.copy(
-                progress = progress,
-                speedText = speed,
-                etaText = eta,
-                status = status
-            )
-            _tasks.value = current
-            // 完成或失败时触发持久化
-            if (status == TaskStatus.COMPLETED || status == TaskStatus.FAILED || status == TaskStatus.CANCELLED) {
-                saveTasksToDisk()
-            }
+        val added = newTasks.toList()
+        change { map ->
+            val ordered = linkedMapOf<String, DownloadTask>()
+            added.forEach { ordered[it.id] = it }
+            map.forEach { (id, task) -> if (id !in ordered) ordered[id] = task }
+            map.clear()
+            map.putAll(ordered)
         }
     }
 
-    fun markCompleted(taskId: String, localPath: String) {
-        val current = _tasks.value.toMutableList()
-        val index = current.indexOfFirst { it.id == taskId }
-        if (index != -1) {
-            val old = current[index]
-            current[index] = old.copy(
-                status = TaskStatus.COMPLETED,
-                progress = 100f,
-                speedText = "",
-                etaText = "",
-                localFilePath = localPath
-            )
-            _tasks.value = current
-            saveTasksToDisk()
+    fun updateTaskProgress(taskId: String, progress: Float, speed: String, eta: String, status: TaskStatus) {
+        var statusChanged = false
+        synchronized(lock) {
+            val old = current[taskId] ?: return
+            val updated = old.copy(progress = progress, speedText = speed, etaText = eta, status = status)
+            if (old == updated) return
+            current[taskId] = updated
+            startupChanges?.add { map -> map[taskId]?.let {
+                map[taskId] = it.copy(progress = progress, speedText = speed, etaText = eta, status = status)
+            } }
+            progressFlows[taskId]?.value = updated.toProgress()
+            statusChanged = old.status != status
+            if (statusChanged) publishStructureLocked()
+            else snapshotRequests.trySend(Unit)
         }
+        if (statusChanged) saveRequests.trySend(Unit)
     }
 
-    fun markFailed(taskId: String, error: String) {
-        val current = _tasks.value.toMutableList()
-        val index = current.indexOfFirst { it.id == taskId }
-        if (index != -1) {
-            val old = current[index]
-            current[index] = old.copy(
-                status = TaskStatus.FAILED,
-                speedText = "",
-                etaText = "",
-                errorMessage = error
-            )
-            _tasks.value = current
-            saveTasksToDisk()
-        }
+    fun markCompleted(taskId: String, localPath: String) = change { map ->
+        map[taskId]?.let { map[taskId] = it.copy(status = TaskStatus.COMPLETED,
+            progress = 100f, speedText = "", etaText = "", localFilePath = localPath, errorMessage = "") }
+    }
+
+    fun markFailed(taskId: String, error: String) = change { map ->
+        map[taskId]?.let { map[taskId] = it.copy(status = TaskStatus.FAILED,
+            speedText = "", etaText = "", errorMessage = error) }
     }
 
     fun removeTask(taskId: String, deleteLocalFile: Boolean = false) {
-        val current = _tasks.value.toMutableList()
-        val index = current.indexOfFirst { it.id == taskId }
-        if (index != -1) {
-            val task = current[index]
-            if (deleteLocalFile && task.localFilePath.isNotEmpty()) {
-                try {
-                    val file = File(task.localFilePath)
-                    if (file.exists()) {
-                        file.delete()
-                    }
-                } catch (ignored: Exception) {
-                }
-            }
-            current.removeAt(index)
-            _tasks.value = current
-            saveTasksToDisk()
-        }
+        clearTasks({ it.id == taskId }, deleteLocalFile)
     }
 
-    /**
-     * 批量清除符合条件的任务记录（单次更新 StateFlow 与单次落盘，避免并发竞态）
-     */
     fun clearTasks(predicate: (DownloadTask) -> Boolean, deleteLocalFiles: Boolean = false): Int {
-        val current = _tasks.value.toMutableList()
-        val toRemove = current.filter(predicate)
-        if (toRemove.isEmpty()) return 0
-
-        if (deleteLocalFiles) {
-            toRemove.forEach { task ->
-                if (task.localFilePath.isNotEmpty()) {
-                    try {
-                        val file = File(task.localFilePath)
-                        if (file.exists()) {
-                            file.delete()
-                        }
-                    } catch (ignored: Exception) {
-                    }
-                }
+        var count = 0
+        change { map ->
+            val removed = map.values.filter(predicate)
+            count = removed.size
+            removed.forEach { map.remove(it.id) }
+            if (deleteLocalFiles) {
+                val paths = removed.map { it.localFilePath }.filter { it.isNotEmpty() }
+                repositoryScope.launch { paths.forEach { path ->
+                    try { File(path).delete() } catch (e: Exception) { e.printStackTrace() }
+                } }
             }
         }
-
-        current.removeAll(toRemove.toSet())
-        _tasks.value = current
-        saveTasksToDisk()
-        return toRemove.size
+        return count
     }
 
     companion object {
-        @Volatile
-        private var INSTANCE: TaskRepository? = null
-
-        fun getInstance(context: Context): TaskRepository {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: TaskRepository(context.applicationContext).also { INSTANCE = it }
-            }
+        @Volatile private var INSTANCE: TaskRepository? = null
+        fun getInstance(context: Context): TaskRepository = INSTANCE ?: synchronized(this) {
+            INSTANCE ?: TaskRepository(File(context.applicationContext.filesDir, "download_tasks_v1.json"))
+                .also { INSTANCE = it }
         }
     }
 }
+
+private fun TaskStatus.isActive() = this == TaskStatus.PENDING ||
+    this == TaskStatus.DOWNLOADING || this == TaskStatus.PROCESSING

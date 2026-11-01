@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Hd
+import androidx.compose.material.icons.outlined.Hd
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,7 +32,7 @@ fun BilibiliGuideDialog(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Hd,
+                    imageVector = Icons.Outlined.Hd,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier
@@ -59,7 +59,7 @@ fun BilibiliGuideDialog(
         confirmButton = {
             Button(
                 onClick = onLoginClick,
-                shape = RoundedCornerShape(8.dp)
+
             ) {
                 Text(text = strings.bilibiliGuideLogin, fontWeight = FontWeight.Bold)
             }
@@ -67,7 +67,7 @@ fun BilibiliGuideDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                shape = RoundedCornerShape(8.dp)
+
             ) {
                 Text(text = strings.bilibiliGuideLater)
             }

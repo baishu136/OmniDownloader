@@ -19,3 +19,4 @@ jni/
 ytdl_lib/
 scratch/
 *.log
+/release-smoke/build

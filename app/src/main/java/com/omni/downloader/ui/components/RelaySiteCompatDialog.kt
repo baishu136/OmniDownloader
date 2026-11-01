@@ -77,7 +77,7 @@ fun RelaySiteCompatDialog(
         confirmButton = {
             Button(
                 onClick = onConfirm,
-                shape = RoundedCornerShape(8.dp)
+
             ) {
                 Text("我已知晓并继续")
             }
@@ -85,7 +85,7 @@ fun RelaySiteCompatDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                shape = RoundedCornerShape(8.dp)
+
             ) {
                 Text("取消")
             }
