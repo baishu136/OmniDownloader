@@ -15,6 +15,10 @@
 [![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
 
+<p align="center">
+  <img src="docs/images/screenshot.jpg" alt="OmniDownloader スクリーンショット" />
+</p>
+
 **OmniDownloader** は、クロスプラットフォームに対応した最新のメディアダウンローダーです（**Android ネイティブ、Apple iOS ネイティブ、Windows デスクトップ独立版、Web バックグラウンド版**）。**Bilibili (4K/1080P60/DASH分離ストリーム合成/プレイリスト一括)、TikTok、Douyin (抖音)、YouTube、X (Twitter)、小紅書、快手** などの透かしなし高画質メディアを高速抽出・保存できます。
 
 </div>

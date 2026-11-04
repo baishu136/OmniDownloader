@@ -15,6 +15,10 @@
 [![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
 
+<p align="center">
+  <img src="docs/images/screenshot.jpg" alt="OmniDownloader 软件截图" />
+</p>
+
 **OmniDownloader** 是一套现代化全平台多媒体音视频下载矩阵（涵盖 **Android 原生、Apple iOS 原生、Windows 桌面独立版、Web 网页纯后台服务版**）。支持 **哔哩哔哩 (4K/1080P60/DASH分离流/合集聚合)、抖音、快手、小红书、TikTok、YouTube、X (Twitter)** 等各大主流平台的原画无水印直连极速提取。
 
 </div>
