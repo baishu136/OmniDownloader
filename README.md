@@ -15,6 +15,10 @@
 [![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
 
+<p align="center">
+  <img src="docs/images/screenshot.jpg" alt="OmniDownloader Screenshot" />
+</p>
+
 **OmniDownloader** is a modern, cross-platform multimedia downloader matrix (**Android native, Apple iOS native, Windows Desktop standalone app, and Web background service**). It supports ultra-fast extraction and direct downloading of original-quality videos without watermarks from major platforms including **Bilibili (4K/1080P60 DASH muxing & playlists), Douyin, TikTok, Kuaishou, Xiaohongshu, YouTube, and X (Twitter)**.
 
 </div>
