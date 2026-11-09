@@ -27,7 +27,7 @@ enum NativeMediaPipeline {
             guard scope==PlatformSession.shared.generation(site) else{throw OmniPlatform.error("SOURCE_EXPIRED","账号或网络已改变，请重新解析")}
             guard let file=staged else{throw OmniPlatform.error("POSTPROCESS_FAILED","没有生成成品")}
             try await NativeFFmpeg.verify(file,task:task)
-            try JSONEncoder().encode(Ready(signature:signature,name:file.lastPathComponent)).write(to:ready,options:[.atomic,.completeUntilFirstUserAuthentication])
+            try JSONEncoder().encode(Ready(signature:signature,name:file.lastPathComponent)).write(to:ready,options:[.atomic,.completeFileProtectionUntilFirstUserAuthentication])
         }
         guard let file=staged else{throw OmniPlatform.error("POSTPROCESS_FAILED","没有可导出的成品")}
         try await NativeFFmpeg.verify(file,task:task);try Task.checkCancellation();progress(98,"正在导出成品…")

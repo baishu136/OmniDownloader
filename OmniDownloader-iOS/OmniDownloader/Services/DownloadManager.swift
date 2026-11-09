@@ -28,7 +28,7 @@ extension Notification.Name { static let omniAnalyzeURL=Notification.Name("omniA
     public func saveTasks(force:Bool=false){
         saveWork?.cancel()
         let snapshot=tasks,file=storage
-        let item=DispatchWorkItem{guard let data=try? JSONEncoder().encode(snapshot) else{return};try? data.write(to:file,options:[.atomic,.completeUntilFirstUserAuthentication])}
+        let item=DispatchWorkItem{guard let data=try? JSONEncoder().encode(snapshot) else{return};try? data.write(to:file,options:[.atomic,.completeFileProtectionUntilFirstUserAuthentication])}
         saveWork=item
         if force{persistence.async(execute:item)}else{persistence.asyncAfter(deadline:.now()+1,execute:item)}
     }

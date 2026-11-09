@@ -13,7 +13,7 @@ final class BackgroundTransfer:NSObject,URLSessionDownloadDelegate,@unchecked Se
         let lock=NSLock();var task:URLSessionDownloadTask?;var cancelled=false;let resumeFile:URL
         init(_ file:URL){resumeFile=file}
         func install(_ value:URLSessionDownloadTask){lock.lock();task=value;let stop=cancelled;lock.unlock();if stop{cancel()}else{value.resume()}}
-        func cancel(){lock.lock();cancelled=true;let value=task;lock.unlock();value?.cancel{data in if let data=data{try? data.write(to:self.resumeFile,options:[.atomic,.completeUntilFirstUserAuthentication])}}}
+        func cancel(){lock.lock();cancelled=true;let value=task;lock.unlock();value?.cancel{data in if let data=data{try? data.write(to:self.resumeFile,options:[.atomic,.completeFileProtectionUntilFirstUserAuthentication])}}}
     }
     private let lock=NSRecursiveLock()
     private var records:[String:Record]=[:]
