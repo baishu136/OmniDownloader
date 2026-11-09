@@ -26,7 +26,7 @@ struct OmniDownloaderApp: App {
                 .environmentObject(downloadManager)
                 .overlay{
                     if !launched{
-                        ZStack{OmniPalette.background.ignoresSafeArea();Image(systemName:"icloud.and.arrow.down").font(.system(size:54,weight:.medium)).foregroundColor(OmniPalette.primary)}.accessibilityHidden(true).transition(.opacity)
+                        ZStack{OmniPalette.background.ignoresSafeArea();OmniBrand(size:76)}.accessibilityHidden(true).transition(.opacity)
                     }
                 }
                 .task{try? await Task.sleep(nanoseconds:150_000_000);withAnimation(reduceMotion ? nil:.easeOut(duration:0.18)){launched=true}}

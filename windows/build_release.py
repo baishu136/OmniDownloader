@@ -7,7 +7,7 @@ import zipfile
 from tools.prepare_runtime import prepare
 
 BASE = Path(__file__).resolve().parent
-VERSION = '1.7.19'
+VERSION = '1.7.20'
 
 
 def main():

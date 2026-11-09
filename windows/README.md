@@ -1,10 +1,10 @@
-# OmniDownloader Windows 1.7.19
+# OmniDownloader Windows 1.7.20
 
 Windows 10/11 x64 客户端，提供桌面 EXE 和本机 Web EXE。两种形态共用下载核心和用户数据。
 
 ## 使用
 
-完整解压 `OmniDownloader_Desktop-1.7.19.zip` 或 `OmniDownloader_Web-1.7.19.zip`，在解压目录双击同名 EXE；请保留 `_internal` 目录。运行不需要安装 Python。桌面版需要 Edge WebView2；抖音自动网页补全需要本机 Microsoft Edge。
+完整解压 `OmniDownloader_Desktop-1.7.20.zip` 或 `OmniDownloader_Web-1.7.20.zip`，在解压目录双击同名 EXE；请保留 `_internal` 目录。运行不需要安装 Python。桌面版需要 Edge WebView2；抖音自动网页补全需要本机 Microsoft Edge。
 
 Web 版默认仅监听 http://127.0.0.1:58000，启动后常驻托盘。托盘可打开网页或退出后台服务。用户数据在 `%LOCALAPPDATA%/OmniDownloader`，已下载成品保存在设置所选目录。自启动为可选项。
 
@@ -33,7 +33,7 @@ python windows/tools/prepare_web_assets.py
 python windows/build_release.py --mode all
 ```
 
-样式资产构建需要 Node/npm；最终 EXE 不依赖这些开发工具。`runtime-lock.json` 固定 Deno 2.9.8 和 FFmpeg 7.1 的官方归档及二进制 SHA-256，构建前校验并在缺失时恢复。不同版本不会被静默混入成品。新输出在 `dist/1.7.19/`，不会停止或覆盖旧服务；发布 ZIP 在 `release/`。
+样式资产构建需要 Node/npm；最终 EXE 不依赖这些开发工具。`runtime-lock.json` 固定 Deno 2.9.8 和 FFmpeg 7.1 的官方归档及二进制 SHA-256，构建前校验并在缺失时恢复。不同版本不会被静默混入成品。新输出在 `dist/1.7.20/`，不会停止或覆盖旧服务；发布 ZIP 在 `release/`。
 
 `OMNI_STATE_DIR` 可为测试指定独立数据目录，`OMNI_PORT` 可指定本机测试端口。测试请使用独立状态，避免改动真实任务。
 

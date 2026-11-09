@@ -43,7 +43,7 @@ from engine.domestic_extractor import DomesticDirectExtractor
 from engine.tiktok_extractor import TikTokDirectExtractor
 from engine.ytdlp_engine import YtDlpEngine
 
-app = FastAPI(title="OmniDownloader API", description="全能多媒体下载器 Windows 后端接口", version="1.7.19")
+app = FastAPI(title="OmniDownloader API", description="全能多媒体下载器 Windows 后端接口", version="1.7.20")
 
 # 允许跨域以便调试
 app.add_middleware(

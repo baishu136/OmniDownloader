@@ -44,7 +44,7 @@ import ffmpegkit
                 }else{
                     VStack(spacing:4){ForEach(Page.allCases){item in
                         Button{withAnimation(reduceMotion ? nil:.easeInOut(duration:0.2)){page=item;message=""};if item == .downloads{loadStorage()};if item == .accounts{reloadSession()};if item == .engine{inspectEngine()}}label:{
-                            HStack(spacing:22){Image(systemName:item.icon).font(.system(size:25,weight:.regular)).foregroundColor(OmniPalette.primary).frame(width:30);VStack(alignment:.leading,spacing:5){Text(L(item.title)).font(.system(size:18));Text(L(item.summary)).font(.subheadline).foregroundColor(OmniPalette.secondary)};Spacer();Image(systemName:"chevron.right").font(.subheadline).foregroundColor(OmniPalette.secondary)}.padding(.vertical,21).contentShape(Rectangle())
+                            HStack(spacing:22){OmniIcon(name:item.icon,size:24).foregroundColor(OmniPalette.primary).frame(width:30);VStack(alignment:.leading,spacing:5){Text(L(item.title)).font(.system(size:18));Text(L(item.summary)).font(.subheadline).foregroundColor(OmniPalette.secondary)};Spacer();OmniIcon(name:"chevron.right",size:20).foregroundColor(OmniPalette.secondary)}.padding(.vertical,21).contentShape(Rectangle())
                         }.buttonStyle(OmniPressStyle()).accessibilityIdentifier("omni.settings."+item.rawValue)
                     }}
                 }
@@ -106,7 +106,7 @@ import ffmpegkit
             Text(L("媒体组件随应用版本更新；不会下载并执行外部程序。")).font(.caption).foregroundColor(OmniPalette.secondary)
             Link(L("检查应用更新"),destination:URL(string:"https://github.com/baishu136/OmniDownloader/releases")!)
         case .about:
-            HStack{Text("OmniDownloader").font(.title2.bold());Spacer();Text("1.7.19").foregroundColor(OmniPalette.primary)}
+            HStack{Text("OmniDownloader").font(.title2.bold());Spacer();Text("1.7.20").foregroundColor(OmniPalette.primary)}
             Text(L("支持平台")).font(.headline);OmniPlatformChips()
             Text("SwiftUI · WebKit · URLSession · FFmpegKit").font(.caption).foregroundColor(OmniPalette.secondary)
             Link("GitHub",destination:URL(string:"https://github.com/baishu136/OmniDownloader")!)

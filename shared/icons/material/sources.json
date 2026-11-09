@@ -1,0 +1,33 @@
+{
+  "repository": "https://github.com/google/material-design-icons",
+  "style": "Material Icons Outlined 24px",
+  "sha256": {
+    "account_circle": "49f9a2176b3ff2687d84be379ae56ef7e866f1fcb1357bc7941f127072bdec65",
+    "delete": "e79a2454f8818b72ceaab13a033b37ea7a484d0579ce31dfed220e5349554238",
+    "gif": "282bd2eb071f7f0b3cda0ae16a2ecbfcc2a2a1efb5aea7615658e9f7ff335d44",
+    "home": "6f5d2c85c8d60a818c3d6011e7cf1b981bc7c7ba5a7ced3664c6c0b6d42c9d69",
+    "info": "196cbf2420d05da17413907eb7ba67d66a799feb9e04fe60053394cf15af5225",
+    "open_in_new": "c8117992219bb914a560094f460e0a49c75f4a2ddae5e872b7934e15025c4e5b",
+    "settings": "814b7a6eea050c073d4a8d7b1f72512b0bd4f71b33beb584c8063fb0bfa78d41",
+    "videocam": "d85582413e23d973db10549c3d86054a264c25b65e55e3521c791e012d0ac7d1",
+    "volume_off": "3427a16fb06e835d5fedb68bdc9bc6d793c18e60c1b29cfa4021b2f358f67daa",
+    "add": "670df546c8e7b8f19fb262ec89156108f87fcbcb57b19a40f37244b980cb7b53",
+    "bolt": "76530caabdac57f10ee21881051bc452ce6b312cbd608a35ca2e1b061263fd38",
+    "content_paste": "5d6a7ee0325cb9f2530385fb844f3c7fcbcf081fb8fe8ee59d16ad33a8d06c9d",
+    "link": "dd6a57aa5e09cda48d8637c45686b9e3467ea69d0bf4e5528c14e4dc084528d8",
+    "storage": "4b14a5ebdc7cea4b6b5cf44cfa34aab165d5e12d202e16c7f7011706893732fb",
+    "cloud_download": "40c0303014d1fd52939cc29f12356e101038da57e7e917bf88863cc00101bb56",
+    "download": "5f927662f1866f02ed052721a3b021f8004a5f7e8549b388b1149d064634c9a8",
+    "folder": "ad9106c980e54054e752983972ff907418f63c928fbeba88a98ff47ee7199948",
+    "audiotrack": "9500b44468fb16450dd00f28213de5831420533c03b0cc6c75f85d86bec2228d",
+    "palette": "ca5972511f83c8d277742e0c3901540c1fec99276e1fb7150e73776a40fa97c1",
+    "photo_library": "7d6fa0bb45792306061d0b3cfdcadd146c33cdc4116b81817c990250147a4378",
+    "arrow_back": "5eab5a4557e97143f2166479366672a76bbc31d805be62efa75c7d1a10e13cf2",
+    "check": "e7bd57a6f37125b7363cfc9fb11f8c1dc9aec12003c94e96329d1cca5c11d8f8",
+    "chevron_right": "dd80108de070d899de9b4ce1ae7c80a459e5d9ef21d9c4aae4528afcddcf9895",
+    "close": "817eeece6e725ef03c5be0b0ade63c53506d6f8678684dd41eb0c0deaae3ac7b",
+    "expand_less": "3459b09b47905c897bef51fc767fe9610641316a78df93f582e3cfc67c4b6c75",
+    "expand_more": "5295578525e1a0b07f046e994fe32f108913debeac3053ed37124200bb44924f",
+    "public": "a632332cb95e06cd683f892a839fa0e61fc9922f8e4a8cd2ac8c1190fabf637f"
+  }
+}

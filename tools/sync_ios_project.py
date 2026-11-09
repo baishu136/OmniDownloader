@@ -74,7 +74,7 @@ def main():
     add(objects['99999999AAAA000000000002']['files'],put('ffmpeg-link','PBXBuildFile',productRef=product))
     proj=objects['777777778888999900000001'];proj['packageReferences']=[package]
     for key in ['BBBBBBBB0000111100000001','BBBBBBBB0000111100000002']:
-        settings=objects[key]['buildSettings'];settings['MARKETING_VERSION']='1.7.19';settings['CURRENT_PROJECT_VERSION']='78'
+        settings=objects[key]['buildSettings'];settings['MARKETING_VERSION']='1.7.20';settings['CURRENT_PROJECT_VERSION']='79'
         settings['SWIFT_OBJC_BRIDGING_HEADER']='OmniDownloader/Media/NativeProbe.h'
     targets=[]
     for name, ui in [('OmniDownloaderTests',False),('OmniDownloaderUITests',True)]:

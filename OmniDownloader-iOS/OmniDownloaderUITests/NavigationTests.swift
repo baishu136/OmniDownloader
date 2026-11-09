@@ -18,6 +18,14 @@ final class NavigationTests:XCTestCase {
         app.launchArguments=["-AppleLanguages","(zh-Hans)","-AppleLocale","zh_CN","-omni.language","zhCN"]
         app.launch()
         XCTAssertTrue(app.textFields["omni.video.url"].waitForExistence(timeout:15))
+        let analyze=app.buttons["omni.action.analyze"]
+        XCTAssertTrue(analyze.exists);XCTAssertFalse(analyze.isEnabled)
+        XCTAssertGreaterThanOrEqual(analyze.frame.height,44)
+        let field=app.textFields["omni.video.url"];field.tap();field.typeText("https://example.com/video")
+        XCTAssertTrue(analyze.isEnabled)
+        app.buttons["清空"].tap();XCTAssertFalse(analyze.isEnabled)
+        app.swipeDown()
+        app.buttons["omni.nav.3"].tap();app.buttons["omni.nav.0"].tap()
         let home=XCTAttachment(screenshot:app.screenshot());home.name="iOS-home";home.lifetime = .keepAlways;add(home)
         app.buttons["omni.nav.3"].tap()
         XCTAssertTrue(app.staticTexts["Cookie 与登录管理"].waitForExistence(timeout:5))

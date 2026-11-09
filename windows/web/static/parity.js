@@ -1,22 +1,10 @@
-/* Android's page hierarchy and controls, shared by the packaged EXE and Web UI. */
+/* Desktop styling with the current settings, localization and quality reporting. */
 (() => {
   'use strict';
-  const VERSION = '1.7.19';
+  const VERSION = '1.7.20';
   const $ = id => document.getElementById(id);
   const platforms = [['哔哩哔哩','#fb7299'],['抖音','#60636c'],['快手','#ff4d16'],['小红书','#ff2442'],['YouTube','#f00'],['TikTok','#28bac5'],['X (Twitter)','#8c9099'],['Instagram','#ed2990'],['Facebook','#1683ff'],['Pinterest','#e60023'],['Pixiv','#0096fa'],['小黑盒','#f6b92c']];
   function navigation() {
-    const nav = $('nav-home')?.parentElement;
-    if (!nav) return;
-    nav.classList.add('omni-nav');
-    [['home','首页','house'],['images','图文','images'],['tasks','任务','arrow-down'],['settings','设置','gear']].forEach(([key,label,icon]) => {
-      const button = $('nav-'+key);
-      const badge = key === 'tasks' ? $('badge-running-count') : null;
-      button.replaceChildren();
-      const glyph = document.createElement('i'); glyph.className='fa-solid fa-'+icon; glyph.setAttribute('aria-hidden','true');
-      const text = document.createElement('span'); text.textContent=label;
-      button.append(glyph,text); if(badge) button.append(badge);
-      button.setAttribute('aria-label',label);
-    });
     const oldSwitch = window.switchTab;
     window.switchTab = function(tab) {
       oldSwitch(tab);
@@ -28,35 +16,18 @@
     $('nav-home').setAttribute('aria-current','page');
     const title = document.querySelector('header h1');
     if(title) {
-      title.parentElement.querySelector('p')?.remove();
       const version=document.createElement('span');version.className='omni-version';version.textContent='v'+VERSION;
       title.append(version);
     }
   }
   function home() {
     const input=$('input-url'); if(!input)return;
-    const card=$('tab-home').firstElementChild;
-    card.classList.add('omni-home-card');
-    const body=input.closest('.text-center');
-    if(!body)return;
-    body.querySelector('h2')?.remove();body.querySelector(':scope > p')?.remove();
-    const oldPlatforms=Array.from(body.children).find(e=>e.classList.contains('flex-wrap'));
-    const chips=document.createElement('div');chips.className='omni-platforms';chips.setAttribute('aria-label','支持的平台');
-    for(const [name,color] of platforms){const item=document.createElement('div');item.className='omni-platform';item.style.setProperty('--dot',color);const dot=document.createElement('span');dot.setAttribute('aria-hidden','true');item.append(dot,document.createTextNode(name));chips.append(item);}
-    oldPlatforms?.remove();body.prepend(chips);
+    input.setAttribute('aria-label','视频链接或分享文本');
     const row=input.parentElement;
-    const paste=row.querySelector('button[onclick="pasteClipboard()"]');
-    const analyze=$('btn-analyze');
-    const helpers=Array.from(row.querySelectorAll('button')).filter(b=>b!==paste&&b!==analyze);
-    const field=document.createElement('div');field.className='omni-input';
-    const icon=document.createElement('i');icon.className='fa-solid fa-link';icon.setAttribute('aria-hidden','true');
-    const inlinePaste=document.createElement('button');inlinePaste.className='omni-inline-paste';inlinePaste.title='粘贴剪贴板';inlinePaste.setAttribute('aria-label','粘贴剪贴板');inlinePaste.innerHTML='<i class="fa-regular fa-clipboard" aria-hidden="true"></i>';inlinePaste.onclick=()=>window.pasteClipboard();
-    field.append(icon,input,inlinePaste);input.placeholder='粘贴视频链接或分享文本…';input.setAttribute('aria-label','视频链接或分享文本');
-    const actions=document.createElement('div');actions.className='omni-actions';paste.textContent='粘贴剪贴板';analyze.innerHTML='<span>立即解析</span>';actions.append(paste,analyze);
-    row.replaceWith(field);field.after(actions);
-    const assist=document.createElement('details');assist.className='omni-assist';const summary=document.createElement('summary');summary.textContent='浏览器辅助';assist.append(summary,...helpers);actions.after(assist);
-    const relay=$('relay-sites-section');
-    if(relay){const heading=relay.querySelector('h3');heading?.closest('.justify-between')?.remove();}
+    const helpers=Array.from(row.querySelectorAll('button')).filter(b=>b!==$('btn-analyze')&&!b.matches('[onclick="pasteClipboard()"]'));
+    const assist=document.createElement('details');assist.className='omni-assist';
+    const summary=document.createElement('summary');summary.textContent='浏览器辅助';assist.append(summary,...helpers);row.after(assist);
+    row.classList.add('omni-desktop-input');
   }
   function settings() {
     const section=$('tab-settings'), root=section?.firstElementChild;

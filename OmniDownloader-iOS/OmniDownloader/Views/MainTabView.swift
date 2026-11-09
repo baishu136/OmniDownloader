@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 @MainActor struct MainTabView:View{
     @EnvironmentObject private var manager:DownloadManager
@@ -19,13 +20,14 @@ import SwiftUI
             HStack(spacing:0){ForEach(0..<tabs.count,id:\.self){index in
                 Button{selection=index}label:{
                     VStack(spacing:5){
-                        Image(systemName:tabs[index].1).font(.system(size:23,weight:.medium)).frame(width:66,height:34).background(selection==index ? OmniPalette.primaryContainer:Color.clear,in:Capsule())
+                        OmniIcon(name:tabs[index].1,size:24).frame(width:64,height:32).background(selection==index ? OmniPalette.primaryContainer:Color.clear,in:Capsule())
                             .overlay(alignment:.topTrailing){if index==2 && active>0{Text(active>99 ? "99+":"\(active)").font(.caption2.bold()).foregroundColor(OmniPalette.onPrimary).padding(.horizontal,4).background(OmniPalette.primary,in:Capsule()).offset(x:3,y:-3)}}
                         Text(OmniLocalization.text(tabs[index].0,language:language)).font(.caption.weight(selection==index ? .semibold:.regular))
                     }.foregroundColor(selection==index ? OmniPalette.onSurface:OmniPalette.secondary).frame(maxWidth:.infinity,minHeight:58).contentShape(Rectangle())
                 }.buttonStyle(OmniPressStyle()).accessibilityIdentifier("omni.nav.\(index)").accessibilityLabel(OmniLocalization.text(tabs[index].0,language:language)).accessibilityAddTraits(selection==index ? .isSelected:[])
             }}.padding(.horizontal,8).padding(.top,8).padding(.bottom,4).background(OmniPalette.background)
         }
+        .onChange(of:selection){_ in UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),to:nil,from:nil,for:nil)}
         .onReceive(NotificationCenter.default.publisher(for:.omniAnalyzeURL)){_ in selection=0}
         .onReceive(NotificationCenter.default.publisher(for:.omniAnalyzeImages)){_ in selection=1}
         .onReceive(NotificationCenter.default.publisher(for:.omniShowImages)){_ in selection=1}

@@ -356,6 +356,8 @@
 				"8D52871E0C23DE77F8554D92",
 				"33ED3A13B28C53E08CCF56A8",
 				"FAC5AB6A8B80277896409CEE",
+				"2E195CA93637E350AC33D0E7",
+				"A24407D8DFE56394A72BEDA7",
 			);
 			"sourceTree" = "<group>";
 		};
@@ -463,6 +465,7 @@
 				"60B3ABBBBC91D32A5E5820DF",
 				"566BE13753E051CBFE69052D",
 				"7F9C79AD1BD5E2EE26D43594",
+				"C5A606EA51CBDE2B913AC04B",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -507,6 +510,7 @@
 				"F07443A350AACA475EA1D26E",
 				"31E1AD71534FF3E05CFA6FB5",
 				"B4FFCAA572CE1535BDB4B9FC",
+				"A3A7B70F32CF2238F31E0D69",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -570,7 +574,7 @@
 				"CODE_SIGN_STYLE" = "Automatic";
 				"CODE_SIGNING_ALLOWED" = "NO";
 				"CODE_SIGNING_REQUIRED" = "NO";
-				"CURRENT_PROJECT_VERSION" = "78";
+				"CURRENT_PROJECT_VERSION" = "79";
 				"GENERATE_INFOPLIST_FILE" = "NO";
 				"INFOPLIST_FILE" = "OmniDownloader/App/Info.plist";
 				"IPHONEOS_DEPLOYMENT_TARGET" = "15.0";
@@ -578,7 +582,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				"MARKETING_VERSION" = "1.7.19";
+				"MARKETING_VERSION" = "1.7.20";
 				"PRODUCT_BUNDLE_IDENTIFIER" = "com.omnidownloader.ios";
 				"PRODUCT_NAME" = "$(TARGET_NAME)";
 				"SWIFT_EMIT_LOC_STRINGS" = "YES";
@@ -596,7 +600,7 @@
 				"CODE_SIGN_STYLE" = "Automatic";
 				"CODE_SIGNING_ALLOWED" = "NO";
 				"CODE_SIGNING_REQUIRED" = "NO";
-				"CURRENT_PROJECT_VERSION" = "78";
+				"CURRENT_PROJECT_VERSION" = "79";
 				"GENERATE_INFOPLIST_FILE" = "NO";
 				"INFOPLIST_FILE" = "OmniDownloader/App/Info.plist";
 				"IPHONEOS_DEPLOYMENT_TARGET" = "15.0";
@@ -604,7 +608,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				"MARKETING_VERSION" = "1.7.19";
+				"MARKETING_VERSION" = "1.7.20";
 				"PRODUCT_BUNDLE_IDENTIFIER" = "com.omnidownloader.ios";
 				"PRODUCT_NAME" = "$(TARGET_NAME)";
 				"SWIFT_EMIT_LOC_STRINGS" = "YES";
@@ -1324,6 +1328,26 @@
 		"B4FFCAA572CE1535BDB4B9FC" = {
 			"isa" = "PBXBuildFile";
 			"fileRef" = "FAC5AB6A8B80277896409CEE";
+		};
+		"2E195CA93637E350AC33D0E7" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/OmniIcon.swift";
+			"sourceTree" = "<group>";
+		};
+		"A3A7B70F32CF2238F31E0D69" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "2E195CA93637E350AC33D0E7";
+		};
+		"A24407D8DFE56394A72BEDA7" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/LICENSE-MaterialIcons.txt";
+			"sourceTree" = "<group>";
+		};
+		"C5A606EA51CBDE2B913AC04B" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "A24407D8DFE56394A72BEDA7";
 		};
 	};
 	"rootObject" = "777777778888999900000001";

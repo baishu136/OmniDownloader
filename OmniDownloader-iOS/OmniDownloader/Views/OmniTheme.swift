@@ -13,6 +13,7 @@ enum OmniPalette {
     }
     static let primary = adaptive(0x3B5BDB, 0xB3C5FF)
     static let onPrimary = adaptive(0xFFFFFF, 0x0A2A6B)
+    static let tertiary = adaptive(0x725572, 0xE1BAD9)
     static let primaryContainer = adaptive(0xDCE3FF, 0x2C4A9E)
     static let onPrimaryContainer = adaptive(0x0A1A5C, 0xDCE3FF)
     static let background = adaptive(0xF7F7FB, 0x111318)

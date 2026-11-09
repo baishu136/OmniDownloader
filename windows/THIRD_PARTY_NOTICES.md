@@ -6,3 +6,5 @@
 - yt-dlp, yt-dlp-ejs, FastAPI, uvicorn, pywebview and other Python dependency versions are recorded in `requirements-lock.txt`; their installed license/metadata files accompany the frozen dependencies where supplied by the packages.
 
 OmniDownloader application and build source accompany this release. Native libraries and third-party code retain their respective licenses.
+
+- Brand cloud artwork: Google Material Icons Outlined, Apache-2.0; source SVG, hashes and license in `shared/icons/material` in the corresponding source package.

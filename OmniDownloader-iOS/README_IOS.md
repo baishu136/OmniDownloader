@@ -1,4 +1,4 @@
-# OmniDownloader iOS 1.7.19
+# OmniDownloader iOS 1.7.20
 
 原生 SwiftUI 客户端，按 Android 四页导航与分类设置移植。最低 iOS/iPadOS 15；iPhone、iPad、横竖屏、深浅色和减少动态效果。应用内自定义 HTTP/HTTPS/SOCKS5 代理需要 iOS 17；旧系统仍可使用系统网络设置。
 
@@ -39,10 +39,12 @@ xcodebuild build -project OmniDownloader.xcodeproj -scheme OmniDownloader -confi
 
 5. 真机安装需要自己的 Apple 团队/证书或自行签名。工程默认不读取本机证书；在 Xcode 设置签名团队，并将 `CODE_SIGNING_ALLOWED`、`CODE_SIGNING_REQUIRED` 设为 `YES`。未签名 IPA 不能直接安装。
 
-根目录 `.github/workflows/ios-1.7.19.yml` 执行 iPhone 原生媒体/界面测试、ARM64 构建与 iPad 布局测试。详细验收状态以 `docs/PARITY_1.7.19_2026-11-08.md` 和对应 Actions 运行记录为准，编译、模拟器与真机验证分别记录。
+根目录 `.github/workflows/ios-1.7.20.yml` 执行 iPhone 原生媒体/界面测试、ARM64 构建与 iPad 布局测试。详细验收状态以 `docs/PARITY_1.7.20_2026-11-08.md` 和对应 Actions 运行记录为准，编译、模拟器与真机验证分别记录。
 
 ## 媒体组件与源码
 
 FFmpegKit 的 C 桥接和原生库来自上述固定提交；`NativeProbe.c` 直接读取 libavformat 媒体信息，避免依赖 ffprobe 命令输出重定向。该依赖含 GPL v3 组件，相关许可随应用 Resources 提供。应用完整源码、工程与构建脚本及依赖固定版本一并交付。依赖的构建脚本、第三方源码版本和下载地址可在固定提交中复现：
 
 https://github.com/jaywcjlove/ffmpeg-kit/tree/0bd85df8f9693061f6f979414662baaf876a3e20
+
+1.7.20 UI：导航、设置及主要按键使用与 Android 同源的 Material Outlined 矢量资源；品牌、启动图标及按钮主色/禁用/选中/按压状态对齐 Android。SVG 与 SHA-256 位于 `shared/icons/material`，Apache-2.0 许可随包提供。

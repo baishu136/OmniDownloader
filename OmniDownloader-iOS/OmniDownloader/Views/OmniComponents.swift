@@ -5,16 +5,36 @@ import ImageIO
 import UniformTypeIdentifiers
 
 struct OmniPressStyle:ButtonStyle{
+    var cornerRadius:CGFloat=14
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    func makeBody(configuration:Configuration)->some View{configuration.label.opacity(configuration.isPressed ? 0.85:1).scaleEffect(configuration.isPressed && !reduceMotion ? 0.97:1).animation(reduceMotion ? nil:.easeOut(duration:0.15),value:configuration.isPressed)}
+    @Environment(\.isEnabled) private var enabled
+    func makeBody(configuration:Configuration)->some View{
+        configuration.label
+            .overlay{if configuration.isPressed && enabled{Color.primary.opacity(0.08).allowsHitTesting(false)}}
+            .clipShape(RoundedRectangle(cornerRadius:cornerRadius,style:.continuous))
+            .animation(reduceMotion ? nil:.easeOut(duration:0.16),value:configuration.isPressed)
+    }
 }
 struct OmniAction:View{
-    let title:String;let icon:String;var prominent:Bool=false;var disabled:Bool=false;var action:()->Void
+    let title:String;let icon:String;var prominent:Bool=false;var disabled:Bool=false;var tonal:Bool=false;var action:()->Void
     var body:some View{
-        Button(action:action){Label(title,systemImage:icon).font(.system(size:16,weight:.semibold)).frame(maxWidth:.infinity,minHeight:52)
-            .foregroundColor(prominent ? OmniPalette.onPrimaryContainer:OmniPalette.onSurface)
-            .background(prominent ? OmniPalette.primaryContainer:OmniPalette.surfaceVariant.opacity(0.45),in:Capsule())}
-            .buttonStyle(OmniPressStyle()).disabled(disabled).opacity(disabled ? 0.5:1)
+        Button(action:action){
+            HStack(spacing:6){OmniIcon(name:icon,size:20);Text(title).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)}
+                .padding(.horizontal,12).frame(maxWidth:.infinity,minHeight:48)
+                .foregroundColor(disabled ? OmniPalette.onSurface.opacity(0.38):prominent ? (tonal ? OmniPalette.onPrimaryContainer:OmniPalette.onPrimary):OmniPalette.onSurface)
+                .background(disabled ? OmniPalette.onSurface.opacity(0.12):prominent ? (tonal ? OmniPalette.primaryContainer:OmniPalette.primary):OmniPalette.surfaceVariant.opacity(0.55),in:Capsule())
+                .contentShape(Capsule())
+        }.buttonStyle(OmniPressStyle(cornerRadius:24)).disabled(disabled)
+    }
+}
+
+struct OmniBrand:View{
+    var size:CGFloat=44
+    var body:some View{
+        OmniIcon(name:"icloud.and.arrow.down",size:size*23/44)
+            .foregroundColor(OmniPalette.onPrimary).frame(width:size,height:size)
+            .background(LinearGradient(colors:[OmniPalette.primary,OmniPalette.tertiary],startPoint:.topLeading,endPoint:.bottomTrailing),in:RoundedRectangle(cornerRadius:size*14/44,style:.continuous))
+            .accessibilityHidden(true)
     }
 }
 struct OmniPlatformChips:View{
@@ -29,7 +49,7 @@ struct OmniPlatformChips:View{
         var result:[[Int]]=[[]],used:CGFloat=0
         let items=Array(0..<count)+(toggle ? [-1]:[])
         for index in items{
-            let natural=index == -1 ? CGFloat(36):(sites[index] as NSString).size(withAttributes:[.font:font]).width+32
+            let natural=index == -1 ? CGFloat(44):(sites[index] as NSString).size(withAttributes:[.font:font]).width+32
             let next=min(width,natural)
             if used>0 && used+7+next>width{result.append([]);used=0}
             result[result.count-1].append(index);used += (used>0 ? 7:0)+next
@@ -44,7 +64,7 @@ struct OmniPlatformChips:View{
         GeometryReader{geometry in
             VStack(alignment:.leading,spacing:7){ForEach(Array(displayed.enumerated()),id:\.offset){_,row in
                 HStack(spacing:7){ForEach(row,id:\.self){index in
-                    if index == -1{Button{withAnimation(reduceMotion ? nil:.easeInOut(duration:0.2)){expanded.toggle()}}label:{Image(systemName:expanded ? "chevron.up":"chevron.down").font(.caption.bold()).frame(width:36,height:30).background(OmniPalette.surfaceVariant.opacity(0.4),in:Capsule())}.buttonStyle(OmniPressStyle()).accessibilityLabel(expanded ? "收起平台":"展开平台")}
+                    if index == -1{Button{withAnimation(reduceMotion ? nil:.easeInOut(duration:0.2)){expanded.toggle()}}label:{OmniIcon(name:expanded ? "chevron.up":"chevron.down",size:20).frame(width:44,height:36).background(OmniPalette.surfaceVariant.opacity(0.4),in:Capsule())}.buttonStyle(OmniPressStyle()).accessibilityLabel(expanded ? "收起平台":"展开平台")}
                     else{HStack(spacing:6){Circle().fill(colors[(OmniPlatform.all.firstIndex(of:sites[index]) ?? index)%colors.count]).frame(width:7,height:7);Text(sites[index]).font(.caption).lineLimit(1)}.padding(.horizontal,10).padding(.vertical,7).foregroundColor(OmniPalette.secondary).background(OmniPalette.surfaceVariant.opacity(0.35),in:Capsule())}
                 }}
             }}.onAppear{width=max(1,geometry.size.width)}.onChange(of:geometry.size.width){width=max(1,$0)}
@@ -54,7 +74,7 @@ struct OmniPlatformChips:View{
 struct OmniPageHeader:View{
     let title:String
     var back:(()->Void)?=nil
-    var body:some View{HStack(spacing:14){if let back=back{Button(action:back){Image(systemName:"arrow.left").font(.title3).frame(width:44,height:44)}.buttonStyle(OmniPressStyle()).accessibilityLabel("返回")};Text(title).font(.system(size:25,weight:.semibold));Spacer()}.foregroundColor(OmniPalette.onSurface).padding(.vertical,8)}
+    var body:some View{HStack(spacing:14){if let back=back{Button(action:back){OmniIcon(name:"arrow.left",size:24).frame(width:44,height:44)}.buttonStyle(OmniPressStyle()).accessibilityLabel("返回")};Text(title).font(.system(size:25,weight:.semibold));Spacer()}.foregroundColor(OmniPalette.onSurface).padding(.vertical,8)}
 }
 struct OmniRemoteImage:View{
     let url:String
