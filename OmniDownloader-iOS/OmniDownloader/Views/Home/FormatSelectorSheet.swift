@@ -28,7 +28,7 @@ import SwiftUI
                             HStack{Button(L("全选")){selectedEpisodes=Set(episodes.map(identity))};Spacer();Button(L("反选")){selectedEpisodes=Set(episodes.map(identity)).subtracting(selectedEpisodes)}}
                             LazyVStack(spacing:4){ForEach(Array(episodes.enumerated()),id:\.offset){index,item in
                                 Button{let id=identity(item);if !selectedEpisodes.insert(id).inserted{selectedEpisodes.remove(id)}}label:{HStack{Image(systemName:selectedEpisodes.contains(identity(item)) ? "checkmark.circle.fill":"circle");Text("\(index+1). "+item.title).lineLimit(2);Spacer()}.font(.subheadline).padding(.vertical,10).contentShape(Rectangle())}.buttonStyle(OmniPressStyle())
-                            }
+                            }}
                         }
                     }
                     HStack{Text(L("下载模式")).font(.title3.bold());Spacer();Toggle(L("保存封面"),isOn:$saveCover).font(.subheadline).fixedSize()}
@@ -61,8 +61,10 @@ import SwiftUI
         let rows=collection ? episodes.filter{selectedEpisodes.contains(identity($0))}:[metadata]
         let collectionId=rows.count>1 ? UUID().uuidString:nil
         let tasks=rows.enumerated().map{index,row->DownloadTask in
-            let format=row.availableVideoFormats.first{$0.formatId==selectedFormat} ?? row.availableVideoFormats.first
-            return DownloadTask(url:row.url,title:row.title,author:row.author,thumbnailUrl:row.thumbnailUrl,downloadType:type,selectedResolution:format?.resolutionLabel ?? "best",audioFormat:audio,collectionId:collectionId,collectionTitle:collectionId==nil ? nil:metadata.title,episodeIndex:index+1,episodeTotal:rows.count,selectedVideoFormatId:format?.formatId,mediaId:row.mediaId,expectedDurationMs:format?.sourceDurationMs ?? row.expectedDurationMs,selectedWidth:format?.width,selectedHeight:format?.height,saveCover:saveCover)
+            let intended=metadata.availableVideoFormats.first{$0.formatId==selectedFormat}
+            let format=row.availableVideoFormats.first{$0.formatId==selectedFormat} ?? (intended == nil ? row.availableVideoFormats.first:nil)
+            let quality=format ?? intended
+            return DownloadTask(url:row.url,title:row.title,author:row.author,thumbnailUrl:row.thumbnailUrl,downloadType:type,selectedResolution:quality?.resolutionLabel ?? "best",audioFormat:audio,collectionId:collectionId,collectionTitle:collectionId==nil ? nil:metadata.title,episodeIndex:index+1,episodeTotal:rows.count,selectedVideoFormatId:format?.formatId,mediaId:row.mediaId,expectedDurationMs:format?.sourceDurationMs ?? row.expectedDurationMs,selectedWidth:quality?.width,selectedHeight:quality?.height,saveCover:saveCover)
         }
         manager.addTasks(tasks);presentation.wrappedValue.dismiss()
     }

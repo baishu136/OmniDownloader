@@ -70,7 +70,12 @@ enum ImagePostEngine {
                     if let regex=try? NSRegularExpression(pattern:#"/(\d+)x(\d+)/"#),let match=regex.firstMatch(in:address,range:NSRange(address.startIndex...,in:address)){width=Int((address as NSString).substring(with:match.range(at:1))) ?? 0;height=Int((address as NSString).substring(with:match.range(at:2))) ?? 0}
                     return ["url":address,"width":width,"height":height,"bitrateKbps":Double(NativeMediaParser.number(row["bitrate"]))/1000]
                 }
-                media.append(["mediaId":entry["id_str"] as? String ?? entry["media_key"] as? String ?? "","formats":variants,"durationMs":NativeMediaParser.number(info["duration_millis"]),"isGif":entry["type"] as? String=="animated_gif","thumbnailUrl":entry["media_url_https"] as? String ?? ""])
+                let source=variants.first?["url"] as? String ?? ""
+                let parts=source.components(separatedBy:"/")
+                let marker=parts.firstIndex(where:{["ext_tw_video","amplify_video"].contains($0)})
+                let fallback=marker.flatMap{parts.indices.contains($0+1) ? parts[$0+1]:nil} ?? ""
+                let identity=entry["id_str"] as? String ?? entry["media_key"] as? String ?? fallback
+                if !identity.isEmpty{media.append(["mediaId":identity,"formats":variants,"durationMs":NativeMediaParser.number(info["duration_millis"]),"isGif":entry["type"] as? String=="animated_gif","thumbnailUrl":entry["media_url_https"] as? String ?? ""])}
             }
         }
         return ["contentId":id,"title":item["text"] as? String ?? "X_\(id)","author":(item["user"] as? [String:Any])?["screen_name"] as? String ?? "","images":images,"media":media]

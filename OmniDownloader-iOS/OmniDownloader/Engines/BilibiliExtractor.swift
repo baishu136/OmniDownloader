@@ -90,6 +90,7 @@ public final class BilibiliExtractor{
         guard !streams.0.isEmpty else{throw OmniPlatform.error("AUTH_REQUIRED","没有取得真实视频流，请检查登录状态与观看权限")}
         guard scope==PlatformSession.shared.generation("哔哩哔哩") else{throw CancellationError()}
         var result=metadata(pair.0,video:streams.0,audio:streams.1)
+        result.sourceScope=scope
         if pair.1.count>1{result.multiMediaList=pair.1.prefix(200).map{metadata($0)}}
         MediaSources.shared.remember(result);return result
     }
@@ -103,7 +104,7 @@ public final class BilibiliExtractor{
         guard scope==PlatformSession.shared.generation("哔哩哔哩") else{throw CancellationError()}
         let requested=task.selectedVideoFormatId ?? "",height=extractHeightFromResolution(task.selectedResolution)
         let exact=streams.0.first{$0.formatId==requested} ?? streams.0.first{!requested.isEmpty && $0.formatId.split(separator:":").dropLast().joined(separator:":")==requested.split(separator:":").dropLast().joined(separator:":")}
-        let chosen=exact ?? streams.0.first{height==0 || min($0.width,$0.height)>=height}
+        let chosen=exact ?? streams.0.first{height>0 && min($0.width,$0.height)==height} ?? streams.0.first{height==0 || min($0.width,$0.height)>=height}
         guard let chosen=chosen else{throw OmniPlatform.error("QUALITY_UNAVAILABLE","当前账号没有满足所选画质的真实视频流")}
         if task.downloadType == .audioOnly && streams.1.isEmpty{
             return(chosen.sourceUrl ?? "",chosen.sourceUrl ?? "",pair.0.title)

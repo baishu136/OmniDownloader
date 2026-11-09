@@ -70,9 +70,12 @@
       output.title ||= node.full_text||node.text||'';output.author ||= item.core?.user_results?.result?.legacy?.screen_name||item.user?.screen_name||'';
       for(const entry of list(node.extended_entities?.media||node.mediaDetails||node.media_details)){
         if(entry.type==='photo'){let url=entry.media_url_https||entry.media_url;if(url&&owns(new URL(url).hostname,'twimg.com')){const u=new URL(url);if(!u.searchParams.has('name'))u.searchParams.set('name','orig');url=u.href;}addImage(url,entry.original_info?.width,entry.original_info?.height);continue;}
-        const info=entry.video_info||entry.videoInfo||{},m=video(entry.id_str||entry.id||entry.media_key,info.duration_millis);if(!m)continue;
+        const info=entry.video_info||entry.videoInfo||{};
+        const sourceId=list(info.variants).map(v=>(v.url||'').match(/\/(?:ext_tw_video|amplify_video)\/(\d+)\//)?.[1]).find(Boolean);
+        const identity=entry.id_str||entry.id||entry.media_key||sourceId;if(!identity)continue;
+        const m=video(identity,info.duration_millis);if(!m)continue;
         m.isGif=entry.type==='animated_gif';m.thumbnailUrl=entry.media_url_https||'';
-        for(const variant of list(info.variants))if((variant.content_type||variant.type)==='video/mp4'){
+        for(const variant of list(info.variants))if(['video/mp4','application/x-mpegURL','application/vnd.apple.mpegurl'].includes(variant.content_type||variant.type)){
           const size=(variant.url||'').match(/\/(\d+)x(\d+)\//);addFormat(m,variant.url,size?.[1],size?.[2],{bitrateKbps:number(variant.bitrate)/1000});}
       }
     }

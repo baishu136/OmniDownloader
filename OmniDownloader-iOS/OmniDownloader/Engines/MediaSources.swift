@@ -126,6 +126,22 @@ enum NativeMediaParser {
     }
 }
 
+enum DouyinQuality {
+    static func needsPage(_ value:VideoMetadata)->Bool{
+        guard let best=MediaQuality.sorted(value.availableVideoFormats).first else{return true}
+        return min(best.width,best.height)<=720 || value.availableVideoFormats.contains{$0.width==0 || $0.height==0} || (value.referenceWidth ?? 0)*(value.referenceHeight ?? 0)>best.width*best.height
+    }
+    static func merge(_ native:VideoMetadata,_ page:VideoMetadata)throws->VideoMetadata{
+        guard native.mediaId==page.mediaId,native.sourceScope==page.sourceScope else{throw OmniPlatform.error("MEDIA_ID_MISMATCH","页面返回作品或会话不一致")}
+        var result=native
+        result.availableVideoFormats=MediaQuality.sorted(page.availableVideoFormats+native.availableVideoFormats)
+        if (page.referenceWidth ?? 0)*(page.referenceHeight ?? 0)>(native.referenceWidth ?? 0)*(native.referenceHeight ?? 0){result.referenceWidth=page.referenceWidth;result.referenceHeight=page.referenceHeight}
+        result.qualityEvidence="已合并同一作品的网页源与原生源，下载后核对实际尺寸。"
+        if needsPage(result){result.qualityWarning="已保留当前可用源；更高画质尚未确认，本次结果不代表上传原片。"}
+        return result
+    }
+}
+
 enum MediaResolver {
     static func analyze(_ raw:String)async throws->VideoMetadata{
         let original=UrlSniffer.extractFirstUrl(from:raw) ?? raw

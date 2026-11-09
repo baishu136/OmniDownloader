@@ -1,4 +1,14 @@
 import SwiftUI
+import WebKit
+
+struct SniffedMediaItem:Identifiable,Equatable{
+    let id=UUID().uuidString
+    let url:String
+    let title:String
+    let format:String
+    let host:String
+    let timestamp=Date()
+}
 
 @MainActor struct HomeView:View{
     @EnvironmentObject private var downloadManager:DownloadManager
@@ -19,6 +29,9 @@ import SwiftUI
     @State private var showYouTube=false
     @State private var pendingYouTube:VideoMetadata?
     @State private var pendingBrowser=false
+    @State private var pendingFormats=false
+    @State private var bilibiliLogin=false
+    @State private var retryAfterLogin=false
     private func L(_ text:String)->String{OmniLocalization.text(text,language:language)}
     var body:some View{
         ZStack{
@@ -47,7 +60,11 @@ import SwiftUI
             }
         }
         .sheet(isPresented:$showFormats,onDismiss:{if pendingBrowser{pendingBrowser=false;validate()}}){if let metadata=metadata{FormatSelectorSheet(metadata:metadata,onMoreQuality:{pendingBrowser=true;showFormats=false})}}
-        .sheet(isPresented:$browser.visible,onDismiss:{analysis?.cancel();analyzing=false;browser.close()}){PlatformBrowserSheet(browser:browser,onDone:{browser.visible=false})}
+        .sheet(isPresented:$browser.visible,onDismiss:{
+            analysis?.cancel();analyzing=false;browser.close()
+            if pendingFormats{pendingFormats=false;showFormats=true}
+            else if retryAfterLogin{retryAfterLogin=false;start(input)}
+        }){PlatformBrowserSheet(browser:browser,login:bilibiliLogin,onDone:{browser.visible=false},onSaved:{if bilibiliLogin{retryAfterLogin=true}})}
         .sheet(isPresented:$showYouTube,onDismiss:{if let value=pendingYouTube{pendingYouTube=nil;Task{await accept(.video(value))}}}){YouTubeBrowserSheet(url:youtubeURL){pendingYouTube=$0}}
         .sheet(item:$activeRelay){RelayBrowserSheet(site:$0,initialVideoUrl:input)}
         .onReceive(NotificationCenter.default.publisher(for:.omniAnalyzeURL)){if let url=$0.object as? String{input=url;start(url)}}
@@ -68,9 +85,21 @@ import SwiftUI
                 let url=await UrlSniffer.resolveRedirects(for:value);try Task.checkCancellation();guard generation==epoch else{return};input=url
                 if OmniPlatform.detect(url)=="YouTube"{youtubeURL=url;showYouTube=true;return}
                 let result:CapturedTarget
-                do{result = .video(try await MediaResolver.analyze(url))}
+                do{
+                    var native=try await MediaResolver.analyze(url)
+                    if native.siteName=="抖音",DouyinQuality.needsPage(native){
+                        stage=L("正在自动补全画质…")
+                        do{if case .video(let page)=try await browser.capture(url){native=try DouyinQuality.merge(native,page)}}
+                        catch is CancellationError{throw CancellationError()}
+                        catch{native.qualityWarning="已保留当前可用源；更高画质尚未确认，可在浏览器验证后重试。"}
+                    }
+                    result = .video(native)
+                }
+                catch MediaRouting.images(let post){result = .images(post)}
+                catch is CancellationError{throw CancellationError()}
                 catch{
-                    if error.localizedDescription.contains("NO_MEDIA"){throw error}
+                    let message=error.localizedDescription
+                    if ["NO_MEDIA","MEDIA_ID_MISMATCH","RATE_LIMITED","ACCESS_DENIED","ACCESS_UNCONFIRMED","DRM","PREVIEW_ONLY"].contains(where:message.contains) || OmniPlatform.detect(url)=="哔哩哔哩"{throw error}
                     stage=L("正在自动补全画质…");result=try await browser.capture(url)
                 }
                 guard generation==epoch,!Task.isCancelled else{return};await accept(result)
@@ -86,14 +115,21 @@ import SwiftUI
             do{value=try await NativeMP4Probe.confirm(original)}catch{return}
             guard !Task.isCancelled else{return}
             metadata=value;MediaSources.shared.remember(value)
-            if browser.visible{browser.visible=false}
-            if !downloadManager.acceptRefreshed(value){DispatchQueue.main.async{showFormats=true}}
+            let present = !downloadManager.acceptRefreshed(value)
+            if browser.visible{pendingFormats=present;browser.visible=false}
+            else if present{showFormats=true}
         case .images(let post):
             if browser.visible{browser.visible=false}
             NotificationCenter.default.post(name:.omniShowImages,object:post)
         }
     }
     private func validate(){
+        if OmniPlatform.detect(input)=="哔哩哔哩"{
+            analysis?.cancel();bilibiliLogin=true;retryAfterLogin=false
+            analysis=Task{do{try await browser.prepare(input,login:true);browser.present()}catch{self.error=error.localizedDescription}}
+            return
+        }
+        bilibiliLogin=false
         analysis?.cancel();error="";browser.present();analyzing=true;stage=L("等待平台验证…")
         analysis=Task{
             defer{analyzing=false;stage=""}

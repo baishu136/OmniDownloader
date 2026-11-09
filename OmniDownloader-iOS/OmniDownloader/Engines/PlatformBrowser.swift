@@ -118,6 +118,7 @@ struct PlatformBrowserSheet:View{
     @ObservedObject var browser:PlatformBrowser
     var login:Bool=false
     var onDone:()->Void
+    var onSaved:(()->Void)?=nil
     @State private var saving=false
     var body:some View{
         NavigationView{
@@ -132,7 +133,7 @@ struct PlatformBrowserSheet:View{
             .toolbar{
                 ToolbarItem(placement:.cancellationAction){Button("关闭"){onDone()}}
                 if login{ToolbarItem(placement:.confirmationAction){Button(saving ? "保存中…":"保存登录状态"){
-                    saving=true;Task{do{try await browser.saveSession();onDone()}catch{browser.notice=error.localizedDescription};saving=false}
+                    saving=true;Task{do{try await browser.saveSession();onSaved?();onDone()}catch{browser.notice=error.localizedDescription};saving=false}
                 }.disabled(saving)}}
             }
         }.navigationViewStyle(.stack)
