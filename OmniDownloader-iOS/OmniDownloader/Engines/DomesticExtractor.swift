@@ -48,9 +48,9 @@ public final class DomesticExtractor{
         for item in roots.flatMap({Self.targetItems($0,id:id)}){
             let images=item["images"] as? [[String:Any]] ?? (item["image_post_info"] as? [String:Any])?["images"] as? [[String:Any]] ?? []
             if !images.isEmpty{
-                let resources=images.enumerated().compactMap{index,image->ImageResource? in
+                let resources=images.enumerated().compactMap{index,image->PostImageResource? in
                     let source=(image["origin_image"] as? [String:Any])?["url_list"] as? [String] ?? image["url_list"] as? [String] ?? []
-                    guard let url=source.first(where:NativeMediaParser.safeURL) else{return nil};return ImageResource(id:id+"-p\(index)",url:url,width:NativeMediaParser.number(image["width"]),height:NativeMediaParser.number(image["height"]))
+                    guard let url=source.first(where:NativeMediaParser.safeURL) else{return nil};return PostImageResource(id:id+"-p\(index)",url:url,width:NativeMediaParser.number(image["width"]),height:NativeMediaParser.number(image["height"]))
                 }
                 guard scope==PlatformSession.shared.generation(site) else{throw CancellationError()}
                 var post=ImagePost(url:url,platform:site,contentId:id,title:item["desc"] as? String ?? id,author:(item["author"] as? [String:Any])?["nickname"] as? String ?? "",resources:resources);post.sourceScope=scope;throw MediaRouting.images(post)

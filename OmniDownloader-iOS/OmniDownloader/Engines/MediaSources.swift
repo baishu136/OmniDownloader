@@ -1,7 +1,7 @@
 import Foundation
 import CryptoKit
 
-struct ImageResource: Identifiable, Codable, Equatable {
+struct PostImageResource: Identifiable, Codable, Equatable {
     let id: String
     let url: String
     var width: Int = 0
@@ -17,7 +17,7 @@ struct ImagePost: Identifiable, Codable {
     let contentId: String
     var title: String
     var author: String = ""
-    var resources: [ImageResource]
+    var resources: [PostImageResource]
     var frameArchive: String? = nil
     var frameDelays: [Int]? = nil
     var frameNames: [String]? = nil
@@ -81,11 +81,11 @@ enum NativeMediaParser {
         guard !expected.isEmpty,let actual=json["contentId"] as? String,actual==expected else{throw OmniPlatform.error("MEDIA_ID_MISMATCH","网页数据与目标作品不一致")}
         let title=text(json["title"]).isEmpty ? site+"_"+actual:text(json["title"])
         let author=text(json["author"]),cover=text(json["thumbnailUrl"])
-        let resources=(json["images"] as? [[String:Any]] ?? []).enumerated().compactMap { index,row -> ImageResource? in
+        let resources=(json["images"] as? [[String:Any]] ?? []).enumerated().compactMap { index,row -> PostImageResource? in
             let source=text(row["url"]);guard safeURL(source) else{return nil}
             var parts=URLComponents(string:source);parts?.query=nil;parts?.fragment=nil
             let id=SHA256.hash(data:Data((actual+"|"+(parts?.string ?? source)).utf8)).prefix(10).map{String(format:"%02x",$0)}.joined()
-            return ImageResource(id:id,url:source,width:number(row["width"]),height:number(row["height"]),original:row["original"] as? Bool ?? true,animated:source.lowercased().contains(".gif"))
+            return PostImageResource(id:id,url:source,width:number(row["width"]),height:number(row["height"]),original:row["original"] as? Bool ?? true,animated:source.lowercased().contains(".gif"))
         }
         let post=resources.isEmpty ? nil:ImagePost(url:url,platform:site,contentId:actual,title:title,author:author,resources:resources)
         let mediaRows=json["media"] as? [[String:Any]] ?? []

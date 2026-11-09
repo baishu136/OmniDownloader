@@ -78,7 +78,7 @@ struct MediaShareSheet:UIViewControllerRepresentable{
 
 /// WebKit renders GIFs without flattening their animation. Content is sandboxed and script-free.
 struct ImagePreviewPage:UIViewRepresentable{
-    let resource:ImageResource;let site:String
+    let resource:PostImageResource;let site:String
     func makeUIView(context:Context)->WKWebView{
         let configuration=WKWebViewConfiguration();configuration.websiteDataStore = .nonPersistent();configuration.defaultWebpagePreferences.allowsContentJavaScript=false
         let web=WKWebView(frame:.zero,configuration:configuration);web.isOpaque=false;web.backgroundColor = .black;web.scrollView.backgroundColor = .black
@@ -103,7 +103,7 @@ struct ImagePreviewPage:UIViewRepresentable{
     static func dismantleUIView(_ web:WKWebView,coordinator:Coordinator){coordinator.task?.cancel();web.stopLoading()}
 }
 struct ImageGallery:View{
-    let resources:[ImageResource];let site:String;let start:Int
+    let resources:[PostImageResource];let site:String;let start:Int
     @Environment(\.presentationMode) private var presentation
     @State private var index=0
     var body:some View{

@@ -32,7 +32,7 @@ final class LocalMediaServer {
                         let edges=specification.split(separator:"-",omittingEmptySubsequences:false)
                         let begin=Int(edges.first ?? "") ?? 0
                         let end=min(content.count-1,Int(edges.count>1 ? edges[1]:"") ?? content.count-1)
-                        if begin>=0,begin<=end,end<content.count{data=content.subdata(in:begin...end);status="206 Partial Content";range="Content-Range: bytes \(begin)-\(end)/\(content.count)\r\n"}
+                        if begin>=0,begin<=end,end<content.count{data=content.subdata(in:begin..<(end+1));status="206 Partial Content";range="Content-Range: bytes \(begin)-\(end)/\(content.count)\r\n"}
                     }
                     let header="HTTP/1.1 \(status)\r\nContent-Type: video/mp4\r\nContent-Length: \(data.count)\r\n\(range)Connection: close\r\n\r\n"
                     var response=Data(header.utf8);if !text.hasPrefix("HEAD "){response.append(data)}
@@ -43,5 +43,5 @@ final class LocalMediaServer {
         }
     }
     var url:String{"http://127.0.0.1:\(port)/fixture.mp4"}
-    func stop(){listener.cancel()}
+    func stop(){listener.stateUpdateHandler=nil;listener.newConnectionHandler=nil;listener.cancel()}
 }

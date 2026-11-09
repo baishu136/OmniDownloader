@@ -20,13 +20,13 @@ enum ImagePostEngine {
                 let info=try await json("https://www.pixiv.net/ajax/illust/\(id)/ugoira_meta",site:site)
                 guard let metadata=info["body"] as? [String:Any],let zip=metadata["originalSrc"] as? String ?? metadata["src"] as? String,NativeMediaParser.safeURL(zip),let frames=metadata["frames"] as? [[String:Any]],!frames.isEmpty,frames.count<=2000 else{throw OmniPlatform.error("NO_MEDIA","未返回可用 Ugoira 帧")}
                 let source=(body["urls"] as? [String:Any])?["original"] as? String ?? ""
-                let resources=source.isEmpty ? []:[ImageResource(id:id+"-preview",url:source,width:NativeMediaParser.number(body["width"]),height:NativeMediaParser.number(body["height"]))]
+                let resources=source.isEmpty ? []:[PostImageResource(id:id+"-preview",url:source,width:NativeMediaParser.number(body["width"]),height:NativeMediaParser.number(body["height"]))]
                 post=ImagePost(url:url,platform:site,contentId:id,title:body["title"] as? String ?? id,author:body["userName"] as? String ?? "",resources:resources,frameArchive:zip,frameDelays:frames.map{NativeMediaParser.number($0["delay"])},frameNames:frames.compactMap{$0["file"] as? String})
             }else{
                 let pages=try await json("https://www.pixiv.net/ajax/illust/\(id)/pages",site:site)
-                let resources=(pages["body"] as? [[String:Any]] ?? []).enumerated().compactMap{index,item->ImageResource? in
+                let resources=(pages["body"] as? [[String:Any]] ?? []).enumerated().compactMap{index,item->PostImageResource? in
                     guard let address=(item["urls"] as? [String:Any])?["original"] as? String,NativeMediaParser.safeURL(address) else{return nil}
-                    return ImageResource(id:id+"-p\(index)",url:address,width:NativeMediaParser.number(item["width"]),height:NativeMediaParser.number(item["height"]))
+                    return PostImageResource(id:id+"-p\(index)",url:address,width:NativeMediaParser.number(item["width"]),height:NativeMediaParser.number(item["height"]))
                 }
                 post=ImagePost(url:url,platform:site,contentId:id,title:body["title"] as? String ?? id,author:body["userName"] as? String ?? "",resources:resources)
             }
@@ -37,9 +37,9 @@ enum ImagePostEngine {
             let modules=item["modules"] as? [String:Any] ?? [:],dynamic=modules["module_dynamic"] as? [String:Any] ?? [:],major=dynamic["major"] as? [String:Any] ?? [:]
             let draw=major["draw"] as? [String:Any] ?? [:],opus=major["opus"] as? [String:Any] ?? [:]
             let rows=draw["items"] as? [[String:Any]] ?? opus["pics"] as? [[String:Any]] ?? []
-            let resources=rows.enumerated().compactMap{index,row->ImageResource? in
+            let resources=rows.enumerated().compactMap{index,row->PostImageResource? in
                 let source=row["src"] as? String ?? row["url"] as? String ?? "";guard NativeMediaParser.safeURL(source) else{return nil}
-                return ImageResource(id:id+"-p\(index)",url:source,width:NativeMediaParser.number(row["width"]),height:NativeMediaParser.number(row["height"]))
+                return PostImageResource(id:id+"-p\(index)",url:source,width:NativeMediaParser.number(row["width"]),height:NativeMediaParser.number(row["height"]))
             }
             post=ImagePost(url:url,platform:site,contentId:id,title:(dynamic["desc"] as? [String:Any])?["text"] as? String ?? (opus["summary"] as? [String:Any])?["text"] as? String ?? "B站动态 \(id)",author:(modules["module_author"] as? [String:Any])?["name"] as? String ?? "",resources:resources)
         }else if site=="X (Twitter)"{
