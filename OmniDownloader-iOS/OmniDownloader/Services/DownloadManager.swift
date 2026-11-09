@@ -99,9 +99,8 @@ extension Notification.Name { static let omniAnalyzeURL=Notification.Name("omniA
         guard let id=pendingRetry,let index=tasks.firstIndex(where:{$0.id==id}) else{return false}
         let old=tasks[index],rows=metadata.multiMediaList.isEmpty ? [metadata]:metadata.multiMediaList
         guard let row=rows.first(where:{old.mediaId==nil || $0.mediaId==old.mediaId}),!row.availableVideoFormats.isEmpty else{return false}
-        let area=(old.selectedWidth ?? 0)*(old.selectedHeight ?? 0)
-        guard let format=row.availableVideoFormats.first(where:{$0.width * $0.height >= area}) else{return false}
-        var replacement=DownloadTask(id:old.id,url:row.url,title:old.title,author:row.author,thumbnailUrl:row.thumbnailUrl,downloadType:old.downloadType,selectedResolution:format.resolutionLabel,audioFormat:old.audioFormat,collectionId:old.collectionId,collectionTitle:old.collectionTitle,episodeIndex:old.episodeIndex,episodeTotal:old.episodeTotal,selectedVideoFormatId:format.formatId,mediaId:row.mediaId,expectedDurationMs:format.sourceDurationMs ?? row.expectedDurationMs,selectedWidth:format.width,selectedHeight:format.height,saveCover:old.saveCover ?? false)
+        guard let format=row.availableVideoFormats.first(where:{MediaQuality.meets($0,old)}) else{return false}
+        var replacement=DownloadTask(id:old.id,url:row.url,title:old.title,author:row.author,thumbnailUrl:row.thumbnailUrl,downloadType:old.downloadType,selectedResolution:format.resolutionLabel,audioFormat:old.audioFormat,collectionId:old.collectionId,collectionTitle:old.collectionTitle,episodeIndex:old.episodeIndex,episodeTotal:old.episodeTotal,selectedVideoFormatId:format.formatId,mediaId:row.mediaId,expectedDurationMs:format.sourceDurationMs ?? row.expectedDurationMs,selectedWidth:format.width,selectedHeight:format.height,saveCover:old.saveCover ?? false,selectedFPS:old.selectedFPS,selectedDynamicRange:old.selectedDynamicRange,selectedCodec:old.selectedCodec)
         replacement.createdAt=old.createdAt;tasks[index]=replacement;pendingRetry=nil;saveTasks(force:true);pump();return true
     }
     public func deleteTask(id:String,deleteFile:Bool=true){

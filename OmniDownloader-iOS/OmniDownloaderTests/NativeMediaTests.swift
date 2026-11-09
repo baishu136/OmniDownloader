@@ -28,6 +28,12 @@ final class NativeMediaTests:XCTestCase {
         XCTAssertEqual(MediaQuality.sorted([low,high]).map{$0.formatId},["4k","720"])
         XCTAssertEqual(MediaQuality.sorted([high])[0].dynamicRange,"HDR10")
     }
+    func testRefreshPreservesFPSHDRAndCodec(){
+        let task=DownloadTask(url:"https://example.com/video",title:"HDR",selectedWidth:1920,selectedHeight:1080,selectedFPS:60,selectedDynamicRange:"HDR10",selectedCodec:"hvc1")
+        let right=FormatOption(formatId:"right",resolutionLabel:"1080p",width:1920,height:1080,fps:60,vcodec:"hev1",dynamicRange:"HDR10")
+        let lower=FormatOption(formatId:"lower",resolutionLabel:"4K",width:3840,height:2160,fps:30,vcodec:"hvc1",dynamicRange:"SDR")
+        XCTAssertTrue(MediaQuality.meets(right,task));XCTAssertFalse(MediaQuality.meets(lower,task))
+    }
     func testZIPOriginalBytesAndCRC()throws{
         let root=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at:root,withIntermediateDirectories:true)

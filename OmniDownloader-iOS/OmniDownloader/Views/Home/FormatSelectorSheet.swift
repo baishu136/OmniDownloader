@@ -64,7 +64,7 @@ import SwiftUI
             let intended=metadata.availableVideoFormats.first{$0.formatId==selectedFormat}
             let format=row.availableVideoFormats.first{$0.formatId==selectedFormat} ?? (intended == nil ? row.availableVideoFormats.first:nil)
             let quality=format ?? intended
-            return DownloadTask(url:row.url,title:row.title,author:row.author,thumbnailUrl:row.thumbnailUrl,downloadType:type,selectedResolution:quality?.resolutionLabel ?? "best",audioFormat:audio,collectionId:collectionId,collectionTitle:collectionId==nil ? nil:metadata.title,episodeIndex:index+1,episodeTotal:rows.count,selectedVideoFormatId:format?.formatId,mediaId:row.mediaId,expectedDurationMs:format?.sourceDurationMs ?? row.expectedDurationMs,selectedWidth:quality?.width,selectedHeight:quality?.height,saveCover:saveCover)
+            return DownloadTask(url:row.url,title:row.title,author:row.author,thumbnailUrl:row.thumbnailUrl,downloadType:type,selectedResolution:quality?.resolutionLabel ?? "best",audioFormat:audio,collectionId:collectionId,collectionTitle:collectionId==nil ? nil:metadata.title,episodeIndex:index+1,episodeTotal:rows.count,selectedVideoFormatId:format?.formatId,mediaId:row.mediaId,expectedDurationMs:format?.sourceDurationMs ?? row.expectedDurationMs,selectedWidth:quality?.width,selectedHeight:quality?.height,saveCover:saveCover,selectedFPS:quality?.fps,selectedDynamicRange:quality?.dynamicRange,selectedCodec:quality?.vcodec)
         }
         manager.addTasks(tasks);presentation.wrappedValue.dismiss()
     }

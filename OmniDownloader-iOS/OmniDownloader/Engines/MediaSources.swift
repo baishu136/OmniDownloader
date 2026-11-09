@@ -54,6 +54,15 @@ final class MediaSources {
 }
 
 enum MediaQuality {
+    static func meets(_ format:FormatOption,_ task:DownloadTask)->Bool{
+        if task.downloadType == .audioOnly{return true}
+        let area=(task.selectedWidth ?? 0)*(task.selectedHeight ?? 0)
+        guard format.width*format.height>=area,format.fps>=(task.selectedFPS ?? 0) else{return false}
+        if let range=task.selectedDynamicRange,!range.isEmpty,range != "SDR",format.dynamicRange != range{return false}
+        func codec(_ value:String)->String{let v=value.lowercased();if v.hasPrefix("avc") || v=="h264"{return "avc"};if v.hasPrefix("hev") || v.hasPrefix("hvc") || v=="h265"{return "hevc"};return v}
+        if let selected=task.selectedCodec,!selected.isEmpty,codec(format.vcodec ?? "") != codec(selected){return false}
+        return true
+    }
     static func label(_ width:Int,_ height:Int)->String{guard width>0,height>0 else{return "源视频（尺寸未知）"};let edge=min(width,height);return "\(edge==2160 ? "4K":edge==4320 ? "8K":"\(edge)p") · \(width)×\(height)"}
     static func sorted(_ rows:[FormatOption])->[FormatOption]{
         var seen=Set<String>()

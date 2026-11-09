@@ -64,9 +64,7 @@ enum NativeMediaPipeline {
         }else{
             let metadata=try MediaSources.shared.video(task)
             let formats=metadata.availableVideoFormats
-            let selected=formats.first{$0.formatId==task.selectedVideoFormatId} ?? formats.first{format in
-                format.width*(format.height)>=((task.selectedWidth ?? 0)*(task.selectedHeight ?? 0))
-            }
+            let selected=formats.first{$0.formatId==task.selectedVideoFormatId && MediaQuality.meets($0,task)} ?? formats.first{MediaQuality.meets($0,task)}
             guard let selected=selected else{throw OmniPlatform.error("QUALITY_UNAVAILABLE","所选规格已不可用，请重新解析")}
             let source=selected.sourceUrl ?? selected.formatId
             if let url=URL(string:source),url.pathExtension.lowercased()=="m3u8" || source.contains(".m3u8?"){
