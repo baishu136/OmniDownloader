@@ -3,6 +3,10 @@ import ImageIO
 @testable import OmniDownloader
 
 final class NativeMediaTests:XCTestCase {
+    func testSharedLinkKeepsPortExtensionAndSignedQuery(){
+        let link="http://127.0.0.1:12345/fixture.mp4?token=a.b%2Fc&part=1"
+        XCTAssertEqual(UrlSniffer.extractFirstUrl(from:"分享视频 "+link+" 复制后打开"),link)
+    }
     func testStrictTargetAndUnknownDimensions()throws{
         let url="https://www.douyin.com/video/1234567890123456789"
         let media:[String:Any]=["mediaId":"1234567890123456789","formats":[["url":"https://example.com/source.mp4"]]]

@@ -4,7 +4,7 @@ import Foundation
 public class UrlSniffer {
     
     private static let urlRegex = try! NSRegularExpression(
-        pattern: #"https?://[a-zA-Z0-9\.\-_]+[a-zA-Z0-9/?:@&=+$,#~%!\(\)]*"#,
+        pattern: #"https?://[a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=%-]+"#,
         options: .caseInsensitive
     )
     

@@ -177,7 +177,7 @@ enum MediaResolver {
             value.sourceScope=post.sourceScope;MediaSources.shared.remember(value);return value
         }
         if let source=URL(string:url),["mp4","webm","m4v","mov","m3u8"].contains(source.pathExtension.lowercased()){
-            let format=FormatOption(formatId:url,resolutionLabel:"源视频（尺寸未知）",sourceUrl:url)
+            let format=FormatOption(formatId:url,resolutionLabel:"源视频（尺寸未知）",ext:source.pathExtension.lowercased(),sourceUrl:url)
             let value=VideoMetadata(url:url,title:source.deletingPathExtension().lastPathComponent,siteName:site,availableVideoFormats:[format],mediaId:source.path)
             MediaSources.shared.remember(value);return value
         }
