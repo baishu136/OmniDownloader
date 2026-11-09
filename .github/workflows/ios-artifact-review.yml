@@ -16,7 +16,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           for i in {1..60}; do
-            STATUS=$(gh api repos/${{ github.repository }}/actions/runs/42549317358 --jq '.status')
+            STATUS=$(gh api repos/${{ github.repository }}/actions/runs/42550768378 --jq '.status')
             if [ "$STATUS" = "completed" ]; then exit 0; fi
             sleep 10
           done
@@ -24,7 +24,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           github-token: ${{ github.token }}
-          run-id: 42549317358
+          run-id: 42550768378
           name: OmniDownloader-iOS-1.7.19
           path: native-results
       - name: Export original test screenshots and summaries
