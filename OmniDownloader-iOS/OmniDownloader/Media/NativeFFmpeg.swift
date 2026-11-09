@@ -30,19 +30,9 @@ enum NativeFFmpeg {
     struct Probe { var width:Int;var height:Int;var durationMs:Int64;var audio:Bool }
     static func probe(_ file:URL)async throws->Probe{
         try await withCheckedThrowingContinuation{continuation in DispatchQueue.global(qos:.utility).async{
-            let report=FileManager.default.temporaryDirectory.appendingPathComponent("omni-probe-"+UUID().uuidString+".json")
-            defer{try? FileManager.default.removeItem(at:report)}
-            let session=FFprobeKit.executeWithArguments(["-v","error","-show_streams","-show_format","-of","json","-o",report.path,file.path])
-            let text=(try? String(contentsOf:report,encoding:.utf8)) ?? ""
-            guard ReturnCode.isSuccess(session.getReturnCode()),text.utf8.count<8_388_608,
-                  let start=text.firstIndex(of:"{"),let end=text.lastIndex(of:"}"),start<=end,
-                  let data=String(text[start...end]).data(using:.utf8),let json=try? JSONSerialization.jsonObject(with:data) as? [String:Any] else{continuation.resume(throwing:OmniPlatform.error("POSTPROCESS_FAILED","无法读取成品媒体信息"));return}
-            let streams=json["streams"] as? [[String:Any]] ?? [],video=streams.first{($0["codec_type"] as? String)=="video"}
-            var width=NativeMediaParser.number(video?["width"]),height=NativeMediaParser.number(video?["height"])
-            let rotation=(video?["tags"] as? [String:Any])?["rotate"] ?? (video?["side_data_list"] as? [[String:Any]])?.first?["rotation"]
-            if abs((rotation as? NSNumber)?.intValue ?? Int(rotation as? String ?? "") ?? 0)%180==90{swap(&width,&height)}
-            let duration=Double((json["format"] as? [String:Any])?["duration"] as? String ?? "") ?? 0
-            continuation.resume(returning:Probe(width:width,height:height,durationMs:Int64(duration*1000),audio:streams.contains{($0["codec_type"] as? String)=="audio"}))
+            let actual=file.path.withCString{omni_probe_local($0)}
+            guard actual.status==0 else{continuation.resume(throwing:OmniPlatform.error("POSTPROCESS_FAILED","无法读取成品媒体信息"));return}
+            continuation.resume(returning:Probe(width:Int(actual.width),height:Int(actual.height),durationMs:actual.duration_ms,audio:actual.audio != 0))
         }}
     }
     static func verify(_ file:URL,task:DownloadTask)async throws{

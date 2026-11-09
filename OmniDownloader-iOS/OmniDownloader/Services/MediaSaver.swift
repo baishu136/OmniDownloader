@@ -12,7 +12,7 @@ public class MediaSaver {
     public func saveVideoToAlbum(fileUrl: URL) async throws {
         try await requestPhotoPermission()
         
-        let album = PHPhotoLibrary.authorizationStatus(for:.readWrite)==.authorized ? try await getOrCreateAlbum():nil
+        let album = PHPhotoLibrary.authorizationStatus(for:.readWrite) == .authorized ? try await getOrCreateAlbum():nil
         
         try await PHPhotoLibrary.shared().performChanges {
             let createAssetRequest = PHAssetCreationRequest.forAsset()
@@ -26,7 +26,7 @@ public class MediaSaver {
     /// 保存图片到系统相册
     public func saveImageToAlbum(fileUrl: URL) async throws {
         try await requestPhotoPermission()
-        let album = PHPhotoLibrary.authorizationStatus(for:.readWrite)==.authorized ? try await getOrCreateAlbum():nil
+        let album = PHPhotoLibrary.authorizationStatus(for:.readWrite) == .authorized ? try await getOrCreateAlbum():nil
         
         try await PHPhotoLibrary.shared().performChanges {
             let createAssetRequest = PHAssetCreationRequest.forAsset()

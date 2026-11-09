@@ -64,6 +64,7 @@ def main():
         build=next((k for k,v in objects.items() if v.get('isa')=='PBXBuildFile' and v.get('fileRef')==ref),None)
         add(target_files,build or put('build:'+relative,'PBXBuildFile',fileRef=ref))
     for path in sorted((ROOT/'OmniDownloader').rglob('*.swift')): register(path,sources,'sourcecode.swift')
+    for path in sorted((ROOT/'OmniDownloader').rglob('*.c')): register(path,sources,'sourcecode.c.c')
     for path in sorted((ROOT/'OmniDownloader/Resources').rglob('*')):
         if path.is_file(): register(path,resources,'text')
     for path in sorted((ROOT/'OmniDownloader').rglob('*.xcassets')): register(path,resources,'folder.assetcatalog')
@@ -74,6 +75,7 @@ def main():
     proj=objects['777777778888999900000001'];proj['packageReferences']=[package]
     for key in ['BBBBBBBB0000111100000001','BBBBBBBB0000111100000002']:
         settings=objects[key]['buildSettings'];settings['MARKETING_VERSION']='1.7.19';settings['CURRENT_PROJECT_VERSION']='78'
+        settings['SWIFT_OBJC_BRIDGING_HEADER']='OmniDownloader/Media/NativeProbe.h'
     targets=[]
     for name, ui in [('OmniDownloaderTests',False),('OmniDownloaderUITests',True)]:
         test_sources=[];test_resources=[]

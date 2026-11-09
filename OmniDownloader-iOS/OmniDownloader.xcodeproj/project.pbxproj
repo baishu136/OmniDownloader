@@ -355,6 +355,7 @@
 				"5DD23A050D03E570F4017A88",
 				"8D52871E0C23DE77F8554D92",
 				"33ED3A13B28C53E08CCF56A8",
+				"FAC5AB6A8B80277896409CEE",
 			);
 			"sourceTree" = "<group>";
 		};
@@ -505,6 +506,7 @@
 				"5B55AF68D68FBAA17EE9C63D",
 				"F07443A350AACA475EA1D26E",
 				"31E1AD71534FF3E05CFA6FB5",
+				"B4FFCAA572CE1535BDB4B9FC",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -582,6 +584,7 @@
 				"SWIFT_EMIT_LOC_STRINGS" = "YES";
 				"SWIFT_VERSION" = "5.0";
 				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"SWIFT_OBJC_BRIDGING_HEADER" = "OmniDownloader/Media/NativeProbe.h";
 			};
 			"name" = "Debug";
 		};
@@ -607,6 +610,7 @@
 				"SWIFT_EMIT_LOC_STRINGS" = "YES";
 				"SWIFT_VERSION" = "5.0";
 				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"SWIFT_OBJC_BRIDGING_HEADER" = "OmniDownloader/Media/NativeProbe.h";
 			};
 			"name" = "Release";
 		};
@@ -1310,6 +1314,16 @@
 		"214000BEE83A9CB33D52EE6A" = {
 			"isa" = "PBXBuildFile";
 			"fileRef" = "33ED3A13B28C53E08CCF56A8";
+		};
+		"FAC5AB6A8B80277896409CEE" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.c.c";
+			"path" = "OmniDownloader/Media/NativeProbe.c";
+			"sourceTree" = "<group>";
+		};
+		"B4FFCAA572CE1535BDB4B9FC" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "FAC5AB6A8B80277896409CEE";
 		};
 	};
 	"rootObject" = "777777778888999900000001";
