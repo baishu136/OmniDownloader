@@ -66,5 +66,16 @@ final class NativeMediaTests:XCTestCase {
         let mute=root.appendingPathComponent("mute.mp4")
         try await NativeFFmpeg.run(["-i",source.path,"-map","0:v:0","-c:v","copy","-an",mute.path])
         let silent=try await NativeFFmpeg.probe(mute);XCTAssertFalse(silent.audio);XCTAssertEqual(silent.width,320)
+        let originalBytes=try Data(contentsOf:source)
+        let server=try LocalMediaServer(originalBytes);try await server.start();defer{server.stop()}
+        let analyzed=try await MediaResolver.analyze(server.url)
+        let confirmed=try await NativeMP4Probe.confirm(analyzed)
+        XCTAssertEqual(confirmed.availableVideoFormats[0].width,320)
+        XCTAssertEqual(confirmed.availableVideoFormats[0].height,180)
+        MediaSources.shared.remember(confirmed)
+        let task=DownloadTask(url:server.url,title:"Native pipeline fixture",downloadType:.videoWithAudio,selectedVideoFormatId:confirmed.availableVideoFormats[0].formatId,mediaId:confirmed.mediaId,expectedDurationMs:confirmed.expectedDurationMs,selectedWidth:320,selectedHeight:180)
+        let exported=try await NativeMediaPipeline.execute(task,progress:{_,_ in})
+        defer{try? FileManager.default.removeItem(at:exported)}
+        XCTAssertEqual(try Data(contentsOf:exported),originalBytes,"Original muxed MP4 must remain byte-identical")
     }
 }

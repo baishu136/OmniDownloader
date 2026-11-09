@@ -354,6 +354,7 @@
 				"20112BBB0499E9796D56141A",
 				"5DD23A050D03E570F4017A88",
 				"8D52871E0C23DE77F8554D92",
+				"33ED3A13B28C53E08CCF56A8",
 			);
 			"sourceTree" = "<group>";
 		};
@@ -825,6 +826,7 @@
 			"isa" = "PBXSourcesBuildPhase";
 			"buildActionMask" = "2147483647";
 			"files" = (
+				"214000BEE83A9CB33D52EE6A",
 				"7A25AD0E68B3789842C26E7A",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
@@ -1298,6 +1300,16 @@
 		"7304E423673A465D7A1E4D45" = {
 			"isa" = "PBXBuildFile";
 			"fileRef" = "8D52871E0C23DE77F8554D92";
+		};
+		"33ED3A13B28C53E08CCF56A8" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloaderTests/LocalMediaServer.swift";
+			"sourceTree" = "<group>";
+		};
+		"214000BEE83A9CB33D52EE6A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "33ED3A13B28C53E08CCF56A8";
 		};
 	};
 	"rootObject" = "777777778888999900000001";
