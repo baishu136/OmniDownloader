@@ -1,15 +1,26 @@
 # OmniDownloader - Apple iOS 原生版
 
-**OmniDownloader iOS** 是专为 iPhone 与 iPad 设计的全能音视频极速下载器。采用纯正的 **Swift 5.9 + SwiftUI** 声明式现代架构与 **iOS 原生硬件加速 AVFoundation 媒体引擎**，完美还原 Android 端广受好评的全平台下载与合集聚合能力。
+**OmniDownloader iOS** 是专为 iPhone 与 iPad 设计的全能音视频极速下载器。采用纯正的 **Swift 5.9 + SwiftUI** 声明式现代架构与 **iOS 原生硬件加速 AVFoundation 媒体引擎**，提供 B 站、部分国内平台和合集能力；YouTube 使用本机会话浏览器进行受限解析，具体支持范围和验证状态见下文。
 
 ---
+
+## 2026-11-02 界面与 YouTube 更新
+
+- 配色、首页品牌区、圆角卡片、下载配置、任务标签与 Android 对齐，支持浅色/深色。iOS 16+ 使用胶囊选中态底栏；iOS 15 保留经过配色的原生底栏，不提高最低版本。
+- 设置 → YouTube Cookie：导入 Netscape `cookies.txt`，仅保留 `youtube.com` 子域的有效项，使用本机 Keychain（ThisDeviceOnly）存储。不会读取 Safari/Chrome 密码，也不会把会话转交中转站。
+- 首页解析 YouTube 链接会进入本机 WKWebView。请播放原视频并切换所需清晰度；确认视频 ID、资源身份、长度和 MIME 后，才能选择下载。只接受已取得完整地址的 MP4 / AAC；地址仅在内存短时保留。
+- 支持音画合流 MP4、仅画面 MP4 和 M4A，下载后核对完整长度、媒体轨道、时长和尺寸。会话变化、地址过期、应用重启后，需要重新打开原视频解析。YouTube 下载期间应保持应用在前台。
+- 不支持本链路中的直播、DRM、仅能取得分段地址的内容，或页面未提供完整可用地址的格式。Cookie 不能保证通过 YouTube 人机验证，也不能保证取得 4K/8K。
+- **验证状态**：Windows 上完成 22 个 Swift 文件语法检查、Xcode 工程引用检查、5 个浏览器脚本样例验证；未进行 Apple SDK 编译、签名、iPhone / iPad 运行。不能把这些检查当成 iOS 构建或真机验收。
+
+在 Mac 上打开 `OmniDownloader.xcodeproj`，设置自己的签名团队，先执行无签名模拟器构建，再在 iPhone 上验证 Keychain 导入、Cookie 更新/移除、普通/分离音轨、取消/重试、前后台切换、相册拒绝和深浅色/大字体。
 
 ## 🌟 核心特性
 
 1. **哔哩哔哩（B站）全画质极速直连**：
    - 官方原生 DASH 双流解耦，支持 **4K (2160p)**、**1080P60 高帧率**、**1080P 高清**以及无损音频原轨提取；
    - 智能视频流挑选引擎：按“高度降序 -> 清晰度qn降序 -> AVC高兼容编码优先 -> 码率降序”精选候选流，支持无缝平滑降级；
-   - 内置安全 WebKit 官方登录入口，无感截取持久化 SESSDATA 凭证，一键免费解锁游客 480P 限制。
+   - 内置安全 WebKit 官方登录入口，无感截取持久化 SESSDATA 凭证，在账号已有权益范围内取得可用清晰度；登录不会额外授予会员或充电权限。
 
 2. **分P视频与 UGC 合集聚合下载**：
    - 自动识别多视频、分P教学视频与 UGC 电视剧/合集；
@@ -31,7 +42,7 @@
 
 6. **原生后台下载持久化**：
    - 基于 `URLSessionConfiguration.background` 与 iOS `nsurlsessiond` 系统级守护进程；
-   - 退到后台、锁屏状态下下载依然稳定进行，不中断、不被系统杀进程。
+   - 适用原有 URLSession 后台任务；执行受系统调度、权限与网络条件限制，不能保证永久运行。YouTube 新链路为前台下载，需要保持应用打开。
 
 ---
 

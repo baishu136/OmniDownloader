@@ -8,6 +8,8 @@ public enum DownloadType: String, Codable, CaseIterable {
     case gif = "GIF"
     case cover = "COVER"
     case auto = "AUTO"
+    case image = "IMAGE"
+    case imageZip = "IMAGE_ZIP"
 }
 
 /// 音频输出格式
@@ -17,6 +19,7 @@ public enum AudioFormat: String, Codable, CaseIterable {
     case flac = "flac"
     case wav = "wav"
     case aac = "aac"
+    case opus = "opus"
     
     public var label: String {
         switch self {
@@ -25,6 +28,7 @@ public enum AudioFormat: String, Codable, CaseIterable {
         case .flac: return "FLAC 无损音频 (高解析度)"
         case .wav: return "WAV 无损音频 (广播级)"
         case .aac: return "AAC 高压缩比"
+        case .opus: return "OPUS 音频"
         }
     }
 }
@@ -39,6 +43,7 @@ public enum TaskStatus: String, Codable {
     case failed = "FAILED"
     case paused = "PAUSED"
     case cancelled = "CANCELLED"
+    case waitingForAuth = "WAITING_FOR_AUTH"
 }
 
 /// 清晰度格式选项模型
@@ -53,6 +58,14 @@ public struct FormatOption: Identifiable, Codable, Equatable {
     public let approximateSize: String
     public let note: String
     public let isAudioOnly: Bool
+    public var sourceUrl: String? = nil
+    public var sourceHeaders: [String:String]? = nil
+    public var vcodec: String? = nil
+    public var dynamicRange: String? = nil
+    public var bitrateKbps: Double? = nil
+    public var dimensionsVerified: Bool? = nil
+    public var sourceDurationMs: Int64? = nil
+    public var audioSourceUrl: String? = nil
     
     public init(
         formatId: String,
@@ -60,10 +73,16 @@ public struct FormatOption: Identifiable, Codable, Equatable {
         ext: String = "mp4",
         width: Int = 0,
         height: Int = 0,
-        fps: Int = 30,
+        fps: Int = 0,
         approximateSize: String = "",
         note: String = "",
-        isAudioOnly: Bool = false
+        isAudioOnly: Bool = false,
+        sourceUrl: String? = nil,
+        sourceHeaders: [String:String]? = nil,
+        vcodec: String? = nil,
+        dynamicRange: String? = nil,
+        bitrateKbps: Double? = nil,
+        audioSourceUrl: String? = nil
     ) {
         self.formatId = formatId
         self.resolutionLabel = resolutionLabel
@@ -74,6 +93,9 @@ public struct FormatOption: Identifiable, Codable, Equatable {
         self.approximateSize = approximateSize
         self.note = note
         self.isAudioOnly = isAudioOnly
+        self.sourceUrl = sourceUrl; self.sourceHeaders = sourceHeaders
+        self.vcodec = vcodec; self.dynamicRange = dynamicRange; self.bitrateKbps = bitrateKbps
+        self.audioSourceUrl = audioSourceUrl
     }
 }
 
@@ -90,6 +112,13 @@ public struct VideoMetadata: Identifiable, Codable {
     public var availableVideoFormats: [FormatOption]
     public var availableAudioFormats: [FormatOption]
     public var multiMediaList: [VideoMetadata]
+    public var mediaId: String? = nil
+    public var expectedDurationMs: Int64? = nil
+    public var referenceWidth: Int? = nil
+    public var referenceHeight: Int? = nil
+    public var qualityWarning: String? = nil
+    public var qualityEvidence: String? = nil
+    public var sourceScope: String? = nil
     
     public init(
         url: String,
@@ -101,7 +130,9 @@ public struct VideoMetadata: Identifiable, Codable {
         isGif: Bool = false,
         availableVideoFormats: [FormatOption] = [],
         availableAudioFormats: [FormatOption] = [],
-        multiMediaList: [VideoMetadata] = []
+        multiMediaList: [VideoMetadata] = [],
+        mediaId: String? = nil,
+        expectedDurationMs: Int64? = nil
     ) {
         self.url = url
         self.title = title
@@ -113,6 +144,7 @@ public struct VideoMetadata: Identifiable, Codable {
         self.availableVideoFormats = availableVideoFormats
         self.availableAudioFormats = availableAudioFormats
         self.multiMediaList = multiMediaList
+        self.mediaId = mediaId; self.expectedDurationMs = expectedDurationMs
     }
 }
 
@@ -124,6 +156,7 @@ public struct DownloadTask: Identifiable, Codable, Equatable {
     public var author: String
     public var thumbnailUrl: String
     public var downloadType: DownloadType
+    public var selectedVideoFormatId: String?
     public var selectedResolution: String
     public var audioFormat: AudioFormat
     public var status: TaskStatus
@@ -139,6 +172,13 @@ public struct DownloadTask: Identifiable, Codable, Equatable {
     public var collectionTitle: String?
     public var episodeIndex: Int
     public var episodeTotal: Int
+    public var mediaId: String? = nil
+    public var expectedDurationMs: Int64? = nil
+    public var selectedWidth: Int? = nil
+    public var selectedHeight: Int? = nil
+    public var imagePlatform: String? = nil
+    public var selectedImageIds: [String]? = nil
+    public var saveCover: Bool? = nil
     
     public init(
         id: String = UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(12).lowercased(),
@@ -159,7 +199,15 @@ public struct DownloadTask: Identifiable, Codable, Equatable {
         collectionId: String? = nil,
         collectionTitle: String? = nil,
         episodeIndex: Int = 0,
-        episodeTotal: Int = 0
+        episodeTotal: Int = 0,
+        selectedVideoFormatId: String? = nil,
+        mediaId: String? = nil,
+        expectedDurationMs: Int64? = nil,
+        selectedWidth: Int? = nil,
+        selectedHeight: Int? = nil,
+        imagePlatform: String? = nil,
+        selectedImageIds: [String]? = nil,
+        saveCover: Bool = false
     ) {
         self.id = id
         self.url = url
@@ -168,6 +216,7 @@ public struct DownloadTask: Identifiable, Codable, Equatable {
         self.thumbnailUrl = thumbnailUrl
         self.downloadType = downloadType
         self.selectedResolution = selectedResolution
+        self.selectedVideoFormatId = selectedVideoFormatId
         self.audioFormat = audioFormat
         self.status = status
         self.progress = progress
@@ -180,6 +229,9 @@ public struct DownloadTask: Identifiable, Codable, Equatable {
         self.collectionTitle = collectionTitle
         self.episodeIndex = episodeIndex
         self.episodeTotal = episodeTotal
+        self.mediaId = mediaId; self.expectedDurationMs = expectedDurationMs
+        self.selectedWidth = selectedWidth; self.selectedHeight = selectedHeight
+        self.imagePlatform = imagePlatform; self.selectedImageIds = selectedImageIds; self.saveCover = saveCover
     }
 }
 
