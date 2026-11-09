@@ -182,6 +182,7 @@ public struct DownloadTask: Identifiable, Codable, Equatable {
     public var selectedFPS: Int? = nil
     public var selectedDynamicRange: String? = nil
     public var selectedCodec: String? = nil
+    public var sourceReferer: String? = nil
     
     public init(
         id: String = UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(12).lowercased(),
@@ -213,7 +214,8 @@ public struct DownloadTask: Identifiable, Codable, Equatable {
         saveCover: Bool = false,
         selectedFPS: Int? = nil,
         selectedDynamicRange: String? = nil,
-        selectedCodec: String? = nil
+        selectedCodec: String? = nil,
+        sourceReferer: String? = nil
     ) {
         self.id = id
         self.url = url
@@ -239,6 +241,7 @@ public struct DownloadTask: Identifiable, Codable, Equatable {
         self.selectedWidth = selectedWidth; self.selectedHeight = selectedHeight
         self.imagePlatform = imagePlatform; self.selectedImageIds = selectedImageIds; self.saveCover = saveCover
         self.selectedFPS=selectedFPS;self.selectedDynamicRange=selectedDynamicRange;self.selectedCodec=selectedCodec
+        self.sourceReferer=sourceReferer
     }
 }
 

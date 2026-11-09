@@ -326,7 +326,8 @@ struct RelayBrowserSheet: View {
             title: title,
             downloadType: item.format=="音频" ? .audioOnly:.videoWithAudio,
             selectedResolution: format.resolutionLabel,
-            selectedVideoFormatId: format.formatId
+            selectedVideoFormatId: format.formatId,
+            sourceReferer: origin?.string
         )
         downloadManager.addTask(task)
         showSnifferSheet = false

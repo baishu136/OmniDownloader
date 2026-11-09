@@ -26,6 +26,9 @@ final class LocalMediaServer {
                 connection.start(queue:self.queue)
                 connection.receive(minimumIncompleteLength:1,maximumLength:8192){request,_,_,_ in
                     let text=String(decoding:request ?? Data(),as:UTF8.self)
+                    if text.contains("?referer=required"),!text.lowercased().contains("referer: https://relay.example/"){
+                        connection.send(content:Data("HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".utf8),completion:.contentProcessed{_ in connection.cancel()});return
+                    }
                     var data=content,status="200 OK",range=""
                     if let line=text.components(separatedBy:"\r\n").first(where:{$0.lowercased().hasPrefix("range: bytes=")}){
                         let specification=line.components(separatedBy:"=").last ?? ""

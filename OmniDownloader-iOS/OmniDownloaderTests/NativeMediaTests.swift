@@ -83,6 +83,14 @@ final class NativeMediaTests:XCTestCase {
         XCTAssertEqual(confirmed.availableVideoFormats[0].width,320)
         XCTAssertEqual(confirmed.availableVideoFormats[0].height,180)
         MediaSources.shared.remember(confirmed)
+        let capturedURL=server.url+"?referer=required"
+        let capturedFormat=FormatOption(formatId:capturedURL,resolutionLabel:"尺寸未知",sourceUrl:capturedURL)
+        let captured=VideoMetadata(url:capturedURL,title:"Confirmed capture",siteName:confirmed.siteName,availableVideoFormats:[capturedFormat])
+        MediaSources.shared.remember(captured)
+        let captureTask=DownloadTask(url:capturedURL,title:"Confirmed relay capture",downloadType:.gif,selectedVideoFormatId:capturedURL,sourceReferer:"https://relay.example/")
+        let capturedGIF=try await NativeMediaPipeline.execute(captureTask,progress:{_,_ in})
+        defer{try? FileManager.default.removeItem(at:capturedGIF)}
+        XCTAssertGreaterThan(CGImageSourceGetCount(try XCTUnwrap(CGImageSourceCreateWithURL(capturedGIF as CFURL,nil))),1)
         let task=DownloadTask(url:server.url,title:"Native pipeline fixture",downloadType:.videoWithAudio,selectedVideoFormatId:confirmed.availableVideoFormats[0].formatId,mediaId:confirmed.mediaId,expectedDurationMs:confirmed.expectedDurationMs,selectedWidth:320,selectedHeight:180)
         UserDefaults.standard.set(Data([255]),forKey:"omni.folderBookmark")
         do{_ = try await NativeMediaPipeline.execute(task,progress:{_,_ in});XCTFail("Invalid export permission must fail")}

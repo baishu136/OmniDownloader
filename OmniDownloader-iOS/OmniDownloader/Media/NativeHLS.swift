@@ -24,13 +24,13 @@ enum NativeHLS {
             output[key]=match.range(at:2).location != NSNotFound ? text.substring(with:match.range(at:2)):text.substring(with:match.range(at:3))
         };return output
     }
-    private static func lines(_ url:URL,site:String)async throws->[String]{
-        let(data,_)=try await OmniNetwork.data(url,site:site)
+    private static func lines(_ url:URL,site:String,headers:[String:String]=[:])async throws->[String]{
+        let(data,_)=try await OmniNetwork.data(url,site:site,headers:headers)
         guard data.count<=2_097_152,let text=String(data:data,encoding:.utf8),text.trimmingCharacters(in:.whitespacesAndNewlines).hasPrefix("#EXTM3U") else{throw OmniPlatform.error("EXTRACTOR_CHANGED","不是有效 HLS 清单")}
         return text.components(separatedBy:.newlines).map{$0.trimmingCharacters(in:.whitespacesAndNewlines)}
     }
-    static func prepare(_ url:URL,site:String,taskId:String,directory:URL,progress:@escaping(Float)->Void)async throws->Inputs{
-        let root=try await lines(url,site:site)
+    static func prepare(_ url:URL,site:String,taskId:String,directory:URL,headers:[String:String]=[:],progress:@escaping(Float)->Void)async throws->Inputs{
+        let root=try await lines(url,site:site,headers:headers)
         var streams:[(attrs:[String:String],url:URL)]=[]
         for(index,line)in root.enumerated() where line.hasPrefix("#EXT-X-STREAM-INF:"){
             if let relative=root.dropFirst(index+1).first(where:{!$0.isEmpty && !$0.hasPrefix("#")}),let source=URL(string:relative,relativeTo:url)?.absoluteURL{streams.append((attributes(line),source))}
@@ -43,13 +43,13 @@ enum NativeHLS {
             let choice=choices.first{$0["DEFAULT"]=="YES"} ?? choices.first
             if let path=choice?["URI"]{audio=URL(string:path,relativeTo:url)?.absoluteURL}
         }
-        let video=try await localize(selected?.url ?? url,site:site,taskId:taskId,directory:directory.appendingPathComponent("video"),progress:{progress($0*(audio==nil ? 1:0.8))})
+        let video=try await localize(selected?.url ?? url,site:site,taskId:taskId,directory:directory.appendingPathComponent("video"),headers:headers,progress:{progress($0*(audio==nil ? 1:0.8))})
         let localAudio:URL?
-        if let audio=audio{localAudio=try await localize(audio,site:site,taskId:taskId,directory:directory.appendingPathComponent("audio"),progress:{progress(0.8+$0*0.2)})}else{localAudio=nil}
+        if let audio=audio{localAudio=try await localize(audio,site:site,taskId:taskId,directory:directory.appendingPathComponent("audio"),headers:headers,progress:{progress(0.8+$0*0.2)})}else{localAudio=nil}
         return Inputs(video:video,audio:localAudio)
     }
-    private static func localize(_ url:URL,site:String,taskId:String,directory:URL,progress:@escaping(Float)->Void)async throws->URL{
-        let input=try await lines(url,site:site)
+    private static func localize(_ url:URL,site:String,taskId:String,directory:URL,headers:[String:String]=[:],progress:@escaping(Float)->Void)async throws->URL{
+        let input=try await lines(url,site:site,headers:headers)
         guard input.contains("#EXT-X-ENDLIST"),!input.contains(where:{$0.hasPrefix("#EXT-X-STREAM-INF")}) else{throw OmniPlatform.error("NO_MEDIA","本机离线导出需要完整点播清单，暂不接收直播或多层嵌套清单")}
         let count=input.filter{!$0.isEmpty && !$0.hasPrefix("#")}.count
         guard count>0,count<=5000 else{throw OmniPlatform.error("NO_MEDIA","HLS 分段数量不合法")}
@@ -57,15 +57,15 @@ enum NativeHLS {
         var output:[String]=[],index=0,resourceIndex=0,pendingRange:String?,offsets:[String:Int]=[:]
         func resource(_ relative:String,range:String?,name:String)async throws->String{
             guard !relative.contains("{$"),let source=URL(string:relative,relativeTo:url)?.absoluteURL,NativeMediaParser.safeURL(source.absoluteString) else{throw OmniPlatform.error("EXTRACTOR_CHANGED","HLS 资源地址无效")}
-            var headers:[String:String]=[:]
+            var requestHeaders=headers
             if let range=range{
                 let values=range.split(separator:"@",maxSplits:1).compactMap{Int($0)}
                 guard let length=values.first,length>0,length<=134_217_728 else{throw OmniPlatform.error("EXTRACTOR_CHANGED","HLS 区间无效")}
                 let start=values.count==2 ? values[1]:(offsets[source.absoluteString] ?? 0)
                 guard start>=0,start<=Int.max-length else{throw OmniPlatform.error("EXTRACTOR_CHANGED","HLS 区间溢出")}
-                headers["Range"]="bytes=\(start)-\(start+length-1)";offsets[source.absoluteString]=start+length
+                requestHeaders["Range"]="bytes=\(start)-\(start+length-1)";offsets[source.absoluteString]=start+length
             }
-            let staged=try await BackgroundTransfer.shared.download(source,site:site,taskId:taskId,headers:headers,progress:{_ in})
+            let staged=try await BackgroundTransfer.shared.download(source,site:site,taskId:taskId,headers:requestHeaders,progress:{_ in})
             let destination=directory.appendingPathComponent(name)
             try FileManager.default.moveItem(at:staged,to:destination);return name
         }

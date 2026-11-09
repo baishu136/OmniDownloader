@@ -23,7 +23,13 @@ enum NativeMediaPipeline {
         if staged==nil{
             let site=task.imagePlatform ?? OmniPlatform.detect(task.url),scope=PlatformSession.shared.generation(site)
             if [.image,.imageZip].contains(task.downloadType){staged=try await images(task,work:work,progress:progress)}
-            else if site=="Pixiv",let post=try? MediaSources.shared.images(task),post.frameArchive != nil{staged=try await animation(post,task:task,work:work,progress:progress)}
+            else if task.downloadType == .cover{staged=try await video(task,work:work,progress:progress)}
+            else if site=="Pixiv"{
+                let post:ImagePost
+                do{post=try MediaSources.shared.images(task)}catch{post=try await ImagePostEngine.analyze(task.url)}
+                guard post.frameArchive != nil,task.mediaId==nil || task.mediaId==post.contentId else{throw OmniPlatform.error("NO_MEDIA","原动画已不可定位，请重新解析")}
+                staged=try await animation(post,task:task,work:work,progress:progress)
+            }
             else{staged=try await video(task,work:work,progress:progress)}
             try Task.checkCancellation()
             guard scope==PlatformSession.shared.generation(site) else{throw OmniPlatform.error("SOURCE_EXPIRED","账号或网络已改变，请重新解析")}
@@ -82,6 +88,7 @@ enum NativeMediaPipeline {
             let metadata:VideoMetadata
             do{metadata=try MediaSources.shared.video(task)}
             catch{
+                try Task.checkCancellation()
                 let refreshed=try await MediaResolver.analyze(task.url)
                 let rows=refreshed.multiMediaList.isEmpty ? [refreshed]:refreshed.multiMediaList
                 guard let row=rows.first(where:{task.mediaId==nil || $0.mediaId==task.mediaId}) else{throw OmniPlatform.error("MEDIA_ID_MISMATCH","原媒体已不可定位，请重新解析")}
@@ -91,10 +98,12 @@ enum NativeMediaPipeline {
             let selected=formats.first{$0.formatId==task.selectedVideoFormatId && MediaQuality.meets($0,task)} ?? formats.first{MediaQuality.meets($0,task)}
             guard let selected=selected else{throw OmniPlatform.error("QUALITY_UNAVAILABLE","所选规格已不可用，请重新解析")}
             let source=selected.sourceUrl ?? selected.formatId
+            var headers=selected.sourceHeaders ?? [:]
+            if let referer=task.sourceReferer,NativeMediaParser.safeURL(referer){var origin=URLComponents(string:referer);origin?.path="/";origin?.query=nil;origin?.fragment=nil;headers["Referer"]=origin?.string}
             if let url=URL(string:source),selected.ext.lowercased()=="m3u8" || url.pathExtension.lowercased()=="m3u8" || source.contains(".m3u8?"){
-                let local=try await NativeHLS.prepare(url,site:site,taskId:task.id,directory:work.appendingPathComponent("hls"),progress:{progress($0*75,"正在下载分段媒体…")});input=local.video;audio=local.audio;hls=true
+                let local=try await NativeHLS.prepare(url,site:site,taskId:task.id,directory:work.appendingPathComponent("hls"),headers:headers,progress:{progress($0*75,"正在下载分段媒体…")});input=local.video;audio=local.audio;hls=true
                 if audio==nil,[.videoWithAudio,.audioOnly].contains(task.downloadType),let extra=selected.audioSourceUrl,let address=URL(string:extra){audio=try await NativeHLS.prepare(address,site:site,taskId:task.id,directory:work.appendingPathComponent("hls-audio"),progress:{progress(75+$0*10,"正在下载音轨…")}).video}
-            }else{input=try await fetch(source,site:site,task:task,work:work,name:"input.media",headers:selected.sourceHeaders ?? [:],progress:{progress($0*85,"正在下载媒体…")})}
+            }else{input=try await fetch(source,site:site,task:task,work:work,name:"input.media",headers:headers,progress:{progress($0*85,"正在下载媒体…")})}
         }
             let relative=String(input.path.dropFirst(work.path.count+1)),audioRelative=audio.map{String($0.path.dropFirst(work.path.count+1))}
             guard valid(relative),audioRelative.map(valid) ?? true else{throw OmniPlatform.error("POSTPROCESS_FAILED","媒体暂存文件不完整")}
