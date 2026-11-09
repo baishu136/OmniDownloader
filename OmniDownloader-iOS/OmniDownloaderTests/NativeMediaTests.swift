@@ -91,6 +91,14 @@ final class NativeMediaTests:XCTestCase {
         let capturedGIF=try await NativeMediaPipeline.execute(captureTask,progress:{_,_ in})
         defer{try? FileManager.default.removeItem(at:capturedGIF)}
         XCTAssertGreaterThan(CGImageSourceGetCount(try XCTUnwrap(CGImageSourceCreateWithURL(capturedGIF as CFURL,nil))),1)
+        let hlsURL=server.url.replacingOccurrences(of:"fixture.mp4",with:"fixture.m3u8")+"?referer=required"
+        let hlsFormat=FormatOption(formatId:hlsURL,resolutionLabel:"HLS",ext:"m3u8",sourceUrl:hlsURL)
+        MediaSources.shared.remember(VideoMetadata(url:hlsURL,title:"Relay HLS",siteName:confirmed.siteName,availableVideoFormats:[hlsFormat]))
+        let hlsTask=DownloadTask(url:hlsURL,title:"Relay HLS",selectedVideoFormatId:hlsURL,sourceReferer:"https://relay.example/")
+        let hlsOutput=try await NativeMediaPipeline.execute(hlsTask,progress:{_,_ in})
+        defer{try? FileManager.default.removeItem(at:hlsOutput)}
+        let hlsProbe=try await NativeFFmpeg.probe(hlsOutput)
+        XCTAssertEqual(hlsProbe.width,320);XCTAssertTrue(hlsProbe.audio)
         let task=DownloadTask(url:server.url,title:"Native pipeline fixture",downloadType:.videoWithAudio,selectedVideoFormatId:confirmed.availableVideoFormats[0].formatId,mediaId:confirmed.mediaId,expectedDurationMs:confirmed.expectedDurationMs,selectedWidth:320,selectedHeight:180)
         UserDefaults.standard.set(Data([255]),forKey:"omni.folderBookmark")
         do{_ = try await NativeMediaPipeline.execute(task,progress:{_,_ in});XCTFail("Invalid export permission must fail")}

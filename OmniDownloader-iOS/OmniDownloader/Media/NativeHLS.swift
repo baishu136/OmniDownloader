@@ -67,6 +67,7 @@ enum NativeHLS {
             }
             let staged=try await BackgroundTransfer.shared.download(source,site:site,taskId:taskId,headers:requestHeaders,progress:{_ in})
             let destination=directory.appendingPathComponent(name)
+            try? FileManager.default.removeItem(at:destination)
             try FileManager.default.moveItem(at:staged,to:destination);return name
         }
         for line in input{

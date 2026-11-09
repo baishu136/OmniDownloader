@@ -7,7 +7,8 @@ final class BackgroundTransfer:NSObject,URLSessionDownloadDelegate,@unchecked Se
     private final class Record{
         let continuation:CheckedContinuation<URL,Error>;let progress:(Float)->Void;let site:String;let scope:String;let resumeFile:URL
         var staged:URL?
-        init(_ continuation:CheckedContinuation<URL,Error>,progress:@escaping(Float)->Void,site:String,resumeFile:URL){self.continuation=continuation;self.progress=progress;self.site=site;self.scope=PlatformSession.shared.generation(site);self.resumeFile=resumeFile}
+        let range:String?
+        init(_ continuation:CheckedContinuation<URL,Error>,progress:@escaping(Float)->Void,site:String,resumeFile:URL,range:String?){self.continuation=continuation;self.progress=progress;self.site=site;self.scope=PlatformSession.shared.generation(site);self.resumeFile=resumeFile;self.range=range}
     }
     private final class CancellationSlot:@unchecked Sendable{
         let lock=NSLock();var task:URLSessionDownloadTask?;var cancelled=false;let resumeFile:URL
@@ -50,7 +51,7 @@ final class BackgroundTransfer:NSObject,URLSessionDownloadDelegate,@unchecked Se
     func download(_ url:URL,site:String,taskId:String,headers:[String:String]=[:],progress:@escaping(Float)->Void)async throws->URL{
         try Task.checkCancellation()
         let session=try connection()
-        let intent=url.absoluteString+"|"+PlatformSession.shared.generation(site)
+        let intent=url.absoluteString+"|"+PlatformSession.shared.generation(site)+"|"+(headers["Range"] ?? "")
         let digest=SHA256.hash(data:Data(intent.utf8)).prefix(16).map{String(format:"%02x",$0)}.joined()
         let resume=root.appendingPathComponent(digest+".resume"),slot=CancellationSlot(resume)
         return try await withTaskCancellationHandler(operation:{
@@ -59,7 +60,7 @@ final class BackgroundTransfer:NSObject,URLSessionDownloadDelegate,@unchecked Se
                 if let data=try? Data(contentsOf:resume){task=session.downloadTask(withResumeData:data)}
                 else{task=session.downloadTask(with:OmniNetwork.request(url,site:site,headers:headers))}
                 task.taskDescription=taskId
-                lock.lock();records[key(session,task)]=Record(continuation,progress:progress,site:site,resumeFile:resume);lock.unlock()
+                lock.lock();records[key(session,task)]=Record(continuation,progress:progress,site:site,resumeFile:resume,range:headers["Range"]);lock.unlock()
                 slot.install(task)
             }
         },onCancel:{slot.cancel()})
@@ -67,6 +68,7 @@ final class BackgroundTransfer:NSObject,URLSessionDownloadDelegate,@unchecked Se
     func urlSession(_ session:URLSession,downloadTask:URLSessionDownloadTask,didWriteData bytesWritten:Int64,totalBytesWritten:Int64,totalBytesExpectedToWrite:Int64){
         lock.lock();let record=records[key(session,downloadTask)];lock.unlock()
         guard let record=record else{return}
+        if let range=record.range,let response=downloadTask.response as? HTTPURLResponse,!Self.acceptsRange(response,range){downloadTask.cancel();return}
         if record.scope != PlatformSession.shared.generation(record.site){downloadTask.cancel();return}
         if totalBytesExpectedToWrite>0{record.progress(Float(totalBytesWritten)/Float(totalBytesExpectedToWrite))}
     }
@@ -79,6 +81,8 @@ final class BackgroundTransfer:NSObject,URLSessionDownloadDelegate,@unchecked Se
     func urlSession(_ session:URLSession,task:URLSessionTask,didCompleteWithError error:Error?){
         lock.lock();let record=records.removeValue(forKey:key(session,task));lock.unlock()
         guard let record=record else{return}
+        if record.scope != PlatformSession.shared.generation(record.site){if let file=record.staged{try? FileManager.default.removeItem(at:file)};try? FileManager.default.removeItem(at:record.resumeFile);record.continuation.resume(throwing:OmniPlatform.error("SOURCE_EXPIRED","账号或网络已改变，请重新解析"));return}
+        if let range=record.range,let response=task.response as? HTTPURLResponse,!Self.acceptsRange(response,range){if let file=record.staged{try? FileManager.default.removeItem(at:file)};try? FileManager.default.removeItem(at:record.resumeFile);record.continuation.resume(throwing:OmniPlatform.error("NETWORK_ERROR","服务器未正确返回所需的媒体区间"));return}
         if let error=error{if let file=record.staged{try? FileManager.default.removeItem(at:file)};record.continuation.resume(throwing:error);return}
         guard record.scope==PlatformSession.shared.generation(record.site),let response=task.response as? HTTPURLResponse,(200...299).contains(response.statusCode),let file=record.staged else{
             if let file=record.staged{try? FileManager.default.removeItem(at:file)}
@@ -86,11 +90,13 @@ final class BackgroundTransfer:NSObject,URLSessionDownloadDelegate,@unchecked Se
             record.continuation.resume(throwing:OmniPlatform.error("SOURCE_EXPIRED","媒体源已失效或会话已改变，请重新解析"));return
         }
         let length=(try? file.resourceValues(forKeys:[.fileSizeKey]).fileSize) ?? 0
+        if let range=record.range{let parts=range.dropFirst(6).split(separator:"-").compactMap{Int($0)};if parts.count != 2 || parts[1]<parts[0] || length != parts[1]-parts[0]+1{try? FileManager.default.removeItem(at:file);record.continuation.resume(throwing:OmniPlatform.error("NETWORK_ERROR","媒体区间不完整"));return}}
         guard length>0,response.expectedContentLength<=0 || response.expectedContentLength==Int64(length) else{
             try? FileManager.default.removeItem(at:file);record.continuation.resume(throwing:OmniPlatform.error("NETWORK_ERROR","媒体下载不完整，请重试"));return
         }
         try? FileManager.default.removeItem(at:record.resumeFile);record.continuation.resume(returning:file)
     }
+    private static func acceptsRange(_ response:HTTPURLResponse,_ range:String)->Bool{response.statusCode==206 && range.hasPrefix("bytes=") && (response.value(forHTTPHeaderField:"Content-Range") ?? "").lowercased().hasPrefix("bytes "+range.dropFirst(6)+"/")}
     func urlSession(_ session:URLSession,task:URLSessionTask,willPerformHTTPRedirection response:HTTPURLResponse,newRequest request:URLRequest,completionHandler:@escaping(URLRequest?)->Void){
         lock.lock();let record=records[key(session,task)];lock.unlock()
         guard let record=record,let url=request.url,NativeMediaParser.safeURL(url.absoluteString) else{completionHandler(nil);return}

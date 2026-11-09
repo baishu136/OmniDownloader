@@ -30,6 +30,8 @@ final class LocalMediaServer {
                         connection.send(content:Data("HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".utf8),completion:.contentProcessed{_ in connection.cancel()});return
                     }
                     var data=content,status="200 OK",range=""
+                    let manifest=text.components(separatedBy:"\r\n").first?.contains("/fixture.m3u8") ?? false
+                    if manifest{data=Data("#EXTM3U\n#EXT-X-VERSION:4\n#EXT-X-TARGETDURATION:2\n#EXT-X-MEDIA-SEQUENCE:0\n#EXTINF:1.0,\n#EXT-X-BYTERANGE:\(content.count)@0\nfixture.mp4?referer=required\n#EXT-X-ENDLIST\n".utf8)}
                     if let line=text.components(separatedBy:"\r\n").first(where:{$0.lowercased().hasPrefix("range: bytes=")}){
                         let specification=line.components(separatedBy:"=").last ?? ""
                         let edges=specification.split(separator:"-",omittingEmptySubsequences:false)
