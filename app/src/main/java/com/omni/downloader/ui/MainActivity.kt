@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +61,29 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
+    private val sharedLinkGeneration = mutableStateOf(0)
+    private val sharedTargetTab = mutableStateOf(0)
+    private var automaticDouyin: com.omni.downloader.ui.components.AndroidDouyinPageCapture? = null
+
+    private fun attachAutomaticCapture() {
+        if (automaticDouyin != null) return
+        automaticDouyin = com.omni.downloader.ui.components.AndroidDouyinPageCapture(this).also {
+            com.omni.downloader.engine.DouyinPageCapture.attach(it)
+        }
+    }
+
+    override fun onResume() { super.onResume(); attachAutomaticCapture() }
+    override fun onPause() {
+        automaticDouyin?.let { com.omni.downloader.engine.DouyinPageCapture.detach(it); it.close() }
+        automaticDouyin = null
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        automaticDouyin?.let { com.omni.downloader.engine.DouyinPageCapture.detach(it); it.close() }
+        automaticDouyin = null
+        super.onDestroy()
+    }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -72,6 +96,7 @@ class MainActivity : ComponentActivity() {
             null
         }
         super.onCreate(savedInstanceState)
+        attachAutomaticCapture()
         launchSplash?.setKeepOnScreenCondition { SystemClock.uptimeMillis() - launchTime < 500L }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             launchSplash?.setOnExitAnimationListener { provider ->
@@ -107,6 +132,19 @@ class MainActivity : ComponentActivity() {
                     val snackbarHostState = remember { SnackbarHostState() }
                     val message by viewModel.message.collectAsStateWithLifecycle()
                     var currentTab by rememberSaveable { mutableStateOf(0) }
+                    val mediaNavigation by viewModel.mediaNavigation.collectAsStateWithLifecycle()
+                    LaunchedEffect(sharedLinkGeneration.value) {
+                        if (sharedLinkGeneration.value > 0) currentTab = sharedTargetTab.value
+                    }
+                    LaunchedEffect(mediaNavigation) {
+                        mediaNavigation?.let { request ->
+                            // An explicit visit to Tasks/Settings is not stolen by
+                            // a slower parse finishing in a retained content tab.
+                            if (viewModel.consumeMediaNavigation(request) && (currentTab == 0 || currentTab == 3)) {
+                                currentTab = if (request.destination == com.omni.downloader.engine.MediaPage.IMAGES) 3 else 0
+                            }
+                        }
+                    }
                     BackHandler(enabled = currentTab != 0) { currentTab = 0 }
 
                     LaunchedEffect(message) {
@@ -160,6 +198,7 @@ class MainActivity : ComponentActivity() {
         val navItems = remember(appStrings) {
             listOf(
                 NavItem(0, Icons.Outlined.Home, appStrings.navHome),
+                NavItem(3, Icons.Outlined.PhotoLibrary, "图文"),
                 NavItem(1, Icons.Outlined.Download, appStrings.navTasks),
                 NavItem(2, Icons.Outlined.Settings, appStrings.navSettings)
             )
@@ -207,11 +246,12 @@ class MainActivity : ComponentActivity() {
     ) {
         val onNavTasks = remember(onSelectTab) { { onSelectTab(1) } }
         val onNavSettings = remember(onSelectTab) { { onSelectTab(2) } }
-        RetainedTabHost(currentTab, 3, modifier.fillMaxSize()) { tab ->
+        RetainedTabHost(currentTab, 4, modifier.fillMaxSize()) { tab ->
             when (tab) {
                 0 -> HomeScreen(viewModel, onNavTasks, onNavSettings, isActive = LocalTabActive.current)
                 1 -> TasksScreen(viewModel)
                 2 -> SettingsScreen(viewModel)
+                3 -> com.omni.downloader.ui.screens.ImagesScreen(viewModel, onNavTasks)
             }
         }
     }
@@ -226,7 +266,18 @@ class MainActivity : ComponentActivity() {
             val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT) ?: ""
             val url = UrlSniffer.extractUrl(sharedText) ?: sharedText
             if (url.isNotBlank()) {
+                // Explicit share integrations may choose the photo-post workflow without typing
+                // the URL through an IME; ordinary shared links retain the video workflow.
+                if (intent.getStringExtra("com.omni.downloader.TARGET") == "images") {
+                    sharedTargetTab.value = 3
+                    viewModel.updateImageInput(url)
+                    viewModel.analyzeImages()
+                    sharedLinkGeneration.value += 1
+                    return
+                }
+                sharedTargetTab.value = 0
                 viewModel.updateInputUrl(url)
+                sharedLinkGeneration.value += 1
                 viewModel.startAnalyze(url)
             }
         }

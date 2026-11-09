@@ -27,48 +27,10 @@
     });
   </script>
   <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/theme.css">
   <!-- Material Symbols & Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#EEF2FF',
-              100: '#E0E7FF',
-              200: '#C7D2FE',
-              300: '#A5B4FC',
-              400: '#818CF8',
-              500: '#6366F1',
-              600: '#4F46E5', /* 安卓原生主色 Indigo40 */
-              700: '#4338CA',
-              800: '#3730A3',
-              900: '#312E81',
-            },
-            cyan: {
-              50: '#F0F9FF',
-              100: '#E0F2FE',
-              200: '#BAE6FD',
-              400: '#38BDF8',
-              500: '#0EA5E9',
-              600: '#0284C7', /* 安卓原生辅色 Cyan40 */
-              700: '#0369A1',
-            },
-            m3: {
-              surface: '#F8FAFC',
-              card: '#FFFFFF',
-              primary: '#4F46E5',
-              secondary: '#0284C7',
-              accent: '#E0E7FF'
-            }
-          }
-        }
-      }
-    }
-  </script>
+  <link rel="stylesheet" href="/static/vendor/fontawesome/css/all.min.css">
+  
   <style>
     :root { color-scheme: light; }
     html.dark { color-scheme: dark; background: #020617; }
@@ -109,6 +71,7 @@
       100% { background-position: -200% 0; }
     }
   </style>
+  <link rel="stylesheet" href="/static/parity.css">
 </head>
 <body class="bg-[#F8FAFC] dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-200 dark:selection:bg-indigo-800">
 
@@ -130,6 +93,7 @@
           <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
           <span>解析下载</span>
         </button>
+        <button id="nav-images" onclick="switchTab('images')" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300">图文</button>
         <button id="nav-tasks" onclick="switchTab('tasks')" class="px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400">
           <i class="fa-solid fa-list-check text-xs"></i>
           <span>任务列表</span>
@@ -171,21 +135,23 @@
 
           <!-- 链接输入框组合 -->
           <div class="relative flex items-center mt-4">
-            <input 
-              type="text" 
-              id="input-url" 
-              placeholder="在此粘贴分享口令或视频链接 (如 https://...)" 
+            <input
+              type="text"
+              id="input-url"
+              placeholder="在此粘贴分享口令或视频链接 (如 https://...)"
               class="w-full pl-12 pr-28 py-4 bg-slate-50 dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 rounded-2xl outline-none text-sm transition shadow-inner"
               onkeydown="if(event.key==='Enter') startAnalyze()"
             />
             <div class="absolute left-4 text-indigo-500 dark:text-indigo-400">
               <i class="fa-solid fa-link"></i>
             </div>
-            
+
             <div class="absolute right-2.5 flex items-center space-x-1.5">
               <button onclick="pasteClipboard()" title="读取剪贴板" class="px-2.5 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-100/70 dark:bg-indigo-900/70 hover:bg-indigo-200/70 dark:hover:bg-indigo-800/70 rounded-xl transition">
                 <i class="fa-regular fa-paste mr-1"></i>粘贴
               </button>
+              <button onclick="openHeyboxAssist()" class="px-2 text-xs text-indigo-600">浏览器辅助</button>
+              <button onclick="captureHeyboxMedia()" class="px-2 text-xs text-indigo-600">读取已播放媒体</button>
               <button id="btn-analyze" onclick="startAnalyze()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-500/15 transition flex items-center space-x-1">
                 <span>解析</span>
                 <i class="fa-solid fa-arrow-right text-[10px]"></i>
@@ -249,7 +215,7 @@
               <i class="fa-regular fa-circle-user text-indigo-600 dark:text-indigo-400"></i>
               <span>创作者名字</span>
             </p>
-            <p id="meta-url" class="text-[11px] text-slate-400 truncate max-w-lg"></p>
+            <p id="meta-access" class="text-xs text-slate-500"></p><p id="meta-url" class="text-[11px] text-slate-400 truncate max-w-lg"></p>
           </div>
         </div>
 
@@ -304,6 +270,14 @@
         <!-- 2. 清晰度选择区 (视频清晰度选项) -->
         <div id="resolution-section" class="space-y-3">
           <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">选择视频清晰度</label>
+          <div class="flex flex-wrap gap-2 text-xs">
+            <select id="quality-policy" class="p-2 rounded border dark:bg-slate-800" aria-label="画质策略">
+              <option value="BEST_AVAILABLE">最高源画质（包含4K/8K）</option><option value="EXACT_FORMAT">下方精确格式</option>
+              <option value="MAX_2160">严格上限4K</option><option value="TARGET_4320">指定8K档位</option><option value="COMPATIBLE">兼容优先 H.264</option><option value="HDR">最高HDR源</option><option value="SDR">最高SDR源</option><option value="FPS60">至少60fps</option>
+            </select>
+            <select id="quality-container" class="p-2 rounded border dark:bg-slate-800" aria-label="容器"><option value="auto">自动容器</option><option value="mp4">MP4</option><option value="mkv">MKV</option></select>
+            <label><input id="quality-allow-lower" type="checkbox">允许较低画质</label>
+          </div>
           <div id="format-options-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <!-- 动态填充 format 选项 -->
           </div>
@@ -349,6 +323,28 @@
     </section>
 
     <!-- === TAB 2: 任务列表 (TASKS) === -->
+    <section id="tab-images" class="hidden space-y-4 fade-in">
+      <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 space-y-4 border border-indigo-100 dark:border-indigo-900">
+        <h2 class="text-2xl font-bold">图文下载</h2>
+        <p>抖音 · 快手 · B站动态 · Pixiv · 小红书 · X · Pinterest</p>
+        <textarea id="image-url" aria-label="图文作品链接" rows="2" class="w-full p-3 rounded-xl border dark:bg-slate-900" placeholder="粘贴单个作品链接或分享文字"></textarea>
+        <button id="image-analyze" onclick="analyzeImages()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl">解析图文</button>
+        <button onclick="openImagesAssist()" class="px-4 py-2 border rounded-xl">浏览器辅助（抖音）</button>
+        <button id="image-browser-capture" onclick="captureBrowserImages()" class="px-4 py-2 border rounded-xl">提取已打开的图文</button>
+        <p id="image-error" role="alert" class="text-red-500 whitespace-pre-wrap"></p>
+        <div id="image-result" hidden>
+          <h3 id="image-title" class="font-bold text-lg"></h3>
+          <p id="image-source" class="text-sm my-2"></p>
+          <div class="flex flex-wrap gap-3 my-4">
+            <button onclick="selectImages(true)" class="px-3 py-2 border rounded-xl">全选</button>
+            <button onclick="selectImages(false)" class="px-3 py-2 border rounded-xl">清空选择</button>
+            <button onclick="downloadImages(false)" class="px-3 py-2 bg-indigo-600 text-white rounded-xl">保存所选原图</button>
+            <button onclick="downloadImages(true)" class="px-3 py-2 border rounded-xl">打包 ZIP</button>
+          </div>
+          <div id="image-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+        </div>
+      </div>
+    </section>
     <section id="tab-tasks" class="hidden space-y-4 fade-in">
       <div class="flex items-center justify-between">
         <div>
@@ -371,7 +367,7 @@
       <div id="tasks-container" class="space-y-3">
         <!-- 动态生成任务卡片 -->
       </div>
-      
+
       <!-- 无任务空状态 -->
       <div id="tasks-empty" class="hidden text-center py-16 bg-white dark:bg-slate-800 rounded-3xl border border-indigo-100/60 dark:border-indigo-900/60 p-8 space-y-3">
         <div class="w-16 h-16 mx-auto bg-indigo-50 dark:bg-indigo-950 text-indigo-400 rounded-full flex items-center justify-center text-2xl">
@@ -441,6 +437,26 @@
           </div>
         </div>
 
+        <div class="space-y-2">
+          <label class="block text-sm font-bold">平台会话与引擎</label>
+            <div class="rounded-xl border p-3 space-y-2">
+              <h3 class="font-semibold">YouTube Cookie</h3>
+              <p class="text-sm">从已登录 YouTube 的浏览器导出 Netscape cookies.txt。导入后，解析与下载自动使用同一会话；遇到人机验证请先在浏览器完成，再更新文件。</p>
+              <input id="youtube-cookie-file" type="file" accept=".txt,text/plain" aria-label="YouTube cookies.txt 文件" />
+              <button onclick="importYoutubeCookies()" class="p-2 rounded-xl bg-indigo-600 text-white">导入 / 更新 YouTube Cookie</button>
+              <a href="https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies" target="_blank" rel="noopener noreferrer" class="underline text-sm">官方导出说明</a>
+              <p id="youtube-cookie-status" role="status" class="text-sm"></p>
+            </div>
+
+          <select id="session-platform" class="p-2 rounded-xl dark:bg-slate-900"><option>YouTube</option><option>X (Twitter)</option><option>小红书</option><option>小黑盒</option><option>Pixiv</option><option>抖音</option><option>哔哩哔哩</option><option>Pinterest</option><option>Instagram</option><option>Facebook</option><option>TikTok</option><option>快手</option></select>
+          <label class="flex items-center gap-2"><input type="checkbox" id="session-disable-cookie" onchange="toggleSessionCookie()" /> 禁用所选平台 Cookie</label>
+          <p id="session-policy-status" class="text-xs text-slate-500" role="status">关闭后新解析与新下载不使用已保存会话；会话继续加密保留。</p>
+          <input type="file" id="session-file" accept=".txt" class="block text-xs" />
+          <button onclick="importSession()" class="p-2 rounded-xl bg-indigo-600 text-white">导入Cookies文件</button>
+          <button onclick="clearSession()" class="p-2 rounded-xl border">清除所选会话</button>
+          <button onclick="showEngineStatus()" class="p-2 rounded-xl border">查看引擎组件</button>
+          <p class="text-xs text-slate-500">会话由Windows当前用户加密保存。仅本机可管理会话，导入后重新解析原链接。</p>
+        </div>
         <!-- 3. B站 Cookie 授权 -->
         <div class="space-y-2">
           <div class="flex items-center justify-between">
@@ -497,7 +513,7 @@
             <div class="space-y-1">
               <div class="flex items-center space-x-2">
                 <span class="font-bold text-slate-800 dark:text-slate-100 text-sm">OmniDownloader</span>
-                <span class="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-bold">v1.4.8 稳定版</span>
+                <span class="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-bold">v1.5.3 稳定版</span>
               </div>
               <p class="text-slate-500 dark:text-slate-400 text-[11px]">全平台现代化媒体音视频下载矩阵 · Windows 网页纯后台 / 桌面独立双形态</p>
             </div>
@@ -554,7 +570,7 @@
 
       <!-- 模态框主体滚动区域 -->
       <div class="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6 text-slate-700 dark:text-slate-200 text-xs sm:text-sm leading-relaxed">
-        
+
         <!-- 1. 简体中文说明 -->
         <div id="guide-content-zh-cn" class="space-y-5">
           <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/60 rounded-2xl border border-indigo-100 dark:border-indigo-900">
@@ -591,7 +607,7 @@
           <div class="p-4 bg-amber-50/70 dark:bg-amber-950/70 rounded-2xl border border-amber-200/80 dark:border-amber-800/80 space-y-2">
             <h4 class="font-bold text-amber-950 dark:text-amber-100 text-sm flex items-center"><i class="fa-brands fa-bilibili text-[#FB7299] mr-2"></i>解锁 B站 4K / 1080P60 高清画质 (SESSDATA 获取方法)</h4>
             <p class="text-xs text-amber-900/90 dark:text-amber-100/90">
-              B站官方接口对未登录游客限制最高仅下发 480P。配置大会员账户的 <code>SESSDATA</code> 即可免费解锁 4K、1080P60 帧极清画质：
+              可用画质取决于目标视频、账户权益和平台返回。配置对应账户的 <code>SESSDATA</code> 后重新解析；充电专属内容还需要该视频对应的充电权益：
             </p>
             <ol class="list-decimal list-inside space-y-1 text-xs text-amber-900/90 dark:text-amber-100/90">
               <li>在电脑浏览器打开 <strong>bilibili.com</strong> 并登录您的账号；</li>
@@ -1117,9 +1133,104 @@
       });
     });
 
+    let imagePost = null;
+    let imageViewer = null, viewerUrls = [], viewerIndex = 0, viewerScale = 1, viewerFocus = null;
+    function renderImageViewer() {
+      const img = imageViewer.querySelector('img');
+      viewerScale = 1; img.style.transform = 'scale(1)'; img.src = viewerUrls[viewerIndex];
+      imageViewer.querySelector('[data-count]').textContent = `${viewerIndex+1} / ${viewerUrls.length}`;
+      imageViewer.querySelector('[data-prev]').disabled = viewerIndex === 0;
+      imageViewer.querySelector('[data-next]').disabled = viewerIndex === viewerUrls.length-1;
+      imageViewer.querySelector('[data-error]').hidden = true;
+    }
+    function openImageViewer(urls, index=0) {
+      if(!urls.length) return;
+      if(!imageViewer) {
+        imageViewer = document.createElement('dialog');
+        imageViewer.setAttribute('aria-label','图片查看器');
+        imageViewer.style.cssText = 'width:96vw;height:94vh;max-width:none;max-height:none;background:#111;color:white;border:0;border-radius:16px;padding:16px;';
+        imageViewer.innerHTML = '<div style="display:flex;justify-content:space-between"><span data-count></span><button data-close>关闭</button></div><div style="height:calc(100% - 70px);overflow:auto;display:flex;align-items:center;justify-content:center"><img alt="图片预览" style="max-width:100%;max-height:100%;object-fit:contain;transform-origin:center"><span data-error hidden>图片暂不可预览，请关闭后重试或保存原图</span></div><div style="display:flex;justify-content:space-between;gap:16px"><button data-prev>上一张</button><span>滚轮缩放 · 双击还原</span><button data-next>下一张</button></div>';
+        document.body.append(imageViewer);
+        imageViewer.querySelector('[data-close]').onclick = () => imageViewer.close();
+        imageViewer.onclose = () => { imageViewer.querySelector('img').removeAttribute('src'); viewerFocus?.focus(); };
+        imageViewer.querySelector('[data-prev]').onclick = () => { if(viewerIndex>0) {viewerIndex--;renderImageViewer();} };
+        imageViewer.querySelector('[data-next]').onclick = () => { if(viewerIndex<viewerUrls.length-1) {viewerIndex++;renderImageViewer();} };
+        const img = imageViewer.querySelector('img');
+        img.onerror = () => { imageViewer.querySelector('[data-error]').hidden = false; };
+        img.ondblclick = () => {viewerScale=1;img.style.transform='scale(1)';};
+        img.addEventListener('wheel', e => { e.preventDefault();viewerScale=Math.max(1,Math.min(8,viewerScale*(e.deltaY<0?1.2:1/1.2)));img.style.transform=`scale(${viewerScale})`; },{passive:false});
+        imageViewer.addEventListener('keydown', e => {
+          if(e.key==='ArrowLeft') imageViewer.querySelector('[data-prev]').click();
+          if(e.key==='ArrowRight') imageViewer.querySelector('[data-next]').click();
+        });
+      }
+      viewerFocus=document.activeElement; viewerUrls=urls; viewerIndex=Math.max(0,Math.min(index,urls.length-1));
+      renderImageViewer(); if(!imageViewer.open) imageViewer.showModal();
+    }
+    const selectedImages = new Set();
+    async function analyzeImages() {
+      const button = document.getElementById('image-analyze');
+      button.disabled = true; button.textContent = '正在解析…';
+      imagePost = null; selectedImages.clear();
+      document.getElementById('image-error').textContent = '';
+      document.getElementById('image-result').hidden = true;
+      try {
+        const response = await fetch('/api/images/analyze', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:document.getElementById('image-url').value})});
+        const post = await response.json();
+        if (!response.ok) throw new Error(post.detail || '解析失败');
+        showImagePost(post);
+      } catch(error) { document.getElementById('image-error').textContent = error.message; }
+      finally { button.disabled = false; button.textContent = '解析图文'; }
+    }
+    function showImagePost(post) {
+      selectedImages.clear();
+        imagePost = post; post.resources.forEach(item => selectedImages.add(item.id));
+        document.getElementById('image-title').textContent = post.title;
+        document.getElementById('image-source').textContent = `${post.resources.length} 张图片。` + (post.resources.some(item => !item.original) ? '部分图片为平台可用资源，暂不能确认无水印或原始尺寸。' : '平台返回的原图资源；保留原始格式及动画。');
+        const grid = document.getElementById('image-grid'); grid.replaceChildren();
+        post.resources.forEach((item,index) => {
+          const card = document.createElement('div'); card.className = 'border rounded-xl p-2';
+          const image = document.createElement('img'); image.src = item.previewUrl || item.url; image.referrerPolicy = 'no-referrer'; image.loading = 'lazy'; image.alt = `第 ${index+1} 张`; image.className = 'w-full h-44 object-contain';
+          const check = document.createElement('input'); check.type = 'checkbox'; check.checked = true; check.dataset.imageId = item.id;
+          check.setAttribute('aria-label', `选择第 ${index+1} 张图片`);
+          image.tabIndex = 0; image.style.cursor = 'zoom-in';
+          image.onclick = () => openImageViewer(post.resources.map(i => i.previewUrl || i.url), index);
+          image.onkeydown = e => { if(e.key === 'Enter') image.click(); };
+          check.addEventListener('change', () => check.checked ? selectedImages.add(item.id) : selectedImages.delete(item.id));
+          card.append(image,check,document.createTextNode(` ${index+1} · ${item.width}×${item.height} · ${item.original ? '平台原图' : '来源待确认'}`)); grid.append(card);
+        });
+        document.getElementById('image-result').hidden = false;
+    }
+    async function openImagesAssist() {
+      const response=await fetch('/api/browser-assist/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:document.getElementById('image-url').value})});
+      const result=await response.json();showToast(response.ok?'请在新窗口打开目标抖音图文，完成验证后返回点击提取':result.detail,!response.ok);
+    }
+    async function captureBrowserImages() {
+      const button=document.getElementById('image-browser-capture');button.disabled=true;
+      try {
+        const response=await fetch('/api/browser-assist/images',{method:'POST'});const post=await response.json();
+        if(!response.ok) throw new Error(post.detail||'读取失败');
+        showImagePost(post);document.getElementById('image-error').textContent='';
+      } catch(error){document.getElementById('image-error').textContent=error.message;}
+      finally{button.disabled=false;}
+    }
+    function selectImages(value) {
+      document.querySelectorAll('[data-image-id]').forEach(check => {check.checked=value; if(value)selectedImages.add(check.dataset.imageId);else selectedImages.delete(check.dataset.imageId);});
+    }
+    async function downloadImages(archive) {
+      if (!imagePost || !selectedImages.size) return showToast('请先选择图片',true);
+      const ids = imagePost.resources.filter(item => selectedImages.has(item.id)).map(item => item.id);
+      const groups = archive ? [ids] : ids.map(id => [id]);
+      const group = crypto.randomUUID();
+      const tasks = groups.map((batch,index) => ({url:imagePost.url,title:`${imagePost.title} (${archive ? '原图归档' : index+1})`,author:imagePost.author,downloadType:archive?'IMAGE_ZIP':'IMAGE',imagePlatform:imagePost.platform,selectedImageIds:batch,mediaId:imagePost.contentId,collectionId:groups.length>1?group:null,collectionTitle:imagePost.title,episodeIndex:index+1,episodeTotal:groups.length}));
+      const response = await fetch('/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tasks})});
+      if (!response.ok) return showToast((await response.json()).detail||'创建任务失败',true);
+      switchTab('tasks');
+    }
+
     // 标签切换
     function switchTab(tab) {
-      ['home', 'tasks', 'settings'].forEach(t => {
+      ['home', 'images', 'tasks', 'settings'].forEach(t => {
         const el = document.getElementById(`tab-${t}`);
         const nav = document.getElementById(`nav-${t}`);
         if (t === tab) {
@@ -1194,7 +1305,9 @@
           throw new Error(data.detail || "解析失败");
         }
         currentMetadata = data;
+        selectedType = data.isGif ? 'VIDEO_ONLY' : 'VIDEO_WITH_AUDIO';
         renderAnalyzeResult(data);
+        selectDownloadType(selectedType);
       } catch (e) {
         showToast(e.message, true);
       } finally {
@@ -1212,6 +1325,7 @@
       document.getElementById('meta-duration').innerText = data.durationText || '';
       document.getElementById('meta-site').innerText = data.siteName || '网络视频';
       document.getElementById('meta-url').innerText = data.url;
+      document.getElementById('meta-access').innerText = data.siteName === '哔哩哔哩' ? `当前账号：${data.accountName || '未验证'} · 访问：${data.accessState || 'UNKNOWN'}` : '';
 
       // 默认选中第一项清晰度
       selectedFormatId = (data.availableVideoFormats && data.availableVideoFormats.length > 0)
@@ -1269,6 +1383,7 @@
         }`;
         card.onclick = () => {
           selectedFormatId = fmt.formatId;
+          document.getElementById('quality-policy').value = 'EXACT_FORMAT';
           renderFormatOptions(formats);
         };
 
@@ -1332,6 +1447,37 @@
       document.querySelectorAll('input[name="episode-item"]').forEach(cb => cb.checked = !cb.checked);
     }
 
+    async function openHeyboxAssist() {
+      const response = await fetch('/api/browser-assist/open', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:document.getElementById('input-url').value})});
+      const data = await response.json(); showToast(response.ok ? '请在新窗口手动播放目标视频，然后点击读取已播放媒体' : data.detail, !response.ok);
+    }
+    async function captureHeyboxMedia() {
+      const response = await fetch('/api/browser-assist/candidates'); const data = await response.json();
+      if (!response.ok) { showToast(data.detail,true); return; }
+      if (!data.length) { showToast('尚未发现可保存的已播放源；blob或加密媒体不适用',true); return; }
+      const source = data[0];
+      if (!confirm(`确认保存刚刚播放的目标内容？\n${source.title}\n${source.width}×${source.height}\n来源：${new URL(source.url).hostname}`)) return;
+      const result = await fetch('/api/download', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tasks:[{url:source.url,title:source.title || '小黑盒视频',downloadType:'VIDEO_WITH_AUDIO',selectedResolution:'best',qualitySelection:{mode:'BEST_AVAILABLE'}}]})});
+      showToast(result.ok ? '已加入下载队列' : '提交失败',!result.ok);
+    }
+
+    function selectedQualityPolicy(batch = false) {
+      const choice = document.getElementById('quality-policy').value;
+      const intent = {mode:choice, allowLowerQuality:document.getElementById('quality-allow-lower').checked,
+                      container:document.getElementById('quality-container').value};
+      if (choice.startsWith('MAX_') || choice.startsWith('TARGET_')) {
+        intent.maxHeight = Number(choice.split('_')[1]); intent.mode = choice.startsWith('MAX_') ? 'MAX_HEIGHT' : 'TARGET_TIER';
+      }
+      if (choice === 'HDR' || choice === 'SDR') { intent.mode = 'BEST_AVAILABLE'; intent.dynamicRangePreference = choice; }
+      if (choice === 'FPS60') { intent.mode = 'BEST_AVAILABLE'; intent.targetFps = 60; }
+      if (choice === 'COMPATIBLE') { intent.mode = 'BEST_AVAILABLE'; intent.codecPreference = 'avc'; }
+      if (batch && choice === 'EXACT_FORMAT') {
+        const format = currentMetadata.availableVideoFormats.find(f => f.formatId === selectedFormatId);
+        intent.mode = 'MAX_HEIGHT'; intent.maxHeight = format ? Math.min(format.width || format.height, format.height) : 0;
+      }
+      return intent;
+    }
+
     // 提交下载
     async function submitDownload() {
       if (!currentMetadata) return;
@@ -1354,7 +1500,9 @@
             url: ep.url,
             title: `${currentMetadata.title} - ${ep.title}`,
             downloadType: selectedType,
-            selectedResolution: selectedFormatId,
+            selectedResolution: 'best',
+            mediaId: ep.mediaId || '',
+            qualitySelection: selectedQualityPolicy(true),
             audioFormat: selectedAudioFormat,
             thumbnailUrl: ep.thumbnailUrl || currentMetadata.thumbnailUrl,
             author: currentMetadata.author,
@@ -1370,7 +1518,10 @@
           url: currentMetadata.url,
           title: currentMetadata.title,
           downloadType: selectedType,
-          selectedResolution: selectedFormatId,
+          selectedResolution: selectedQualityPolicy().mode === 'EXACT_FORMAT' ? selectedFormatId : 'best',
+          selectedVideoFormatId: selectedQualityPolicy().mode === 'EXACT_FORMAT' ? selectedFormatId : '',
+          mediaId: currentMetadata.mediaId || '',
+          qualitySelection: selectedQualityPolicy(),
           audioFormat: selectedAudioFormat,
           thumbnailUrl: currentMetadata.thumbnailUrl,
           author: currentMetadata.author
@@ -1438,19 +1589,207 @@
       }
     }
 
-    // 渲染任务列表
-    function renderTaskList(tasks) {
-      const container = document.getElementById('tasks-container');
-      const emptyEl = document.getElementById('tasks-empty');
-      const runningBadge = document.getElementById('badge-running-count');
+    // 安全转义 HTML 文本，杜绝 XSS 注入风险
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
 
-      const runningCount = tasks.filter(t => t.status === 'DOWNLOADING' || t.status === 'PROCESSING' || t.status === 'PENDING').length;
+    function getStatusBadgeHtml(status) {
+      switch(status) {
+        case 'DOWNLOADING':
+          return '<span class="px-2 py-0.5 text-[10px] rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold"><i class="fa-solid fa-arrow-down mr-1"></i>正在下载</span>';
+        case 'PROCESSING':
+          return '<span class="px-2 py-0.5 text-[10px] rounded-md bg-cyan-50 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 font-bold"><i class="fa-solid fa-arrows-spin fa-spin mr-1"></i>混流封装中</span>';
+        case 'COMPLETED':
+          return '<span class="px-2 py-0.5 text-[10px] rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold"><i class="fa-solid fa-check mr-1"></i>已完成</span>';
+        case 'WAITING_FOR_AUTH':
+          return '<span class="text-amber-600 text-xs">等待登录/验证，请导入会话后重试</span>';
+        case 'FAILED':
+          return '<span class="px-2 py-0.5 text-[10px] rounded-md bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold"><i class="fa-solid fa-xmark mr-1"></i>下载失败</span>';
+        case 'CANCELLED':
+          return '<span class="px-2 py-0.5 text-[10px] rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold">已取消</span>';
+        default:
+          return '<span class="px-2 py-0.5 text-[10px] rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold">排队中</span>';
+      }
+    }
+
+    function getTaskActionsHtml(t) {
+      let actions = '';
+      if (t.status === 'FAILED' || t.status === 'CANCELLED' || t.status === 'WAITING_FOR_AUTH') {
+        actions += `<button onclick="fetch('/api/tasks/${t.id}/retry',{method:'POST'}).then(() => fetchTasks())" class="px-3 py-1.5 rounded-lg border text-xs">${t.errorCode === 'EXPORT_FAILED' ? '重试导出' : '重试'}</button>`;
+      }
+
+      if (t.status === 'COMPLETED') {
+        if(['IMAGE','COVER','GIF'].includes(t.downloadType)) actions += `<button onclick="openImageViewer(['/api/tasks/${t.id}/download'])" class="px-3 py-1.5 rounded-lg border text-xs">查看图片</button>`;
+        actions += `
+          <a href="/api/tasks/${t.id}/download" download title="通过浏览器保存到当前设备" class="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-xs transition shadow-sm">
+            <i class="fa-solid fa-download"></i>
+          </a>
+          <button onclick="openFile('${t.id}')" title="在服务端电脑中定位" class="w-7 h-7 flex items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-xs transition">
+            <i class="fa-regular fa-folder-open"></i>
+          </button>
+        `;
+      }
+      if (t.status === 'DOWNLOADING' || t.status === 'PENDING') {
+        actions += `
+          <button onclick="cancelTask('${t.id}')" title="取消下载" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-rose-100 dark:hover:bg-rose-900 hover:text-rose-600 dark:hover:text-rose-400 text-xs transition">
+            <i class="fa-solid fa-stop"></i>
+          </button>
+        `;
+      }
+      actions += `
+        <button onclick="deleteTask('${t.id}')" title="删除记录" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs transition">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      `;
+      return actions;
+    }
+
+    function getProgressBarClass(status) {
+      switch(status) {
+        case 'PROCESSING': return 'bg-cyan-500';
+        case 'COMPLETED': return 'bg-emerald-500';
+        case 'FAILED': return 'bg-rose-500';
+        case 'CANCELLED': return 'bg-slate-400';
+        default: return 'bg-gradient-to-r from-indigo-600 to-cyan-500';
+      }
+    }
+
+    function buildTaskCardHtml(t) {
+      const isAnimated = t.status === 'DOWNLOADING';
+      const progressColor = getProgressBarClass(t.status);
+      const safeTitle = escapeHtml(t.title);
+      const safeResolution = t.selectedResolution ? `<span>· ${escapeHtml(t.selectedResolution)}</span>` : '';
+      const safeSize = t.fileSizeText ? `<span>· ${escapeHtml(t.fileSizeText)}</span>` : '';
+      const safeDownloadType = escapeHtml(({IMAGE:'原始图片',IMAGE_ZIP:'图文 ZIP 归档'})[t.downloadType] || t.downloadType);
+      const safeEta = t.etaText ? `剩余: ${escapeHtml(t.etaText)}` : (t.errorMessage ? `<span class="text-rose-500 dark:text-rose-400 truncate max-w-xs">${escapeHtml(t.errorMessage)}</span>` : '');
+
+      return `
+        <div id="task-card-${t.id}" data-status="${t.status}" class="task-card-item bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 border border-indigo-100/70 dark:border-indigo-900/70 shadow-sm space-y-3 transition hover:shadow-md">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center space-x-3 min-w-0">
+              <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden flex-shrink-0 relative">
+                ${t.thumbnailUrl ? `<img src="${escapeHtml(t.thumbnailUrl)}" class="w-full h-full object-cover" />` : `<div class="w-full h-full flex items-center justify-center text-indigo-400"><i class="fa-solid fa-file-video"></i></div>`}
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 truncate" title="${safeTitle}">${safeTitle}</h4>
+                <div class="flex items-center space-x-2 text-[11px] text-slate-400 mt-0.5">
+                  <span>${safeDownloadType}</span>
+                  ${safeResolution}
+                  ${safeSize}
+                </div>
+              </div>
+            </div>
+            <div class="flex-shrink-0 flex items-center space-x-2">
+              <span class="task-status-badge-container">${getStatusBadgeHtml(t.status)}</span>
+              <div class="task-actions-container flex items-center space-x-2">${getTaskActionsHtml(t)}</div>
+            </div>
+          </div>
+
+          <!-- 进度条与速率 -->
+          <div class="space-y-1.5">
+            <div class="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div class="task-progress-bar h-full rounded-full transition-all duration-300 ${progressColor} ${isAnimated ? 'pulse-bar' : ''}" style="width: ${Math.min(Math.max(t.progress, 0), 100)}%"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
+              <span class="task-progress-text">${t.progress.toFixed(1)}% ${t.speedText ? '· ' + escapeHtml(t.speedText) : ''}</span>
+              <span class="task-eta-text">${safeEta}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateTaskCardDom(cardEl, t) {
+      if (!cardEl) return;
+      const prevStatus = cardEl.dataset.status;
+      if (prevStatus !== t.status) {
+        cardEl.dataset.status = t.status;
+        const badgeContainer = cardEl.querySelector('.task-status-badge-container');
+        if (badgeContainer) badgeContainer.innerHTML = getStatusBadgeHtml(t.status);
+        const actionsContainer = cardEl.querySelector('.task-actions-container');
+        if (actionsContainer) actionsContainer.innerHTML = getTaskActionsHtml(t);
+      }
+
+      const bar = cardEl.querySelector('.task-progress-bar');
+      if (bar) {
+        bar.style.width = `${Math.min(Math.max(t.progress, 0), 100)}%`;
+        const expectedColor = getProgressBarClass(t.status);
+        bar.className = `task-progress-bar h-full rounded-full transition-all duration-300 ${expectedColor} ${t.status === 'DOWNLOADING' ? 'pulse-bar' : ''}`;
+      }
+
+      const progressText = cardEl.querySelector('.task-progress-text');
+      if (progressText) {
+        progressText.textContent = `${t.progress.toFixed(1)}% ${t.speedText ? '· ' + t.speedText : ''}`;
+      }
+
+      const etaText = cardEl.querySelector('.task-eta-text');
+      if (etaText) {
+        if (t.etaText) {
+          etaText.textContent = `剩余: ${t.etaText}`;
+        } else if (t.errorMessage) {
+          etaText.innerHTML = `<span class="text-rose-500 dark:text-rose-400 truncate max-w-xs">${escapeHtml(t.errorMessage)}</span>`;
+        } else {
+          etaText.textContent = '';
+        }
+      }
+    }
+
+    function updateRunningBadge(count) {
+      const runningBadge = document.getElementById('badge-running-count');
+      if (!runningBadge) return;
+      const runningCount = typeof count === 'number' ? count : allTasks.filter(t => t.status === 'DOWNLOADING' || t.status === 'PROCESSING' || t.status === 'PENDING').length;
       if (runningCount > 0) {
         runningBadge.innerText = runningCount;
         runningBadge.classList.remove('hidden');
       } else {
         runningBadge.classList.add('hidden');
       }
+    }
+
+    // 增量合流调度管理器：同一渲染帧内合并多次高频 SSE 更新
+    const pendingTaskUpdates = new Map();
+    let taskUpdateRafId = null;
+
+    function flushPendingTaskUpdates() {
+      taskUpdateRafId = null;
+      if (pendingTaskUpdates.size === 0) return;
+
+      const container = document.getElementById('tasks-container');
+      const emptyEl = document.getElementById('tasks-empty');
+      if (!container) return;
+
+      updateRunningBadge();
+
+      pendingTaskUpdates.forEach((t, taskId) => {
+        const card = document.getElementById(`task-card-${taskId}`);
+        if (card) {
+          updateTaskCardDom(card, t);
+        } else {
+          // 新增任务：增量构建并置顶插入，绝不重写整表 DOM
+          const temp = document.createElement('div');
+          temp.innerHTML = buildTaskCardHtml(t);
+          if (temp.firstElementChild) {
+            container.prepend(temp.firstElementChild);
+            if (emptyEl) emptyEl.classList.add('hidden');
+          }
+        }
+      });
+      pendingTaskUpdates.clear();
+    }
+
+    // 渲染任务列表（仅在初次加载或清空记录等全量变动时调用，保持滚动位置与卡片稳定性）
+    function renderTaskList(tasks) {
+      const container = document.getElementById('tasks-container');
+      const emptyEl = document.getElementById('tasks-empty');
+
+      updateRunningBadge();
 
       if (!tasks || tasks.length === 0) {
         container.innerHTML = '';
@@ -1459,86 +1798,22 @@
       }
       emptyEl.classList.add('hidden');
 
-      container.innerHTML = tasks.map(t => {
-        let statusBadge = '';
-        let progressColor = 'bg-gradient-to-r from-indigo-600 to-cyan-500';
-        let isAnimated = false;
+      // 检查当前 DOM 是否已有对应节点，优先增量复用
+      const existingCards = new Map();
+      container.querySelectorAll('.task-card-item').forEach(el => {
+        const id = el.id.replace('task-card-', '');
+        existingCards.set(id, el);
+      });
 
-        switch(t.status) {
-          case 'DOWNLOADING':
-            statusBadge = '<span class="px-2 py-0.5 text-[10px] rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold"><i class="fa-solid fa-arrow-down mr-1"></i>正在下载</span>';
-            isAnimated = true;
-            break;
-          case 'PROCESSING':
-            statusBadge = '<span class="px-2 py-0.5 text-[10px] rounded-md bg-cyan-50 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 font-bold"><i class="fa-solid fa-arrows-spin fa-spin mr-1"></i>混流封装中</span>';
-            progressColor = 'bg-cyan-500';
-            break;
-          case 'COMPLETED':
-            statusBadge = '<span class="px-2 py-0.5 text-[10px] rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold"><i class="fa-solid fa-check mr-1"></i>已完成</span>';
-            progressColor = 'bg-emerald-500';
-            break;
-          case 'FAILED':
-            statusBadge = '<span class="px-2 py-0.5 text-[10px] rounded-md bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold"><i class="fa-solid fa-xmark mr-1"></i>下载失败</span>';
-            progressColor = 'bg-rose-500';
-            break;
-          case 'CANCELLED':
-            statusBadge = '<span class="px-2 py-0.5 text-[10px] rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold">已取消</span>';
-            progressColor = 'bg-slate-400';
-            break;
-          default:
-            statusBadge = '<span class="px-2 py-0.5 text-[10px] rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold">排队中</span>';
-        }
+      const isStructureSame = existingCards.size === tasks.length && tasks.every(t => existingCards.has(t.id));
+      if (isStructureSame) {
+        tasks.forEach(t => {
+          updateTaskCardDom(existingCards.get(t.id), t);
+        });
+        return;
+      }
 
-        return `
-          <div id="task-card-${t.id}" class="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 border border-indigo-100/70 dark:border-indigo-900/70 shadow-sm space-y-3 transition hover:shadow-md">
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex items-center space-x-3 min-w-0">
-                <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden flex-shrink-0 relative">
-                  ${t.thumbnailUrl ? `<img src="${t.thumbnailUrl}" class="w-full h-full object-cover" />` : `<div class="w-full h-full flex items-center justify-center text-indigo-400"><i class="fa-solid fa-file-video"></i></div>`}
-                </div>
-                <div class="min-w-0">
-                  <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 truncate" title="${t.title}">${t.title}</h4>
-                  <div class="flex items-center space-x-2 text-[11px] text-slate-400 mt-0.5">
-                    <span>${t.downloadType}</span>
-                    ${t.selectedResolution ? `<span>· ${t.selectedResolution}</span>` : ''}
-                    ${t.fileSizeText ? `<span>· ${t.fileSizeText}</span>` : ''}
-                  </div>
-                </div>
-              </div>
-              <div class="flex-shrink-0 flex items-center space-x-2">
-                ${statusBadge}
-                ${t.status === 'COMPLETED' ? `
-                  <a href="/api/tasks/${t.id}/download" download title="通过浏览器保存到当前设备" class="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-xs transition shadow-sm">
-                    <i class="fa-solid fa-download"></i>
-                  </a>
-                  <button onclick="openFile('${t.id}')" title="在服务端电脑中定位" class="w-7 h-7 flex items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-xs transition">
-                    <i class="fa-regular fa-folder-open"></i>
-                  </button>
-                ` : ''}
-                ${(t.status === 'DOWNLOADING' || t.status === 'PENDING') ? `
-                  <button onclick="cancelTask('${t.id}')" title="取消下载" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-rose-100 dark:hover:bg-rose-900 hover:text-rose-600 dark:hover:text-rose-400 text-xs transition">
-                    <i class="fa-solid fa-stop"></i>
-                  </button>
-                ` : ''}
-                <button onclick="deleteTask('${t.id}')" title="删除记录" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs transition">
-                  <i class="fa-solid fa-trash-can"></i>
-                </button>
-              </div>
-            </div>
-
-            <!-- 进度条与速率 -->
-            <div class="space-y-1.5">
-              <div class="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div class="h-full rounded-full transition-all duration-300 ${progressColor} ${isAnimated ? 'pulse-bar' : ''}" style="width: ${t.progress}%"></div>
-              </div>
-              <div class="flex items-center justify-between text-[11px] text-slate-400">
-                <span>${t.progress.toFixed(1)}% ${t.speedText ? `· ${t.speedText}` : ''}</span>
-                <span>${t.etaText ? `剩余: ${t.etaText}` : (t.errorMessage ? `<span class="text-rose-500 dark:text-rose-400 truncate max-w-xs">${t.errorMessage}</span>` : '')}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
+      container.innerHTML = tasks.map(t => buildTaskCardHtml(t)).join('');
     }
 
     // 触发浏览器原生文件另存为/下载
@@ -1577,11 +1852,20 @@
               }
             }
 
-            // 刷新任务列表
-            renderTaskList(allTasks);
+            // 增量调度：使用 requestAnimationFrame 合并帧内更新，消除整体 DOM 销毁重建与滑动掉帧
+            pendingTaskUpdates.set(updated.id, updated);
+            if (!taskUpdateRafId) {
+              taskUpdateRafId = requestAnimationFrame(flushPendingTaskUpdates);
+            }
           } else if (data.type === 'task_deleted') {
             allTasks = allTasks.filter(t => t.id !== data.taskId);
-            renderTaskList(allTasks);
+            pendingTaskUpdates.delete(data.taskId);
+            const cardEl = document.getElementById(`task-card-${data.taskId}`);
+            if (cardEl) cardEl.remove();
+            if (allTasks.length === 0) {
+              document.getElementById('tasks-empty')?.classList.remove('hidden');
+            }
+            updateRunningBadge();
           } else if (data.type === 'focus_page') {
             try {
               window.focus();
@@ -1642,12 +1926,68 @@
         // Windows 系统开机自启动状态
         document.getElementById('setting-autostart').checked = !!data.autoStart;
 
-        if (data.bilibiliCookie) {
+        if (data.hasBilibiliSession) {
           document.getElementById('bili-cookie-status').classList.remove('hidden');
         }
       } catch (e) {
         console.error("加载设置失败", e);
       }
+    }
+
+
+    async function importYoutubeCookies() {
+      const input = document.getElementById('youtube-cookie-file');
+      const file = input.files[0];
+      if (!file) return showToast('请选择 Netscape cookies.txt 文件', true);
+      if (file.size > 2*1024*1024) return showToast('Cookie 文件不得超过 2MB',true);
+      try {
+        const response = await fetch('/api/sessions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform:'YouTube',cookies:await file.text()})});
+        const data = await response.json();
+        document.getElementById('youtube-cookie-status').textContent = response.ok ? 'YouTube Cookie 已加密保存，请重新解析原链接。' : data.detail || '导入失败';
+      } catch(error) { showToast('导入失败，请确认本地服务正在运行',true); }
+      finally { input.value=''; }
+    }
+
+    async function loadSessionPolicy() {
+      const platform = document.getElementById('session-platform').value;
+      const response = await fetch('/api/sessions');
+      if (!response.ok) return;
+      const data = await response.json();
+      const info = data.find(row => row.platform === platform);
+      document.getElementById('session-disable-cookie').checked = info?.enabled === false;
+      document.getElementById('session-policy-status').textContent = info?.enabled === false
+        ? '已禁用：新解析与新下载使用匿名请求，已保存会话保留。更新文件不会自动开启。'
+        : '已开启：新解析与新下载可使用该平台已保存的 Cookie。';
+    }
+    document.getElementById('session-platform').addEventListener('change', loadSessionPolicy);
+    loadSessionPolicy();
+    async function toggleSessionCookie() {
+      const disabled = document.getElementById('session-disable-cookie').checked;
+      try {
+        const response = await fetch('/api/sessions/' + encodeURIComponent(document.getElementById('session-platform').value), {
+          method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({enabled:!disabled})
+        });
+        if (!response.ok) throw new Error('Cookie开关保存失败');
+        showToast(disabled ? 'Cookie已禁用，会话保留' : 'Cookie已开启，请重新解析');
+      } catch (error) { showToast(error.message, true); }
+      await loadSessionPolicy();
+    }
+    async function importSession() {
+      const file = document.getElementById('session-file').files[0];
+      if (!file || file.size > 1048576) { showToast('请选择不超过1MiB的Cookies文件', true); return; }
+      const response = await fetch('/api/sessions', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({platform:document.getElementById('session-platform').value, cookies:await file.text()})});
+      const data = await response.json(); document.getElementById('session-file').value = '';
+      showToast(response.ok ? '会话已导入，请重新解析原链接' : data.detail || '导入失败', !response.ok);
+      await loadSessionPolicy();
+    }
+    async function clearSession() {
+      const response = await fetch('/api/sessions/' + encodeURIComponent(document.getElementById('session-platform').value), {method:'DELETE'});
+      showToast(response.ok ? '会话已清除' : '清除失败，请在本机操作', !response.ok);
+      await loadSessionPolicy();
+    }
+    async function showEngineStatus() {
+      const data = await (await fetch('/api/engine/diagnostics')).json();
+      showToast('Python '+data.python+' · yt-dlp '+data.ytDlp+' · EJS '+data.ejs+' · JS运行时 '+(data.denoAvailable?'可用':'缺失'));
     }
 
     async function saveSettings() {
@@ -1682,5 +2022,6 @@
       }
     }
   </script>
+  <script src="/static/parity.js"></script>
 </body>
 </html>

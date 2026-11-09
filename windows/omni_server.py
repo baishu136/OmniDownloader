@@ -34,7 +34,7 @@ CURRENT_DIR = Path(__file__).parent.resolve()
 if str(CURRENT_DIR) not in sys.path:
     sys.path.insert(0, str(CURRENT_DIR))
 
-from core.models import VideoMetadata, DownloadTask, DownloadType, AudioFormat, TaskStatus
+from core.models import VideoMetadata, DownloadTask, DownloadType, AudioFormat, TaskStatus, QualitySelection
 from core.config import config
 from core.task_manager import task_manager
 from engine.url_sniffer import UrlSniffer
@@ -43,16 +43,22 @@ from engine.domestic_extractor import DomesticDirectExtractor
 from engine.tiktok_extractor import TikTokDirectExtractor
 from engine.ytdlp_engine import YtDlpEngine
 
-app = FastAPI(title="OmniDownloader API", description="全能多媒体下载器 Windows 后端接口", version="1.0.0")
+app = FastAPI(title="OmniDownloader API", description="全能多媒体下载器 Windows 后端接口", version="1.7.19")
 
 # 允许跨域以便调试
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=[x for x in os.environ.get("OMNI_ALLOWED_ORIGINS", "").split(",") if x],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(HTTPException)
+async def safe_http_error(request: Request, exc: HTTPException):
+    from engine.media_errors import sanitize, code
+    return JSONResponse(status_code=exc.status_code, content={'detail': sanitize(exc.detail), 'errorCode': code(exc.detail)})
 
 
 # === 请求数据模型 ===
@@ -65,6 +71,11 @@ class CreateTaskItem(BaseModel):
     title: str
     download_type: DownloadType = Field(..., alias="downloadType")
     selected_resolution: str = Field("", alias="selectedResolution")
+    image_platform: str = Field("", alias="imagePlatform")
+    selected_image_ids: List[str] = Field(default_factory=list, alias="selectedImageIds")
+    quality_selection: Optional[QualitySelection] = Field(None, alias="qualitySelection")
+    selected_video_format_id: str = Field("", alias="selectedVideoFormatId")
+    media_id: str = Field("", alias="mediaId")
     audio_format: AudioFormat = Field(AudioFormat.MP3, alias="audioFormat")
     thumbnail_url: str = Field("", alias="thumbnailUrl")
     author: str = ""
@@ -209,6 +220,56 @@ async def fetch_relay_site_title(url: str):
 
 
 
+_image_previews = {}
+
+
+@app.get('/api/images/preview/{token}/{index}')
+async def image_preview(token: str, index: int):
+    import time
+    from engine.media_resolver import session, check_response, image_extension
+    from core.session_store import sessions
+    saved = _image_previews.get(token)
+    if not saved or time.monotonic() - saved[0] > 900: raise HTTPException(410, '预览已过期，请重新解析')
+    post = saved[1]
+    if index < 0 or index >= len(post['resources']): raise HTTPException(404, '图片不存在')
+    def fetch():
+        item = post['resources'][index]
+        with sessions.cookie_file(post['platform']) as cookie:
+            with session(cookie, config.proxy_url) as client:
+                with client.get(item['url'], headers=item['headers'], stream=True, timeout=(12, 25)) as response:
+                    check_response(response); data = bytearray()
+                    for chunk in response.iter_content(65536):
+                        data.extend(chunk)
+                        if len(data) > 12 * 1024 * 1024: raise ValueError('预览超过12MB，请直接保存原图')
+        extension = image_extension(bytes(data[:64]))
+        return Response(bytes(data), media_type={'jpg':'image/jpeg','png':'image/png','gif':'image/gif','webp':'image/webp','avif':'image/avif'}[extension], headers={'Cache-Control':'private, max-age=300','X-Content-Type-Options':'nosniff'})
+    try: return await asyncio.to_thread(fetch)
+    except Exception: raise HTTPException(400, '预览暂不可用，可尝试保存原图')
+
+
+def publish_image_preview(post):
+    import secrets, time, copy
+    token = secrets.token_urlsafe(24)
+    for key, value in list(_image_previews.items()):
+        if time.monotonic() - value[0] > 900: _image_previews.pop(key, None)
+    if len(_image_previews) >= 32: _image_previews.pop(next(iter(_image_previews)))
+    _image_previews[token] = (time.monotonic(), copy.deepcopy(post))
+    for index, item in enumerate(post['resources']): item['previewUrl'] = f'/api/images/preview/{token}/{index}'
+    return post
+
+
+@app.post('/api/images/analyze')
+async def analyze_image_post(req: AnalyzeRequest):
+    from engine.images import ImageEngine
+    from engine.platforms import platform
+    from engine.media_errors import sanitize
+    url = UrlSniffer.extract_url(req.url) or req.url.strip()
+    try:
+        post = await ImageEngine.extract(url, platform(url))
+        return publish_image_preview(post)
+    except Exception as error: raise HTTPException(400, sanitize(error))
+
+
 @app.post("/api/analyze", response_model=VideoMetadata)
 async def analyze_url(req: AnalyzeRequest):
     """解析任意平台媒体链接，返回视频标题、封面、清晰度列表与分P分集"""
@@ -255,7 +316,13 @@ async def analyze_url(req: AnalyzeRequest):
             ]
         )
 
-    print(f"[OmniServer] 开始解析链接: site={site}, url={clean_url}")
+    print(f"[OmniServer] 开始解析链接: site={site}, url={__import__("engine.media_errors", fromlist=["sanitize"]).sanitize(clean_url)}")
+
+    if site in ("抖音", "小红书", "快手", "小黑盒", "Pixiv"):
+        from engine.platforms import PlatformEngine
+        from engine.media_errors import sanitize
+        try: return await PlatformEngine.extract(clean_url, site)
+        except Exception as exc: raise HTTPException(status_code=400, detail=sanitize(exc))
 
     # 1. 哔哩哔哩原生解析
     if site == "哔哩哔哩":
@@ -295,6 +362,8 @@ async def create_download_tasks(req: BatchCreateTaskRequest):
             title=item.title,
             download_type=item.download_type,
             selected_resolution=item.selected_resolution,
+            quality_selection=item.quality_selection, selected_video_format_id=item.selected_video_format_id, media_id=item.media_id,
+            image_platform=item.image_platform, selected_image_ids=item.selected_image_ids,
             audio_format=item.audio_format,
             thumbnail_url=item.thumbnail_url,
             author=item.author,
@@ -305,6 +374,12 @@ async def create_download_tasks(req: BatchCreateTaskRequest):
         )
         created_tasks.append(task.model_dump(by_alias=True))
     return {"status": "success", "count": len(created_tasks), "tasks": created_tasks}
+
+
+@app.post('/api/tasks/{task_id}/retry')
+async def retry_download_task(task_id: str):
+    if not await task_manager.retry_task(task_id): raise HTTPException(409, '任务不存在或尚未结束')
+    return {'ok': True}
 
 
 @app.get("/api/tasks")
@@ -386,7 +461,8 @@ async def get_settings():
 
 
 @app.post("/api/settings")
-async def update_settings(req: UpdateSettingsRequest):
+async def update_settings(req: UpdateSettingsRequest, request: Request):
+    require_local_session_action(request)
     """更新配置"""
     if req.download_dir is not None:
         config.download_dir = req.download_dir
@@ -394,7 +470,12 @@ async def update_settings(req: UpdateSettingsRequest):
     if req.proxy_url is not None:
         config.proxy_url = req.proxy_url
     if req.bilibili_cookie is not None:
-        config.bilibili_cookie = req.bilibili_cookie
+        if req.bilibili_cookie:
+            from core.session_store import sessions
+            parts = req.bilibili_cookie if "=" in req.bilibili_cookie else "SESSDATA=" + req.bilibili_cookie
+            rows = [f".bilibili.com\tTRUE\t/\tTRUE\t0\t{k.strip()}\t{v.strip()}" for token in parts.split(";") if "=" in token for k, v in [token.split("=", 1)]]
+            sessions.import_text("哔哩哔哩", "# Netscape HTTP Cookie File\n" + "\n".join(rows))
+        config.bilibili_cookie = ""
     if req.max_concurrent_tasks is not None:
         config.max_concurrent_tasks = req.max_concurrent_tasks
     if req.theme is not None:
@@ -517,6 +598,98 @@ async def serve_index():
 def start_server(host: str = "127.0.0.1", port: int = 58000):
     """启动本地服务"""
     uvicorn.run(app, host=host, port=port, log_level="info")
+
+
+
+
+class SessionImportRequest(BaseModel):
+    platform: str
+    cookies: str
+
+
+class SessionCookiePolicyRequest(BaseModel):
+    enabled: bool
+
+
+def require_local_session_action(request: Request):
+    if not request.client or request.client.host not in ("127.0.0.1", "::1", "testclient"):
+        raise HTTPException(403, "会话管理仅允许本机操作")
+    origin = request.headers.get("origin")
+    if origin and origin.rstrip("/") != str(request.base_url).rstrip("/"):
+        raise HTTPException(403, "不接受跨站凭据管理请求")
+
+
+@app.get("/api/sessions")
+async def session_status():
+    from core.session_store import sessions, DOMAINS
+    return [sessions.status(site) for site in DOMAINS]
+
+
+@app.post("/api/sessions")
+async def import_session(req: SessionImportRequest, request: Request):
+    require_local_session_action(request)
+    from core.session_store import sessions
+    try: return sessions.import_text(req.platform, req.cookies)
+    except (ValueError, OSError) as exc: raise HTTPException(400, "会话导入失败，请检查文件格式及Windows用户环境") from exc
+
+
+@app.delete("/api/sessions/{platform}")
+async def clear_session(platform: str, request: Request):
+    require_local_session_action(request)
+    from core.session_store import sessions
+    sessions.clear(platform)
+    return sessions.status(platform)
+
+
+@app.patch("/api/sessions/{platform}")
+async def toggle_session_cookie(platform: str, req: SessionCookiePolicyRequest, request: Request):
+    require_local_session_action(request)
+    from core.session_store import sessions
+    try:
+        result = sessions.set_enabled(platform, req.enabled)
+    except ValueError as error:
+        raise HTTPException(400, "未知平台或无效Cookie开关") from error
+    for key, (_, post) in list(_image_previews.items()):
+        if post.get('platform') == platform: _image_previews.pop(key, None)
+    return result
+
+
+@app.get("/api/engine/diagnostics")
+async def engine_diagnostics():
+    import platform, importlib.metadata
+    from engine.ffmpeg_helper import get_ffmpeg_path
+    return {"python": platform.python_version(), "ytDlp": importlib.metadata.version("yt-dlp"),
+            "ejs": importlib.metadata.version("yt-dlp-ejs"), "ffmpegAvailable": bool(get_ffmpeg_path()),
+            "denoAvailable": (CURRENT_DIR / "bin" / "deno.exe").is_file()}
+
+
+class BrowserAssistRequest(BaseModel):
+    url: str
+
+
+@app.post('/api/browser-assist/open')
+async def open_assist(req: BrowserAssistRequest, request: Request):
+    require_local_session_action(request)
+    from engine.browser_assist import browser_assist
+    try: return await asyncio.to_thread(browser_assist.open, req.url)
+    except (RuntimeError, ValueError) as exc: raise HTTPException(400, str(exc))
+
+
+@app.get('/api/browser-assist/candidates')
+async def assist_candidates(request: Request):
+    require_local_session_action(request)
+    from engine.browser_assist import browser_assist
+    try: return await asyncio.to_thread(browser_assist.candidates)
+    except (RuntimeError, ValueError) as exc: raise HTTPException(400, str(exc))
+
+
+@app.post('/api/browser-assist/images')
+async def assist_images(request: Request):
+    require_local_session_action(request)
+    from engine.browser_assist import browser_assist
+    from engine.media_errors import sanitize
+    try: return publish_image_preview(await asyncio.to_thread(browser_assist.images))
+    except Exception as exc: raise HTTPException(400, sanitize(exc))
 
 
 if __name__ == "__main__":

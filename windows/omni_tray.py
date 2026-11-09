@@ -272,7 +272,7 @@ def get_autostart_state(item):
 
 def main():
     host = "127.0.0.1"
-    port = 58000
+    port = int(os.environ.get("OMNI_PORT", "58000"))
     server_url = f"http://{host}:{port}"
     is_autostart = ("--autostart" in sys.argv or "--silent" in sys.argv)
 
@@ -311,7 +311,7 @@ def main():
     # 4. 创建系统托盘图标
     icon_image = generate_tray_icon()
     menu = (
-        item('🌐 打开网页版 (http://127.0.0.1:58000)', lambda icon, item: smart_open_browser(force=False, host=host, port=port), default=True),
+        item(f'🌐 打开网页版 (http://127.0.0.1:{port})', lambda icon, item: smart_open_browser(force=False, host=host, port=port), default=True),
         item('📂 打开下载文件夹', open_folder),
         item('🚀 开机自启动', toggle_autostart, checked=get_autostart_state),
         pystray.Menu.SEPARATOR,

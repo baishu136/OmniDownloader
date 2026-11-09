@@ -65,12 +65,12 @@ fun CollectionTaskCard(
 
     val totalCount = tasks.size
     val completedCount = tasks.count { it.status == TaskStatus.COMPLETED }
-    val failedCount = tasks.count { it.status == TaskStatus.FAILED }
+    val failedCount = tasks.count { (it.status == TaskStatus.FAILED || it.status == TaskStatus.WAITING_FOR_AUTH) }
     val activeTask = tasks.find { it.status == TaskStatus.DOWNLOADING || it.status == TaskStatus.PROCESSING }
     val isAllCompleted = completedCount == totalCount && totalCount > 0
     val isDownloading = tasks.any { it.status == TaskStatus.DOWNLOADING || it.status == TaskStatus.PROCESSING }
     val isPending = tasks.any { it.status == TaskStatus.PENDING } && !isDownloading
-    val hasFailed = tasks.any { it.status == TaskStatus.FAILED || it.status == TaskStatus.CANCELLED }
+    val hasFailed = tasks.any { (it.status == TaskStatus.FAILED || it.status == TaskStatus.WAITING_FOR_AUTH) || it.status == TaskStatus.CANCELLED }
 
     val coverUrl = remember(tasks) {
         tasks.firstOrNull { it.thumbnailUrl.isNotBlank() }?.thumbnailUrl ?: ""
@@ -305,7 +305,7 @@ fun CollectionTaskCard(
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
-                                TaskStatus.FAILED -> {
+                                TaskStatus.FAILED, TaskStatus.WAITING_FOR_AUTH -> {
                                     IconButton(
                                         onClick = { onRetryEpisode(subTask.id) },
                                         modifier = Modifier.size(28.dp)
@@ -638,7 +638,7 @@ private fun CollectionActionBtn(
 private fun openMediaFile(context: Context, filePath: String, downloadType: DownloadType) {
     try {
         val file = File(filePath)
-        if (!file.exists()) {
+        if (!filePath.startsWith("content://") && !file.exists()) {
             Toast.makeText(context, "文件不存在或已被移动", Toast.LENGTH_SHORT).show()
             return
         }

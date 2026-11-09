@@ -2,7 +2,7 @@ package com.omni.downloader.engine
 
 import android.content.Context
 import android.os.SystemClock
-import android.util.Log
+import com.omni.downloader.engine.SafeLog as Log
 import com.omni.downloader.data.model.DownloadTask
 import com.omni.downloader.data.model.DownloadType
 import com.omni.downloader.data.model.FormatOption
@@ -33,7 +33,7 @@ object TikTokDirectExtractor {
     private const val MOBILE_UA =
         "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
 
-    private val httpClient = OkHttpClient.Builder()
+    private val httpClient = OkHttpClient.Builder().proxySelector(NetworkProxy)
         .followRedirects(true)
         .followSslRedirects(true)
         .connectTimeout(15, TimeUnit.SECONDS)

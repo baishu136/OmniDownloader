@@ -38,6 +38,9 @@ class DomesticDirectExtractor:
 
     @classmethod
     def _extract_sync(cls, raw_url: str, site: str) -> VideoMetadata:
+        if site in ("抖音", "小红书", "快手"):
+            from engine.platforms import PlatformEngine
+            return PlatformEngine._extract(raw_url, site)
         if site == "抖音":
             return cls._extract_douyin(raw_url)
         elif site == "快手":
@@ -73,7 +76,7 @@ class DomesticDirectExtractor:
                 target_item = item
                 break
         if not target_item and aweme_list:
-            target_item = aweme_list[0]
+            raise RuntimeError("[MEDIA_ID_MISMATCH] 未返回目标作品，拒绝推荐视频")
 
         if not target_item:
             raise RuntimeError("未能获取到抖音视频数据，请尝试通用引擎")
@@ -200,6 +203,9 @@ class DomesticDirectExtractor:
         cancel_event: asyncio.Event
     ) -> str:
         """流式直接下载国内短视频"""
+        from engine.platforms import PlatformEngine, platform
+        if platform(task.url) in ('抖音', '小红书', '快手'):
+            return await PlatformEngine.download(task, on_progress, cancel_event)
         clean_title = sanitize_filename(task.title)
         download_dir = Path(config.download_dir)
         download_dir.mkdir(parents=True, exist_ok=True)

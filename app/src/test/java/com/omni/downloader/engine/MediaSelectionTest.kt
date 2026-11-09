@@ -9,8 +9,21 @@ class MediaSelectionTest {
         assertEquals("https://example.org/watch?id=2", MediaSelection.childUrl("https://example.org/list", "网络视频", 1, "https://example.org/watch?id=2", "", "", "2"))
         assertNull(MediaSelection.childUrl("https://example.org/list", "网络视频", 1, "", "", "opaque-id", "2"))
     }
-    @Test fun twitterEntriesUseTheirOwnVideoIndex() {
-        assertEquals("https://x.com/user/status/123/video/3", MediaSelection.childUrl("https://x.com/user/status/123", "X (Twitter)", 2, "https://x.com/user/status/123", "", "", ""))
+    @Test fun twitterEntriesUseOnlyExplicitMediaIdentity() {
+        // 平台明确返回的 /video/N 可以使用
+        assertEquals(
+            "https://x.com/user/status/123/video/3",
+            MediaSelection.childUrl("https://x.com/user/status/123", "X (Twitter)", 2, "https://x.com/user/status/123/video/3", "", "", "")
+        )
+        // 没有显式地址时使用该 entry 自己的直链，而不是按过滤后序号拼接
+        assertEquals(
+            "https://video.twimg.com/amp/ext_tw_video/123.mp4",
+            MediaSelection.childUrl("https://x.com/user/status/123", "X (Twitter)", 0, "https://x.com/user/status/123", "", "https://video.twimg.com/amp/ext_tw_video/123.mp4", "")
+        )
+        // 两者都没有时返回 null，由上层跳过，避免下载到错误媒体
+        assertNull(
+            MediaSelection.childUrl("https://x.com/user/status/123", "X (Twitter)", 1, "https://x.com/user/status/123", "", "", "")
+        )
     }
     @Test fun bilibiliCollectionRetainsSharedEpisode() {
         val children = listOf("https://www.bilibili.com/video/BV1111111111", "https://www.bilibili.com/video/BV2222222222")
@@ -31,6 +44,23 @@ class MediaSelectionTest {
     @Test fun twitterVideoIndexIsPreserved() {
         val children = (1..3).map { "https://x.com/user/status/123/video/$it" }
         assertEquals(2, MediaSelection.initialIndex("https://twitter.com/user/status/123/video/3", children[0], children))
+    }
+    @Test fun twitterMergedEntryCanUseItsPostPageWithoutInventingAnIndex() {
+        val page = "https://x.com/user/status/123"
+        assertEquals(page, MediaSelection.childUrl(page, "X (Twitter)", 1, page, "", "", "987",
+            listOf("https://video.twimg.com/amplify_video/987/pl/stream.m3u8")))
+        assertNull(MediaSelection.childUrl(page, "X (Twitter)", 1, page, "", "", "", listOf("https://video.twimg.com/test.m3u8")))
+        assertNull(MediaSelection.childUrl(page, "X (Twitter)", 1, page, "", "", "987", listOf("https://example.test/unrelated.mp4")))
+    }
+    @Test fun twitterEntryCannotBorrowThePageOfAnotherPost() {
+        assertNull(MediaSelection.childUrl("https://x.com/user/status/123", "X (Twitter)", 0,
+            "https://x.com/user/status/456/video/1", "", "", "987", listOf("https://video.twimg.com/test.m3u8")))
+    }
+    @Test fun bareTwitterPostSelectsItsFirstVideoEvenIfPhotosComeFirst() {
+        val page = "https://x.com/user/status/123"
+        assertEquals(0, MediaSelection.initialIndex(page, page, listOf("$page/video/2", "$page/video/4")))
+        assertEquals(1, MediaSelection.initialIndex("$page/video/4", "$page/video/4", listOf("$page/video/2", "$page/video/4")))
+        assertEquals(-1, MediaSelection.initialIndex("$page/video/1", "$page/video/1", listOf("$page/video/2", "$page/video/4")))
     }
     @Test fun missingEntryDoesNotFallBackToAnUnrelatedFirstVideo() {
         assertEquals(-1, MediaSelection.initialIndex("https://youtu.be/missing", "https://www.youtube.com/watch?v=missing", listOf("https://youtu.be/other")))

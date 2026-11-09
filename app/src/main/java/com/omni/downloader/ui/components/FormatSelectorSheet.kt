@@ -37,6 +37,8 @@ import com.omni.downloader.data.model.AudioFormat
 import com.omni.downloader.data.model.DownloadType
 import com.omni.downloader.data.model.FormatOption
 import com.omni.downloader.data.model.VideoMetadata
+import com.omni.downloader.ui.model.formatDisplaySummary
+import com.omni.downloader.ui.model.supportsAudioExtraction
 
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -62,7 +64,8 @@ fun FormatSelectorSheet(
     onDownloadAllMultiMedia: () -> Unit = {},
     onDownloadSelectedMultiMedia: (Set<Int>, Boolean) -> Unit = { _, _ -> },
     onSaveCoverDirectly: () -> Unit = {},
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onRequestBrowserQuality: (() -> Unit)? = null
 ) {
     val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
     val isMultiVideo = metadata.multiMediaList.size > 1
@@ -195,6 +198,10 @@ fun FormatSelectorSheet(
                         }
                     }
                 }
+            }
+
+            if (currentMedia.siteName == "哔哩哔哩") {
+                Text("当前账号：${currentMedia.accountName.ifBlank { "未验证" }} · 访问：${currentMedia.accessState}", style = MaterialTheme.typography.bodySmall)
             }
 
             // 多视频 / 合集切换与选择模式
@@ -434,6 +441,7 @@ fun FormatSelectorSheet(
             }
             Spacer(modifier = Modifier.height(10.dp))
 
+            val supportsAudioExtraction = currentMedia.supportsAudioExtraction()
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -452,13 +460,15 @@ fun FormatSelectorSheet(
                     isSelected = selectedType == DownloadType.VIDEO_ONLY,
                     onClick = { onSelectType(DownloadType.VIDEO_ONLY) }
                 )
-                ModeTabChip(
-                    modifier = Modifier.weight(1f),
-                    title = strings.tabAudio,
-                    icon = Icons.Outlined.Audiotrack,
-                    isSelected = selectedType == DownloadType.AUDIO_ONLY,
-                    onClick = { onSelectType(DownloadType.AUDIO_ONLY) }
-                )
+                if (supportsAudioExtraction) {
+                    ModeTabChip(
+                        modifier = Modifier.weight(1f),
+                        title = strings.tabAudio,
+                        icon = Icons.Outlined.Audiotrack,
+                        isSelected = selectedType == DownloadType.AUDIO_ONLY,
+                        onClick = { onSelectType(DownloadType.AUDIO_ONLY) }
+                    )
+                }
                 ModeTabChip(
                     modifier = Modifier.weight(1f),
                     title = strings.tabGif,
@@ -471,6 +481,22 @@ fun FormatSelectorSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             // 模式对应选项内容区域
+            if (currentMedia.qualityEvidence.isNotBlank()) {
+                Text(currentMedia.qualityEvidence, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(8.dp))
+            }
+            if (currentMedia.qualityWarning.isNotBlank()) {
+                Text(currentMedia.qualityWarning, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.height(8.dp))
+            }
+            if (currentMedia.siteName == "抖音" && onRequestBrowserQuality != null) {
+                OutlinedButton(onClick = onRequestBrowserQuality, modifier = Modifier.fillMaxWidth()) {
+                    Text("浏览器读取更多画质")
+                }
+                Spacer(Modifier.height(8.dp))
+            }
             when (selectedType) {
                 DownloadType.VIDEO_WITH_AUDIO -> {
                     Text(
@@ -486,6 +512,7 @@ fun FormatSelectorSheet(
                         currentMedia.availableVideoFormats.forEach { format ->
                             FormatRowItem(
                                 format = format,
+                                alternatives = currentMedia.availableVideoFormats,
                                 isSelected = selectedVideoFormat?.formatId == format.formatId,
                                 onClick = { onSelectVideoFormat(format) }
                             )
@@ -506,6 +533,7 @@ fun FormatSelectorSheet(
                         currentMedia.availableVideoFormats.forEach { format ->
                             FormatRowItem(
                                 format = format,
+                                alternatives = currentMedia.availableVideoFormats,
                                 isSelected = selectedVideoFormat?.formatId == format.formatId,
                                 onClick = { onSelectVideoFormat(format) }
                             )
@@ -525,38 +553,6 @@ fun FormatSelectorSheet(
                                 audio = audio,
                                 isSelected = selectedAudioFormat == audio,
                                 onClick = { onSelectAudioFormat(audio) }
-                            )
-                        }
-                    }
-                }
-                DownloadType.GIF -> {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f))
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Outlined.AutoAwesome,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = strings.gifEngineTitle,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = strings.gifEngineDesc,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                lineHeight = 18.sp
                             )
                         }
                     }
@@ -783,6 +779,7 @@ private fun ModeTabChip(
 @Composable
 private fun FormatRowItem(
     format: FormatOption,
+    alternatives: List<FormatOption>,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -800,39 +797,16 @@ private fun FormatRowItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(selected = isSelected, onClick = onClick)
-            Spacer(modifier = Modifier.width(6.dp))
-            Column {
-                Text(
-                    text = format.resolutionLabel,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                if (format.fps > 30) {
-                    val codecPart = if (format.note.isNotEmpty()) " · ${format.note}" else ""
-                    Text(
-                        text = "${format.fps} FPS · ${format.ext.uppercase()}$codecPart",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else if (format.note.isNotEmpty()) {
-                    Text(
-                        text = format.note,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-        if (format.approximateSize.isNotEmpty()) {
-            Text(
-                text = format.approximateSize,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
+        RadioButton(selected = isSelected, onClick = onClick)
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = formatDisplaySummary(format, alternatives),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

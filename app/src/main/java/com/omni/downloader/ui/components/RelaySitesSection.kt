@@ -16,13 +16,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.omni.downloader.data.model.RelaySite
+import com.omni.downloader.data.repository.SettingsRepository
 
 /**
  * 中转站全局操作与状态持有者：
  * 隔离就地解析状态与浏览器弹窗状态，实现零冗余重组。
  */
 @Stable
-class RelaySitesState {
+class RelaySitesState(initialExpanded: Boolean = false, private val onExpandedChange: (Boolean) -> Unit = {}) {
     var resolvingSiteId by mutableStateOf<String?>(null)
     var resolvingSite by mutableStateOf<RelaySite?>(null)
     var resolvingVideoUrl by mutableStateOf("")
@@ -31,7 +32,13 @@ class RelaySitesState {
     var manualBrowserSite by mutableStateOf<RelaySite?>(null)
     var manualBrowserUrl by mutableStateOf("")
 
-    var isExpanded by mutableStateOf(false)
+    var isExpanded by mutableStateOf(initialExpanded)
+        private set
+
+    fun toggleExpanded() {
+        isExpanded = !isExpanded
+        onExpandedChange(isExpanded)
+    }
 
     fun startResolve(site: RelaySite, url: String) {
         resolvingSiteId = site.id
@@ -63,7 +70,11 @@ class RelaySitesState {
 }
 
 @Composable
-fun rememberRelaySitesState(): RelaySitesState = remember { RelaySitesState() }
+fun rememberRelaySitesState(): RelaySitesState {
+    val context = LocalContext.current
+    val settings = remember(context) { SettingsRepository.getInstance(context) }
+    return remember(settings) { RelaySitesState(settings.homeRelayExpanded.value, settings::setHomeRelayExpanded) }
+}
 
 /**
  * 顶级 LazyColumn 平铺扩展函数：
@@ -125,7 +136,7 @@ fun LazyListScope.relaySitesItems(
     if (relaySites.size > 3) {
         item(key = "relay_expand_button", contentType = "relay_action_button") {
             TextButton(
-                onClick = { relayState.isExpanded = !relayState.isExpanded },
+                onClick = { relayState.toggleExpanded() },
                 modifier = Modifier.fillMaxWidth(),
 
             ) {
@@ -254,7 +265,7 @@ fun RelaySitesSection(
 
         if (relaySites.size > 3) {
             TextButton(
-                onClick = { relayState.isExpanded = !relayState.isExpanded },
+                onClick = { relayState.toggleExpanded() },
                 modifier = Modifier.fillMaxWidth(),
 
             ) {

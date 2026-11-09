@@ -40,81 +40,24 @@ class UrlSniffer:
     @classmethod
     def identify_site(cls, url: str) -> str:
         """识别媒体平台归属"""
-        lower = url.lower()
-        if "bilibili.com" in lower or "b23.tv" in lower or lower.startswith("bv") or lower.startswith("av"):
-            return "哔哩哔哩"
-        if "youtube.com" in lower or "youtu.be" in lower:
-            return "YouTube"
-        if "twitter.com" in lower or "x.com" in lower:
-            return "X (Twitter)"
-        if "tiktok.com" in lower:
-            return "TikTok"
-        if "douyin.com" in lower or "iesdouyin.com" in lower:
-            return "抖音"
-        if "kuaishou.com" in lower or "kwai.com" in lower or "gifshow.com" in lower:
-            return "快手"
-        if "xiaohongshu.com" in lower or "xhslink.com" in lower or "rednote.com" in lower:
-            return "小红书"
-        if "instagram.com" in lower or "instagr.am" in lower:
-            return "Instagram"
-        if "facebook.com" in lower or "fb.watch" in lower or "fb.me" in lower:
-            return "Facebook"
-        if "pinterest.com" in lower or "pin.it" in lower:
-            return "Pinterest"
-        return "网络视频"
+        from engine.platforms import platform
+        return platform(url)
 
     @classmethod
     async def sanitize_and_resolve_url(cls, raw_url: str, proxy_url: str = "") -> str:
         """
         规范化并解析 URL（包含短链跟随重定向）
         """
-        clean_url = raw_url.strip()
-        if not clean_url:
-            return ""
-
-        # 若用户直接输入 BV 号
-        bv_match = re.search(r"BV[a-zA-Z0-9]{10}", clean_url, re.IGNORECASE)
-        if bv_match and "bilibili.com" not in clean_url and "b23.tv" not in clean_url:
-            return f"https://www.bilibili.com/video/{bv_match.group(0)}"
-
-        # 判断是否为常见需要重定向的短链
-        is_short_link = any(domain in clean_url for domain in [
-            "b23.tv", "v.douyin.com", "v.kuaishou.com", "xhslink.com",
-            "vm.tiktok.com", "vt.tiktok.com", "pin.it", "fb.watch", "fb.me"
-        ])
-
-        if not is_short_link:
-            return clean_url
-
-        # 在子线程中执行网络追踪
-        def _resolve() -> str:
-            ua = DESKTOP_UA if any(d in clean_url for d in ["xhslink.com", "b23.tv", "pin.it", "pinterest.com"]) else MOBILE_UA
-            headers = {"User-Agent": ua}
-            proxies = None
-            if proxy_url:
-                proxies = {"http": proxy_url, "https": proxy_url}
-
-            try:
-                # 不自动跟随重定向，手动探测最多 10 跳以获取真实最终目标
-                current = clean_url
-                for _ in range(10):
-                    resp = requests.head(current, headers=headers, proxies=proxies, timeout=8, allow_redirects=False)
-                    if 300 <= resp.status_code < 400 and "Location" in resp.headers:
-                        loc = resp.headers["Location"]
-                        if loc.startswith("/"):
-                            # 相对路径拼接
-                            from urllib.parse import urljoin
-                            current = urljoin(current, loc)
-                        else:
-                            current = loc
-                    else:
-                        break
-                return current
-            except Exception as e:
-                print(f"[UrlSniffer] 解析短链重定向提示: {e}")
-                return clean_url
-
-        return await asyncio.to_thread(_resolve)
+        from engine.platforms import normalize, http, page, platform
+        clean = normalize(raw_url.strip())
+        from urllib.parse import urlsplit
+        host = (urlsplit(clean).hostname or '').lower()
+        short = host in ('b23.tv', 'v.douyin.com', 'v.kuaishou.com', 'xhslink.com', 'xhslink.cn', 't.co', 'vm.tiktok.com', 'vt.tiktok.com', 'pin.it', 'fb.watch', 'fb.me')
+        if not short: return clean
+        def resolve():
+            session = http(platform(clean))
+            return normalize(page(session, clean).url)
+        return await asyncio.to_thread(resolve)
 
     @classmethod
     def unpack_direct_media_url(cls, raw_url: str, default_title: str = "中转下载视频") -> Tuple[str, str]:

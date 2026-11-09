@@ -4,11 +4,12 @@ OmniDownloader 配置管理器 (Windows 移植版)
 """
 
 import os
+import sys
 import json
 from pathlib import Path
 from typing import Dict, Any
 
-CONFIG_FILE = Path(__file__).parent.parent / "config.json"
+CONFIG_FILE = Path(os.environ["OMNI_STATE_DIR"]) / "config.json" if os.environ.get("OMNI_STATE_DIR") else (Path(os.environ.get("LOCALAPPDATA", Path.home())) / "OmniDownloader" / "config.json" if getattr(sys, "frozen", False) else Path(__file__).parent.parent / "config.json")
 
 
 def get_default_download_dir() -> str:
@@ -99,6 +100,16 @@ class AppConfig:
         self.has_shown_relay_compat_tip = True
         self.save()
 
+    def migrate_credentials(self):
+        if not self.bilibili_cookie: return
+        from core.session_store import sessions
+        header = self.bilibili_cookie.strip()
+        if '=' not in header: header = 'SESSDATA=' + header
+        rows = ['.bilibili.com\tTRUE\t/\tTRUE\t0\t' + part.strip().replace('=', '\t', 1) for part in header.split(';') if '=' in part]
+        sessions.import_text('哔哩哔哩', '# Netscape HTTP Cookie File\n' + '\n'.join(rows))
+        self.bilibili_cookie = ''
+        self.save()
+
     def save(self):
         """保存配置到本地 JSON"""
         data = {
@@ -111,6 +122,7 @@ class AppConfig:
             "has_shown_relay_compat_tip": self.has_shown_relay_compat_tip
         }
         try:
+            CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception as e:
@@ -121,7 +133,8 @@ class AppConfig:
         return {
             "downloadDir": self.download_dir,
             "proxyUrl": self.proxy_url,
-            "bilibiliCookie": self.bilibili_cookie,
+            "bilibiliCookie": "",
+            "hasBilibiliSession": __import__("core.session_store", fromlist=["sessions"]).sessions.status("哔哩哔哩")["state"] == "IMPORTED",
             "maxConcurrentTasks": self.max_concurrent_tasks,
             "theme": self.theme,
             "relaySites": self.relay_sites,
@@ -130,3 +143,4 @@ class AppConfig:
 
 
 config = AppConfig()
+config.migrate_credentials()

@@ -19,6 +19,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
@@ -136,17 +139,18 @@ fun OmniDownloaderTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
+    val context = LocalContext.current
+    val targetScheme = remember(context, dynamicColor, darkTheme, amoled) { when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         darkTheme && amoled -> AmoledColorScheme
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
-    }
+    } }
+    val colorScheme = animatedThemeColors(targetScheme)
 
-    val statusColors = remember(darkTheme) {
+    val targetStatusColors = remember(darkTheme) {
         if (darkTheme) {
             OmniStatusColors(
                 success = SuccessGreenDark,
@@ -163,17 +167,26 @@ fun OmniDownloaderTheme(
             )
         }
     }
+    val statusColors = OmniStatusColors(
+        animateColorAsState(targetStatusColors.success, tween(320), label = "status-success").value,
+        animateColorAsState(targetStatusColors.warning, tween(320), label = "status-warning").value,
+        animateColorAsState(targetStatusColors.error, tween(320), label = "status-error").value,
+        animateColorAsState(targetStatusColors.info, tween(320), label = "status-info").value
+    )
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = view.context.findActivity()?.window ?: return@SideEffect
+            window.decorView.setBackgroundColor(colorScheme.background.toArgb())
             // 透明系统栏 + 内容延伸到边，由 Scaffold 统一消费 Insets
             window.statusBarColor = Color.Transparent.toArgb()
             window.navigationBarColor = Color.Transparent.toArgb()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) window.isNavigationBarContrastEnforced = false
+            val lightBars = colorScheme.background.luminance() > 0.45f
             WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = !darkTheme
-                isAppearanceLightNavigationBars = !darkTheme
+                if (isAppearanceLightStatusBars != lightBars) isAppearanceLightStatusBars = lightBars
+                if (isAppearanceLightNavigationBars != lightBars) isAppearanceLightNavigationBars = lightBars
             }
         }
     }

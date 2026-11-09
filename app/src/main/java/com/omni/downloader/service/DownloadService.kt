@@ -168,13 +168,30 @@ class DownloadService : Service() {
                 // 已取消的任务不再发布完成通知，也不覆盖 CANCELLED 状态。
                 if (currentRunningTaskId == next.id) {
                     result.onSuccess { finalPath ->
-                        repository.markCompleted(next.id, finalPath)
-                        MediaScannerConnection.scanFile(
-                            applicationContext,
-                            arrayOf(finalPath),
-                            null
-                        ) { _, _ -> }
-                        showCompletedNotification(next)
+                        // 成品校验：绝不把“选了 1080P 实际 360P”报告成普通高清完成
+                        val expectedHeight = next.qualitySelection.maxHeight.takeIf { it > 0 }
+                            ?: com.omni.downloader.data.model.parseResolutionHeight(next.selectedResolution)
+                        val qualityError = if (
+                            next.downloadType == com.omni.downloader.data.model.DownloadType.VIDEO_WITH_AUDIO ||
+                            next.downloadType == com.omni.downloader.data.model.DownloadType.VIDEO_ONLY
+                        ) {
+                            com.omni.downloader.engine.MediaVerifier.verify(
+                                java.io.File(finalPath),
+                                expectedHeight
+                            )
+                        } else null
+
+                        if (qualityError != null) {
+                            repository.markFailed(next.id, qualityError)
+                        } else {
+                            repository.markCompleted(next.id, finalPath)
+                            if (!finalPath.startsWith("content://")) MediaScannerConnection.scanFile(
+                                applicationContext,
+                                arrayOf(finalPath),
+                                null
+                            ) { _, _ -> }
+                            showCompletedNotification(next)
+                        }
                     }.onFailure { err ->
                         repository.markFailed(next.id, err.message ?: "下载过程中遇到错误")
                     }

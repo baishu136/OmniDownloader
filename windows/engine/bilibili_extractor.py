@@ -35,6 +35,40 @@ def format_duration(seconds: int) -> str:
     return f"{h:02d}:{m:02d}:{s:02d}" if h > 0 else f"{m:02d}:{s:02d}"
 
 
+def collection_items(data, bvid, owner, pic, formats, account):
+    """Expand pages or UGC seasons with each child's own BV/CID and duration."""
+    pages = data.get('pages') or []
+    children = []
+    if len(pages) > 1:
+        rows = [(bvid, p, f"P{p.get('page', i + 1)} {p.get('part') or ''}", pic, p.get('duration') or 0)
+                for i, p in enumerate(pages)]
+    else:
+        season = data.get('ugc_season') or {}
+        rows = []
+        for section in season.get('sections') or []:
+            for ep in section.get('episodes') or []:
+                arc, page = ep.get('arc') or {}, ep.get('page') or {}
+                target = ep.get('bvid') or arc.get('bvid') or ''
+                if not re.fullmatch(r'BV[a-zA-Z0-9]{10}', target): continue
+                page = dict(page, cid=page.get('cid') or arc.get('cid'))
+                rows.append((target, page, f"[{season.get('title') or '合集'}] {ep.get('title') or arc.get('title') or target}",
+                             arc.get('pic') or pic, arc.get('duration') or page.get('duration') or 0))
+    seen = set()
+    for index, (target, page, title, cover, duration) in enumerate(rows):
+        number = int(page.get('page') or index + 1) if len(pages) > 1 else 1
+        identity = (target, number)
+        if identity in seen: continue
+        seen.add(identity)
+        cid = page.get('cid')
+        children.append(VideoMetadata(url=f'https://www.bilibili.com/video/{target}' + (f'?p={number}' if number > 1 else ''),
+            title=title, author=owner, durationText=format_duration(duration),
+            mediaId=f'{target}:{cid}' if cid else '', expectedDurationMs=int(duration * 1000),
+            thumbnailUrl='https:' + cover if cover.startswith('//') else cover,
+            accountId=account['id'], accountName=account['name'], accountVerifiedAt=account['checkedAt'],
+            siteName='哔哩哔哩', availableVideoFormats=formats))
+    return children
+
+
 class BilibiliDirectExtractor:
     """B站原生解析与下载"""
     session = requests.Session()
@@ -66,8 +100,13 @@ class BilibiliDirectExtractor:
     @classmethod
     def _get_cookie_header(cls) -> str:
         """获取并拼接用户自定义凭证"""
+        cls.session.proxies = {'http': config.proxy_url, 'https': config.proxy_url} if config.proxy_url else {}
         cls._ensure_cookies()
-        user_cookie = config.bilibili_cookie.strip()
+        # Remove stale account cookies when the saved session has been cleared/replaced.
+        cls.session.cookies.clear()
+        from core.session_store import sessions
+        cls.session.cookies.update(sessions.jar("哔哩哔哩"))
+        user_cookie = config.bilibili_cookie.strip() if sessions.is_enabled("哔哩哔哩") else ''
         cookie_parts = []
         for k, v in cls.session.cookies.items():
             cookie_parts.append(f"{k}={v}")
@@ -79,6 +118,20 @@ class BilibiliDirectExtractor:
                 cookie_parts.append(user_cookie)
 
         return "; ".join(cookie_parts)
+
+    @classmethod
+    def _verify_account(cls, headers):
+        result = {'id': '', 'name': '', 'verified': False, 'checkedAt': int(time.time() * 1000)}
+        if 'SESSDATA=' in headers.get('Cookie', ''):
+            try:
+                response = cls.session.get('https://api.bilibili.com/x/web-interface/nav', headers=headers, timeout=10).json()
+                data = response.get('data') or {}
+                if response.get('code') == 0 and data.get('isLogin') is True and data.get('mid'):
+                    result.update(id=str(data['mid']), name=data.get('uname') or '', verified=True)
+            except (requests.RequestException, ValueError): pass
+        from core.session_store import sessions
+        sessions.record_validation('哔哩哔哩', result)
+        return result
 
     @classmethod
     def extract_bvid(cls, url: str) -> Optional[str]:
@@ -112,6 +165,9 @@ class BilibiliDirectExtractor:
             raise RuntimeError(f"B站接口反馈: {resp_json.get('message', '未知错误')}")
 
         data = resp_json["data"]
+        account = cls._verify_account(headers)
+        exclusive = data.get('is_upower_exclusive', (data.get('rights') or {}).get('is_upower_exclusive'))
+        if exclusive == 1 and not account['verified']: raise RuntimeError('[AUTH_REQUIRED] 充电专属需要验证对应权益账号')
         title = data.get("title", "B站视频")
         pic = data.get("pic", "")
         if pic.startswith("//"):
@@ -129,71 +185,39 @@ class BilibiliDirectExtractor:
 
         # 2. 获取清晰度列表 (DASH playurl)
         play_api = f"https://api.bilibili.com/x/player/playurl?bvid={bvid}&cid={cid}&qn=120&fnval=4048&fnver=0&fourk=1"
-        play_resp = cls.session.get(play_api, headers=headers, timeout=12).json()
+        play_resp = cls._playinfo(play_api, headers)
 
         video_formats: List[FormatOption] = []
+        validate_playback(play_resp)
+        play_resp = cls._expand(play_resp, play_api, headers)
         play_data = play_resp.get("data", {})
         accept_quality = play_data.get("accept_quality", [])
         accept_desc = play_data.get("accept_description", [])
 
-        # 映射生成清晰度列表
-        for qn, desc in zip(accept_quality, accept_desc):
-            height = 1080
-            if qn >= 120:
-                height = 2160
-            elif qn >= 116:
-                height = 1080
-            elif qn >= 80:
-                height = 1080
-            elif qn >= 64:
-                height = 720
-            elif qn >= 32:
-                height = 480
-            elif qn >= 16:
-                height = 360
-
-            video_formats.append(
-                FormatOption(
-                    formatId=str(qn),
-                    resolutionLabel=desc,
-                    height=height,
-                    ext="mp4",
-                    note="DASH 原生流"
-                )
-            )
+        # Real DASH candidates; dimensions and codec are separate from Bilibili qn.
+        from engine.quality import label, score
+        streams = play_data.get("dash", {}).get("video", [])
+        for v in sorted(streams, key=lambda f: ((f.get("width") or 0) * (f.get("height") or 0), f.get("bandwidth") or 0), reverse=True):
+            w, h = v.get("width") or 0, v.get("height") or 0
+            video_formats.append(FormatOption(formatId=f'{v.get("id")}-{v.get("codecid", 0)}',
+                resolutionLabel=label(w, h), width=w, height=h, vcodec=v.get("codecs") or "",
+                isVideoOnly=True, ext="mp4"))
 
         if not video_formats:
-            video_formats.append(
-                FormatOption(
-                    formatId="80",
-                    resolutionLabel="1080P 高清 (默认)",
-                    height=1080,
-                    ext="mp4"
-                )
-            )
+            raise RuntimeError('[MEDIA_UNCONFIRMED] 当前账号未取得真实DASH格式，请检查登录和权益')
 
-        # 构建分P列表
-        multi_list: List[VideoMetadata] = []
-        if len(pages) > 1:
-            for p in pages:
-                p_num = p.get("page", 1)
-                p_part = p.get("part", f"P{p_num}")
-                p_dur = p.get("duration", 0)
-                multi_list.append(
-                    VideoMetadata(
-                        url=f"https://www.bilibili.com/video/{bvid}?p={p_num}",
-                        title=f"P{p_num} {p_part}",
-                        author=owner,
-                        durationText=format_duration(p_dur),
-                        thumbnailUrl=pic,
-                        siteName="哔哩哔哩",
-                        availableVideoFormats=video_formats
-                    )
-                )
-
-        final_title = f"{title} (共{len(pages)}集)" if len(pages) > 1 else title
+        expected_part = (pages[target_p-1].get('duration', 0) if pages else duration) * 1000
+        returned = play_data.get('timelength', 0)
+        if expected_part and returned and returned + 2000 < expected_part: raise RuntimeError('[PREVIEW_ONLY] 平台返回时长短于目标分P')
+        multi_list = collection_items(data, bvid, owner, pic, video_formats, account)
+        final_title = f"{title} (共{len(multi_list)}集)" if multi_list else title
         return VideoMetadata(
-            url=f"https://www.bilibili.com/video/{bvid}",
+            url=f"https://www.bilibili.com/video/{bvid}" + (f"?p={target_p}" if target_p > 1 else ""),
+            mediaId=f"{bvid}:{cid}", expectedDurationMs=int((pages[target_p-1].get("duration", 0) if pages else duration) * 1000),
+            accessState=access_state(None if exclusive is None else exclusive == 1, account['verified'], bool(streams), False, expected_part, returned),
+            accountId=account['id'], accountName=account['name'], accountVerifiedAt=account['checkedAt'],
+            exclusiveType='UPOWER' if exclusive == 1 else 'REGULAR' if exclusive == 0 else 'UNKNOWN',
+            accessEvidence=[f"accountVerified={account['verified']}", f"exclusive={exclusive}", "playurl.code=0", "dash=true", f"expectedMs={expected_part}", f"returnedMs={returned}"],
             title=final_title,
             author=owner,
             durationText=format_duration(duration),
@@ -204,169 +228,87 @@ class BilibiliDirectExtractor:
         )
 
     @classmethod
-    async def download(
-        cls,
-        task: DownloadTask,
-        on_progress: Callable[[float, str, str, TaskStatus], None],
-        cancel_event: asyncio.Event
-    ) -> str:
-        """执行 B 站下载任务"""
+    def _playinfo(cls, api, headers):
+        from engine.wbi import key, query
+        from urllib.parse import parse_qsl, urlsplit
+        def get(url):
+            response = cls.session.get(url, headers=headers, timeout=12)
+            if response.status_code == 404: return {'code': -404}
+            response.raise_for_status()
+            return response.json()
+        primary = get(api)
+        if primary.get('code', 0) not in (-400, -404): return primary
+        images = (get('https://api.bilibili.com/x/web-interface/nav').get('data') or {}).get('wbi_img') or {}
+        if not images: return primary
+        public = key(images.get('img_url', ''), images.get('sub_url', ''))
+        return get('https://api.bilibili.com/x/player/wbi/playurl?' + query(dict(parse_qsl(urlsplit(api).query)), public, round(time.time())))
+
+    @classmethod
+    def _expand(cls, response, api, headers):
+        validate_playback(response)
+        data = response.get('data') or {}
+        qualities = [int(q) for q in data.get('accept_quality', []) if str(q).isdigit()]
+        current = int(re.search(r'qn=(\d+)', api)[1])
+        if qualities and max(qualities) > current:
+            extra = cls._playinfo(re.sub(r'qn=\d+', f'qn={max(qualities)}', api), headers)
+            validate_playback(extra)
+            old = data.get('dash') or {}
+            new = (extra.get('data') or {}).get('dash') or {}
+            unique = {(v.get('id'), v.get('codecid')): v for v in old.get('video', []) + new.get('video', [])}
+            if new:
+                new['video'] = list(unique.values())
+                return extra
+        return response
+
+    @classmethod
+    async def download(cls, task, on_progress, cancel_event):
+        from engine.ytdlp_engine import YtDlpEngine
+        if YtDlpEngine.has_ready(task): return await YtDlpEngine.download(task, on_progress, cancel_event)
         bvid = cls.extract_bvid(task.url)
-        if not bvid:
-            raise ValueError("无法解析 B 站视频 ID")
+        if not bvid: raise ValueError('无法解析B站视频ID')
+        headers = {'User-Agent': PC_UA, 'Referer': 'https://www.bilibili.com/', 'Cookie': cls._get_cookie_header()}
+        api = f'https://api.bilibili.com/x/web-interface/view?bvid={bvid}' if bvid.upper().startswith('BV') else f'https://api.bilibili.com/x/web-interface/view?aid={bvid[2:]}'
+        view = await asyncio.to_thread(lambda: cls.session.get(api, headers=headers, timeout=12).json())
+        if view.get('code') != 0: raise RuntimeError('[CONTENT_UNAVAILABLE] 获取目标视频信息失败')
+        data = view['data']; pages = data.get('pages') or []
+        if data.get('is_upower_exclusive', (data.get('rights') or {}).get('is_upower_exclusive')) == 1 and not (await asyncio.to_thread(cls._verify_account, headers))['verified']: raise RuntimeError('[AUTH_REQUIRED] 充电专属需要验证对应权益账号')
+        match = re.search(r'[?&]p=(\d+)', task.url); number = int(match[1]) if match else 1
+        if number < 1 or (pages and number > len(pages)): raise ValueError('[MEDIA_ID_MISMATCH] 分P不存在')
+        part = pages[number - 1] if pages else data
+        cid = part.get('cid')
+        actual_id = f'{bvid}:{cid}'
+        if task.media_id and task.media_id != actual_id: raise ValueError('[MEDIA_ID_MISMATCH] 分P身份已改变')
+        api = f'https://api.bilibili.com/x/player/playurl?bvid={bvid}&cid={cid}&qn=120&fnval=4048&fnver=0&fourk=1'
+        response = await asyncio.to_thread(lambda: cls._expand(cls._playinfo(api, headers), api, headers))
+        dash = (response.get('data') or {}).get('dash') or {}
+        formats = []
+        for v in dash.get('video', []):
+            rate = str(v.get('frame_rate') or '0').split('/')
+            fps = float(rate[0]) / float(rate[1]) if len(rate) == 2 and float(rate[1]) else float(rate[0])
+            formats.append(dict(v, format_id=f'{v.get("id")}-{v.get("codecid", 0)}', url=v.get('baseUrl') or v.get('base_url'), ext='mp4',
+                                vcodec=v.get('codecs') or 'unknown', acodec='none', fps=fps, tbr=v.get('bandwidth', 0) / 1000))
+        for a in dash.get('audio', []):
+            formats.append(dict(format_id=f'audio-{a.get("id")}', url=a.get('baseUrl') or a.get('base_url'), ext='m4a',
+                                vcodec='none', acodec=a.get('codecs') or 'mp4a.40.2', abr=a.get('bandwidth', 0) / 1000))
+        if not formats: raise RuntimeError('[MEDIA_UNCONFIRMED] 未取得目标视频DASH流')
+        info = dict(id=actual_id, title=task.title, webpage_url=task.url, extractor='BilibiliNative',
+                    duration=part.get('duration') or data.get('duration'), thumbnail=task.thumbnail_url or data.get('pic'), formats=formats,
+                    http_headers={'User-Agent': PC_UA, 'Referer': f'https://www.bilibili.com/video/{bvid}'})
+        with YtDlpEngine._lock: YtDlpEngine._cache[YtDlpEngine._key(task.url, '哔哩哔哩')] = (time.monotonic(), info)
+        return await YtDlpEngine.download(task, on_progress, cancel_event)
 
-        on_progress(0.0, "", "正在获取高清播放直链...", TaskStatus.DOWNLOADING)
-        headers = {
-            "User-Agent": PC_UA,
-            "Referer": "https://www.bilibili.com",
-            "Cookie": cls._get_cookie_header()
-        }
 
-        # 1. 获取视频真实标题与 cid
-        view_api = f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}" if bvid.upper().startswith("BV") else f"https://api.bilibili.com/x/web-interface/view?aid={bvid[2:]}"
-        view_json = (await asyncio.to_thread(cls.session.get, view_api, headers=headers, timeout=12)).json()
-        data = view_json.get("data", {})
-        pages = data.get("pages", [])
-        real_title = data.get("title", task.title)
-        cid = pages[0].get("cid", 0) if pages else data.get("cid", 0)
+def validate_playback(response):
+    if response.get('code', 0) != 0:
+        reason = {-101: 'AUTH_REQUIRED', -352: 'CHALLENGE_REQUIRED', -412: 'CHALLENGE_REQUIRED', -403: 'ACCESS_DENIED', -10403: 'ACCESS_DENIED', -404: 'CONTENT_UNAVAILABLE'}.get(response.get('code'), 'EXTRACTOR_CHANGED')
+        raise RuntimeError(f'[{reason}] B站播放接口拒绝访问，请检查目标账号、权益和接口状态')
+    data = response.get('data') or {}
+    if data.get('is_preview') or any('试看' in str(x) for x in data.get('accept_description', [])):
+        raise RuntimeError('[PREVIEW_ONLY] 当前仅取得试看，请确认目标视频的充电权益')
 
-        # 匹配具体分P
-        p_match = re.search(r"[?&]p=(\d+)", task.url)
-        p_num = int(p_match.group(1)) if p_match else 1
-        if pages:
-            for p in pages:
-                if p.get("page") == p_num:
-                    cid = p.get("cid", cid)
-                    part = p.get("part", "")
-                    real_title = f"{real_title} - P{p_num} {part}" if part else f"{real_title} - P{p_num}"
-                    break
 
-        clean_title = sanitize_filename(real_title)
-        download_dir = Path(config.download_dir)
-        download_dir.mkdir(parents=True, exist_ok=True)
-        staging_dir = download_dir / ".staging"
-        staging_dir.mkdir(parents=True, exist_ok=True)
-
-        # 0. 仅保存封面处理
-        if task.download_type == DownloadType.COVER:
-            cover_url = task.thumbnail_url or data.get("pic", "")
-            if not cover_url:
-                raise ValueError("未获取到封面图地址")
-            dest = download_dir / f"{clean_title}_cover.jpg"
-            on_progress(30.0, "", "正在下载封面图片...", TaskStatus.DOWNLOADING)
-            resp = await asyncio.to_thread(requests.get, cover_url, headers=headers, timeout=15)
-            with open(dest, "wb") as f:
-                f.write(resp.content)
-            on_progress(100.0, "", "封面已保存", TaskStatus.COMPLETED)
-            return str(dest)
-
-        # 2. 请求 DASH 流地址
-        qn_req = task.selected_resolution if task.selected_resolution.isdigit() else "120"
-        play_api = f"https://api.bilibili.com/x/player/playurl?bvid={bvid}&cid={cid}&qn={qn_req}&fnval=4048&fnver=0&fourk=1"
-        play_json = (await asyncio.to_thread(cls.session.get, play_api, headers=headers, timeout=12)).json()
-        dash = play_json.get("data", {}).get("dash")
-        if not dash:
-            raise RuntimeError("未能获取到 B 站 DASH 音视频流")
-
-        video_streams = dash.get("video", [])
-        audio_streams = dash.get("audio", [])
-
-        # 选择最匹配的视频轨
-        target_video = None
-        for v in video_streams:
-            if str(v.get("id")) == qn_req:
-                target_video = v
-                break
-        if not target_video and video_streams:
-            target_video = video_streams[0]
-
-        # 选择码率最高的音频轨
-        target_audio = max(audio_streams, key=lambda a: a.get("bandwidth", 0)) if audio_streams else None
-
-        video_url = target_video.get("baseUrl") or target_video.get("base_url") if target_video else None
-        audio_url = target_audio.get("baseUrl") or target_audio.get("base_url") if target_audio else None
-
-        temp_video = staging_dir / f"bili_{task.id}_video.m4s"
-        temp_audio = staging_dir / f"bili_{task.id}_audio.m4s"
-
-        stream_headers = {
-            "User-Agent": PC_UA,
-            "Referer": f"https://www.bilibili.com/video/{bvid}"
-        }
-
-        # 内部流式分段下载器
-        async def _download_stream(url: str, dest_path: Path, weight: float, base_prog: float, label: str):
-            def _download():
-                with requests.get(url, headers=stream_headers, stream=True, timeout=20) as r:
-                    r.raise_for_status()
-                    total_size = int(r.headers.get("content-length", 0))
-                    downloaded = 0
-                    start_time = time.time()
-                    last_time = start_time
-
-                    with open(dest_path, "wb") as f:
-                        for chunk in r.iter_content(chunk_size=1024 * 128):
-                            if cancel_event.is_set():
-                                raise asyncio.CancelledError("下载被取消")
-                            if chunk:
-                                f.write(chunk)
-                                downloaded += len(chunk)
-                                now = time.time()
-                                if now - last_time >= 0.5:
-                                    last_time = now
-                                    ratio = downloaded / total_size if total_size > 0 else 0.5
-                                    prog = base_prog + ratio * weight
-                                    speed_mb = (downloaded / (now - start_time)) / (1024 * 1024)
-                                    eta_s = int((total_size - downloaded) / (downloaded / (now - start_time))) if total_size > downloaded and now > start_time else 0
-                                    eta_str = f"{eta_s // 60}分{eta_s % 60}秒" if eta_s > 0 else ""
-                                    on_progress(round(prog, 1), f"{speed_mb:.1f} MB/s", eta_str, TaskStatus.DOWNLOADING)
-
-            await asyncio.to_thread(_download)
-
-        # 3. 执行分轨下载与合并
-        try:
-            if task.download_type == DownloadType.AUDIO_ONLY:
-                # 仅音频
-                if not audio_url:
-                    raise RuntimeError("未发现可用音频轨")
-                await _download_stream(audio_url, temp_audio, 90.0, 0.0, "下载音频流")
-                on_progress(92.0, "", "正在转码音频格式...", TaskStatus.PROCESSING)
-                final_file = download_dir / f"{clean_title}.{task.audio_format.value}"
-                await FFmpegHelper.extract_audio(str(temp_audio), str(final_file), task.audio_format.value)
-            else:
-                # 包含画面的下载
-                if not video_url:
-                    raise RuntimeError("未发现可用视频轨")
-                await _download_stream(video_url, temp_video, 75.0, 0.0, "下载视频画面")
-
-                if task.download_type == DownloadType.VIDEO_ONLY:
-                    # 仅纯画面
-                    final_file = download_dir / f"{clean_title}_mute.mp4"
-                    on_progress(80.0, "", "正在导出纯画面视频...", TaskStatus.PROCESSING)
-                    await FFmpegHelper.strip_audio(str(temp_video), str(final_file))
-                elif task.download_type == DownloadType.GIF:
-                    # 动图 GIF
-                    final_file = download_dir / f"{clean_title}.gif"
-                    on_progress(80.0, "", "正在转换为 GIF 动图...", TaskStatus.PROCESSING)
-                    await FFmpegHelper.convert_to_gif(str(temp_video), str(final_file))
-                else:
-                    # 音画合流
-                    if audio_url:
-                        await _download_stream(audio_url, temp_audio, 18.0, 75.0, "下载音频轨道")
-                        final_file = download_dir / f"{clean_title}.mp4"
-                        on_progress(94.0, "", "正在混流封装 MP4 (FFmpeg)...", TaskStatus.PROCESSING)
-                        await FFmpegHelper.merge_video_and_audio(str(temp_video), str(temp_audio), str(final_file))
-                    else:
-                        final_file = download_dir / f"{clean_title}.mp4"
-                        temp_video.replace(final_file)
-
-            on_progress(100.0, "", "下载完成", TaskStatus.COMPLETED)
-            return str(final_file)
-        finally:
-            # 清理临时切片
-            for p in [temp_video, temp_audio]:
-                if p.exists():
-                    try:
-                        p.unlink()
-                    except Exception:
-                        pass
+def access_state(exclusive, account_verified, has_stream, preview, expected_ms, returned_ms):
+    if preview or (expected_ms and returned_ms and returned_ms + 2000 < expected_ms): return 'PREVIEW'
+    if exclusive is True and not account_verified: return 'DENIED'
+    if not has_stream or not expected_ms or not returned_ms: return 'UNKNOWN'
+    return 'FULL' if abs(expected_ms-returned_ms) <= 2000 and (exclusive is False or account_verified) else 'UNKNOWN'

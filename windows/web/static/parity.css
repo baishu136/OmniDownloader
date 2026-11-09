@@ -1,0 +1,34 @@
+:root{--omni-bg:#f7f7fb;--omni-surface:#fff;--omni-fg:#1a1b21;--omni-muted:#46464f;--omni-outline:#dcdce5;--omni-primary:#3b5bdb;--omni-container:#dce3ff;--omni-on-container:#0a1a5c}
+html.dark{--omni-bg:#0f1217;--omni-surface:#191c24;--omni-fg:#e3e2e8;--omni-muted:#c6c6d0;--omni-outline:#44464f;--omni-primary:#b3c5ff;--omni-container:#263b70;--omni-on-container:#dce3ff;color-scheme:dark}
+body{background:var(--omni-bg)!important;color:var(--omni-fg)!important;font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+header{background:var(--omni-bg)!important;border:0!important;box-shadow:none!important}
+header h1{background:none!important;color:var(--omni-fg)!important;-webkit-text-fill-color:var(--omni-fg);font-size:23px!important}
+button,input,select,textarea{font:inherit}button{touch-action:manipulation;transition:background-color .18s ease,transform .15s ease,box-shadow .18s ease}
+button:not(:disabled):active{transform:scale(.97)}button:focus-visible,a:focus-visible{outline:3px solid var(--omni-primary);outline-offset:3px}
+button:disabled{cursor:not-allowed;opacity:.5}input,textarea,select{color:var(--omni-fg);accent-color:var(--omni-primary)}
+.omni-version{font-size:12px;background:var(--omni-container);color:var(--omni-on-container);border-radius:9px;padding:3px 8px;margin-left:9px;white-space:nowrap}
+.omni-home-card{background:transparent!important;box-shadow:none!important;border:0!important;padding:12px 0!important;overflow:visible!important}
+.omni-home-card>.pointer-events-none{display:none}.omni-platforms{display:flex;flex-wrap:wrap;gap:8px;text-align:left;margin-bottom:18px}
+.omni-platform{border:0;border-radius:22px;padding:8px 12px;background:var(--omni-surface);color:var(--omni-muted);font-size:13px;white-space:nowrap}
+.omni-platform span{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;background:var(--dot)}
+.omni-input{position:relative;display:flex;align-items:center;background:var(--omni-surface);border:1px solid var(--omni-outline);border-radius:24px;min-height:62px;text-align:left}
+.omni-input input{width:100%;min-width:0;border:0!important;box-shadow:none!important;background:transparent!important;padding:19px 48px!important;font-size:15px;outline:0}
+.omni-input>i{position:absolute;left:18px;color:var(--omni-primary)}.omni-inline-paste{position:absolute;right:10px;min-width:40px;min-height:40px;color:var(--omni-muted);border-radius:50%}
+.omni-actions{display:flex;gap:12px;margin-top:12px}.omni-actions>button{flex:1;min-height:52px;border-radius:24px!important;font-size:15px!important;padding:12px!important;justify-content:center}
+.omni-actions>button:first-child{background:var(--omni-surface)!important;color:var(--omni-fg)!important;box-shadow:none!important}
+.omni-actions>button:last-child{background:var(--omni-container)!important;color:var(--omni-on-container)!important;box-shadow:none!important}
+.omni-assist{margin-top:14px;text-align:left;color:var(--omni-muted);font-size:13px}.omni-assist summary{cursor:pointer;min-height:34px}.omni-assist button{padding:9px 12px;border:1px solid var(--omni-outline);border-radius:18px;margin:4px}
+.omni-settings{max-width:720px;margin:auto!important;border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}
+.omni-settings h2{font-size:24px;margin:12px 0 24px;font-weight:650}.omni-settings-menu{display:grid;gap:6px}
+.omni-settings-row{display:flex;align-items:center;gap:22px;text-align:left;min-height:88px;width:100%;padding:18px 14px;border-radius:22px;color:var(--omni-fg)}
+.omni-settings-row:hover{background:var(--omni-surface)}.omni-settings-row>i:first-child{width:28px;text-align:center;color:var(--omni-primary);font-size:23px}.omni-settings-row>span{flex:1}.omni-settings-row strong{display:block;font-size:17px;font-weight:500}.omni-settings-row small{display:block;font-size:14px;color:var(--omni-muted);margin-top:3px}.omni-settings-row>i:last-child{color:var(--omni-muted)}
+.omni-child{animation:omni-enter .2s ease}.omni-child-head{display:flex;align-items:center;gap:14px;margin-bottom:24px}.omni-child-head h2{margin:0}.omni-child-head button{width:44px;height:44px;border-radius:50%;color:var(--omni-fg)}
+.omni-child-content{display:grid;gap:24px;background:var(--omni-surface);padding:24px;border:1px solid var(--omni-outline);border-radius:26px}.omni-settings-save{margin:20px 0;display:flex;justify-content:flex-end}.omni-settings-save button{min-height:48px;background:var(--omni-container)!important;color:var(--omni-on-container)!important;border-radius:24px;padding:12px 24px}
+.omni-engine-status{white-space:pre-wrap;word-break:break-word;font-size:13px;color:var(--omni-muted)}
+.omni-settings-menu.hidden,.omni-settings-save.hidden{display:none}
+nav.omni-nav{background:transparent!important;border:0!important;box-shadow:none!important;padding:4px!important}nav.omni-nav button{min-height:48px;border-radius:28px!important}.omni-nav button[aria-current=page]{background:var(--omni-container)!important;color:var(--omni-on-container)!important;box-shadow:none!important}
+@keyframes omni-enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:640px){header>div{flex-wrap:nowrap!important;padding:16px!important}header>div>div:last-child{display:none}header h1{font-size:24px!important}header>div>div:first-child{width:100%}nav.omni-nav{position:fixed;z-index:60;bottom:0;left:0;right:0;background:var(--omni-bg)!important;display:flex;justify-content:space-around;border-top:1px solid var(--omni-outline)!important;padding:8px 6px max(10px,env(safe-area-inset-bottom))!important;border-radius:0!important;gap:0!important}nav.omni-nav button{flex:1;display:flex!important;flex-direction:column;gap:4px;margin:0!important;padding:6px!important;font-size:12px!important;min-height:54px}nav.omni-nav button i{font-size:20px}body>main{padding:12px 20px 110px!important}.omni-settings-row{padding:16px 6px;gap:20px;min-height:90px}.omni-child-content{padding:18px}.omni-platforms{gap:7px}.omni-platform{font-size:12px;padding:7px 10px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}button:active{transform:none!important}}
+.omni-language { display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:22px; }
+.omni-language select { background:var(--omni-surface,#eef0f8);color:inherit;border:1px solid #858a9a66;border-radius:14px;padding:10px 16px; }

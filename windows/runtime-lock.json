@@ -1,0 +1,16 @@
+{
+  "deno": {
+    "version": "2.9.8",
+    "url": "https://github.com/denoland/deno/releases/download/v2.9.8/deno-x86_64-pc-windows-msvc.zip",
+    "archiveSha256": "cba84b26e0df5ae7f74fc66b86a95b866872a86292ebd84fa1e959927edd93bf",
+    "binarySha256": "924397800533d3eb0ed0c889b20ad70e18b970d93acd8135bc043f425e528266",
+    "archiveEntry": "deno.exe"
+  },
+  "ffmpeg": {
+    "version": "7.1-essentials_build-www.gyan.dev",
+    "url": "https://github.com/GyanD/codexffmpeg/releases/download/7.1/ffmpeg-7.1-essentials_build.zip",
+    "archiveSha256": "fa7d4d7e795db0e2503f49f105f46ed5852386f0cfdd819899be3b65ebde24fc",
+    "binarySha256": "2ce797a0f88d7f067180338fb227f7b1928ea727bd9a4d7a1d022f7c52af71a3",
+    "archiveEntry": "ffmpeg-7.1-essentials_build/bin/ffmpeg.exe"
+  }
+}

@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -14,6 +15,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -39,6 +41,8 @@ import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.MoreHoriz
+import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import com.omni.downloader.ui.design.TabProgressIndicator
@@ -60,6 +64,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,6 +72,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
+import com.omni.downloader.ui.model.collapsedPlatformCount
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -75,6 +83,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omni.downloader.data.model.RelaySite
 import com.omni.downloader.ui.components.FormatSelectorSheet
+import com.omni.downloader.ui.components.MediaCaptureDialog
 import com.omni.downloader.ui.components.RelaySitesOverlays
 import com.omni.downloader.ui.components.TaskCard
 import com.omni.downloader.ui.components.relaySitesItems
@@ -121,6 +130,9 @@ fun HomeScreen(
 
     var showBilibiliGuideDialog by remember { mutableStateOf(false) }
     var showBilibiliLoginSheet by remember { mutableStateOf(false) }
+    var showMediaCapture by remember { mutableStateOf(false) }
+    var mediaCaptureUrl by remember { mutableStateOf("") }
+    var continueAfterVerification by remember { mutableStateOf(false) }
 
     // 首页常驻组合在后台时不应弹出引导弹窗，只有当前页面可见时才触发
     LaunchedEffect(hasPromptedBilibiliLogin, bilibiliCookie, isActive) {
@@ -143,7 +155,7 @@ fun HomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().testTag("home_list"),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -229,14 +241,57 @@ fun HomeScreen(
                 }
             },
             dismissButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.dismissErrorDialog()
-                        onNavigateToSettings()
+                Row {
+                    if (errorDialogDetail?.contains("BROWSER_ASSIST_REQUIRED") == true ||
+                        (com.omni.downloader.engine.LinkNormalizer.platformOf(inputUrl) == "抖音" &&
+                            errorDialogDetail.orEmpty().let { "MEDIA_UNCONFIRMED" in it || "AUTH_REQUIRED" in it || "CHALLENGE_REQUIRED" in it })) {
+                        TextButton(
+                            onClick = {
+                                viewModel.dismissErrorDialog()
+                                mediaCaptureUrl = inputUrl
+                                continueAfterVerification = true
+                                showMediaCapture = true
+                            }
+                        ) {
+                            Text(strings.browserCaptureAction)
+                        }
                     }
-                ) {
-                    Text(strings.setProxy)
+                    TextButton(
+                        onClick = {
+                            if (errorDialogDetail.orEmpty().let { "AUTH_REQUIRED" in it || "CHALLENGE_REQUIRED" in it }) {
+                                viewModel.requestedSessionPlatform.value = com.omni.downloader.engine.UrlSniffer.identifySite(inputUrl)
+                            }
+                            viewModel.dismissErrorDialog()
+                            onNavigateToSettings()
+                        }
+                    ) {
+                        Text(if (errorDialogDetail.orEmpty().let { "AUTH_REQUIRED" in it || "CHALLENGE_REQUIRED" in it })
+                            if (com.omni.downloader.engine.UrlSniffer.identifySite(inputUrl) == "YouTube") "导入 YouTube Cookie" else "账户与会话"
+                        else strings.setProxy)
+                    }
                 }
+            }
+        )
+    }
+
+    // 浏览器辅助捕获（分享页为 SPA、后台无法直接取流时）
+    if (isActive && showMediaCapture) {
+        val captureUrl = mediaCaptureUrl.ifBlank { inputUrl }
+        if (com.omni.downloader.engine.LinkNormalizer.platformOf(captureUrl) == com.omni.downloader.engine.LinkNormalizer.PLATFORM_DOUYIN) {
+            com.omni.downloader.ui.components.DouyinVideoBrowser(captureUrl,
+                onDismiss = { showMediaCapture = false },
+                onCaptured = { item, url -> showMediaCapture = false; viewModel.acceptBrowserVideo(item, url) },
+                autoContinue = continueAfterVerification)
+        } else MediaCaptureDialog(
+            startUrl = captureUrl,
+            onDismissRequest = { showMediaCapture = false },
+            onCaptured = { directUrl ->
+                showMediaCapture = false
+                viewModel.startDirectDownload(
+                    context = context,
+                    directUrl = directUrl,
+                    title = strings.browserCaptureTitle
+                )
             }
         )
     }
@@ -257,7 +312,13 @@ fun HomeScreen(
             onDownloadAllMultiMedia = { viewModel.startDownloadAllMultiMedia(context) },
             onDownloadSelectedMultiMedia = { indices, saveCover -> viewModel.startDownloadSelectedMultiMedia(context, indices, saveCover) },
             onSaveCoverDirectly = { viewModel.downloadCoverDirectly(context) },
-            onDismiss = { viewModel.dismissFormatSheet() }
+            onDismiss = { viewModel.dismissFormatSheet() },
+            onRequestBrowserQuality = {
+                continueAfterVerification = false
+                mediaCaptureUrl = metadata?.let { it.multiMediaList.getOrNull(selectedMultiMediaIndex)?.url ?: it.url }.orEmpty()
+                viewModel.dismissFormatSheet()
+                showMediaCapture = true
+            }
         )
     }
 
@@ -368,6 +429,7 @@ private fun HomeInputPanel(
 ) {
     val context = LocalContext.current
     val strings = LocalAppStrings.current
+    val analysisStage by viewModel.analysisStage.collectAsStateWithLifecycle()
 
     OmniCard(contentPadding = PaddingValues(14.dp)) {
         TextField(
@@ -483,7 +545,7 @@ private fun HomeInputPanel(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = strings.analyzing,
+                                text = analysisStage.ifBlank { strings.analyzing },
                                 style = MaterialTheme.typography.labelLarge,
                                 maxLines = 1,
                                 softWrap = false,
@@ -516,7 +578,8 @@ private fun HomeInputPanel(
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HomePlatformChips() {
+internal fun HomePlatformChips() {
+    var expanded by rememberSaveable { mutableStateOf(false) }
     val supportedPlatforms = remember {
         listOf(
             "哔哩哔哩" to BilibiliPink,
@@ -528,22 +591,39 @@ private fun HomePlatformChips() {
             "X (Twitter)" to TwitterBlue,
             "Instagram" to InstagramPink,
             "Facebook" to FacebookBlue,
-            "Pinterest" to PinterestRed
+            "Pinterest" to PinterestRed,
+            "Pixiv" to Color(0xFF0096FA),
+            "小黑盒" to Color(0xFF64748B)
         )
     }
-    FlowRow(
-        modifier = Modifier
-            .testTag("home_platforms")
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
-        verticalArrangement = Arrangement.spacedBy(7.dp)
-    ) {
-        supportedPlatforms.forEach { (name, color) ->
-            PlatformChip(
-                name = name,
-                color = if (name == "抖音") MaterialTheme.colorScheme.onSurfaceVariant else color
-            )
+    val density = LocalDensity.current
+    val measurer = rememberTextMeasurer()
+    val style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium)
+    BoxWithConstraints(Modifier.fillMaxWidth().testTag("home_platforms").animateContentSize(tween(260))) {
+        val width = with(density) { maxWidth.roundToPx() }
+        val widths = remember(measurer, density, style, supportedPlatforms) {
+            supportedPlatforms.map { (name, _) -> measurer.measure(name, style).size.width + with(density) { 32.dp.roundToPx() } }
+        }
+        val count = collapsedPlatformCount(width, widths, with(density) { 7.dp.roundToPx() }, with(density) { 32.dp.roundToPx() })
+        FlowRow(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(7.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            supportedPlatforms.forEachIndexed { index, (name, color) ->
+                AnimatedVisibility(visible = expanded || index < count,
+                    enter = fadeIn(tween(180)), exit = fadeOut(tween(120))) {
+                    PlatformChip(name, if (name == "抖音") MaterialTheme.colorScheme.onSurfaceVariant else color)
+                }
+            }
+            if (count < supportedPlatforms.size) IconButton(
+                onClick = { expanded = !expanded },
+                modifier = Modifier.size(32.dp).testTag("home_platforms_toggle")
+            ) {
+                Icon(if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.MoreHoriz,
+                    contentDescription = if (expanded) "收起支持的平台" else "展开支持的平台",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     }
 }

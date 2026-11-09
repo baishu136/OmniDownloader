@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,7 +90,13 @@ fun TaskCard(
     val context = LocalContext.current
     val strings = LocalAppStrings.current
     val statusColors = LocalStatusColors.current
-    val isGifTask = task.downloadType == DownloadType.GIF || task.localFilePath.endsWith(".gif", ignoreCase = true)
+    val mediaMime by produceState(initialValue = com.omni.downloader.engine.MediaFileType.mime(null, task.localFilePath, null, task.downloadType),
+        task.localFilePath, task.downloadType) {
+        if (task.localFilePath.isNotBlank()) value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            resolveMediaMime(context, task.localFilePath, task.downloadType)
+        }
+    }
+    val isImageTask = mediaMime.startsWith("image/")
     var showGifPreviewDialog by remember { mutableStateOf(false) }
 
     val resolvedProgressFlow = remember(task.id, progressFlow, progressFlowProvider) {
@@ -114,6 +121,7 @@ fun TaskCard(
         TaskStatus.PROCESSING -> strings.statusProcessing
         TaskStatus.COMPLETED -> strings.statusCompleted
         TaskStatus.FAILED -> strings.statusFailed
+        TaskStatus.WAITING_FOR_AUTH -> "等待登录/验证"
         TaskStatus.CANCELLED -> strings.statusCancelled
     }
 
@@ -160,6 +168,8 @@ fun TaskCard(
                                 DownloadType.AUDIO_ONLY -> "${strings.badgeAudio}: ${task.audioFormat.ext.uppercase()}"
                                 DownloadType.GIF -> "${strings.badgeGif}: GIF"
                                 DownloadType.COVER -> "${strings.badgeCover}: 原图"
+                                DownloadType.IMAGE -> "图文：原始图片"
+                                DownloadType.IMAGE_ZIP -> "图文：ZIP 归档"
                             },
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -181,7 +191,7 @@ fun TaskCard(
                     fallbackEtaText = task.etaText,
                     progressFlow = resolvedProgressFlow
                 )
-            } else if (task.status == TaskStatus.FAILED && task.errorMessage.isNotEmpty()) {
+            } else if ((task.status == TaskStatus.FAILED || task.status == TaskStatus.WAITING_FOR_AUTH) && task.errorMessage.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(10.dp))
                 TaskErrorSection(errorMessage = task.errorMessage)
             }
@@ -206,7 +216,7 @@ fun TaskCard(
 
                     TaskStatus.COMPLETED -> {
                         OmniPillButton(
-                            text = if (task.downloadType == DownloadType.GIF || task.downloadType == DownloadType.COVER) "查看" else strings.play,
+                            text = if (isImageTask) "查看" else strings.play,
                             icon = when (task.downloadType) {
                                 DownloadType.COVER -> Icons.Outlined.Image
                                 DownloadType.GIF -> Icons.Outlined.Visibility
@@ -214,7 +224,7 @@ fun TaskCard(
                             },
                             primary = true,
                             onClick = {
-                                if (isGifTask) {
+                                if (isImageTask) {
                                     showGifPreviewDialog = true
                                 } else {
                                     openMediaFile(context, task.localFilePath, task.downloadType)
@@ -225,7 +235,7 @@ fun TaskCard(
                         TaskIconBtn(
                             icon = Icons.Outlined.Share,
                             contentDescription = "分享",
-                            onClick = { shareMediaFile(context, task.localFilePath, task.title) }
+                            onClick = { shareMediaFile(context, task.localFilePath, task.title, task.downloadType) }
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         TaskIconBtn(
@@ -235,12 +245,12 @@ fun TaskCard(
                         )
                     }
 
-                    TaskStatus.FAILED, TaskStatus.CANCELLED -> {
+                    TaskStatus.FAILED, TaskStatus.WAITING_FOR_AUTH, TaskStatus.CANCELLED -> {
                         OmniPillButton(
-                            text = strings.retry,
+                            text = if (task.errorMessage.contains("[EXPORT_FAILED]")) "重试导出" else strings.retry,
                             icon = Icons.Outlined.Refresh,
                             primary = true,
-                            onClick = { onRetry(task.url) }
+                            onClick = { onRetry(task.id) }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         TaskIconBtn(
@@ -254,67 +264,10 @@ fun TaskCard(
         }
     }
 
-    // 应用内原生无缝动图无限循环播放弹窗
     if (showGifPreviewDialog) {
-        val targetFile = File(task.localFilePath)
-        AlertDialog(
-            onDismissRequest = { showGifPreviewDialog = false },
-            title = {
-                Text(
-                    text = "GIF 动图无限循环播放",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (targetFile.exists()) {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 340.dp)
-                                .clip(RoundedCornerShape(12.dp)),
-                            color = MaterialTheme.colorScheme.surfaceVariant
-                        ) {
-                            AsyncImage(
-                                model = targetFile,
-                                contentDescription = "GIF预览",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                    } else {
-                        Text(
-                            text = "动图文件不存在或已被删除",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    openMediaFile(context, task.localFilePath, task.downloadType)
-                }) {
-                    Text("系统相册打开")
-                }
-            },
-            dismissButton = {
-                Row {
-                    TextButton(onClick = {
-                        shareMediaFile(context, task.localFilePath, task.title)
-                    }) {
-                        Text("分享")
-                    }
-                    TextButton(onClick = { showGifPreviewDialog = false }) {
-                        Text("关闭")
-                    }
-                }
-            }
-        )
+        ImageViewer(count = 1, model = {
+            if (task.localFilePath.startsWith("content://")) android.net.Uri.parse(task.localFilePath) else File(task.localFilePath)
+        }, onDismiss = { showGifPreviewDialog = false })
     }
 }
 
@@ -536,26 +489,30 @@ private fun TaskIconBtn(
     }
 }
 
+private fun resolveMediaMime(context: Context, filePath: String, downloadType: DownloadType): String {
+    val content = filePath.startsWith("content://")
+    val uri = if (content) android.net.Uri.parse(filePath) else null
+    val declared = if (uri != null) runCatching { context.contentResolver.getType(uri) }.getOrNull() else null
+    val header = runCatching {
+        (if (uri != null) context.contentResolver.openInputStream(uri) else File(filePath).inputStream())?.use { input ->
+            val bytes = ByteArray(12); val count = input.read(bytes)
+            if (count > 0) bytes.copyOf(count) else null
+        }
+    }.getOrNull()
+    return com.omni.downloader.engine.MediaFileType.mime(header, filePath, declared, downloadType)
+}
+
 private fun openMediaFile(context: Context, filePath: String, downloadType: DownloadType) {
     try {
         val file = File(filePath)
-        if (!file.exists()) {
+        if (!filePath.startsWith("content://") && !file.exists()) {
             Toast.makeText(context, "文件不存在或已被移动", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
+        val uri = if (filePath.startsWith("content://")) android.net.Uri.parse(filePath) else FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 
-        val mimeType = when (downloadType) {
-            DownloadType.AUDIO_ONLY -> "audio/*"
-            DownloadType.COVER -> "image/*"
-            DownloadType.GIF -> "image/gif"
-            else -> "video/*"
-        }
+        val mimeType = resolveMediaMime(context, filePath, downloadType)
 
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, mimeType)
@@ -568,22 +525,18 @@ private fun openMediaFile(context: Context, filePath: String, downloadType: Down
     }
 }
 
-private fun shareMediaFile(context: Context, filePath: String, title: String) {
+private fun shareMediaFile(context: Context, filePath: String, title: String, downloadType: DownloadType) {
     try {
         val file = File(filePath)
-        if (!file.exists()) {
+        if (!filePath.startsWith("content://") && !file.exists()) {
             Toast.makeText(context, "文件不存在或已被移动", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
+        val uri = if (filePath.startsWith("content://")) android.net.Uri.parse(filePath) else FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 
         val intent = Intent(Intent.ACTION_SEND).apply {
-            type = if (filePath.endsWith(".mp3") || filePath.endsWith(".m4a") || filePath.endsWith(".flac")) "audio/*" else "video/*"
+            type = resolveMediaMime(context, filePath, downloadType)
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(Intent.EXTRA_TITLE, title)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)

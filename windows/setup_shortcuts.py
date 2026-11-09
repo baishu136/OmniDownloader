@@ -12,10 +12,10 @@ import winreg
 import argparse
 from pathlib import Path
 
-BASE_DIR = Path(__file__).parent.resolve()
+BASE_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).parent.resolve()
 VBS_PATH = BASE_DIR / "启动网页版(纯后台无黑框).vbs"
-EXE_PATH = BASE_DIR / "dist" / "OmniDownloader_Web" / "OmniDownloader_Web.exe"
-ICON_PATH = BASE_DIR / "app.ico"
+EXE_PATH = Path(sys.executable).resolve() if getattr(sys, 'frozen', False) else BASE_DIR / "dist" / "OmniDownloader_Web" / "OmniDownloader_Web.exe"
+ICON_PATH = Path(__file__).parent.resolve() / "app.ico"
 
 
 def get_target_path():

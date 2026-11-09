@@ -1,3 +1,6 @@
+<!-- omni-1719-development -->
+> **1.7.19 多端开发分支（2026-11-09）**：Android 界面标注修改、原生 iOS 客户端及 Windows 桌面/Web 客户端。实现与验证范围见 [三端能力及验收记录](docs/PARITY_1.7.19_2026-11-08.md)、[iOS 构建说明](OmniDownloader-iOS/README_IOS.md)、[Windows 构建说明](windows/README.md)。本分支未创建新的公开 Release；本机安装产物在 `release/1.7.19/`，iOS IPA 需自行签名。
+
 <div align="center">
 
 # OmniDownloader

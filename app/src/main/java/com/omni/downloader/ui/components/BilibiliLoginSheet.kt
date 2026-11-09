@@ -41,6 +41,7 @@ fun BilibiliLoginSheet(
     var loadProgress by remember { mutableFloatStateOf(0f) }
     var isLoading by remember { mutableStateOf(true) }
     var captured by remember { mutableStateOf(false) }
+    var identity by remember { mutableStateOf<WebViewDesktopMode?>(null) }
 
     // 定时轮询 Cookie，确保用户登录一旦完成立即截获并退出
     LaunchedEffect(captured) {
@@ -144,9 +145,10 @@ fun BilibiliLoginSheet(
                                 useWideViewPort = true
                                 loadWithOverviewMode = true
                                 mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                                userAgentString = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
                             }
 
+                            val mode = WebViewDesktopMode(this).also { it.apply(true) }
+                            identity = mode
                             val currentWebView = this
                             CookieManager.getInstance().apply {
                                 setAcceptCookie(true)
@@ -156,10 +158,12 @@ fun BilibiliLoginSheet(
                             webViewClient = object : WebViewClient() {
                                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                                     super.onPageStarted(view, url, favicon)
+                                    mode.onPageStarted()
                                     isLoading = true
                                 }
 
                                 override fun onPageFinished(view: WebView?, url: String?) {
+                                    mode.onPageFinished()
                                     super.onPageFinished(view, url)
                                     isLoading = false
                                     if (!captured) {
@@ -197,9 +201,12 @@ fun BilibiliLoginSheet(
                                 }
                             }
 
-                            loadUrl("https://passport.bilibili.com/login")
+                            com.omni.downloader.data.repository.SessionRepository.getInstance(context)
+                                .restoreBrowserCookies("哔哩哔哩") { loadUrl("https://passport.bilibili.com/login") }
                         }
                     },
+                    onRelease = { identity?.close(); identity = null; it.stopLoading(); it.destroy() },
+                    update = {},
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)

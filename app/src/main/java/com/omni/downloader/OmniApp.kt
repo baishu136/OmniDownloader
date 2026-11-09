@@ -22,7 +22,7 @@ import java.util.concurrent.Executors
 class OmniApp : Application(), ImageLoaderFactory {
 
     companion object {
-        var appVersion: String = "1.5.9"
+        var appVersion: String = "1.7.19"
             private set
     }
 
@@ -81,6 +81,14 @@ class OmniApp : Application(), ImageLoaderFactory {
         try {
             appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "1.5.2"
         } catch (_: Exception) {}
+
+        // 清理上次异常退出留下的临时 Cookie 文件
+        appScope.launch {
+            runCatching {
+                com.omni.downloader.data.repository.SessionRepository.getInstance(this@OmniApp)
+                    .cleanupStaleTempFiles()
+            }
+        }
 
         // 后台异步预热初始化核心下载引擎，避免阻塞启动并提前解压
         appScope.launch {

@@ -1,359 +1,284 @@
-"""
-OmniDownloader yt-dlp 原生通用解析与下载引擎 (Windows 移植版)
-用于 YouTube, X (Twitter), Instagram, Facebook, Pinterest 等海内外主流及通用媒体网站
-"""
-
-import os
-import re
+"""Session-aware extraction and explicit per-media quality selection."""
 import asyncio
+import copy
+import os
+import hashlib
+import shutil
+import logging
 from pathlib import Path
-from typing import Optional, List, Dict, Any, Callable
+import re
+import threading
+import time
+from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 import yt_dlp
-
-from core.models import VideoMetadata, FormatOption, DownloadTask, DownloadType, TaskStatus
+from core.models import VideoMetadata, FormatOption, DownloadType, TaskStatus
 from core.config import config
+from core.session_store import sessions, DOMAINS
 from engine.ffmpeg_helper import get_ffmpeg_path, FFmpegHelper
+from engine.quality import choose, label, score, height_from_legacy
+from engine.media_errors import sanitize
+from engine.media_verifier import verify, probe as probe_output
 
 
-def format_duration(seconds: Optional[int]) -> str:
-    if not seconds or seconds <= 0:
-        return ""
+def format_duration(seconds):
+    if not seconds: return ''
     m, s = divmod(int(seconds), 60)
     h, m = divmod(m, 60)
-    return f"{h:02d}:{m:02d}:{s:02d}" if h > 0 else f"{m:02d}:{s:02d}"
+    return f'{h:02}:{m:02}:{s:02}' if h else f'{m:02}:{s:02}'
 
 
-def format_bytes(b: Optional[int]) -> str:
-    if not b or b <= 0:
-        return ""
-    if b >= 1024 * 1024 * 1024:
-        return f"{b / (1024 * 1024 * 1024):.1f} GB"
-    return f"{b / (1024 * 1024):.1f} MB"
+def format_bytes(value):
+    return f'{value / 1048576:.1f} MB' if value else ''
 
 
-def clean_media_title(raw_title: str) -> str:
-    """清理标题：彻底移除内嵌的 URL 短链、链接与 Windows 非法字符"""
-    if not raw_title:
-        return "video"
-    # 移除标题中附带的 http/https 链接（如推特推文自带的 https://t.co/xxx）
-    t = re.sub(r'https?://\S+', '', raw_title).strip()
-    # 移除多余的短横线、下划线、竖线与两端空格
-    t = re.sub(r'^[_\-\s|]+|[_\-\s|]+$', '', t).strip()
-    # 清理 Windows 非法文件名字符与不可见换行符
-    t = re.sub(r'[\\/:*?"<>|\r\n\t]', '_', t).strip()
-    # 去除首尾的点和空格
-    t = t.strip('. ')
-    return t[:80] if t else "video"
+def clean_media_title(title):
+    title = re.sub(r'https?://\S+', '', title or '')
+    return re.sub(r'[\\/:*?"<>|\r\n\t]', '_', title).strip('. ')[:80] or 'video'
 
 
-def extract_height_from_label(label: str) -> int:
-    lower = label.lower().strip()
-    if lower.startswith("http-") or lower.startswith("hls-"):
-        # 针对 http-2176 等码率标识，不属于常规分辨率高度
-        return 0
-    if "4k" in lower:
-        return 2160
-    if "2k" in lower:
-        return 1440
-    m = re.search(r"(\d{3,4})[pP]", label)
-    if m:
-        return int(m.group(1))
-    return 0
+extract_height_from_label = height_from_legacy
 
 
 class YtDlpSafeLogger:
-    """安全的空日志器，避免在 Windows 无窗口模式下由于向 None 的 stdout 打印导致 Errno 22"""
-    def debug(self, msg: str):
-        pass
-
-    def info(self, msg: str):
-        pass
-
-    def warning(self, msg: str):
-        pass
-
-    def error(self, msg: str):
-        pass
+    def debug(self, msg): logging.getLogger('omni.ytdlp').debug(sanitize(msg))
+    def info(self, msg): logging.getLogger('omni.ytdlp').info(sanitize(msg))
+    def warning(self, msg): logging.getLogger('omni.ytdlp').warning(sanitize(msg))
+    def error(self, msg): logging.getLogger('omni.ytdlp').error(sanitize(msg))
 
 
 class YtDlpEngine:
-    """yt-dlp 原生 API 封装"""
+    _cache = {}
+    _lock = threading.RLock()
 
     @classmethod
-    def _build_ydl_opts(cls, proxy_url: str = "", extra_headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
-        opts: Dict[str, Any] = {
-            "quiet": True,
-            "no_warnings": True,
-            "nocheckcertificate": True,
-            "ignoreerrors": True,
-            "no_color": True,
-            "geo_bypass": True,
-            "socket_timeout": 30,
-            "logger": YtDlpSafeLogger(),
-            "logtostderr": False,
-        }
-
-        ffmpeg_bin = get_ffmpeg_path()
-        if ffmpeg_bin:
-            opts["ffmpeg_location"] = os.path.dirname(ffmpeg_bin)
-
-        if proxy_url:
-            opts["proxy"] = proxy_url.strip()
-
-        if extra_headers:
-            opts["http_headers"] = extra_headers
-
+    def _build_ydl_opts(cls, proxy_url='', extra_headers=None):
+        opts = {'quiet': True, 'no_warnings': False, 'ignoreerrors': False,
+                'socket_timeout': 25, 'logger': YtDlpSafeLogger(), 'retries': 2,
+                'fragment_retries': 2, 'noplaylist': True, 'format_sort': ['res', 'fps']}
+        if get_ffmpeg_path(): opts['ffmpeg_location'] = get_ffmpeg_path()
+        if proxy_url: opts['proxy'] = proxy_url.strip()
+        if extra_headers: opts['http_headers'] = extra_headers
+        runtime = Path(__file__).resolve().parents[1] / 'bin' / 'deno.exe'
+        if runtime.is_file(): opts['js_runtimes'] = {'deno': {'path': str(runtime)}}
         return opts
 
+    @staticmethod
+    def _identity(raw):
+        parts = urlsplit(raw)
+        query = parse_qs(parts.query, keep_blank_values=True)
+        media = query.pop('omni_media', [''])[0]
+        return urlunsplit(parts._replace(query=urlencode(query, doseq=True))), media
+
     @classmethod
-    async def extract(cls, raw_url: str, site_name: str = "") -> VideoMetadata:
+    def _key(cls, raw, site):
+        generation = sessions.status(site)['generation'] if site in DOMAINS else 0
+        return raw, site, generation, config.proxy_url
+
+    @classmethod
+    def _resolve(cls, raw, site, ydl):
+        key = cls._key(raw, site)
+        with cls._lock: cached = cls._cache.get(key)
+        if cached and time.monotonic() - cached[0] < 600:
+            return copy.deepcopy(cached[1])
+        url, media = cls._identity(raw)
+        try:
+            if site == 'Pinterest':
+                from engine.media_resolver import resolve_site_video
+                info = resolve_site_video(url, site, ydl.params.get('cookiefile'), ydl.params.get('proxy', ''))
+            else: info = ydl.extract_info(url, download=False)
+        except yt_dlp.utils.DownloadError as exc:
+            from engine.media_errors import code
+            if site == 'Instagram' and code(exc) == 'NETWORK_ERROR':
+                time.sleep(.8)
+                info = ydl.extract_info(url, download=False)
+                if not info: raise RuntimeError('[MEDIA_UNCONFIRMED] 重试后仍未取得目标媒体')
+                with cls._lock: cls._cache[key] = (time.monotonic(), copy.deepcopy(info))
+                return info
+            if site != 'X (Twitter)' or not any(value in str(exc).lower() for value in ('no video could be found', '429', 'timed out', '502', '503', 'connection reset', 'connection aborted', 'remote end closed', 'unexpected_eof', 'server disconnected')): raise
+            # A new public request avoids cached _selected_api and logged-in GraphQL preflight.
+            from engine.media_resolver import resolve_x_video
+            info = resolve_x_video(url, proxy=ydl.params.get('proxy', ''))
+        if not info: raise RuntimeError('[MEDIA_UNCONFIRMED] 本次未取得媒体')
+        entries = [e for e in (info.get('entries') or []) if e]
+        if media:
+            info = next((e for e in entries if str(e.get('id')) == media), info if str(info.get('id')) == media else None)
+            if not info: raise RuntimeError('[MEDIA_ID_MISMATCH] 原媒体已不可定位')
+        with cls._lock:
+            if len(cls._cache) >= 128: cls._cache.clear()
+            cls._cache[key] = (time.monotonic(), copy.deepcopy(info))
+        return info
+
+    @classmethod
+    async def extract(cls, raw_url, site_name=''):
         return await asyncio.to_thread(cls._extract_sync, raw_url, site_name)
 
     @classmethod
-    def _extract_sync(cls, raw_url: str, site_name: str = "") -> VideoMetadata:
-        proxy_url = config.proxy_url
-        headers = {}
-        if site_name == "YouTube":
-            headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        elif site_name == "X (Twitter)":
-            headers["User-Agent"] = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15"
-
-        opts = cls._build_ydl_opts(proxy_url, headers)
-        opts["extract_flat"] = False
-
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(raw_url, download=False)
-            if not info:
-                raise RuntimeError("yt-dlp 未能获取到视频信息")
-
-            # 处理推文多视频或多 entry 列表
-            entries = info.get("entries")
-            if entries and isinstance(entries, list) and len(entries) > 0:
-                first_entry = entries[0]
-                multi_list = []
-                for idx, item in enumerate(entries):
-                    if not item:
-                        continue
-                    multi_list.append(
-                        VideoMetadata(
-                            url=item.get("webpage_url") or item.get("url") or raw_url,
-                            title=item.get("title") or f"视频片段 {idx+1}",
-                            author=item.get("uploader") or "",
-                            durationText=format_duration(item.get("duration")),
-                            thumbnailUrl=item.get("thumbnail") or "",
-                            siteName=site_name or "网络视频",
-                            availableVideoFormats=[]
-                        )
-                    )
-                info = first_entry
-            else:
-                multi_list = []
-
-            title = info.get("title", "网络视频")
-            author = info.get("uploader") or info.get("creator") or info.get("channel") or ""
-            duration = info.get("duration")
-            thumbnail = info.get("thumbnail") or ""
-
-            # 解析可用清晰度
-            formats_raw = info.get("formats", [])
-            video_formats: Dict[str, FormatOption] = {}
-
-            # 遍历 formats 聚合出常用分辨率选项
-            for f in formats_raw:
-                vcodec = f.get("vcodec", "")
-                acodec = f.get("acodec", "")
-                height = f.get("height") or 0
-                width = f.get("width") or 0
-                filesize = f.get("filesize") or f.get("filesize_approx")
-
-                if height <= 0 and width <= 0:
-                    continue
-                if vcodec == "none":
-                    continue
-
-                label = f"{height}p"
-                if height >= 2160:
-                    label = "4K (2160p)"
-                elif height >= 1440:
-                    label = "2K (1440p)"
-                elif height >= 1080:
-                    label = "1080p"
-                elif height >= 720:
-                    label = "720p"
-                elif height >= 480:
-                    label = "480p"
-                elif height >= 360:
-                    label = "360p"
-
-                size_str = format_bytes(filesize)
-                if label not in video_formats or (filesize and not video_formats[label].approximate_size):
-                    video_formats[label] = FormatOption(
-                        formatId=str(f.get("format_id", label)),
-                        resolutionLabel=label,
-                        width=width,
-                        height=height,
-                        fps=int(f.get("fps") or 0),
-                        ext="mp4",
-                        approximateSize=size_str,
-                        note="最佳视频编码轨"
-                    )
-
-            # 排序（高分辨率优先）
-            sorted_formats = sorted(
-                list(video_formats.values()),
-                key=lambda x: x.height,
-                reverse=True
-            )
-
-            if not sorted_formats:
-                sorted_formats.append(
-                    FormatOption(
-                        formatId="best",
-                        resolutionLabel="自适应最高画质",
-                        ext="mp4"
-                    )
-                )
-
-            return VideoMetadata(
-                url=raw_url,
-                title=title,
-                author=author,
-                durationText=format_duration(duration),
-                thumbnailUrl=thumbnail,
-                siteName=site_name or info.get("extractor_key") or "网络视频",
-                availableVideoFormats=sorted_formats,
-                multiMediaList=multi_list
-            )
+    def _extract_sync(cls, raw_url, site_name=''):
+        opts = cls._build_ydl_opts(config.proxy_url)
+        opts['noplaylist'] = False
+        with sessions.cookie_file(site_name) as cookie:
+            if cookie: opts['cookiefile'] = cookie
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                info = cls._resolve(raw_url, site_name, ydl)
+                entries = [e for e in (info.get('entries') or []) if e]
+                if not entries: return cls._metadata(info, raw_url, site_name)
+                children = []
+                for entry in entries[:200]:
+                    if site_name == 'X (Twitter)':
+                        parts = urlsplit(raw_url)
+                        query = parse_qs(parts.query); query['omni_media'] = [str(entry['id'])]
+                        child = urlunsplit(parts._replace(query=urlencode(query, doseq=True)))
+                    else: child = entry.get('webpage_url') or entry.get('original_url') or entry.get('url')
+                    if not child: continue
+                    with cls._lock: cls._cache[cls._key(child, site_name)] = (time.monotonic(), copy.deepcopy(entry))
+                    children.append(cls._metadata(entry, child, site_name))
+                if not children: raise RuntimeError('[NO_MEDIA] 合集没有可定位的媒体')
+                return children[0].model_copy(update={'multi_media_list': children})
 
     @classmethod
-    async def download(
-        cls,
-        task: DownloadTask,
-        on_progress: Callable[[float, str, str, TaskStatus], None],
-        cancel_event: asyncio.Event
-    ) -> str:
-        """运行 yt-dlp 进行实际文件下载与混流"""
-        clean_title = clean_media_title(task.title) or f"video_{task.id}"
-        download_dir = Path(config.download_dir)
-        download_dir.mkdir(parents=True, exist_ok=True)
-        staging_dir = download_dir / ".staging"
-        staging_dir.mkdir(parents=True, exist_ok=True)
+    def _metadata(cls, info, url, site):
+        video, audio = [], []
+        for f in sorted(info.get('formats') or [], key=score, reverse=True):
+            if f.get('has_drm'): continue
+            w, h = int(f.get('width') or 0), int(f.get('height') or 0)
+            if f.get('vcodec') == 'none':
+                audio.append(FormatOption(formatId=str(f['format_id']), resolutionLabel='音频', isAudioOnly=True, ext=f.get('ext') or 'm4a'))
+            elif w or h or (site == 'X (Twitter)' and 'video.twimg.com/tweet_video/' in f.get('url', '')):
+                video.append(FormatOption(formatId=str(f['format_id']), resolutionLabel=label(w, h) if w or h else '源动图（尺寸未知）',
+                    width=w, height=h, fps=int(f.get('fps') or 0), ext=f.get('ext') or '',
+                    vcodec=f.get('vcodec') or '', acodec=f.get('acodec') or '',
+                    isVideoOnly=f.get('acodec') == 'none', approximateSize=format_bytes(f.get('filesize') or f.get('filesize_approx')),
+                    note=' · '.join(filter(None, [f.get('vcodec'), f.get('dynamic_range')]))))
+        if not video: raise RuntimeError('[MEDIA_UNCONFIRMED] 未取得真实视频格式')
+        return VideoMetadata(url=url, title=info.get('title') or '媒体', author=info.get('uploader') or '',
+            isGif=site == 'X (Twitter)' and any('video.twimg.com/tweet_video/' in f.get('url', '') for f in info.get('formats') or []) and not any('ext_tw_video' in f.get('url', '') or 'amplify_video' in f.get('url', '') for f in info.get('formats') or []),
+            durationText=format_duration(info.get('duration')), thumbnailUrl=info.get('thumbnail') or '',
+            siteName=site, availableVideoFormats=video, availableAudioFormats=audio,
+            mediaId=str(info.get('id', '')), expectedDurationMs=int((info.get('duration') or 0) * 1000))
 
-        # 0. 仅保存封面
-        if task.download_type == DownloadType.COVER:
-            cover_url = task.thumbnail_url or task.url
-            dest = download_dir / f"{clean_title}_cover.jpg"
-            on_progress(20.0, "", "正在保存封面图...", TaskStatus.DOWNLOADING)
-            import requests
-            resp = await asyncio.to_thread(requests.get, cover_url, timeout=15)
-            with open(dest, "wb") as f:
-                f.write(resp.content)
-            on_progress(100.0, "", "封面已保存", TaskStatus.COMPLETED)
-            return str(dest)
+    @staticmethod
+    def workspace(task):
+        return Path(os.environ.get('OMNI_STATE_DIR') or Path(os.environ.get('LOCALAPPDATA', Path.home())) / 'OmniDownloader') / 'media_tasks' / task.id
 
-        outtmpl = str(staging_dir / f"{task.id}_stream.%(ext)s")
-        opts = cls._build_ydl_opts(config.proxy_url)
-        opts["outtmpl"] = outtmpl
-        opts["windowsfilenames"] = True
-        opts["restrictfilenames"] = True
-        opts["retries"] = 10
-        opts["fragment_retries"] = 10
-        opts["nopart"] = True  # 彻底禁用临时 .part 命名
+    @staticmethod
+    def signature(task):
+        intent = task.quality_selection.model_dump(by_alias=True) if task.quality_selection else {}
+        return hashlib.sha256(f'{task.url}|{task.selected_resolution}|{task.selected_video_format_id}|{task.download_type}|{intent}'.encode()).hexdigest()
 
-        # progress hook
-        def hook(d: Dict[str, Any]):
-            if cancel_event.is_set():
-                raise asyncio.CancelledError("用户取消下载")
-            status = d.get("status")
-            if status == "downloading":
-                total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
-                downloaded = d.get("downloaded_bytes") or 0
-                prog = (downloaded / total * 90.0) if total > 0 else 50.0
-                speed = d.get("speed") or 0
-                speed_str = f"{speed / (1024 * 1024):.1f} MB/s" if speed > 0 else ""
-                eta = d.get("eta") or 0
-                eta_str = f"{eta // 60}分{eta % 60}秒" if eta > 0 else ""
-                on_progress(round(prog, 1), speed_str, eta_str, TaskStatus.DOWNLOADING)
-            elif status == "finished":
-                on_progress(92.0, "", "下载完成，正在合并封装...", TaskStatus.PROCESSING)
+    @classmethod
+    def has_ready(cls, task):
+        import json
+        try:
+            data = json.loads((cls.workspace(task) / 'ready.json').read_text(encoding='utf-8'))
+            return data['signature'] == cls.signature(task) and (cls.workspace(task) / Path(data['file']).name).is_file()
+        except (OSError, ValueError, KeyError): return False
 
-        opts["progress_hooks"] = [hook]
+    @classmethod
+    async def download(cls, task, on_progress, cancel_event):
+        try:
+            return await asyncio.to_thread(cls._download_sync, task, on_progress, cancel_event)
+        except yt_dlp.utils.DownloadError as exc:
+            if cancel_event.is_set() or not any(x in str(exc).lower() for x in ('http error 403', 'http error 410', 'url has expired')): raise
+            from engine.url_sniffer import UrlSniffer
+            site = UrlSniffer.identify_site(task.url)
+            if site not in ('X (Twitter)', 'YouTube'): raise
+            with cls._lock: cls._cache.pop(cls._key(task.url, site), None)
+            on_progress(0, '', '刷新同一媒体地址（仅一次）', TaskStatus.DOWNLOADING)
+            return await asyncio.to_thread(cls._download_sync, task, on_progress, cancel_event)
 
-        # 格式与转码策略
-        req_height = extract_height_from_label(task.selected_resolution)
-        selected_fmt = task.selected_resolution.strip()
-
-        if task.download_type == DownloadType.VIDEO_WITH_AUDIO:
-            if selected_fmt and selected_fmt != "best" and not selected_fmt.endswith("p"):
-                # 如果是明确的格式 ID (如 http-2176, hls-872, 137, 22 等)
-                opts["format"] = f"{selected_fmt}+bestaudio/{selected_fmt}/best"
-            elif req_height > 0:
-                opts["format"] = f"bestvideo[height<={req_height}]+bestaudio/best[height<={req_height}]/best"
-            else:
-                opts["format"] = "bestvideo+bestaudio/best"
-            opts["merge_output_format"] = "mp4"
-
-        elif task.download_type == DownloadType.VIDEO_ONLY:
-            if selected_fmt and selected_fmt != "best" and not selected_fmt.endswith("p"):
-                opts["format"] = f"{selected_fmt}/best"
-            elif req_height > 0:
-                opts["format"] = f"bestvideo[height<={req_height}]/best[height<={req_height}]"
-            else:
-                opts["format"] = "bestvideo/best"
-            opts["postprocessor_args"] = ["-an"]
-
-        elif task.download_type == DownloadType.AUDIO_ONLY:
-            opts["format"] = "bestaudio/best"
-            opts["postprocessors"] = [{
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": task.audio_format.value,
-                "preferredquality": "0",
-            }]
-        elif task.download_type == DownloadType.GIF:
-            opts["format"] = "bestvideo/best"
-
-        on_progress(0.0, "", "准备启动下载引擎...", TaskStatus.DOWNLOADING)
-
-        def _exec():
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                ydl.download([task.url])
-
-        await asyncio.to_thread(_exec)
-
-        # 严格寻找暂存目录中生成的有效媒体文件（彻底排除 .part / .ytdl / .temp 临时文件）
-        staged_files = [
-            f for f in staging_dir.glob(f"{task.id}_*")
-            if f.is_file() and not f.name.endswith(".part") and not f.name.endswith(".ytdl") and not f.name.endswith(".temp")
-        ]
-
-        if not staged_files:
-            # 清理残留的未完成临时碎片
-            for p in staging_dir.glob(f"{task.id}_*"):
-                try:
-                    p.unlink()
-                except Exception:
-                    pass
-            raise RuntimeError("媒体文件未完全生成或下载合并被中断，请重试")
-
-        target_staged = max(staged_files, key=lambda f: f.stat().st_mtime)
-
-        # 如果是 GIF 则进行二次转换
-        if task.download_type == DownloadType.GIF:
-            final_file = download_dir / f"{clean_title}.gif"
-            on_progress(95.0, "", "正在使用 FFmpeg 渲染 GIF...", TaskStatus.PROCESSING)
-            await FFmpegHelper.convert_to_gif(str(target_staged), str(final_file))
-            try:
-                target_staged.unlink()
-            except Exception:
-                pass
-        else:
-            final_file = download_dir / f"{clean_title}{target_staged.suffix}"
-            counter = 1
-            while final_file.exists():
-                final_file = download_dir / f"{clean_title}_{counter}{target_staged.suffix}"
-                counter += 1
-
-            target_staged.rename(final_file)
-
-        on_progress(100.0, "", "下载完成", TaskStatus.COMPLETED)
-        return str(final_file)
+    @classmethod
+    def _download_sync(cls, task, on_progress, cancel_event):
+        from engine.url_sniffer import UrlSniffer
+        import json
+        site = UrlSniffer.identify_site(task.url)
+        staging = cls.workspace(task)
+        staging.mkdir(parents=True, exist_ok=True)
+        ready = staging / 'ready.json'
+        title = clean_media_title(task.title)
+        intent = task.quality_selection.model_dump(by_alias=True) if task.quality_selection else {}
+        signature = cls.signature(task)
+        source = None
+        if ready.is_file():
+            data = json.loads(ready.read_text(encoding='utf-8'))
+            candidate_path = staging / Path(data['file']).name
+            if data['signature'] == signature and candidate_path.is_file(): source = candidate_path
+        if source is None:
+            opts = cls._build_ydl_opts(config.proxy_url)
+            opts.update(outtmpl=str(staging / 'media.%(ext)s'), windowsfilenames=True)
+            final_paths = []
+            def hook(data):
+                if cancel_event.is_set(): raise RuntimeError('[CANCELLED] 用户取消')
+                total = data.get('total_bytes') or data.get('total_bytes_estimate') or 0
+                on_progress(data.get('downloaded_bytes', 0) / total * 90 if total else 0, '', '', TaskStatus.DOWNLOADING)
+            def post_hook(data):
+                path = data.get('info_dict', {}).get('filepath')
+                if data.get('status') == 'finished' and path: final_paths.append(Path(path))
+            opts.update(progress_hooks=[hook], postprocessor_hooks=[post_hook])
+            selected, expected_duration, require_audio = None, 0, False
+            with sessions.cookie_file(site) as cookie:
+                if cookie: opts['cookiefile'] = cookie
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    info = cls._resolve(task.url, site, ydl)
+                    if info.get('entries'): raise RuntimeError('[MEDIA_ID_MISMATCH] 请先选择具体子媒体')
+                    formats = info.get('formats') or []
+                    expected_duration = info.get('duration') or 0
+                    if not intent:
+                        limit = height_from_legacy(task.selected_resolution)
+                        intent = {'mode': 'MAX_HEIGHT' if limit else 'BEST_AVAILABLE', 'maxHeight': limit}
+                    exact = task.selected_video_format_id or task.selected_resolution
+                    if exact in ('', 'best', 'direct', '默认画质') or height_from_legacy(exact) or exact == info.get('_omni_native_source_id'): exact = ''
+                    if task.download_type == DownloadType.COVER:
+                        opts.update(writethumbnail=True, skip_download=True)
+                    elif task.download_type == DownloadType.AUDIO_ONLY:
+                        opts.update(format='bestaudio/best', postprocessors=[{'key': 'FFmpegExtractAudio', 'preferredcodec': task.audio_format.value}])
+                    else:
+                        selected = choose(formats, intent, exact)
+                        fid = str(selected['format_id'])
+                        audio_tracks = any(f.get('vcodec') == 'none' for f in formats)
+                        require_audio = bool(selected.get('acodec') and selected.get('acodec') != 'none') or audio_tracks
+                        if task.download_type == DownloadType.VIDEO_WITH_AUDIO and selected.get('acodec') == 'none' and not audio_tracks:
+                            raise RuntimeError('[NO_AUDIO] 目标未提供音轨，请选择仅视频')
+                        if task.download_type == DownloadType.VIDEO_ONLY:
+                            opts.update(format=fid, postprocessors=[{'key': 'FFmpegVideoRemuxer', 'preferedformat': 'mp4'}],
+                                        postprocessor_args={'VideoRemuxer': ['-an']})
+                        else:
+                            opts['format'] = fid if selected.get('acodec') != 'none' else f'{fid}+bestaudio'
+                            opts['merge_output_format'] = 'mkv' if intent.get('container') == 'auto' else intent.get('container', 'mp4')
+                    ydl.params.update(opts)
+                    with yt_dlp.YoutubeDL(opts) as downloader:
+                        result = downloader.process_ie_result(info, download=True)
+                    output = result.get('filepath') or result.get('_filename')
+                    paths = final_paths + ([Path(output)] if output else [])
+                    paths += [Path(f['filepath']) for f in result.get('requested_downloads', []) if f.get('filepath')]
+                    if task.download_type == DownloadType.COVER:
+                        paths += [Path(t['filepath']) for t in result.get('thumbnails', []) if t.get('filepath')]
+                    source = next((p for p in reversed(paths) if p.is_file() and p.parent.resolve() == staging.resolve()), None)
+                    if not source: raise RuntimeError('[POSTPROCESS_FAILED] 引擎未返回已完成媒体文件')
+            if task.download_type == DownloadType.VIDEO_ONLY:
+                muted = staging / 'muted.mp4'
+                if not asyncio.run(FFmpegHelper.strip_audio(str(source), str(muted))): raise RuntimeError('[POSTPROCESS_FAILED] 移除音轨失败')
+                if probe_output(muted)['audio']: raise RuntimeError('[POSTPROCESS_FAILED] 仅视频成品仍包含音轨')
+                source = muted
+            if task.download_type == DownloadType.GIF:
+                target = staging / 'result.gif'
+                if not asyncio.run(FFmpegHelper.convert_to_gif(str(source), str(target))): raise RuntimeError('[POSTPROCESS_FAILED] GIF转换失败')
+                source = target
+            elif task.download_type != DownloadType.COVER:
+                verify(source, selected, expected_duration, require_audio and task.download_type == DownloadType.VIDEO_WITH_AUDIO)
+            ready.write_text(json.dumps({'signature': signature, 'file': source.name}), encoding='utf-8')
+        if cancel_event.is_set(): raise RuntimeError('[CANCELLED] 用户取消')
+        destination = Path(config.download_dir) / f'{title}{source.suffix}'
+        index = 1
+        while destination.exists():
+            destination = destination.with_name(f'{title}_{index}{source.suffix}'); index += 1
+        try:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            partial = destination.with_name('.' + destination.name + '.' + task.id + '.part')
+            shutil.copy2(source, partial)
+            if partial.stat().st_size != source.stat().st_size: raise OSError('导出长度不符')
+            partial.replace(destination)
+            source.unlink()
+        except OSError as exc: raise RuntimeError('[EXPORT_FAILED] 成品已保留，可以重试导出') from exc
+        ready.unlink(missing_ok=True)
+        on_progress(100, '', '', TaskStatus.PROCESSING)
+        return str(destination)

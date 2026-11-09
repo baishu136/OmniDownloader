@@ -2,7 +2,7 @@ package com.omni.downloader.engine
 
 import android.content.Context
 import android.os.SystemClock
-import android.util.Log
+import com.omni.downloader.engine.SafeLog as Log
 import com.omni.downloader.data.model.AudioFormat
 import com.omni.downloader.data.model.DownloadTask
 import com.omni.downloader.data.model.DownloadType
@@ -27,7 +27,7 @@ object BilibiliDirectExtractor {
     private const val TAG = "BilibiliExtractor"
     private const val PC_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-    private val httpClient = OkHttpClient.Builder()
+    private val httpClient = OkHttpClient.Builder().proxySelector(NetworkProxy)
         .followRedirects(true)
         .followSslRedirects(true)
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -39,6 +39,36 @@ object BilibiliDirectExtractor {
 
     @Volatile
     var customUserCookie: String = ""
+
+    fun syncSession(context: Context) {
+        val sessions = com.omni.downloader.data.repository.SessionRepository.getInstance(context)
+        customUserCookie = if (!sessions.isCookieEnabled("哔哩哔哩")) "" else
+            sessions.cookieHeader("哔哩哔哩").orEmpty().ifBlank {
+                com.omni.downloader.data.repository.SettingsRepository.getInstance(context).bilibiliCookie.value
+            }
+    }
+
+    private data class Account(val id: String = "", val name: String = "", val verified: Boolean = false, val checkedAt: Long = System.currentTimeMillis())
+    private fun verifyAccount(context: Context): Account {
+        val account = if (!getCookieHeader().contains("SESSDATA=")) Account() else runCatching {
+            httpClient.newCall(Request.Builder().url("https://api.bilibili.com/x/web-interface/nav")
+                .header("User-Agent", PC_USER_AGENT).header("Referer", "https://www.bilibili.com/")
+                .header("Cookie", getCookieHeader()).build()).execute().use { response ->
+                val json = JSONObject(response.body?.string().orEmpty())
+                val data = json.optJSONObject("data")
+                if (json.optInt("code", -1) == 0 && data?.optBoolean("isLogin") == true && data.optLong("mid") > 0)
+                    Account(data.optString("mid"), data.optString("uname"), true) else Account()
+            }
+        }.getOrDefault(Account())
+        com.omni.downloader.data.repository.SessionRepository.getInstance(context)
+            .recordAccountValidation("哔哩哔哩", account.id, account.name, account.verified)
+        return account
+    }
+
+    private fun exclusive(data: JSONObject): Boolean? {
+        if (data.has("is_upower_exclusive")) return data.optBoolean("is_upower_exclusive") || data.optInt("is_upower_exclusive") == 1
+        return data.optJSONObject("rights")?.let { if (it.has("is_upower_exclusive")) it.optInt("is_upower_exclusive") == 1 else null }
+    }
 
     /**
      * 获取基础会话 Cookie 并拼接用户自定义凭证
@@ -92,8 +122,9 @@ object BilibiliDirectExtractor {
     /**
      * 原生秒级直接解析 B 站视频元数据与清晰度列表
      */
-    suspend fun extract(rawUrl: String): Result<VideoMetadata> = withContext(Dispatchers.IO) {
+    suspend fun extract(context: Context, rawUrl: String): Result<VideoMetadata> = withContext(Dispatchers.IO) {
         try {
+            syncSession(context)
             var resolvedUrl = UrlSniffer.sanitizeAndResolveUrl(rawUrl)
             var bvid = extractBvid(resolvedUrl)
 
@@ -144,6 +175,9 @@ object BilibiliDirectExtractor {
             }
 
             val data = viewJson.getJSONObject("data")
+            val account = verifyAccount(context)
+            val exclusive = exclusive(data)
+            if (exclusive == true && !account.verified) error("[AUTH_REQUIRED] 该内容为充电专属，请验证拥有对应权益的账号")
             val title = data.optString("title", "B站视频")
             val pic = data.optString("pic", "")
             val duration = data.optInt("duration", 0)
@@ -156,20 +190,15 @@ object BilibiliDirectExtractor {
 
             // 2. 获取清晰度格式 (qn=120, fnval=4048 支持 4K/1080P/HDR 等全清晰度流)
             val playApiUrl = "https://api.bilibili.com/x/player/playurl?bvid=$bvid&cid=$cid&qn=120&fnval=4048&fnver=0&fourk=1"
-            val playRequest = Request.Builder()
-                .url(playApiUrl)
-                .header("User-Agent", PC_USER_AGENT)
-                .header("Referer", "https://www.bilibili.com/video/$bvid")
-                .header("Cookie", getCookieHeader())
-                .build()
-
-            val playResponse = httpClient.newCall(playRequest).execute()
-            val playBody = playResponse.body?.string() ?: ""
-            val playJson = JSONObject(playBody)
+            val playJson = expandPlayInfo(fetchPlayInfo(playApiUrl), playApiUrl)
+            validatePlayback(playJson)
 
             val videoFormats = mutableListOf<FormatOption>()
             val audioFormats = mutableListOf<FormatOption>()
 
+            val expectedPartMs = (sourcePages?.optJSONObject(requestedPage - 1)?.optLong("duration") ?: duration.toLong()) * 1000
+            val returnedMs = playJson.optJSONObject("data")?.optLong("timelength") ?: 0
+            if (expectedPartMs > 0 && returnedMs > 0 && returnedMs + 2000 < expectedPartMs) error("[PREVIEW_ONLY] 平台返回时长短于目标分P，不能作为完整成品")
             val playData = playJson.optJSONObject("data")
             val dash = playData?.optJSONObject("dash")
 
@@ -185,16 +214,9 @@ object BilibiliDirectExtractor {
                         val bandwidth = v.optLong("bandwidth", 0)
                         val codecs = v.optString("codecs", "")
 
-                        if (h > 0 && !seenHeights.contains(h)) {
+                        if (h > 0) {
                             seenHeights.add(h)
-                            val label = when {
-                                h >= 2160 -> "4K (2160p)"
-                                h >= 1440 -> "2K (1440p)"
-                                h >= 1080 -> "1080p 全高清"
-                                h >= 720 -> "720p 高清"
-                                h >= 480 -> "480p 标清"
-                                else -> "${h}p"
-                            }
+                            val label = QualitySelector.label(v.optInt("width"), h)
                             val estSize = if (duration > 0 && bandwidth > 0) {
                                 formatBytes((bandwidth * duration) / 8)
                             } else ""
@@ -208,11 +230,12 @@ object BilibiliDirectExtractor {
 
                             videoFormats.add(
                                 FormatOption(
-                                    formatId = "bili_$id",
+                                    formatId = "bili_${id}_${v.optInt("codecid")}",
                                     resolutionLabel = label,
                                     width = v.optInt("width", 0),
                                     height = h,
-                                    fps = v.optInt("frameRate", 30),
+                                    fps = kotlin.math.round(QualitySelector.frameRate(v.optString("frame_rate", "30"))).toInt(),
+                                    vcodec = codecs, acodec = "none", isVideoOnly = true,
                                     approximateSize = estSize,
                                     note = codecNote
                                 )
@@ -234,17 +257,9 @@ object BilibiliDirectExtractor {
                 }
             }
 
-            if (videoFormats.isEmpty()) {
-                videoFormats.addAll(
-                    listOf(
-                        FormatOption(formatId = "1080", resolutionLabel = "1080p 全高清", height = 1080),
-                        FormatOption(formatId = "720", resolutionLabel = "720p 高清", height = 720),
-                        FormatOption(formatId = "480", resolutionLabel = "480p 标清", height = 480)
-                    )
-                )
-            }
-
-            videoFormats.sortByDescending { it.height }
+            if (videoFormats.isEmpty()) error("[MEDIA_UNCONFIRMED] 当前账号未取得真实 DASH 格式，请检查登录和播放权益")
+            val uniqueFormats = QualitySelector.sorted(videoFormats)
+            videoFormats.clear(); videoFormats.addAll(uniqueFormats)
 
             // 3. 提取分P与合集列表
             val multiMediaList = mutableListOf<VideoMetadata>()
@@ -266,6 +281,7 @@ object BilibiliDirectExtractor {
                             title = "$title - P$pNum $partTitle",
                             author = owner,
                             durationText = formatDuration(pageDuration),
+                            mediaId = "$bvid:${pageObj.optLong("cid")}", expectedDurationMs = pageDuration.toLong() * 1000,
                             thumbnailUrl = finalPic,
                             siteName = "哔哩哔哩",
                             availableVideoFormats = videoFormats,
@@ -313,7 +329,8 @@ object BilibiliDirectExtractor {
                         formatId = "bili_auto_best",
                         resolutionLabel = "自适应最高画质 (推荐)",
                         height = 99999,
-                        note = "各集自动匹配最高清晰度"
+                        note = "各集自动匹配最高清晰度",
+                        isSynthetic = true
                     )
                 )
                 list.addAll(videoFormats)
@@ -323,7 +340,7 @@ object BilibiliDirectExtractor {
             }
 
             val updatedMultiMediaList = if (multiMediaList.isNotEmpty()) {
-                multiMediaList.map { it.copy(availableVideoFormats = finalVideoFormats) }
+                multiMediaList.map { it.copy(availableVideoFormats = finalVideoFormats, accountId = account.id, accountName = account.name, accountVerifiedAt = account.checkedAt) }
             } else {
                 multiMediaList
             }
@@ -339,6 +356,12 @@ object BilibiliDirectExtractor {
                 siteName = "哔哩哔哩",
                 availableVideoFormats = finalVideoFormats,
                 availableAudioFormats = audioFormats,
+                accessState = BiliAccessPolicy.state(exclusive, account.verified, videoFormats.isNotEmpty(), false, expectedPartMs, returnedMs),
+                accountId = account.id, accountName = account.name, accountVerifiedAt = account.checkedAt,
+                exclusiveType = if (exclusive == true) "UPOWER" else if (exclusive == false) "REGULAR" else "UNKNOWN",
+                accessEvidence = listOf("accountVerified=${account.verified}", "exclusive=$exclusive", "playurl.code=0", "dash=true", "expectedMs=$expectedPartMs", "returnedMs=$returnedMs"),
+                mediaId = "$bvid:$cid",
+                expectedDurationMs = (sourcePages?.optJSONObject(requestedPage - 1)?.optLong("duration") ?: duration.toLong()) * 1000,
                 multiMediaList = updatedMultiMediaList
             )
 
@@ -389,6 +412,7 @@ object BilibiliDirectExtractor {
             }
 
             val dataObj = viewJson.getJSONObject("data")
+            if (exclusive(dataObj) == true && !verifyAccount(context).verified) error("[AUTH_REQUIRED] 充电专属需要验证对应权益账号")
             var cid = dataObj.optLong("cid", 0)
             var realTitle = dataObj.optString("title", task.title)
 
@@ -411,7 +435,10 @@ object BilibiliDirectExtractor {
                 realTitle = task.title
             }
 
-            val reqHeight = extractHeightFromResolution(task.selectedResolution)
+            val selectedPart = pages?.optJSONObject((pageNum ?: 1) - 1)
+            val expectedPartMs = (selectedPart?.optLong("duration") ?: dataObj.optLong("duration")) * 1000
+            if (task.mediaId.isNotBlank() && task.mediaId != "$bvid:$cid") error("[MEDIA_ID_MISMATCH] 目标分P发生变化")
+            val reqHeight = task.qualitySelection.maxHeight.takeIf { it > 0 } ?: extractHeightFromResolution(task.selectedResolution)
             val durlQn = when {
                 reqHeight >= 2160 -> 120
                 reqHeight >= 1440 -> 120
@@ -424,16 +451,10 @@ object BilibiliDirectExtractor {
 
             // 2. 请求 DASH 流接口 (始终请求 qn=120&fourk=1 获取 4K/1080P60/1080P 等全量流)
             val playApiUrl = "https://api.bilibili.com/x/player/playurl?bvid=$bvid&cid=$cid&qn=120&fnval=4048&fnver=0&fourk=1"
-            val playResp = httpClient.newCall(
-                Request.Builder()
-                    .url(playApiUrl)
-                    .header("User-Agent", PC_USER_AGENT)
-                    .header("Referer", "https://www.bilibili.com/video/$bvid")
-                    .header("Cookie", getCookieHeader())
-                    .build()
-            ).execute()
-
-            val playJson = JSONObject(playResp.body?.string() ?: "")
+            val playJson = expandPlayInfo(fetchPlayInfo(playApiUrl), playApiUrl)
+            validatePlayback(playJson)
+            val returnedMs = playJson.optJSONObject("data")?.optLong("timelength") ?: 0
+            if (expectedPartMs > 0 && returnedMs > 0 && returnedMs + 2000 < expectedPartMs) error("[PREVIEW_ONLY] 返回时长短于目标分P，不能保存为完整视频")
             val dash = playJson.optJSONObject("data")?.optJSONObject("dash")
 
             stagingDir.mkdirs()
@@ -450,7 +471,7 @@ object BilibiliDirectExtractor {
                 if (dash != null) {
                     val audiosJson = dash.optJSONArray("audio")
 
-                    val bestVideo = selectBestDashVideo(dash.optJSONArray("video"), reqHeight)
+                    val bestVideo = selectBestDashVideo(dash.optJSONArray("video"), reqHeight, task.selectedVideoFormatId, task.qualitySelection)
                     val bestVideoUrl = bestVideo?.url ?: ""
                     val bestVideoBackups = bestVideo?.backups ?: emptyList()
                     if (bestVideo != null) {
@@ -507,7 +528,7 @@ object BilibiliDirectExtractor {
                             val mergeRes = if (tempAudio.exists() && tempAudio.length() > 0) {
                                 FFmpegExecutor.mergeVideoAndAudio(context, tempVideo, tempAudio, mergedFile)
                             } else {
-                                FFmpegExecutor.stripAudio(context, tempVideo, mergedFile)
+                                error("[POSTPROCESS_FAILED] 目标音轨缺失，不能将无声视频作为音画成品")
                             }
 
                             if (mergeRes.isSuccess && mergedFile.exists() && mergedFile.length() > 1024) {
@@ -526,6 +547,7 @@ object BilibiliDirectExtractor {
 
                 // 若 DASH 不可用或合成失败，自动启用 DURL 渐进式一体化 MP4 直连（免合并，100% 成功）
                 if (!mergeSuccess) {
+                    if (task.selectedVideoFormatId.startsWith("bili_") && !task.qualitySelection.allowLowerQuality) error("[POSTPROCESS_FAILED] 所选DASH流下载或合成失败，请重试；未切换至较低质量源")
                     onProgressUpdate(10f, "", "切换官方 MP4 直链通道...", TaskStatus.DOWNLOADING)
                     val durlSuccess = downloadDurlDirectly(
                         bvid = bvid,
@@ -558,7 +580,7 @@ object BilibiliDirectExtractor {
 
             // 处理 VIDEO_ONLY 纯视频画面
             if (task.downloadType == DownloadType.VIDEO_ONLY) {
-                val bestVideo = selectBestDashVideo(dash?.optJSONArray("video"), reqHeight)
+                val bestVideo = selectBestDashVideo(dash?.optJSONArray("video"), reqHeight, task.selectedVideoFormatId, task.qualitySelection)
                 val bestVideoUrl = bestVideo?.url ?: ""
                 val bestVideoBackups = bestVideo?.backups ?: emptyList()
                 if (bestVideo != null) {
@@ -834,7 +856,10 @@ object BilibiliDirectExtractor {
         val bandwidth: Long,
         val isAvc: Boolean,
         val url: String,
-        val backups: List<String>
+        val backups: List<String>,
+        val width: Int = 0,
+        val fps: Double = 0.0,
+        val formatId: String = ""
     )
 
     /**
@@ -844,7 +869,7 @@ object BilibiliDirectExtractor {
      */
     private fun selectBestDashVideo(
         videosJson: org.json.JSONArray?,
-        reqHeight: Int
+        reqHeight: Int, exactId: String = "", quality: com.omni.downloader.data.model.QualitySelection = com.omni.downloader.data.model.QualitySelection()
     ): DashVideoCandidate? {
         if (videosJson == null || videosJson.length() == 0) return null
 
@@ -859,28 +884,75 @@ object BilibiliDirectExtractor {
             val codecs = v.optString("codecs", "")
             val isAvc = codecs.startsWith("avc", ignoreCase = true)
             val backups = parseBackupUrls(v.optJSONArray("backupUrl") ?: v.optJSONArray("backup_url"))
-            candidates.add(DashVideoCandidate(qnId, h, bandwidth, isAvc, url, backups))
+            candidates.add(DashVideoCandidate(qnId, h, bandwidth, isAvc, url, backups, v.optInt("width"), QualitySelector.frameRate(v.optString("frame_rate")), "bili_${qnId}_${v.optInt("codecid")}"))
         }
-        if (candidates.isEmpty()) return null
+        if (quality.codecPreference == "avc") candidates.removeAll { !it.isAvc }
+        if (quality.targetFps > 0) candidates.removeAll { it.fps < quality.targetFps * 0.99 }
+        if (quality.dynamicRangePreference != "auto") error("[QUALITY_UNAVAILABLE] 当前B站原生响应缺少可信色彩范围标记，请选择精确格式")
+        if (candidates.isEmpty()) error("[QUALITY_UNAVAILABLE] 当前B站流不满足编码或帧率条件")
 
-        return if (reqHeight <= 0) {
-            // 自适应最高画质：高度优先 -> qn优先（如1080P60优先于1080P30） -> AVC兼容优先 -> 带宽码率优先
-            candidates.maxWithOrNull(
-                compareBy<DashVideoCandidate> { it.height }
-                    .thenBy { it.qnId }
-                    .thenBy { if (it.isAvc) 1 else 0 }
-                    .thenBy { it.bandwidth }
-            )
-        } else {
-            // 指定清晰度（如 1080、720、4K 等）：
-            // 寻找与 reqHeight 差值最小的流；若差值相同，优先高 qn、AVC 兼容与高码率
-            candidates.minWithOrNull(
-                compareBy<DashVideoCandidate> { Math.abs(it.height - reqHeight) }
-                    .thenByDescending { it.qnId }
-                    .thenByDescending { if (it.isAvc) 1 else 0 }
-                    .thenByDescending { it.bandwidth }
-            )
+        if (exactId.startsWith("bili_") && exactId != "bili_auto_best") {
+            return candidates.firstOrNull { it.formatId == exactId }
+                ?: error("[QUALITY_UNAVAILABLE] 指定 B站格式已不可用，请重新解析")
         }
+        val eligible = if (reqHeight > 0) candidates.filter {
+            val edge = if (it.width > 0) minOf(it.width, it.height) else it.height
+            edge <= reqHeight && (quality.mode != com.omni.downloader.data.model.QualityMode.TARGET_TIER || quality.allowLowerQuality || edge == reqHeight)
+        } else candidates
+        if (eligible.isEmpty()) error("[QUALITY_UNAVAILABLE] 当前B站流不满足指定档位")
+        return eligible.maxWithOrNull(compareBy<DashVideoCandidate> { it.width.toLong() * it.height }
+            .thenBy { it.fps }.thenBy { it.qnId }.thenBy { it.bandwidth })
+    }
+
+    private fun fetchPlayInfo(url: String): JSONObject {
+        fun get(target: String): JSONObject = httpClient.newCall(Request.Builder().url(target)
+            .header("User-Agent", PC_USER_AGENT).header("Referer", "https://www.bilibili.com/")
+            .header("Cookie", getCookieHeader()).build()).execute().use { response ->
+                if (response.code == 404) JSONObject().put("code", -404)
+                else {
+                    if (!response.isSuccessful) error("[${if (response.code == 429) "RATE_LIMITED" else if (response.code == 412) "CHALLENGE_REQUIRED" else "NETWORK_ERROR"}] B站播放请求 HTTP ${response.code}")
+                    JSONObject(response.body?.string().orEmpty())
+                }
+            }
+        val primary = get(url)
+        // Protocol fallback only. Authentication, preview, challenge and rate-limit failures remain terminal.
+        if (primary.optInt("code") !in setOf(-400, -404)) return primary
+        val images = get("https://api.bilibili.com/x/web-interface/nav").optJSONObject("data")?.optJSONObject("wbi_img")
+            ?: return primary
+        val key = WbiSigner.key(images.optString("img_url"), images.optString("sub_url"))
+        val params = java.net.URI(url).rawQuery.split('&').associate { item ->
+            val pair = item.split('=', limit = 2)
+            java.net.URLDecoder.decode(pair[0], "UTF-8") to java.net.URLDecoder.decode(pair.getOrElse(1) { "" }, "UTF-8")
+        }
+        return get("https://api.bilibili.com/x/player/wbi/playurl?" + WbiSigner.query(params, key, (System.currentTimeMillis() + 500) / 1000))
+    }
+
+    private fun validatePlayback(json: JSONObject) {
+        val code = json.optInt("code", 0)
+        if (code != 0) {
+            val reason = when (code) { -101 -> "AUTH_REQUIRED"; -352, -412 -> "CHALLENGE_REQUIRED"; -403, -10403 -> "ACCESS_DENIED"; -404 -> "CONTENT_UNAVAILABLE"; else -> "EXTRACTOR_CHANGED" }
+            error("[$reason] B站播放接口拒绝访问: ${json.optString("message")}")
+        }
+        val data = json.optJSONObject("data") ?: return
+        val descriptions = data.optJSONArray("accept_description")
+        if (data.optBoolean("is_preview") || data.optInt("is_preview") == 1 ||
+            (0 until (descriptions?.length() ?: 0)).any { descriptions?.optString(it)?.contains("试看") == true }) {
+            error("[PREVIEW_ONLY] 当前账号仅取得试看内容，请检查该视频的充电权益")
+        }
+    }
+
+    /** Only follow higher quality IDs actually advertised by the server, once. */
+    private fun expandPlayInfo(json: JSONObject, url: String): JSONObject {
+        validatePlayback(json)
+        val data = json.optJSONObject("data") ?: return json
+        val supported = data.optJSONArray("accept_quality") ?: return json
+        val higher = (0 until supported.length()).map { supported.optInt(it) }.filter { it > 120 }.maxOrNull() ?: return json
+        val extra = runCatching { fetchPlayInfo(url.replace("qn=120", "qn=$higher")) }.getOrNull() ?: return json
+        val oldVideo = data.optJSONObject("dash")?.optJSONArray("video")
+        val newVideo = extra.optJSONObject("data")?.optJSONObject("dash")?.optJSONArray("video")
+        if (extra.optInt("code") != 0 || newVideo == null) return json
+        for (i in 0 until (oldVideo?.length() ?: 0)) newVideo.put(oldVideo!!.get(i))
+        return extra
     }
 
     private fun extractHeightFromResolution(resolutionLabel: String): Int {
@@ -889,6 +961,9 @@ object BilibiliDirectExtractor {
             lower.contains("auto") || lower.contains("best") || lower.contains("默认")) {
             return 0
         }
+        if (lower.contains("8k") || lower.contains("4320")) return 4320
+        if (lower.contains("6k") || lower.contains("3240")) return 3240
+        if (lower.contains("5k") || lower.contains("2880")) return 2880
         if (lower.contains("4k") || lower.contains("2160")) return 2160
         if (lower.contains("2k") || lower.contains("1440")) return 1440
         val regex = Regex("(\\d{3,4})")
