@@ -10,7 +10,7 @@ enum NativeHLS {
             let attrs=attributes(line)
             guard let next=root.dropFirst(index+1).first(where:{!$0.isEmpty && !$0.hasPrefix("#")}),let source=URL(string:next,relativeTo:url)?.absoluteURL,NativeMediaParser.safeURL(source.absoluteString) else{continue}
             let size=(attrs["RESOLUTION"] ?? "").split(separator:"x").compactMap{Int($0)},w=size.count==2 ? size[0]:0,h=size.count==2 ? size[1]:0
-            let group=audio.filter{$0["GROUP-ID"]==attrs["AUDIO"]},chosen=group.first{$0["DEFAULT"]=="YES"} ?? group.first
+            let group=audio.filter{attrs["AUDIO"] != nil && $0["GROUP-ID"]==attrs["AUDIO"]},chosen=group.first{$0["DEFAULT"]=="YES"} ?? group.first
             let audioURL=chosen?["URI"].flatMap{URL(string:$0,relativeTo:url)?.absoluteURL.absoluteString}
             let codec=(attrs["CODECS"] ?? "").split(separator:",").map(String.init).first{candidate in ["avc","hev","hvc","av01","vp"].contains{candidate.hasPrefix($0)}} ?? (attrs["CODECS"] ?? "")
             formats.append(FormatOption(formatId:source.absoluteString,resolutionLabel:MediaQuality.label(w,h),ext:"m3u8",width:w,height:h,fps:Int((Double(attrs["FRAME-RATE"] ?? "") ?? 0).rounded()),sourceUrl:source.absoluteString,vcodec:codec,dynamicRange:attrs["VIDEO-RANGE"],bitrateKbps:(Double(attrs["AVERAGE-BANDWIDTH"] ?? attrs["BANDWIDTH"] ?? "") ?? 0)/1000,audioSourceUrl:audioURL))

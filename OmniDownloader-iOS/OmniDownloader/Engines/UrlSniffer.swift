@@ -22,52 +22,24 @@ public class UrlSniffer {
             return urlString
         }
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "HEAD"
-        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
-        
-        // 允许自动跟随重定向
-        let session = URLSession(configuration: .default)
-        do {
-            let (_, response) = try await session.data(for: request)
-            if let httpResp = response as? HTTPURLResponse, let finalUrl = httpResp.url {
-                return finalUrl.absoluteString
-            }
-        } catch {
-            // 若 HEAD 请求受阻，尝试常规 GET 请求获取 URL
-            do {
-                var getReq = URLRequest(url: url)
-                getReq.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
-                let (_, response) = try await session.data(for: getReq)
-                if let httpResp = response as? HTTPURLResponse, let finalUrl = httpResp.url {
-                    return finalUrl.absoluteString
-                }
-            } catch {
-                return urlString
-            }
-        }
+        let site=OmniPlatform.detect(urlString)
+        guard site != "通用媒体",OmniPlatform.identifier(urlString).isEmpty else{return urlString}
+        do{
+            let config=try OmniNetwork.configuration();config.timeoutIntervalForRequest=7;config.timeoutIntervalForResource=7
+            let session=URLSession(configuration:config,delegate:OmniNetwork.RedirectGuard(site),delegateQueue:nil)
+            defer{session.finishTasksAndInvalidate()}
+            var request=OmniNetwork.request(url,site:site);request.httpMethod="HEAD"
+            let(_,response)=try await session.data(for:request)
+            if let final=response.url,NativeMediaParser.safeURL(final.absoluteString),final != url{return final.absoluteString}
+            if Task.isCancelled{return urlString}
+            if let final=try? await OmniNetwork.data(url,site:site,timeout:7).1.url{return final.absoluteString}
+        }catch{}
         return urlString
     }
-    
+
     /// 检测所属媒体站点
     public static func detectSite(from urlString: String) -> String {
-        let lower = urlString.lowercased()
-        if lower.contains("bilibili.com") || lower.contains("b23.tv") {
-            return "哔哩哔哩"
-        } else if lower.contains("douyin.com") || lower.contains("iesdouyin.com") {
-            return "抖音"
-        } else if lower.contains("kuaishou.com") || lower.contains("gifshow.com") || lower.contains("kwai.com") {
-            return "快手"
-        } else if lower.contains("xiaohongshu.com") || lower.contains("xhslink.com") {
-            return "小红书"
-        } else if lower.contains("youtube.com") || lower.contains("youtu.be") {
-            return "YouTube"
-        } else if lower.contains("tiktok.com") {
-            return "TikTok"
-        } else if lower.contains("twitter.com") || lower.contains("x.com") {
-            return "X (Twitter)"
-        }
-        return "通用媒体"
+        OmniPlatform.detect(urlString)
     }
 
     /// 异步拉取网页并提取 title 标签 (用于添加中转站时自动回填标题)
@@ -96,7 +68,7 @@ public class UrlSniffer {
         request.setValue("zh-CN,zh;q=0.9,en;q=0.8", forHTTPHeaderField: "Accept-Language")
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await OmniNetwork.data(url,site:OmniPlatform.detect(cleanUrl),timeout:6)
             guard let httpResp = response as? HTTPURLResponse, httpResp.statusCode == 200 else {
                 return fallbackHost()
             }

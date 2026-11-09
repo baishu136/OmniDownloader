@@ -328,6 +328,32 @@
 				"75D4A0C2967E782C0913717B",
 				"DE9F857F3CC92059809D35C6",
 				"8D617F78A0AA232882375B92",
+				"4A43E94BB43652945A3DC2F6",
+				"68A5FC4F57EFB7680479DF8A",
+				"D18BFD8C25D236FCE2C2D619",
+				"5EE2623ED68972C84565C325",
+				"47F830CA87B2FB9784B5112B",
+				"26EE40CFFABF742B7379175E",
+				"C7152CFF8B057DBA6A0503F5",
+				"01D6F711E3A01C5B405F0165",
+				"068889838B5A9AAD4E679B68",
+				"AAA92F79ADF21EEEC0040F6A",
+				"B298F395A9662042CE331B14",
+				"848700BBDFC6AD6166701FC3",
+				"BE07DC257055D9AEFCC61743",
+				"8AD71CD7DF157E6C70AADCA3",
+				"E123871BDFF7514D6C143E60",
+				"A3E833D80D3D01BF6B90B888",
+				"13AFB006A2A4BA24FF8EF210",
+				"6B13C83403BD63C658BF3558",
+				"E790CB9B586EEF5D47B8F6AE",
+				"CFFB9D7C1E2156BDE225AE2C",
+				"C2D64342EEDCF3F3A926A7A8",
+				"691307E9F9E94F49C647A8AC",
+				"BEADCBB274A1E050AE585453",
+				"20112BBB0499E9796D56141A",
+				"5DD23A050D03E570F4017A88",
+				"8D52871E0C23DE77F8554D92",
 			);
 			"sourceTree" = "<group>";
 		};
@@ -410,6 +436,31 @@
 			"files" = (
 				"0EF2CBDA0D98DCDD22F86324",
 				"15B2862BF7AB0DC80E1730A9",
+				"8E44743637BC10B2C7AE6012",
+				"C1371309EED01CED47A49755",
+				"3CE902649F8712BB54D1623D",
+				"2BC4D8B09B275E119358479C",
+				"67A8D85D19FCCFC9E7D725ED",
+				"64732B2A087F3D9AA01F64D2",
+				"A317A5F408A7B1B74A213587",
+				"74D2E227A785BE8471475520",
+				"BC9917D3AB3A731DB054A70B",
+				"576800180D78A57EFFC15C51",
+				"320CF3CD705C941957F342C1",
+				"21D697C995E92DDDD79CC4D0",
+				"D5AA1AAF6730291E9319B14D",
+				"5921A024FFF7AB0C1F9207DA",
+				"8521104D6E4FD33D4137D69A",
+				"7EE17692D16F4C36BE9B8CF6",
+				"077DB8FBBD08A9186B592394",
+				"009DB1B2017D0036F43660FA",
+				"2E3C5FABAB0AC154968CC54F",
+				"FF6200032C92482FEE8A8925",
+				"3864509B62ECDA02EAC7AD50",
+				"3B66849D13D2FB93247EA420",
+				"60B3ABBBBC91D32A5E5820DF",
+				"566BE13753E051CBFE69052D",
+				"7F9C79AD1BD5E2EE26D43594",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -789,6 +840,7 @@
 			"isa" = "PBXResourcesBuildPhase";
 			"buildActionMask" = "2147483647";
 			"files" = (
+				"7304E423673A465D7A1E4D45",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -986,6 +1038,266 @@
 			"productName" = "OmniDownloaderUITests";
 			"productReference" = "2E48AC0517D658F248530BAA";
 			"productType" = "com.apple.product-type.bundle.ui-testing";
+		};
+		"4A43E94BB43652945A3DC2F6" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/FFmpegKit-LGPL-3.txt";
+			"sourceTree" = "<group>";
+		};
+		"8E44743637BC10B2C7AE6012" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "4A43E94BB43652945A3DC2F6";
+		};
+		"68A5FC4F57EFB7680479DF8A" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/ffmpegkit-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"C1371309EED01CED47A49755" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "68A5FC4F57EFB7680479DF8A";
+		};
+		"D18BFD8C25D236FCE2C2D619" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.DAV1D.txt";
+			"sourceTree" = "<group>";
+		};
+		"3CE902649F8712BB54D1623D" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "D18BFD8C25D236FCE2C2D619";
+		};
+		"5EE2623ED68972C84565C325" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.GIFLIB.txt";
+			"sourceTree" = "<group>";
+		};
+		"2BC4D8B09B275E119358479C" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "5EE2623ED68972C84565C325";
+		};
+		"47F830CA87B2FB9784B5112B" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.JPEG.txt";
+			"sourceTree" = "<group>";
+		};
+		"67A8D85D19FCCFC9E7D725ED" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "47F830CA87B2FB9784B5112B";
+		};
+		"26EE40CFFABF742B7379175E" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LAME.txt";
+			"sourceTree" = "<group>";
+		};
+		"64732B2A087F3D9AA01F64D2" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "26EE40CFFABF742B7379175E";
+		};
+		"C7152CFF8B057DBA6A0503F5" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LIBOGG.txt";
+			"sourceTree" = "<group>";
+		};
+		"A317A5F408A7B1B74A213587" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "C7152CFF8B057DBA6A0503F5";
+		};
+		"01D6F711E3A01C5B405F0165" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LIBPNG.txt";
+			"sourceTree" = "<group>";
+		};
+		"74D2E227A785BE8471475520" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "01D6F711E3A01C5B405F0165";
+		};
+		"068889838B5A9AAD4E679B68" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LIBTHEORA.txt";
+			"sourceTree" = "<group>";
+		};
+		"BC9917D3AB3A731DB054A70B" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "068889838B5A9AAD4E679B68";
+		};
+		"AAA92F79ADF21EEEC0040F6A" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LIBVORBIS.txt";
+			"sourceTree" = "<group>";
+		};
+		"576800180D78A57EFFC15C51" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "AAA92F79ADF21EEEC0040F6A";
+		};
+		"B298F395A9662042CE331B14" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LIBVPX.txt";
+			"sourceTree" = "<group>";
+		};
+		"320CF3CD705C941957F342C1" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "B298F395A9662042CE331B14";
+		};
+		"848700BBDFC6AD6166701FC3" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LIBWEBP.txt";
+			"sourceTree" = "<group>";
+		};
+		"21D697C995E92DDDD79CC4D0" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "848700BBDFC6AD6166701FC3";
+		};
+		"BE07DC257055D9AEFCC61743" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.OPENCORE-AMR.txt";
+			"sourceTree" = "<group>";
+		};
+		"D5AA1AAF6730291E9319B14D" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "BE07DC257055D9AEFCC61743";
+		};
+		"8AD71CD7DF157E6C70AADCA3" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.OPUS.txt";
+			"sourceTree" = "<group>";
+		};
+		"5921A024FFF7AB0C1F9207DA" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "8AD71CD7DF157E6C70AADCA3";
+		};
+		"E123871BDFF7514D6C143E60" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.SPEEX.txt";
+			"sourceTree" = "<group>";
+		};
+		"8521104D6E4FD33D4137D69A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "E123871BDFF7514D6C143E60";
+		};
+		"A3E833D80D3D01BF6B90B888" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.TIFF.txt";
+			"sourceTree" = "<group>";
+		};
+		"7EE17692D16F4C36BE9B8CF6" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "A3E833D80D3D01BF6B90B888";
+		};
+		"13AFB006A2A4BA24FF8EF210" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"077DB8FBBD08A9186B592394" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "13AFB006A2A4BA24FF8EF210";
+		};
+		"6B13C83403BD63C658BF3558" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.X264.txt";
+			"sourceTree" = "<group>";
+		};
+		"009DB1B2017D0036F43660FA" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "6B13C83403BD63C658BF3558";
+		};
+		"E790CB9B586EEF5D47B8F6AE" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavdevice-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"2E3C5FABAB0AC154968CC54F" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "E790CB9B586EEF5D47B8F6AE";
+		};
+		"CFFB9D7C1E2156BDE225AE2C" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavfilter-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"FF6200032C92482FEE8A8925" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "CFFB9D7C1E2156BDE225AE2C";
+		};
+		"C2D64342EEDCF3F3A926A7A8" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavformat-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"3864509B62ECDA02EAC7AD50" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "C2D64342EEDCF3F3A926A7A8";
+		};
+		"691307E9F9E94F49C647A8AC" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavutil-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"3B66849D13D2FB93247EA420" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "691307E9F9E94F49C647A8AC";
+		};
+		"BEADCBB274A1E050AE585453" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libswresample-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"60B3ABBBBC91D32A5E5820DF" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "BEADCBB274A1E050AE585453";
+		};
+		"20112BBB0499E9796D56141A" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libswscale-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"566BE13753E051CBFE69052D" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "20112BBB0499E9796D56141A";
+		};
+		"5DD23A050D03E570F4017A88" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "folder.assetcatalog";
+			"path" = "OmniDownloader/Assets.xcassets";
+			"sourceTree" = "<group>";
+		};
+		"7F9C79AD1BD5E2EE26D43594" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "5DD23A050D03E570F4017A88";
+		};
+		"8D52871E0C23DE77F8554D92" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "file";
+			"path" = "OmniDownloaderTests/Fixtures/ugoira-deflated.bin";
+			"sourceTree" = "<group>";
+		};
+		"7304E423673A465D7A1E4D45" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "8D52871E0C23DE77F8554D92";
 		};
 	};
 	"rootObject" = "777777778888999900000001";

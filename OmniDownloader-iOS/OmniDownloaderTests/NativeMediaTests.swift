@@ -37,6 +37,14 @@ final class NativeMediaTests:XCTestCase {
         XCTAssertEqual(MediaArchive.crc(Data("123456789".utf8)),0xcbf43926)
         XCTAssertThrowsError(try MediaArchive.unpackFrames(archive,names:["../escape.png"],to:root.appendingPathComponent("bad")))
     }
+    func testCompressedUgoiraFrames()throws{
+        let archive=try XCTUnwrap(Bundle(for:Self.self).url(forResource:"ugoira-deflated",withExtension:"bin"))
+        let root=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer{try? FileManager.default.removeItem(at:root)}
+        let frames=try MediaArchive.unpackFrames(archive,names:["0.png","1.png","2.png"],to:root)
+        XCTAssertEqual(frames.count,3)
+        for frame in frames{XCTAssertNotNil(CGImageSourceCreateWithURL(frame as CFURL,nil))}
+    }
     @MainActor func testRealVideoGIFAndAudioCodecs()async throws{
         let root=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at:root,withIntermediateDirectories:true)
