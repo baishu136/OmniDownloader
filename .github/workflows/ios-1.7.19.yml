@@ -21,7 +21,7 @@ jobs:
         run: |
           set -o pipefail
           DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for a in d["devices"].values() for x in a if x["name"].startswith("iPhone")))')
-          xcodebuild test -project OmniDownloader-iOS/OmniDownloader.xcodeproj -scheme OmniDownloader -configuration Debug -destination "platform=iOS Simulator,id=$DEVICE" -clonedSourcePackagesDirPath "$RUNNER_TEMP/packages" -derivedDataPath "$RUNNER_TEMP/ios-build" -resultBundlePath "$RUNNER_TEMP/iOS-tests.xcresult" CODE_SIGNING_ALLOWED=NO | tee tests.log
+          xcodebuild test -project OmniDownloader-iOS/OmniDownloader.xcodeproj -scheme OmniDownloader -configuration Debug -destination "platform=iOS Simulator,id=$DEVICE" -clonedSourcePackagesDirPath "$RUNNER_TEMP/packages" -derivedDataPath "$RUNNER_TEMP/ios-build" -resultBundlePath "$RUNNER_TEMP/iOS-tests.xcresult" CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- | tee tests.log
       - name: Build ARM64 unsigned IPA
         if: success()
         shell: bash
@@ -38,7 +38,7 @@ jobs:
         run: |
           set -o pipefail
           DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for a in d["devices"].values() for x in a if x["name"].startswith("iPad")))')
-          xcodebuild test-without-building -project OmniDownloader-iOS/OmniDownloader.xcodeproj -scheme OmniDownloader -configuration Debug -only-testing:OmniDownloaderUITests -destination "platform=iOS Simulator,id=$DEVICE" -clonedSourcePackagesDirPath "$RUNNER_TEMP/packages" -derivedDataPath "$RUNNER_TEMP/ios-build" -resultBundlePath "$RUNNER_TEMP/iPad-tests.xcresult" CODE_SIGNING_ALLOWED=NO | tee ipad.log
+          xcodebuild test-without-building -project OmniDownloader-iOS/OmniDownloader.xcodeproj -scheme OmniDownloader -configuration Debug -only-testing:OmniDownloaderUITests -destination "platform=iOS Simulator,id=$DEVICE" -clonedSourcePackagesDirPath "$RUNNER_TEMP/packages" -derivedDataPath "$RUNNER_TEMP/ios-build" -resultBundlePath "$RUNNER_TEMP/iPad-tests.xcresult" CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- | tee ipad.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:

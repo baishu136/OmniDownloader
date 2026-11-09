@@ -1,133 +1,48 @@
-# OmniDownloader - Apple iOS 原生版
+# OmniDownloader iOS 1.7.19
 
-**OmniDownloader iOS** 是专为 iPhone 与 iPad 设计的全能音视频极速下载器。采用纯正的 **Swift 5.9 + SwiftUI** 声明式现代架构与 **iOS 原生硬件加速 AVFoundation 媒体引擎**，提供 B 站、部分国内平台和合集能力；YouTube 使用本机会话浏览器进行受限解析，具体支持范围和验证状态见下文。
+原生 SwiftUI 客户端，按 Android 四页导航与分类设置移植。最低 iOS/iPadOS 15；iPhone、iPad、横竖屏、深浅色和减少动态效果。应用内自定义 HTTP/HTTPS/SOCKS5 代理需要 iOS 17；旧系统仍可使用系统网络设置。
 
----
+## 功能与界面
 
-## 2026-11-02 界面与 YouTube 更新
+- 首页：单行链接、剪贴板、输入框上方的平台标签、解析进度、可取消解析、中转站浏览器。
+- 下载面板：音画合流、纯画面、音频、GIF、封面、真实规格与合集选择；已移除 GIF 宣传说明卡。
+- 图文：原图选择与预览、单图/ZIP、Pixiv Ugoira 原始帧/MP4/GIF。
+- 任务：并发、暂停/取消/继续、合集分组、历史、分享/预览、目录导出与可选相册保存。源过期可重新解析同一媒体；尺寸、帧率、HDR、编码要求不会被静默降低。
+- 设置：外观与语言、下载与存储、网络代理、中转站、账号、下载引擎、关于。账号说明为“Cookie 与登录管理”。
+- 12 个平台独立 Cookie 文件导入、官方网页登录、清除与禁用；登录状态保存在设备钥匙串，WKWebView 使用隔离的临时数据存储。
+- 抖音先读取同作品原生数据，在仅有低清/未知尺寸或参考尺寸更高时自动使用本机 WebKit 补全，保留已取得的可用源。验证码和必须登录的页面仍需本人处理。
+- MP4 使用有界 Range 读取确认实际尺寸；最终文件通过 libavformat 核对真实尺寸、音轨与时长。视频源有合流 MP4 时保持原始字节，其他合并使用流复制；GIF 和音频为明确选择的转换。
 
-- 配色、首页品牌区、圆角卡片、下载配置、任务标签与 Android 对齐，支持浅色/深色。iOS 16+ 使用胶囊选中态底栏；iOS 15 保留经过配色的原生底栏，不提高最低版本。
-- 设置 → YouTube Cookie：导入 Netscape `cookies.txt`，仅保留 `youtube.com` 子域的有效项，使用本机 Keychain（ThisDeviceOnly）存储。不会读取 Safari/Chrome 密码，也不会把会话转交中转站。
-- 首页解析 YouTube 链接会进入本机 WKWebView。请播放原视频并切换所需清晰度；确认视频 ID、资源身份、长度和 MIME 后，才能选择下载。只接受已取得完整地址的 MP4 / AAC；地址仅在内存短时保留。
-- 支持音画合流 MP4、仅画面 MP4 和 M4A，下载后核对完整长度、媒体轨道、时长和尺寸。会话变化、地址过期、应用重启后，需要重新打开原视频解析。YouTube 下载期间应保持应用在前台。
-- 不支持本链路中的直播、DRM、仅能取得分段地址的内容，或页面未提供完整可用地址的格式。Cookie 不能保证通过 YouTube 人机验证，也不能保证取得 4K/8K。
-- **验证状态**：Windows 上完成 22 个 Swift 文件语法检查、Xcode 工程引用检查、5 个浏览器脚本样例验证；未进行 Apple SDK 编译、签名、iPhone / iPad 运行。不能把这些检查当成 iOS 构建或真机验收。
+## 平台差异与限制
 
-在 Mac 上打开 `OmniDownloader.xcodeproj`，设置自己的签名团队，先执行无签名模拟器构建，再在 iPhone 上验证 Keychain 导入、Cookie 更新/移除、普通/分离音轨、取消/重试、前后台切换、相册拒绝和深浅色/大字体。
+系统后台 URLSession 负责网络传输，媒体转换在前台进行；进入后台时暂停转换，回到应用可继续。已完成的输入和校验通过的成品会保留，导出授权失效后可重选目录并重试。强制结束应用后，记录恢复为暂停；未完成的会话需要重新解析。
 
-## 🌟 核心特性
+B 站、抖音、X、Pixiv 提供原生数据入口，其他平台按目标作品从官方网站 WebKit 数据提取。平台验证码、登录、内容删除、会员/充电/地区权益和 DRM 限制不会被绕过。YouTube 使用现有官方网页会话与可确认的直连流；仍可能需要播放和验证，不包含 Android 的完整 Python/yt-dlp 运行时，不能承诺相同的所有格式覆盖。当前没有系统分享扩展；可以粘贴链接或使用 `omnidownloader://download?url=...`。
 
-1. **哔哩哔哩（B站）全画质极速直连**：
-   - 官方原生 DASH 双流解耦，支持 **4K (2160p)**、**1080P60 高帧率**、**1080P 高清**以及无损音频原轨提取；
-   - 智能视频流挑选引擎：按“高度降序 -> 清晰度qn降序 -> AVC高兼容编码优先 -> 码率降序”精选候选流，支持无缝平滑降级；
-   - 内置安全 WebKit 官方登录入口，无感截取持久化 SESSDATA 凭证，在账号已有权益范围内取得可用清晰度；登录不会额外授予会员或充电权限。
+相册“仅添加”权限允许写入照片；只有获得完整图库权限时才管理专属相簿。拒绝相册权限不删除已导出的文件。
 
-2. **分P视频与 UGC 合集聚合下载**：
-   - 自动识别多视频、分P教学视频与 UGC 电视剧/合集；
-   - 首页下载弹窗提供“下载单集 / 批量下载合集”双模式与全选/反选分集抽屉；
-   - 弹窗严格遵循“可滚动主体 + 吸底常驻操作栏 (Sticky Footer)”设计规范；
-   - **下载管理页合集卡片聚合**：显示加权整体进度条、当前正在下载的子分集进度，并支持点击平滑展开/收起分集抽屉明细。
+## 可复现构建
 
-3. **国内热门短视频无水印原画直连**：
-   - 原生支持 **抖音**、**快手**、**小红书** 短链与长链嗅探；
-   - 自动解析 302 重定向并提取官方原生 CDN 无水印最高画质直链与封面。
+1. 在 Mac 使用 Xcode 16.4 或更新版本打开 `OmniDownloader.xcodeproj`，选择共享 scheme `OmniDownloader`。
+2. SwiftPM 固定 `jaywcjlove/ffmpeg-kit` 的提交 `0bd85df8f9693061f6f979414662baaf876a3e20`；首次构建需要网络获取依赖。
+3. 模拟器测试使用本地临时签名，以便系统后台传输服务识别应用，无需上传 Apple 账户凭据：
 
-4. **原生硬件加速 DASH 合并（无需庞大 FFmpeg）**：
-   - 创新性采用 iOS 底层 `AVMutableComposition` + `AVAssetExportSession(presetName: Passthrough)`；
-   - 纯硬件加速，毫秒级无损合并视频轨道与音频轨道，且将 App 安装包体积控制在几兆之内。
-
-5. **无缝存入系统《照片》相册**：
-   - 深度集成 `Photos.framework` (`PHPhotoLibrary`)；
-   - 合并完成后自动在 iPhone 相册中创建“OmniDownloader”专属相簿并将音视频存入其中，方便原生播放与分享。
-
-6. **原生后台下载持久化**：
-   - 基于 `URLSessionConfiguration.background` 与 iOS `nsurlsessiond` 系统级守护进程；
-   - 适用原有 URLSession 后台任务；执行受系统调度、权限与网络条件限制，不能保证永久运行。YouTube 新链路为前台下载，需要保持应用打开。
-
----
-
-## 📁 项目工程架构
-
-```
-OmniDownloader-iOS/
-├── OmniDownloader.xcodeproj/       # Xcode 标准工程配置
-│   └── project.pbxproj
-├── .github/workflows/              # GitHub Actions 自动化 CI 编译流水线
-│   └── ios-build.yml               # 自动打包未签名 OmniDownloader.ipa
-├── README_IOS.md                   # 详细使用与侧载说明文档
-└── OmniDownloader/                 # 核心 Swift 原生代码
-    ├── App/
-    │   ├── OmniDownloaderApp.swift # SwiftUI App 应用程序入口
-    │   └── Info.plist              # 相册权限、后台模式与网络策略声明
-    ├── Models/
-    │   ├── Models.swift            # 核心数据模型 (DownloadTask, VideoMetadata 等)
-    │   └── AppStrings.swift        # 全套简体中文国际化常量表
-    ├── Engines/
-    │   ├── UrlSniffer.swift        # 链接正则嗅探、重定向解析与平台识别
-    │   ├── BilibiliExtractor.swift # B站全画质 DASH、分P/合集与流挑选算法
-    │   └── DomesticExtractor.swift # 抖音/快手/小红书去水印提取
-    ├── Media/
-    │   └── AVMuxer.swift           # AVFoundation 硬件加速音视频无损混流
-    ├── Services/
-    │   ├── CookieStore.swift       # SESSDATA 凭证与偏好配置持久化
-    │   ├── MediaSaver.swift        # 系统相册专属相簿创建与文件安全入库
-    │   └── DownloadManager.swift   # 后台 URLSession 下载任务并发调度管理
-    └── Views/
-        ├── MainTabView.swift       # 根 Tab 栏容器
-        ├── Home/
-        │   ├── HomeView.swift      # 首页 (链接输入、剪贴板嗅探、平台导航)
-        │   └── FormatSelectorSheet.swift # 格式与合集下载弹窗 (Sticky Footer)
-        ├── Tasks/
-        │   ├── TasksView.swift     # 任务管理页 (进行中/已完成，翻页缓冲)
-        │   ├── TaskCard.swift      # 单任务下载卡片
-        │   └── CollectionTaskCard.swift  # 合集聚合卡片 (总进度+子进度+抽屉)
-        └── Settings/
-            ├── SettingsView.swift  # 设置页 (账号状态、相册开关、清理缓存)
-            └── BilibiliLoginSheet.swift  # WebKit 官方安全登录拦截弹窗
+```sh
+xcodebuild test -project OmniDownloader.xcodeproj -scheme OmniDownloader -destination 'platform=iOS Simulator,name=<available iPhone>' CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=-
 ```
 
----
+4. 未签名设备构建：
 
-## 🚀 编译与运行方式
+```sh
+xcodebuild build -project OmniDownloader.xcodeproj -scheme OmniDownloader -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO
+```
 
-### 方案 A：在 Mac 上使用 Xcode 编译运行（针对有 Mac 设备的开发者）
-1. 双击打开 `OmniDownloader.xcodeproj`；
-2. 在 Xcode 顶部选择您的 iPhone 真机或 iOS 模拟器；
-3. 在 `Signing & Capabilities` 中配置您的个人 Apple 开发者账号或个人免费 Apple ID；
-4. 点击 **Run (⌘ + R)** 即可直接将应用安装到手机上运行。
+5. 真机安装需要自己的 Apple 团队/证书或自行签名。工程默认不读取本机证书；在 Xcode 设置签名团队，并将 `CODE_SIGNING_ALLOWED`、`CODE_SIGNING_REQUIRED` 设为 `YES`。未签名 IPA 不能直接安装。
 
----
+根目录 `.github/workflows/ios-1.7.19.yml` 执行 iPhone 原生媒体/界面测试、ARM64 构建与 iPad 布局测试。详细验收状态以 `docs/PARITY_1.7.19_2026-11-08.md` 和对应 Actions 运行记录为准，编译、模拟器与真机验证分别记录。
 
-### 方案 B：在 Windows 环境通过 GitHub Actions 云端打包（免 Mac 设备）
-若您当前在 Windows 开发机上，无需安装 macOS 虚拟机：
-1. 将当前工程推送到您的个人 GitHub 仓库；
-2. 进入仓库页面的 **Actions** 标签；
-3. 选择左侧的 **“构建 iOS OmniDownloader.ipa”** 工作流；
-4. 点击右侧的 **“Run workflow”** 手动触发编译；
-5. 构建完成后（约 2~3 分钟），在页面下方 **Artifacts** 区域即可一键下载最新编译好的 **`OmniDownloader.ipa`** 安装包！
+## 媒体组件与源码
 
----
+FFmpegKit 的 C 桥接和原生库来自上述固定提交；`NativeProbe.c` 直接读取 libavformat 媒体信息，避免依赖 ffprobe 命令输出重定向。该依赖含 GPL v3 组件，相关许可随应用 Resources 提供。应用完整源码、工程与构建脚本及依赖固定版本一并交付。依赖的构建脚本、第三方源码版本和下载地址可在固定提交中复现：
 
-## 📲 iPhone / iPad 侧载安装方法
-
-下载生成的 `OmniDownloader.ipa` 之后，可通过以下任意一种常见方式安装至 iOS 设备：
-
-### 1. TrollStore（巨魔商店 - 推荐，永久保活）
-- **适用机型**：支持 iOS 14.0 ~ 17.0（部分版本）的巨魔设备；
-- **安装步骤**：将 `.ipa` 发送至微信/QQ/隔空投送并在手机上打开，选择“使用 TrollStore 打开”，点击 Install 即可，**永不过期、无需续签**。
-
-### 2. AltStore / Sideloadly / 牛蛙助手（个人免费 Apple ID 签名）
-- **适用机型**：所有 iOS 15.0 ~ 18.x 任意机型，无需越狱；
-- **安装步骤**：
-  1. 电脑连接 iPhone 并打开 Sideloadly / AltStore；
-  2. 拖入 `OmniDownloader.ipa`，输入个人免费 Apple ID 进行签名并安装；
-  3. 手机打开“设置 -> 通用 -> VPN 与设备管理”，信任您的开发者证书即可打开使用（每 7 天在同一 Wi-Fi 下即可自动续签）。
-
-### 3. 爱思助手自签名安装
-- 电脑打开爱思助手 -> 工具箱 -> IPA 签名；
-- 添加 `OmniDownloader.ipa`，使用 Apple ID 签名后，点击一键安装到手机。
-
----
-
-## 📄 授权与免责声明
-本项目仅供编程学习与个人个人影音离线归档使用，解析下载音视频之著作权归各平台及原作者所有。
+https://github.com/jaywcjlove/ffmpeg-kit/tree/0bd85df8f9693061f6f979414662baaf876a3e20
