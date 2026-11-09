@@ -40,7 +40,7 @@
       '小红书':/\/(?:explore|discovery\/item)\/([a-zA-Z0-9]+)/,'X (Twitter)':/\/status\/(\d+)/,'TikTok':/\/video\/(\d+)/,
       'Instagram':/\/(?:p|reel)\/([a-zA-Z0-9_-]+)/,'Pinterest':/\/pin\/(\d+)/,'Pixiv':/\/artworks\/(\d+)/,'哔哩哔哩':/\/(?:opus|video)\/(BV[a-zA-Z0-9]+|\d+)/};
     if(target.site==='Facebook')return u.searchParams.get('v')||p.match(/\/(?:videos|reel)\/(\d+)/)?.[1]||'';
-    if(target.site==='小黑盒')return u.searchParams.get('link_id')||'';
+    if(target.site==='小黑盒')return u.searchParams.get('link_id')||p.match(/\/(?:app\/bbs\/link|bbs\/link)\/(\d+)/)?.[1]||'';
     return p.match(patterns[target.site]||/$a/)?.[1]||'';
   }
   function read(){
@@ -106,6 +106,14 @@
         const m=video(target.id,number(node.playable_duration_in_ms));if(!m)return;
         for(const url of [node.playable_url_quality_hd,node.playable_url,node.browser_native_hd_url,node.browser_native_sd_url])addFormat(m,url);
         output.title ||= node.name||node.title||'';
+      }else if(site==='小黑盒'){
+        output.title ||= node.title||node.name||'';output.author ||= node.user?.username||node.user?.nickname||'';
+        const m=video(target.id,number(node.duration_ms));if(!m)return;
+        const rows=[node.video,node.video_info,...list(node.videos)].filter(Boolean);
+        for(const v of rows){const url=typeof v==='string'?v:v.url||v.video_url||v.play_url;if(url&&/\.(?:mp4|m3u8)(?:[?#]|$)/i.test(url))addFormat(m,url,v.width,v.height);}
+        for(const url of [node.video_url,node.videoUrl,node.play_url])if(url&&/\.(?:mp4|m3u8)(?:[?#]|$)/i.test(url))addFormat(m,url);
+        const content=String(node.content||node.html||'');
+        for(const match of content.matchAll(/<(?:video|source)\b[^>]*\bsrc=["'](https?:\/\/[^"'<>]+)["']/gi))addFormat(m,match[1].replaceAll('&amp;','&'));
       }else if(site==='快手'){
         const p=node.photo||node;output.title ||= p.caption||p.title||'';const m=video(target.id,p.duration||p.durationMs);if(!m)return;
         for(const v of [p.mainMvUrls,p.videoResource?.h264?.adaptationSet?.[0]?.representation,p.videoResource?.hevc?.adaptationSet?.[0]?.representation].flatMap(list))addFormat(m,v.url,v.width,v.height,{bitrateKbps:number(v.avgBitrate)/1000});
@@ -125,7 +133,8 @@
       }
       if((site==='TikTok'&&String(node.id||node.aweme_id||'')===id)||(site==='Instagram'&&String(node.shortcode||node.code||'')===id)||
          (site==='Pinterest'&&String(node.id||'')===id)||(site==='Facebook'&&String(node.id||node.videoId||'')===id)||
-         (site==='快手'&&String(node.photoId||node.photo_id||node.id||'')===id))generic(node);
+         (site==='快手'&&String(node.photoId||node.photo_id||node.id||'')===id)||
+         (site==='小黑盒'&&String(node.link_id||node.linkId||node.linkid||node.id||'')===id))generic(node);
       for(const child of Object.values(node))walk(child,depth+1);
     }
     const values=[...roots,window._ROUTER_DATA,window.__INITIAL_STATE__,window.SIGI_STATE,window.__NEXT_DATA__];
