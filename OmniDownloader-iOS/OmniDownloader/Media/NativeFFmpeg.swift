@@ -30,8 +30,10 @@ enum NativeFFmpeg {
     struct Probe { var width:Int;var height:Int;var durationMs:Int64;var audio:Bool }
     static func probe(_ file:URL)async throws->Probe{
         try await withCheckedThrowingContinuation{continuation in DispatchQueue.global(qos:.utility).async{
-            let session=FFprobeKit.executeWithArguments(["-v","error","-show_streams","-show_format","-of","json",file.path])
-            let text=session.getOutput()
+            let report=FileManager.default.temporaryDirectory.appendingPathComponent("omni-probe-"+UUID().uuidString+".json")
+            defer{try? FileManager.default.removeItem(at:report)}
+            let session=FFprobeKit.executeWithArguments(["-v","error","-show_streams","-show_format","-of","json","-o",report.path,file.path])
+            let text=(try? String(contentsOf:report,encoding:.utf8)) ?? ""
             guard ReturnCode.isSuccess(session.getReturnCode()),text.utf8.count<8_388_608,
                   let start=text.firstIndex(of:"{"),let end=text.lastIndex(of:"}"),start<=end,
                   let data=String(text[start...end]).data(using:.utf8),let json=try? JSONSerialization.jsonObject(with:data) as? [String:Any] else{continuation.resume(throwing:OmniPlatform.error("POSTPROCESS_FAILED","无法读取成品媒体信息"));return}
