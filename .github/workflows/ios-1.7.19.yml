@@ -32,6 +32,13 @@ jobs:
           cp -R "$RUNNER_TEMP/ios-release/Build/Products/Release-iphoneos/OmniDownloader.app" output/Payload/
           cd output && zip -qry OmniDownloader-1.7.19-unsigned.ipa Payload && rm -r Payload
           shasum -a 256 OmniDownloader-1.7.19-unsigned.ipa > SHA256SUMS.txt
+      - name: Verify iPad layouts
+        if: success()
+        shell: bash
+        run: |
+          set -o pipefail
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for a in d["devices"].values() for x in a if x["name"].startswith("iPad")))')
+          xcodebuild test-without-building -project OmniDownloader-iOS/OmniDownloader.xcodeproj -scheme OmniDownloader -configuration Debug -only-testing:OmniDownloaderUITests -destination "platform=iOS Simulator,id=$DEVICE" -clonedSourcePackagesDirPath "$RUNNER_TEMP/packages" -derivedDataPath "$RUNNER_TEMP/ios-build" -resultBundlePath "$RUNNER_TEMP/iPad-tests.xcresult" CODE_SIGNING_ALLOWED=NO | tee ipad.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -40,4 +47,5 @@ jobs:
             output/*
             *.log
             ${{ runner.temp }}/iOS-tests.xcresult
+            ${{ runner.temp }}/iPad-tests.xcresult
           retention-days: 14

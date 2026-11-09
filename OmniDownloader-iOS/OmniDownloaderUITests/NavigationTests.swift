@@ -1,6 +1,14 @@
 import XCTest
 
 final class NavigationTests:XCTestCase {
+    @MainActor func testDarkLandscapeLayout(){
+        let app=XCUIApplication();app.launchArguments=["-AppleLanguages","(zh-Hans)","-AppleLocale","zh_CN","-omni.language","zh-CN","-com.omni.downloader.appearance","dark"];app.launch()
+        XCTAssertTrue(app.textFields["omni.video.url"].waitForExistence(timeout:15))
+        XCUIDevice.shared.orientation = .landscapeRight
+        XCTAssertTrue(app.buttons["omni.nav.3"].waitForExistence(timeout:5))
+        let image=XCTAttachment(screenshot:app.screenshot());image.name="iOS-dark-landscape";image.lifetime = .keepAlways;add(image)
+        XCUIDevice.shared.orientation = .portrait
+    }
     @MainActor func testFourPagesAndCategorizedSettings(){
         let app=XCUIApplication()
         app.launchArguments=["-AppleLanguages","(zh-Hans)","-AppleLocale","zh_CN","-omni.language","zhCN"]

@@ -3,6 +3,7 @@
 #include <libavcodec/avcodec.h>
 #include <libavutil/display.h>
 #include <math.h>
+#include <stdlib.h>
 
 /* Read actual container streams directly; no process stdout or global ffprobe state. */
 OmniProbeResult omni_probe_local(const char *path) {
