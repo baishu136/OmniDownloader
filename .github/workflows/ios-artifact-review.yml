@@ -1,0 +1,44 @@
+name: Export iOS 1.7.19 visual review
+on:
+  push:
+    branches: ['codex/ios-1.7.19']
+    paths: ['.github/workflows/ios-artifact-review.yml']
+permissions:
+  actions: read
+  contents: read
+jobs:
+  screenshots:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - name: Wait for native build artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in {1..60}; do
+            STATUS=$(gh api repos/${{ github.repository }}/actions/runs/42549317358 --jq '.status')
+            if [ "$STATUS" = "completed" ]; then exit 0; fi
+            sleep 10
+          done
+          exit 1
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 42549317358
+          name: OmniDownloader-iOS-1.7.19
+          path: native-results
+      - name: Export original test screenshots and summaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p visual-review
+          find native-results -type d -name '*.xcresult' -print0 | while IFS= read -r -d '' BUNDLE; do
+            NAME=$(basename "$BUNDLE" .xcresult)
+            xcrun xcresulttool export attachments --path "$BUNDLE" --output-path "visual-review/$NAME"
+            xcrun xcresulttool get test-results summary --path "$BUNDLE" > "visual-review/$NAME-summary.json"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OmniDownloader-iOS-1.7.19-visual-review
+          path: visual-review
+          retention-days: 14
