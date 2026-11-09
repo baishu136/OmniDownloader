@@ -45,7 +45,7 @@ extension Notification.Name{
                             LazyVGrid(columns:[GridItem(.adaptive(minimum:145),spacing:12)],spacing:12){
                                 ForEach(Array(post.resources.enumerated()),id:\.element.id){index,image in
                                     VStack(alignment:.leading,spacing:6){
-                                        ZStack(alignment:.topTrailing){Button{preview=Preview(id:index)}label:{OmniRemoteImage(url:image.url).frame(height:170).frame(maxWidth:.infinity).clipShape(RoundedRectangle(cornerRadius:16))}.buttonStyle(OmniPressStyle()).accessibilityLabel(L("查看图片")+" \(index+1)")
+                                        ZStack(alignment:.topTrailing){Button{preview=Preview(id:index)}label:{OmniRemoteImage(url:image.url,site:post.platform).frame(height:170).frame(maxWidth:.infinity).clipShape(RoundedRectangle(cornerRadius:16))}.buttonStyle(OmniPressStyle()).accessibilityLabel(L("查看图片")+" \(index+1)")
                                             Button{if !selected.insert(image.id).inserted{selected.remove(image.id)}}label:{Image(systemName:selected.contains(image.id) ? "checkmark.circle.fill":"circle").font(.title2).foregroundColor(selected.contains(image.id) ? OmniPalette.primary:.white).padding(10).background(Color.black.opacity(0.2),in:Circle())}.buttonStyle(.plain).accessibilityLabel(L("选择图片")+" \(index+1)").accessibilityAddTraits(selected.contains(image.id) ? .isSelected:[])
                                         }
                                         HStack{Text(image.original ? L("原图"):L("平台图片"));if image.animated{Text("GIF").foregroundColor(.purple)};Spacer();Text(image.label)}.font(.caption2).foregroundColor(OmniPalette.secondary)
