@@ -77,7 +77,9 @@ final class NativeMediaTests:XCTestCase {
         try await NativeFFmpeg.run(["-i",source.path,"-map","0:v:0","-c:v","copy","-an",mute.path])
         let silent=try await NativeFFmpeg.probe(mute);XCTAssertFalse(silent.audio);XCTAssertEqual(silent.width,320)
         let originalBytes=try Data(contentsOf:source)
-        let server=try LocalMediaServer(originalBytes);try await server.start();defer{server.stop()}
+        let segment=root.appendingPathComponent("segment.ts")
+        try await NativeFFmpeg.run(["-i",source.path,"-c","copy","-f","mpegts",segment.path])
+        let server=try LocalMediaServer(originalBytes,segment:Data(contentsOf:segment));try await server.start();defer{server.stop()}
         let analyzed=try await MediaResolver.analyze(server.url)
         let confirmed=try await NativeMP4Probe.confirm(analyzed)
         XCTAssertEqual(confirmed.availableVideoFormats[0].width,320)
