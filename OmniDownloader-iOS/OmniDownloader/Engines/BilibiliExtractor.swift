@@ -103,8 +103,9 @@ public final class BilibiliExtractor{
         if let id=task.mediaId,id != pair.0.mediaId{throw OmniPlatform.error("MEDIA_ID_MISMATCH","原分集已不可定位，请重新解析")}
         guard scope==PlatformSession.shared.generation("哔哩哔哩") else{throw CancellationError()}
         let requested=task.selectedVideoFormatId ?? "",height=extractHeightFromResolution(task.selectedResolution)
-        let exact=streams.0.first{$0.formatId==requested} ?? streams.0.first{!requested.isEmpty && $0.formatId.split(separator:":").dropLast().joined(separator:":")==requested.split(separator:":").dropLast().joined(separator:":")}
-        let chosen=exact ?? streams.0.first{height>0 && min($0.width,$0.height)==height} ?? streams.0.first{height==0 || min($0.width,$0.height)>=height}
+        let eligible=streams.0.filter{MediaQuality.meets($0,task)}
+        let exact=eligible.first{$0.formatId==requested} ?? eligible.first{!requested.isEmpty && $0.formatId.split(separator:":").dropLast().joined(separator:":")==requested.split(separator:":").dropLast().joined(separator:":")}
+        let chosen=exact ?? eligible.first{height>0 && min($0.width,$0.height)==height} ?? eligible.first{height==0 || min($0.width,$0.height)>=height}
         guard let chosen=chosen,MediaQuality.meets(chosen,task) else{throw OmniPlatform.error("QUALITY_UNAVAILABLE","当前账号没有满足所选尺寸、帧率、HDR 与编码要求的真实视频流")}
         if task.downloadType == .audioOnly && streams.1.isEmpty{
             return(chosen.sourceUrl ?? "",chosen.sourceUrl ?? "",pair.0.title)

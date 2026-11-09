@@ -84,6 +84,11 @@ final class NativeMediaTests:XCTestCase {
         XCTAssertEqual(confirmed.availableVideoFormats[0].height,180)
         MediaSources.shared.remember(confirmed)
         let task=DownloadTask(url:server.url,title:"Native pipeline fixture",downloadType:.videoWithAudio,selectedVideoFormatId:confirmed.availableVideoFormats[0].formatId,mediaId:confirmed.mediaId,expectedDurationMs:confirmed.expectedDurationMs,selectedWidth:320,selectedHeight:180)
+        UserDefaults.standard.set(Data([255]),forKey:"omni.folderBookmark")
+        do{_ = try await NativeMediaPipeline.execute(task,progress:{_,_ in});XCTFail("Invalid export permission must fail")}
+        catch{XCTAssertTrue(error.localizedDescription.contains("EXPORT_FAILED"))}
+        UserDefaults.standard.removeObject(forKey:"omni.folderBookmark")
+        MediaSources.shared.invalidate(confirmed.siteName);server.stop()
         let exported=try await NativeMediaPipeline.execute(task,progress:{_,_ in})
         defer{try? FileManager.default.removeItem(at:exported)}
         XCTAssertEqual(try Data(contentsOf:exported),originalBytes,"Original muxed MP4 must remain byte-identical")

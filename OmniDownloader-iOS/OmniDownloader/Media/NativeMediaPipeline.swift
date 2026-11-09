@@ -5,6 +5,8 @@ import CryptoKit
 
 enum NativeMediaPipeline {
     private struct Ready:Codable{let signature:String;let name:String}
+    private struct Prepared:Codable{let signature:String;let input:String;let audio:String?;let hls:Bool}
+    private struct Receipt:Codable{let signature:String;let size:Int}
     static var workRoot:URL{
         FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask)[0].appendingPathComponent("media_tasks",isDirectory:true)
     }
@@ -37,10 +39,16 @@ enum NativeMediaPipeline {
     }
     private static func fetch(_ source:String,site:String,task:DownloadTask,work:URL,name:String,headers:[String:String]=[:],progress:@escaping(Float)->Void)async throws->URL{
         guard let url=URL(string:source),NativeMediaParser.safeURL(source) else{throw OmniPlatform.error("SOURCE_EXPIRED","媒体地址无效，请重新解析")}
+        let target=work.appendingPathComponent(name),receipt=work.appendingPathComponent(name+".receipt")
+        let key=SHA256.hash(data:Data((source+"|"+PlatformSession.shared.generation(site)).utf8)).map{String(format:"%02x",$0)}.joined()
+        if let data=try? Data(contentsOf:receipt),let record=try? JSONDecoder().decode(Receipt.self,from:data),record.signature==key,record.size>0,(try? target.resourceValues(forKeys:[.fileSizeKey]).fileSize)==record.size{progress(1);return target}
         let temporary=try await BackgroundTransfer.shared.download(url,site:site,taskId:task.id,headers:headers,progress:progress)
         defer{try? FileManager.default.removeItem(at:temporary)}
-        let target=work.appendingPathComponent(name);try? FileManager.default.removeItem(at:target)
-        try Task.checkCancellation();try FileManager.default.moveItem(at:temporary,to:target);return target
+        try? FileManager.default.removeItem(at:target)
+        try Task.checkCancellation();try FileManager.default.moveItem(at:temporary,to:target)
+        let size=try target.resourceValues(forKeys:[.fileSizeKey]).fileSize ?? 0
+        try JSONEncoder().encode(Receipt(signature:key,size:size)).write(to:receipt,options:.atomic)
+        return target
     }
     private static func video(_ task:DownloadTask,work:URL,progress:@escaping(Float,String)->Void)async throws->URL{
         let site=OmniPlatform.detect(task.url)
@@ -50,6 +58,15 @@ enum NativeMediaPipeline {
             let image=try await fetch(task.thumbnailUrl.isEmpty ? meta.thumbnailUrl:task.thumbnailUrl,site:site,task:task,work:work,name:"cover.source",progress:{progress($0*90,"正在下载封面…")})
             return try imageFile(image,work:work,name:"output")
         }
+        let preparedURL=work.appendingPathComponent("prepared.json")
+        let intent=SHA256.hash(data:Data("\(task.url)|\(task.mediaId ?? "")|\(task.selectedVideoFormatId ?? "")|\(task.downloadType.rawValue)|\(task.audioFormat.rawValue)|\(task.selectedFPS ?? 0)|\(task.selectedDynamicRange ?? "")|\(task.selectedCodec ?? "")".utf8)).map{String(format:"%02x",$0)}.joined()
+        func valid(_ path:String)->Bool{
+            let file=work.appendingPathComponent(path).resolvingSymlinksInPath()
+            return file.path.hasPrefix(work.resolvingSymlinksInPath().path+"/") && ((try? file.resourceValues(forKeys:[.fileSizeKey]).fileSize) ?? 0)>0
+        }
+        if let data=try? Data(contentsOf:preparedURL),let record=try? JSONDecoder().decode(Prepared.self,from:data),record.signature==intent,valid(record.input),record.audio.map(valid) ?? true{
+            input=work.appendingPathComponent(record.input);audio=record.audio.map{work.appendingPathComponent($0)};hls=record.hls
+        }else{
         if site=="YouTube"{
             var request=task
             if task.downloadType == .gif{request.downloadType = .videoOnly}
@@ -71,6 +88,10 @@ enum NativeMediaPipeline {
                 let local=try await NativeHLS.prepare(url,site:site,taskId:task.id,directory:work.appendingPathComponent("hls"),progress:{progress($0*75,"正在下载分段媒体…")});input=local.video;audio=local.audio;hls=true
                 if audio==nil,[.videoWithAudio,.audioOnly].contains(task.downloadType),let extra=selected.audioSourceUrl,let address=URL(string:extra){audio=try await NativeHLS.prepare(address,site:site,taskId:task.id,directory:work.appendingPathComponent("hls-audio"),progress:{progress(75+$0*10,"正在下载音轨…")}).video}
             }else{input=try await fetch(source,site:site,task:task,work:work,name:"input.media",headers:selected.sourceHeaders ?? [:],progress:{progress($0*85,"正在下载媒体…")})}
+        }
+            let relative=String(input.path.dropFirst(work.path.count+1)),audioRelative=audio.map{String($0.path.dropFirst(work.path.count+1))}
+            guard valid(relative),audioRelative.map(valid) ?? true else{throw OmniPlatform.error("POSTPROCESS_FAILED","媒体暂存文件不完整")}
+            try JSONEncoder().encode(Prepared(signature:intent,input:relative,audio:audioRelative,hls:hls)).write(to:preparedURL,options:[.atomic,.completeFileProtectionUntilFirstUserAuthentication])
         }
         try Task.checkCancellation();progress(88,"正在处理媒体…")
         let output=work.appendingPathComponent("output."+(task.downloadType == .gif ? "gif":task.downloadType == .audioOnly ? task.audioFormat.rawValue:"mp4"))
