@@ -1,3 +1,7 @@
+## 1.7.20 正式发布 · Windows / iOS 界面更新
+
+[下载发行包](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20) · Android **1.7.19** / Windows、iOS **1.7.20**。PC 恢复旧版卡片与渐变风格并修复图标边缘；iOS 主要图标和按钮状态对齐 Android。iOS IPA 需要自行签名，尚未真机验收。[变更与验证](docs/UI_1.7.20_2026-11-09.md) · [平台差异与限制](docs/PARITY_1.7.19_2026-11-08.md)。
+
 <div align="center">
 
 # OmniDownloader (全能音视频下载器)
@@ -10,7 +14,7 @@
 </p>
 
 [![Release](https://img.shields.io/github/v/release/baishu136/OmniDownloader?color=blue&label=Release)](https://github.com/baishu136/OmniDownloader/releases)
-[![Android](https://img.shields.io/badge/Android-v1.5.10-green.svg)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-v1.7.19-green.svg)](https://developer.android.com)
 [![iOS](https://img.shields.io/badge/iOS-SwiftUI%20Native-orange.svg)](OmniDownloader-iOS)
 [![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
@@ -29,10 +33,10 @@
 
 | 平台形态 | 适用设备 | 核心技术栈 | 获取与安装方式 |
 | :--- | :--- | :--- | :--- |
-| **🤖 Android 原生版** | Android 手机 / 平板 / 车机 / 电视 (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [下载最新 APK (v1.5.10)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) 或 Releases 页面 |
-| **🍎 iOS 原生版** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + AVFoundation 原生硬件混流 + Photos 相簿 | 源码工程在 [`OmniDownloader-iOS`](OmniDownloader-iOS)，支持 GitHub Actions 免费打包 IPA 并通过 TrollStore 巨魔或自签侧载 |
-| **💻 Windows 桌面版** | Windows 10 / 11 (64位) | Python 3 + FastAPI + Edge WebView2 原生独立窗口 + 内置 FFmpeg | 下载 [`windows/release/OmniDownloader_桌面独立版.zip`](windows/release/)，免环境解压即用，附带多国语言说明 |
-| **🌐 Web 网页纯后台版** | Windows 电脑，支持局域网内任意手机/平板浏览器访问 | 轻量托盘守护进程 + 本地 Web 服务 + 内置 FFmpeg | 下载 [`windows/release/OmniDownloader_网页纯后台版.zip`](windows/release/)，静默常驻托盘，支持浏览器原生接管下载 |
+| **🤖 Android 原生版** | Android 手机 / 平板 / 车机 / 电视 (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [下载最新 APK (v1.7.19)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) 或 Releases 页面 |
+| **🍎 iOS 原生版** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + 原生 FFmpeg + Photos 相簿 | [IPA 1.7.20](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.20-unsigned.ipa) · [Signing / 签名 / 署名](OmniDownloader-iOS/README_IOS.md) |
+| **💻 Windows 桌面版** | Windows 10 / 11 (64位) | Python 3 + FastAPI + Edge WebView2 原生独立窗口 + 内置 FFmpeg | 下载 [`OmniDownloader_Desktop-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Desktop-1.7.20.zip)，免环境解压即用，附带多国语言说明 |
+| **🌐 Web 网页纯后台版** | Windows 本机浏览器 | 轻量托盘守护进程 + 本地 Web 服务 + 内置 FFmpeg | 下载 [`OmniDownloader_Web-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Web-1.7.20.zip)，静默常驻托盘，支持浏览器原生接管下载 |
 
 ---
 
@@ -72,7 +76,7 @@
 ## 📲 快速下载安装
 
 ### Android 安装包
-- 📦 **[`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk)**（或最新版 [`OmniDownloader-v1.5.10-release.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-v1.5.10-release.apk)）：直接安装至安卓手机。
+- 📦 **[`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk)**（或最新版 [`OmniDownloader-1.7.19-arm64-v8a.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.19-arm64-v8a.apk)）：直接安装至安卓手机。
 - 📦 **[`OmniDownloader_Source_LATEST.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Source_LATEST.zip)**：完整工程源码归档。
 
 ### iOS 原生工程与打包
@@ -81,8 +85,8 @@
 - 支持 **TrollStore（巨魔商店 - 永久保活）**、**AltStore / Sideloadly** 免费自签安装。详情参见 [iOS 侧载安装指南](OmniDownloader-iOS/README_IOS.md)。
 
 ### Windows 桌面独立版 & 网页纯后台版
-- 💻 **桌面独立版**：下载解压 [`windows/release/OmniDownloader_桌面独立版.zip`](windows/release/)，双击 `OmniDownloader_Desktop.exe` 直接运行；
-- 🌐 **网页纯后台版**：下载解压 [`windows/release/OmniDownloader_网页纯后台版.zip`](windows/release/)，双击 `OmniDownloader_Web.exe` 启动后台服务并在浏览器秒开使用。
+- 💻 **桌面独立版**：下载解压 [`OmniDownloader_Desktop-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Desktop-1.7.20.zip)，双击 `OmniDownloader_Desktop.exe` 直接运行；
+- 🌐 **网页纯后台版**：下载解压 [`OmniDownloader_Web-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Web-1.7.20.zip)，双击 `OmniDownloader_Web.exe` 启动后台服务并在浏览器秒开使用。
 
 ---
 

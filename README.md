@@ -1,9 +1,6 @@
-## 1.7.20 PC / iOS 界面更新（2026-11-09）
+## Release 1.7.20 · Windows / iOS UI update
 
-PC 恢复桌面卡片与渐变风格并修复图标边缘；iOS 导航、设置及主要按钮改用 Android 同源矢量图标。Android 保持 1.7.19。[变更与验收](docs/UI_1.7.20_2026-11-09.md) · [开发分支](https://github.com/baishu136/OmniDownloader/tree/codex/ui-1.7.20)。iOS 包需要自行签名，尚未进行真机验收。
-
-<!-- omni-1719-development -->
-> **1.7.19 多端开发分支（2026-11-09）**：Android 界面标注修改、原生 iOS 客户端及 Windows 桌面/Web 客户端。实现与验证范围见 [三端能力及验收记录](docs/PARITY_1.7.19_2026-11-08.md)、[iOS 构建说明](OmniDownloader-iOS/README_IOS.md)、[Windows 构建说明](windows/README.md)。本分支未创建新的公开 Release；本机安装产物在 `release/1.7.19/`，iOS IPA 需自行签名。
+[Download release](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20) · Android **1.7.19** / Windows and iOS **1.7.20**. PC restores the desktop card/gradient theme and fixes icon edges; iOS aligns its main icons and button states with Android. iOS IPA requires developer signing and has not been tested on physical devices. [Changes and verification](docs/UI_1.7.20_2026-11-09.md) · [Platform limitations](docs/PARITY_1.7.19_2026-11-08.md).
 
 <div align="center">
 
@@ -17,7 +14,7 @@ PC 恢复桌面卡片与渐变风格并修复图标边缘；iOS 导航、设置�
 </p>
 
 [![Release](https://img.shields.io/github/v/release/baishu136/OmniDownloader?color=blue&label=Release)](https://github.com/baishu136/OmniDownloader/releases)
-[![Android](https://img.shields.io/badge/Android-v1.5.10-green.svg)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-v1.7.19-green.svg)](https://developer.android.com)
 [![iOS](https://img.shields.io/badge/iOS-SwiftUI%20Native-orange.svg)](OmniDownloader-iOS)
 [![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
@@ -36,10 +33,10 @@ PC 恢复桌面卡片与渐变风格并修复图标边缘；iOS 导航、设置�
 
 | Platform | Target Devices | Core Tech Stack | Installation & Download |
 | :--- | :--- | :--- | :--- |
-| **🤖 Android Native** | Android Phones / Tablets / TV (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [Download Latest APK (v1.5.10)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) or via Releases |
-| **🍎 iOS Native** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + AVFoundation hardware-accelerated muxing | Source code in [`OmniDownloader-iOS`](OmniDownloader-iOS); Free cloud build via GitHub Actions for TrollStore / AltStore sideloading |
-| **💻 Windows Desktop** | Windows 10 / 11 (64-bit) | Python 3 + FastAPI + Edge WebView2 standalone window + Built-in FFmpeg | Download [`windows/release/OmniDownloader_桌面独立版.zip`](windows/release/); Standalone portable app with multilingual guides |
-| **🌐 Web Background** | Windows PC, accessible by any browser across LAN | Lightweight system tray daemon + Local web service + Built-in FFmpeg | Download [`windows/release/OmniDownloader_网页纯后台版.zip`](windows/release/); Silent tray app with browser download takeover |
+| **🤖 Android Native** | Android Phones / Tablets / TV (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [Download Latest APK (v1.7.19)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) or via Releases |
+| **🍎 iOS Native** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + native FFmpeg | [IPA 1.7.20](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.20-unsigned.ipa) · [Signing / 签名 / 署名](OmniDownloader-iOS/README_IOS.md) |
+| **💻 Windows Desktop** | Windows 10 / 11 (64-bit) | Python 3 + FastAPI + Edge WebView2 standalone window + Built-in FFmpeg | Download [`OmniDownloader_Desktop-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Desktop-1.7.20.zip); Standalone portable app with multilingual guides |
+| **🌐 Web Background** | Windows PC, local browser | Lightweight system tray daemon + Local web service + Built-in FFmpeg | Download [`OmniDownloader_Web-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Web-1.7.20.zip); Silent tray app with browser download takeover |
 
 ---
 
@@ -60,9 +57,9 @@ PC 恢复桌面卡片与渐变风格并修复图标边缘；iOS 导航、设置�
 
 ## 📲 Quick Downloads
 
-- **Android Latest APK**: [`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) (or [`OmniDownloader-v1.5.10-release.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-v1.5.10-release.apk))
+- **Android Latest APK**: [`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) (or [`OmniDownloader-1.7.19-arm64-v8a.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.19-arm64-v8a.apk))
 - **iOS Sideload Guide**: See [`OmniDownloader-iOS/README_IOS.md`](OmniDownloader-iOS/README_IOS.md)
-- **Windows Portable ZIPs**: Located in [`windows/release/`](windows/release/)
+- **Windows Portable ZIPs**: Located in [GitHub Release](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20)
 
 ---
 
