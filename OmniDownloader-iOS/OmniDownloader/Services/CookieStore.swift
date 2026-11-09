@@ -78,6 +78,9 @@ public class CookieStore: ObservableObject {
     public func updateBilibiliCookie(_ cookie: String) {
         self.bilibiliCookie = cookie.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+    public func saveBilibiliCookies(fullCookie:String,sessdata:String){
+        updateBilibiliCookie(fullCookie.isEmpty ? "SESSDATA="+sessdata:fullCookie)
+    }
     
     /// 清除 B 站登录凭证
     public func clearBilibiliCookie() {
