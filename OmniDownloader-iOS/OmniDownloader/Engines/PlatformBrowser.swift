@@ -132,7 +132,7 @@ struct PlatformBrowserSheet:View{
             .navigationBarTitleDisplayMode(.inline)
             .toolbar{
                 ToolbarItem(placement:.cancellationAction){Button("关闭"){onDone()}}
-                if login{ToolbarItem(placement:.confirmationAction){Button(saving ? "保存中…":"保存登录状态"){
+                ToolbarItem(placement:.confirmationAction){if login{Button(saving ? "保存中…":"保存登录状态"){
                     saving=true;Task{do{try await browser.saveSession();onSaved?();onDone()}catch{browser.notice=error.localizedDescription};saving=false}
                 }.disabled(saving)}}
             }
