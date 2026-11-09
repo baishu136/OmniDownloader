@@ -5,8 +5,12 @@ final class NavigationTests:XCTestCase {
         let app=XCUIApplication();app.launchArguments=["-AppleLanguages","(zh-Hans)","-AppleLocale","zh_CN","-omni.language","zh-CN","-com.omni.downloader.appearance","dark"];app.launch()
         XCTAssertTrue(app.textFields["omni.video.url"].waitForExistence(timeout:15))
         XCUIDevice.shared.orientation = .landscapeRight
-        XCTAssertTrue(app.buttons["omni.nav.3"].waitForExistence(timeout:5))
-        let image=XCTAttachment(screenshot:app.screenshot());image.name="iOS-dark-landscape";image.lifetime = .keepAlways;add(image)
+        let rotated=XCTNSPredicateExpectation(predicate:NSPredicate{_,_ in app.frame.width>app.frame.height},object:nil)
+        XCTAssertEqual(XCTWaiter.wait(for:[rotated],timeout:10),.completed)
+        app.buttons["omni.nav.3"].tap();app.buttons["omni.nav.0"].tap()
+        let home=app.buttons["omni.nav.0"],settings=app.buttons["omni.nav.3"]
+        XCTAssertTrue(home.isHittable);XCTAssertTrue(settings.isHittable)
+        let image=XCTAttachment(screenshot:XCUIScreen.main.screenshot());image.name="iOS-dark-landscape";image.lifetime = .keepAlways;add(image)
         XCUIDevice.shared.orientation = .portrait
     }
     @MainActor func testFourPagesAndCategorizedSettings(){
