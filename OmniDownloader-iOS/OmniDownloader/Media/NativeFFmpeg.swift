@@ -17,7 +17,9 @@ enum NativeFFmpeg {
         try await withTaskCancellationHandler(operation:{
             try await withCheckedThrowingContinuation{(continuation:CheckedContinuation<Void,Error>)in
                 FFmpegKitConfig.enableLogCallback{_ in}
-                let session=FFmpegKit.executeWithArgumentsAsync(["-hide_banner","-nostdin","-y"]+arguments,withCompleteCallback:{ completed in
+                var localArguments:[String]=[]
+                for argument in arguments{if argument=="-i"{localArguments += ["-protocol_whitelist","file,crypto,data"]};localArguments.append(argument)}
+                let session=FFmpegKit.executeWithArgumentsAsync(["-hide_banner","-nostdin","-y"]+localArguments,withCompleteCallback:{ completed in
                     if ReturnCode.isSuccess(completed.getReturnCode()){continuation.resume()}
                     else if completed.getReturnCode()?.getValue()==255{continuation.resume(throwing:CancellationError())}
                     else{continuation.resume(throwing:OmniPlatform.error("POSTPROCESS_FAILED","媒体处理未完成，请重新选择可用源或重试"))}

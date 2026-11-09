@@ -79,12 +79,19 @@ enum NativeMediaPipeline {
             input=try await fetch(audioOnly ? streams.audioUrl:streams.videoUrl,site:site,task:task,work:work,name:audioOnly ? "input.m4a":"input.mp4",progress:{progress($0*70,"正在下载媒体…")})
             if task.downloadType == .videoWithAudio,!streams.audioUrl.isEmpty{audio=try await fetch(streams.audioUrl,site:site,task:task,work:work,name:"audio.m4a",progress:{progress(70+$0*15,"正在下载音轨…")})}
         }else{
-            let metadata=try MediaSources.shared.video(task)
+            let metadata:VideoMetadata
+            do{metadata=try MediaSources.shared.video(task)}
+            catch{
+                let refreshed=try await MediaResolver.analyze(task.url)
+                let rows=refreshed.multiMediaList.isEmpty ? [refreshed]:refreshed.multiMediaList
+                guard let row=rows.first(where:{task.mediaId==nil || $0.mediaId==task.mediaId}) else{throw OmniPlatform.error("MEDIA_ID_MISMATCH","原媒体已不可定位，请重新解析")}
+                metadata=row;MediaSources.shared.remember(row)
+            }
             let formats=metadata.availableVideoFormats
             let selected=formats.first{$0.formatId==task.selectedVideoFormatId && MediaQuality.meets($0,task)} ?? formats.first{MediaQuality.meets($0,task)}
             guard let selected=selected else{throw OmniPlatform.error("QUALITY_UNAVAILABLE","所选规格已不可用，请重新解析")}
             let source=selected.sourceUrl ?? selected.formatId
-            if let url=URL(string:source),url.pathExtension.lowercased()=="m3u8" || source.contains(".m3u8?"){
+            if let url=URL(string:source),selected.ext.lowercased()=="m3u8" || url.pathExtension.lowercased()=="m3u8" || source.contains(".m3u8?"){
                 let local=try await NativeHLS.prepare(url,site:site,taskId:task.id,directory:work.appendingPathComponent("hls"),progress:{progress($0*75,"正在下载分段媒体…")});input=local.video;audio=local.audio;hls=true
                 if audio==nil,[.videoWithAudio,.audioOnly].contains(task.downloadType),let extra=selected.audioSourceUrl,let address=URL(string:extra){audio=try await NativeHLS.prepare(address,site:site,taskId:task.id,directory:work.appendingPathComponent("hls-audio"),progress:{progress(75+$0*10,"正在下载音轨…")}).video}
             }else{input=try await fetch(source,site:site,task:task,work:work,name:"input.media",headers:selected.sourceHeaders ?? [:],progress:{progress($0*85,"正在下载媒体…")})}

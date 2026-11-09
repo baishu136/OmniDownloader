@@ -313,11 +313,20 @@ struct RelayBrowserSheet: View {
     }
 
     private func startDownload(item: SniffedMediaItem) {
+        var origin=URLComponents(string:site.url)
+        origin?.path="/";origin?.query=nil;origin?.fragment=nil;origin?.user=nil;origin?.password=nil
+        let title=item.title.isEmpty ? "\(site.name) 视频":item.title
+        let format=FormatOption(formatId:item.url,resolutionLabel:"浏览器确认源（尺寸未知）",ext:item.format.lowercased(),sourceUrl:item.url,sourceHeaders:["Referer":origin?.string ?? ""])
+        var metadata=VideoMetadata(url:item.url,title:title,siteName:OmniPlatform.detect(item.url),availableVideoFormats:[format])
+        metadata.sourceScope=PlatformSession.shared.generation(metadata.siteName)
+        metadata.qualityEvidence="用户确认的浏览器媒体源，下载后核对实际尺寸。"
+        MediaSources.shared.remember(metadata)
         let task = DownloadTask(
             url: item.url,
-            title: item.title.isEmpty ? "\(site.name) 视频" : item.title,
-            downloadType: .videoWithAudio,
-            selectedResolution: "中转提取原画"
+            title: title,
+            downloadType: item.format=="音频" ? .audioOnly:.videoWithAudio,
+            selectedResolution: format.resolutionLabel,
+            selectedVideoFormatId: format.formatId
         )
         downloadManager.addTask(task)
         showSnifferSheet = false
