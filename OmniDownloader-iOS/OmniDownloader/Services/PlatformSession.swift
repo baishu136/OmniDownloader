@@ -22,11 +22,16 @@ enum OmniPlatform {
     }
     static func identifier(_ text: String) -> String {
         let site = detect(text)
+        if let parts=URLComponents(string:text){
+            if site=="小黑盒",let id=parts.queryItems?.first(where:{$0.name=="link_id"})?.value,id.allSatisfy(\.isNumber){return id}
+            if site=="Facebook",let id=parts.queryItems?.first(where:{$0.name=="v"})?.value,id.allSatisfy(\.isNumber){return id}
+            if site=="哔哩哔哩",parts.host=="t.bilibili.com",let id=parts.path.split(separator:"/").first,id.allSatisfy(\.isNumber){return String(id)}
+        }
         let patterns: [String: String] = ["抖音":#"/(?:video|note|share/video|share/note)/(\d+)"#,
             "X (Twitter)":#"/status/(\d+)"#, "小红书":#"/(?:explore|discovery/item)/([a-zA-Z0-9]+)"#,
             "快手":#"/(?:short-video|photo)/([a-zA-Z0-9]+)"#, "Pixiv":#"/artworks/(\d+)"#,
             "哔哩哔哩":#"/(?:video|opus)/(BV[a-zA-Z0-9]+|\d+)"#, "Instagram":#"/(?:p|reel)/([a-zA-Z0-9_-]+)"#,
-            "TikTok":#"/video/(\d+)"#, "Pinterest":#"/pin/(\d+)"#]
+            "TikTok":#"/video/(\d+)"#, "Pinterest":#"/pin/(\d+)"#, "Facebook":#"/(?:videos|reel)/(\d+)"#, "小黑盒":#"/(?:app/bbs/link|bbs/link)/(\d+)"#]
         if site == "YouTube", let parts = URLComponents(string: text) {
             return parts.queryItems?.first(where: {$0.name == "v"})?.value ?? URL(string:text)?.lastPathComponent ?? ""
         }

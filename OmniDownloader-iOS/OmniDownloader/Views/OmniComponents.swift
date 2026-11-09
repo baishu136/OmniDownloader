@@ -1,6 +1,8 @@
 import SwiftUI
 import UIKit
 import WebKit
+import ImageIO
+import UniformTypeIdentifiers
 
 struct OmniPressStyle:ButtonStyle{
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -46,7 +48,7 @@ struct OmniPlatformChips:View{
                     else{HStack(spacing:6){Circle().fill(colors[(OmniPlatform.all.firstIndex(of:sites[index]) ?? index)%colors.count]).frame(width:7,height:7);Text(sites[index]).font(.caption).lineLimit(1)}.padding(.horizontal,10).padding(.vertical,7).foregroundColor(OmniPalette.secondary).background(OmniPalette.surfaceVariant.opacity(0.35),in:Capsule())}
                 }}
             }}.onAppear{width=max(1,geometry.size.width)}.onChange(of:geometry.size.width){width=max(1,$0)}
-        }.frame(height:CGFloat(displayed.count)*34+CGFloat(max(0,displayed.count-1))*7)
+        }.frame(height:CGFloat(displayed.count)*(UIFont.preferredFont(forTextStyle:.caption1).lineHeight+14)+CGFloat(max(0,displayed.count-1))*7)
     }
 }
 struct OmniPageHeader:View{
@@ -56,7 +58,17 @@ struct OmniPageHeader:View{
 }
 struct OmniRemoteImage:View{
     let url:String
-    var body:some View{AsyncImage(url:URL(string:url)){image in image.resizable().scaledToFill()}placeholder:{ZStack{OmniPalette.surfaceVariant;Image(systemName:"photo").foregroundColor(OmniPalette.secondary)}}.clipped()}
+    var site:String=""
+    @State private var image:UIImage?
+    var body:some View{
+        ZStack{OmniPalette.surfaceVariant;if let image=image{Image(uiImage:image).resizable().scaledToFill()}else{Image(systemName:"photo").foregroundColor(OmniPalette.secondary)}}.clipped()
+            .task(id:url){
+                image=nil;guard let address=URL(string:url),NativeMediaParser.safeURL(url) else{return}
+                let platform=site.isEmpty && (address.host ?? "").hasSuffix("pximg.net") ? "Pixiv":site
+                guard let pair=try? await OmniNetwork.data(address,site:platform,timeout:8),!Task.isCancelled,let decoded=UIImage(data:pair.0) else{return}
+                image=decoded
+            }
+    }
 }
 struct MediaShareSheet:UIViewControllerRepresentable{
     let items:[Any]
@@ -74,11 +86,21 @@ struct ImagePreviewPage:UIViewRepresentable{
     }
     func updateUIView(_ web:WKWebView,context:Context){
         guard context.coordinator.source != resource.url else{return};context.coordinator.source=resource.url
-        if let url=URL(string:resource.url){web.load(OmniNetwork.request(url,site:site))}
+        context.coordinator.task?.cancel()
+        if let url=URL(string:resource.url){
+            context.coordinator.task=Task{@MainActor in
+                do{
+                    let(data,_)=try await OmniNetwork.data(url,site:site,timeout:20)
+                    try Task.checkCancellation()
+                    guard let source=CGImageSourceCreateWithData(data as CFData,nil),let type=CGImageSourceGetType(source),let mime=UTType(type as String)?.preferredMIMEType else{throw OmniPlatform.error("NO_MEDIA","图片无法解码")}
+                    web.load(data,mimeType:mime,characterEncodingName:"UTF-8",baseURL:URL(string:"https://localhost.invalid/")!)
+                }catch is CancellationError{}catch{web.loadHTMLString("<html><body style='color:white;background:black;font:17px sans-serif'>图片暂时无法加载，请重试或下载原图。</body></html>",baseURL:nil)}
+            }
+        }
     }
     func makeCoordinator()->Coordinator{Coordinator()}
-    final class Coordinator{var source=""}
-    static func dismantleUIView(_ web:WKWebView,coordinator:Coordinator){web.stopLoading()}
+    final class Coordinator{var source="";var task:Task<Void,Never>?}
+    static func dismantleUIView(_ web:WKWebView,coordinator:Coordinator){coordinator.task?.cancel();web.stopLoading()}
 }
 struct ImageGallery:View{
     let resources:[ImageResource];let site:String;let start:Int

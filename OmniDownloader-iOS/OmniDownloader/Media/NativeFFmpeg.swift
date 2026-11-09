@@ -38,7 +38,7 @@ enum NativeFFmpeg {
             let streams=json["streams"] as? [[String:Any]] ?? [],video=streams.first{($0["codec_type"] as? String)=="video"}
             var width=NativeMediaParser.number(video?["width"]),height=NativeMediaParser.number(video?["height"])
             let rotation=(video?["tags"] as? [String:Any])?["rotate"] ?? (video?["side_data_list"] as? [[String:Any]])?.first?["rotation"]
-            if abs(NativeMediaParser.number(rotation))%180==90{swap(&width,&height)}
+            if abs((rotation as? NSNumber)?.intValue ?? Int(rotation as? String ?? "") ?? 0)%180==90{swap(&width,&height)}
             let duration=Double((json["format"] as? [String:Any])?["duration"] as? String ?? "") ?? 0
             continuation.resume(returning:Probe(width:width,height:height,durationMs:Int64(duration*1000),audio:streams.contains{($0["codec_type"] as? String)=="audio"}))
         }}
