@@ -10,6 +10,7 @@ from fontTools.svgLib.path.parser import parse_path
 import resvg_py
 from PIL import Image
 import io
+import struct
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'shared/icons/material'
@@ -88,8 +89,15 @@ def main():
     image=Image.open(io.BytesIO(png))
     image.save(web/'static/logo.png');image.resize((128,128),Image.Resampling.LANCZOS).save(web/'static/logo_128.png')
     image.save(web/'logo.png')
-    for dest in [ROOT/'windows/app.ico',web/'static/favicon.ico',web/'favicon.ico']:
-        image.save(dest,format='ICO',sizes=[(16,16),(24,24),(32,32),(48,48),(64,64),(128,128),(256,256)])
+    # Render every ICO frame directly from vectors. Downsampling 1024px with Lanczos
+    # can introduce nonzero alpha at the 16px corners, outside the intended curve.
+    sizes=[16,24,32,48,64,128,256]
+    frames=[resvg_py.svg_to_bytes(svg_string=logo,width=n,height=n) for n in sizes]
+    directory=bytearray(struct.pack('<HHH',0,1,len(sizes)));offset=6+16*len(sizes)
+    for n,data in zip(sizes,frames):
+        directory.extend(struct.pack('<BBBBHHII',n%256,n%256,0,0,1,32,len(data),offset));offset+=len(data)
+    ico=bytes(directory)+b''.join(frames)
+    for dest in [ROOT/'windows/app.ico',web/'static/favicon.ico',web/'favicon.ico']: dest.write_bytes(ico)
     # iOS applies its own app-icon mask: fill the full square, with no baked corner or shadow.
     app_logo=logo.replace('<g clip-path="url(#edge)">','<g>')
     icon=Image.open(io.BytesIO(resvg_py.svg_to_bytes(svg_string=app_logo,width=1024,height=1024))).convert('RGB')

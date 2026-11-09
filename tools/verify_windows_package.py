@@ -1,4 +1,5 @@
 """Exercise running packaged EXEs with isolated states and synthetic local media."""
+import os
 import functools
 from http.server import SimpleHTTPRequestHandler,ThreadingHTTPServer
 import json
@@ -10,8 +11,9 @@ import requests
 from PIL import Image
 
 ROOT=Path(__file__).resolve().parents[1]
-QA=ROOT/'scratch/parity-1719-20261108/package-media';QA.mkdir(parents=True,exist_ok=True)
-exe=ROOT/'windows/dist/1.7.19/OmniDownloader_Web/_internal/bin/ffmpeg.exe'
+VERSION=os.environ.get('OMNI_VERIFY_VERSION','1.7.19')
+QA=ROOT/f'scratch/package-media-{VERSION}';QA.mkdir(parents=True,exist_ok=True)
+exe=ROOT/f'windows/dist/{VERSION}/OmniDownloader_Web/_internal/bin/ffmpeg.exe'
 subprocess.run([str(exe),'-y','-f','lavfi','-i','testsrc2=size=320x180:rate=15','-f','lavfi','-i','sine=frequency=440:sample_rate=44100','-t','1','-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac',str(QA/'fixture.mp4')],check=True,capture_output=True)
 class Handler(SimpleHTTPRequestHandler):
     def log_message(self,*args):pass
@@ -22,7 +24,7 @@ try:
     url=f'http://127.0.0.1:{server.server_port}/fixture.mp4'
     for port in (58120,58121):
         base=f'http://127.0.0.1:{port}';client=requests.Session();client.trust_env=False;client.headers['Origin']=base
-        assert client.get(base+'/openapi.json').json()['info']['version']=='1.7.19'
+        assert client.get(base+'/openapi.json').json()['info']['version']==VERSION
         response=client.post(base+'/api/settings',json={'downloadDir':str(QA/f'exports-{port}')},timeout=5);response.raise_for_status()
         response=client.post(base+'/api/analyze',json={'url':url},timeout=30);response.raise_for_status();metadata=response.json()
         assert metadata['availableVideoFormats']
@@ -41,6 +43,6 @@ try:
                 with Image.open(path) as animation:assert animation.format=='GIF' and animation.n_frames>1
             else:
                 subprocess.run([str(exe),'-v','error','-i',str(path),'-f','null','-'],check=True,capture_output=True)
-        report.append({'port':port,'version':'1.7.19','analysis':True,'gifFramesDecoded':True,'videoDecoded':True})
-    destination=ROOT/'release/1.7.19/qa/windows-package-media.json';destination.parent.mkdir(parents=True,exist_ok=True);destination.write_text(json.dumps(report,indent=2),encoding='utf-8');print(json.dumps(report))
+        report.append({'port':port,'version':VERSION,'analysis':True,'gifFramesDecoded':True,'videoDecoded':True})
+    destination=ROOT/f'release/{VERSION}/qa/windows-package-media.json';destination.parent.mkdir(parents=True,exist_ok=True);destination.write_text(json.dumps(report,indent=2),encoding='utf-8');print(json.dumps(report))
 finally:server.shutdown();server.server_close();worker.join(timeout=3)

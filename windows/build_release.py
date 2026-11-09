@@ -1,5 +1,6 @@
 """Build versioned outputs without stopping or replacing a running older release."""
 import argparse
+import hashlib
 from pathlib import Path
 import subprocess
 import sys
@@ -17,6 +18,13 @@ def main():
     prepare()
     for kind, name, entry in [('desktop', 'OmniDownloader_Desktop', 'omni_app.py'), ('web', 'OmniDownloader_Web', 'omni_tray.py')]:
         if mode not in ('all', kind): continue
+        work = BASE / 'build' / VERSION / kind
+        icon_stamp = work / 'icon.sha256'
+        icon_hash = hashlib.sha256((BASE / 'app.ico').read_bytes()).hexdigest()
+        # PyInstaller's EXE cache tracks the icon path, but can reuse stale artwork
+        # when only that file's bytes change. Invalidate the generated EXE metadata.
+        if not icon_stamp.exists() or icon_stamp.read_text() != icon_hash:
+            (work / name / 'EXE-00.toc').unlink(missing_ok=True)
         command = [sys.executable, '-m', 'PyInstaller', '--noconfirm', '--windowed', '--name', name,
                    '--distpath', str(BASE / 'dist' / VERSION), '--workpath', str(BASE / 'build' / VERSION / kind),
                    '--specpath', str(BASE / 'build' / VERSION / kind), '--paths', str(BASE),
@@ -27,6 +35,7 @@ def main():
         if (BASE / 'app.ico').is_file(): command += ['--icon', str(BASE / 'app.ico'), '--add-data', f'{BASE / "app.ico"};.']
         command += [str(BASE / entry)]
         subprocess.run(command, cwd=BASE, check=True)
+        icon_stamp.write_text(icon_hash)
         result = BASE / 'dist' / VERSION / name
         import shutil
         for document in ('runtime-lock.json', 'THIRD_PARTY_NOTICES.md', 'README.md'):

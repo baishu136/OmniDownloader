@@ -1,3 +1,7 @@
+## 1.7.20 PC / iOS 界面更新（2026-11-09）
+
+PC 恢复桌面卡片与渐变风格并修复图标边缘；iOS 导航、设置及主要按钮改用 Android 同源矢量图标。Android 保持 1.7.19。[变更与验收](docs/UI_1.7.20_2026-11-09.md) · [开发分支](https://github.com/baishu136/OmniDownloader/tree/codex/ui-1.7.20)。iOS 包需要自行签名，尚未进行真机验收。
+
 <!-- omni-1719-development -->
 > **1.7.19 多端开发分支（2026-11-09）**：Android 界面标注修改、原生 iOS 客户端及 Windows 桌面/Web 客户端。实现与验证范围见 [三端能力及验收记录](docs/PARITY_1.7.19_2026-11-08.md)、[iOS 构建说明](OmniDownloader-iOS/README_IOS.md)、[Windows 构建说明](windows/README.md)。本分支未创建新的公开 Release；本机安装产物在 `release/1.7.19/`，iOS IPA 需自行签名。
 

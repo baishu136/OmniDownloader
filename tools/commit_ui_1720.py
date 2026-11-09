@@ -14,6 +14,7 @@ paths=['OmniDownloader-iOS','.github/workflows/ios-1.7.20.yml','shared/icons',
        'windows/web','windows/app.ico','windows/build_release.py','windows/omni_server.py',
        'windows/licenses/MaterialIcons-Apache-2.0.txt','windows/README.md','windows/THIRD_PARTY_NOTICES.md',
        'tools/prepare_ui_assets.py','tools/sync_ios_project.py','tools/commit_ui_1720.py',
+       'tools/update_local_web_1720.ps1','tools/verify_windows_package.py','tools/finalize_ui_1720.py','README.md',
        'docs/UI_1.7.20_2026-11-09.md']
 git('add','--',*[p for p in paths if (ROOT/p).exists()],env=env)
 tree=git('write-tree',env=env)

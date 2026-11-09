@@ -2,6 +2,7 @@
 :root{--omni-surface:#fff;--omni-fg:#1e293b;--omni-muted:#64748b;--omni-outline:#e0e7ff;--omni-primary:#4f46e5;--omni-container:#eef2ff;--omni-on-container:#4338ca}
 html.dark{--omni-surface:#1e293b;--omni-fg:#f1f5f9;--omni-muted:#94a3b8;--omni-outline:#312e81;--omni-primary:#a5b4fc;--omni-container:#1e1b4b;--omni-on-container:#c7d2fe}
 .omni-brand-logo{display:block;width:40px;height:40px;flex-shrink:0;object-fit:contain;filter:drop-shadow(0 3px 5px #4f46e526);border:0;background:transparent}
+html.dark header h1{background-image:linear-gradient(110deg,#a5b4fc,#67e8f9)}
 .omni-version{font-size:10px;line-height:1;vertical-align:middle;background:var(--omni-container);color:var(--omni-on-container);-webkit-text-fill-color:var(--omni-on-container);border-radius:6px;padding:3px 5px;margin-left:6px;white-space:nowrap}
 button{touch-action:manipulation}button:not(:disabled):active{transform:translateY(1px)}button:focus-visible,a:focus-visible{outline:3px solid var(--omni-primary);outline-offset:3px}
 .omni-assist{font-size:12px;color:var(--omni-muted);text-align:left}.omni-assist summary{cursor:pointer;padding:6px 0}.omni-assist button{border:1px solid var(--omni-outline);border-radius:10px;padding:8px 12px;margin:4px;background:var(--omni-container);color:var(--omni-on-container)}
