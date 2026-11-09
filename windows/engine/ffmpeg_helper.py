@@ -10,6 +10,9 @@ import subprocess
 import asyncio
 from pathlib import Path
 from typing import Optional, List
+from contextvars import ContextVar
+
+cancel_context = ContextVar("omni_ffmpeg_cancel", default=None)
 
 
 def get_ffmpeg_path() -> Optional[str]:
@@ -75,7 +78,21 @@ class FFmpegHelper:
             stderr=asyncio.subprocess.PIPE,
             creationflags=creation_flags
         )
-        stdout, stderr = await proc.communicate()
+        pending = asyncio.create_task(proc.communicate())
+        deadline = asyncio.get_running_loop().time() + 1800
+        try:
+            while True:
+                cancelled = cancel_context.get()
+                if cancelled is not None and cancelled.is_set(): raise asyncio.CancelledError()
+                if asyncio.get_running_loop().time() >= deadline: raise asyncio.TimeoutError()
+                try:
+                    stdout, stderr = await asyncio.wait_for(asyncio.shield(pending), timeout=.25)
+                    break
+                except asyncio.TimeoutError: continue
+        except (asyncio.CancelledError, asyncio.TimeoutError):
+            if proc.returncode is None: proc.kill()
+            await pending
+            raise
         if proc.returncode != 0:
             err_msg = stderr.decode("utf-8", errors="ignore")
             print(f"[FFmpeg Error] 命令执行失败: {err_msg[:300]}")

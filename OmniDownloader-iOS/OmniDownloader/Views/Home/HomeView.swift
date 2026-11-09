@@ -1,432 +1,146 @@
 import SwiftUI
-
-/// 首页视图：负责链接输入、剪贴板自动嗅探识别、平台导航展示与唤起格式选择
-struct HomeView: View {
-    @EnvironmentObject var downloadManager: DownloadManager
-    @ObservedObject private var cookieStore = CookieStore.shared
-    @State private var inputUrl: String = ""
-    @State private var isParsing: Bool = false
-    @State private var detectedClipboardUrl: String? = nil
-    @State private var parsedMetadata: VideoMetadata? = nil
-    @State private var showFormatSheet: Bool = false
-    @State private var errorMessage: String? = nil
-    @State private var showErrorAlert: Bool = false
-    @State private var activeBrowserSite: RelaySite? = nil
-
-    private let strings = AppStrings.current
-
-    // 支持的平台胶囊列表
-    private let supportedPlatforms = [
-        ("哔哩哔哩", "play.rectangle.fill", Color.blue),
-        ("抖音", "music.note", Color.primary),
-        ("快手", "video.fill", Color.orange),
-        ("小红书", "bookmark.fill", Color.red)
-    ]
-
-    var body: some View {
-        NavigationView {
-            ZStack {
-                Color(UIColor.systemGroupedBackground)
-                    .ignoresSafeArea()
-
-                ScrollView {
-                    VStack(spacing: 20) {
-                        // 顶部剪贴板快速粘贴条
-                        if let detected = detectedClipboardUrl {
-                            clipboardNotificationBanner(url: detected)
-                                .transition(.move(edge: .top).combined(with: .opacity))
-                        }
-
-                        // 主输入框卡片
-                        inputSectionCard
-
-                        // 备用中转解析站卡片 (仅在配置了中转站时展示)
-                        if !cookieStore.relaySites.isEmpty {
-                            relaySitesSectionCard
-                        }
-
-                        // 支持平台展示区
-                        supportedPlatformsCard
-
-                        // 使用小贴士卡片
-                        tipsCard
-
-                        Spacer(minLength: 40)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 12)
-                }
-            }
-            .navigationTitle(strings.appName)
-            .navigationBarTitleDisplayMode(.large)
-            .sheet(isPresented: $showFormatSheet) {
-                if let meta = parsedMetadata {
-                    FormatSelectorSheet(metadata: meta)
-                }
-            }
-            .sheet(item: $activeBrowserSite) { site in
-                RelayBrowserSheet(site: site, initialVideoUrl: inputUrl)
-            }
-            .alert(isPresented: $showErrorAlert) {
-                Alert(
-                    title: Text(strings.errorTitle),
-                    message: Text(errorMessage ?? strings.unknownError),
-                    dismissButton: .default(Text(strings.confirm))
-                )
-            }
-            .onAppear {
-                checkClipboard()
-            }
-        }
-        .navigationViewStyle(StackNavigationViewStyle())
-    }
-    
-    // MARK: - 剪贴板嗅探提示浮条
-    @ViewBuilder
-    private func clipboardNotificationBanner(url: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "doc.on.clipboard.fill")
-                .foregroundColor(.accentColor)
-                .font(.system(size: 18))
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(strings.clipboardDetectedTitle)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.primary)
-                Text(url)
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-            }
-            
-            Spacer()
-            
-            Button(action: {
-                inputUrl = url
-                detectedClipboardUrl = nil
-                startExtract(url: url)
-            }) {
-                Text(strings.parseAction)
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.accentColor)
-                    .cornerRadius(14)
-            }
-            
-            Button(action: {
-                withAnimation {
-                    detectedClipboardUrl = nil
-                }
-            }) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(.secondary)
-            }
-        }
-        .padding(12)
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.04), radius: 5, x: 0, y: 2)
-    }
-    
-    // MARK: - 输入区域卡片
-    private var inputSectionCard: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Text(strings.inputPrompt)
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.secondary)
-                Spacer()
-                
-                if !inputUrl.isEmpty {
-                    Button(action: {
-                        inputUrl = ""
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "trash")
-                            Text(strings.clearAction)
-                        }
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
-                    }
-                }
-            }
-            
-            // 多行输入区
-            ZStack(alignment: .topLeading) {
-                if inputUrl.isEmpty {
-                    Text(strings.inputPlaceholder)
-                        .font(.system(size: 15))
-                        .foregroundColor(Color(UIColor.placeholderText))
-                        .padding(.top, 8)
-                        .padding(.leading, 4)
-                }
-                
-                TextEditor(text: $inputUrl)
-                    .frame(minHeight: 90)
-                    .font(.system(size: 15))
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
-            }
-            .padding(8)
-            .background(Color(UIColor.tertiarySystemGroupedBackground))
-            .cornerRadius(10)
-            
-            // 操作按钮行：读取剪贴板 + 立即解析
-            HStack(spacing: 12) {
-                Button(action: pasteFromClipboard) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "doc.on.clipboard")
-                        Text(strings.pasteAction)
-                    }
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color(UIColor.secondarySystemGroupedBackground))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                    )
-                }
-                
-                Button(action: {
-                    startExtract(url: inputUrl)
-                }) {
-                    HStack(spacing: 8) {
-                        if isParsing {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            Text(strings.parsing)
-                        } else {
-                            Image(systemName: "arrow.down.circle.fill")
-                            Text(strings.parseAction)
-                        }
-                    }
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(inputUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isParsing ? Color.gray.opacity(0.5) : Color.accentColor)
-                    .cornerRadius(12)
-                }
-                .disabled(inputUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isParsing)
-            }
-        }
-        .padding(16)
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
-    }
-    
-    // MARK: - 支持平台展示卡片
-    private var supportedPlatformsCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Image(systemName: "checkmark.seal.fill")
-                    .foregroundColor(.blue)
-                Text(strings.supportedSites)
-                    .font(.system(size: 16, weight: .semibold))
-                Spacer()
-            }
-            
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(supportedPlatforms, id: \.0) { item in
-                    HStack(spacing: 10) {
-                        Image(systemName: item.1)
-                            .font(.system(size: 18))
-                            .foregroundColor(item.2)
-                        Text(item.0)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.primary)
-                        Spacer()
-                    }
-                    .padding(12)
-                    .background(Color(UIColor.tertiarySystemGroupedBackground))
-                    .cornerRadius(10)
-                }
-            }
-        }
-        .padding(16)
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
-    }
-    
-    // MARK: - 小贴士卡片
-    private var tipsCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Image(systemName: "lightbulb.fill")
-                    .foregroundColor(.orange)
-                Text(strings.tipsTitle)
-                    .font(.system(size: 15, weight: .semibold))
-                Spacer()
-            }
-            
-            Text(strings.tipsContent)
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-                .lineSpacing(4)
-        }
-        .padding(16)
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
-    }
-    
-    // MARK: - 剪贴板检查
-    private func checkClipboard() {
-        if let string = UIPasteboard.general.string, !string.isEmpty {
-            if let validUrl = UrlSniffer.extractFirstUrl(from: string) {
-                if validUrl != inputUrl {
-                    withAnimation {
-                        detectedClipboardUrl = validUrl
-                    }
-                }
-            }
-        }
-    }
-    
-    // 粘贴操作
-    private func pasteFromClipboard() {
-        if let string = UIPasteboard.general.string, !string.isEmpty {
-            if let extracted = UrlSniffer.extractFirstUrl(from: string) {
-                inputUrl = extracted
-            } else {
-                inputUrl = string
-            }
-        }
-    }
-    
-    // MARK: - 执行提取解析
-    private func startExtract(url: String) {
-        let cleanText = url.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let extractedUrl = UrlSniffer.extractFirstUrl(from: cleanText) ?? (cleanText.hasPrefix("http") ? cleanText : nil) else {
-            errorMessage = "未在输入内容中检测到有效的链接地址"
-            showErrorAlert = true
-            return
-        }
-        
-        isParsing = true
-        errorMessage = nil
-        
-        Task {
-            do {
-                let resolved = await UrlSniffer.resolveRedirects(for: extractedUrl)
-                let site = UrlSniffer.detectSite(from: resolved)
-                
-                let metadata: VideoMetadata
-                if site == "哔哩哔哩" {
-                    metadata = try await BilibiliExtractor.shared.extract(rawUrl: resolved)
-                } else if DomesticExtractor.shared.isSupported(resolved) {
-                    metadata = try await DomesticExtractor.shared.extract(rawUrl: resolved)
-                } else {
-                    // 通用降级方案
-                    metadata = VideoMetadata(
-                        url: resolved,
-                        title: "视频下载",
-                        siteName: site,
-                        availableVideoFormats: [
-                            FormatOption(formatId: "direct", resolutionLabel: "直接提取原视频", height: 1080)
-                        ]
-                    )
-                }
-                
-                await MainActor.run {
-                    self.parsedMetadata = metadata
-                    self.isParsing = false
-                    self.showFormatSheet = true
-                }
-            } catch {
-                await MainActor.run {
-                    self.isParsing = false
-                    self.errorMessage = error.localizedDescription
-                    self.showErrorAlert = true
-                }
-            }
-        }
-    }
-
-    // MARK: - 备用中转站卡片 (仅在配置了中转站时展示)
-    private var relaySitesSectionCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "globe")
-                    .foregroundColor(.blue)
-                Text("备用中转解析站")
-                    .font(.system(size: 16, weight: .semibold))
-                Spacer()
-            }
-
-            VStack(spacing: 8) {
-                ForEach(cookieStore.relaySites) { site in
-                    HStack(spacing: 12) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.blue.opacity(0.12))
-                                .frame(width: 34, height: 34)
-                            Text(String(site.name.prefix(1)).uppercased())
-                                .font(.system(size: 15, weight: .bold))
-                                .foregroundColor(.blue)
-                        }
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(site.name)
-                                .font(.system(size: 14, weight: .bold))
-                                .lineLimit(1)
-                            Text(site.url)
-                                .font(.system(size: 11))
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                        }
-
-                        Spacer()
-
-                        Button(action: {
-                            activeBrowserSite = site
-                        }) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "bolt.fill")
-                                    .font(.system(size: 11))
-                                Text("嗅探解析")
-                                    .font(.system(size: 12, weight: .semibold))
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.blue)
-                            .cornerRadius(8)
-                        }
-                    }
-                    .padding(10)
-                    .background(Color(UIColor.tertiarySystemGroupedBackground))
-                    .cornerRadius(12)
-                }
-            }
-        }
-        .padding(16)
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
-    }
-}
-
 import WebKit
 
-/// 嗅探到的媒体流资源条目 (对齐专业级嗅探猫 Cat Catch 数据结构)
-struct SniffedMediaItem: Identifiable, Equatable {
-    let id: String = UUID().uuidString
-    let url: String
-    let title: String
-    let format: String // "MP4", "M3U8", "音频", "WebM", "FLV"
-    let host: String
-    let timestamp: Date = Date()
+struct SniffedMediaItem:Identifiable,Equatable{
+    let id=UUID().uuidString
+    let url:String
+    let title:String
+    let format:String
+    let host:String
+    let timestamp=Date()
 }
 
-/// iOS 端原生媒体嗅探浏览器弹窗 (集成类似“嗅探猫”的专业媒体嗅探与多资源管理体系)
+@MainActor struct HomeView:View{
+    @EnvironmentObject private var downloadManager:DownloadManager
+    @ObservedObject private var preferences=CookieStore.shared
+    @StateObject private var browser=PlatformBrowser()
+    @Environment(\.scenePhase) private var scenePhase
+    @AppStorage("omni.language") private var language="system"
+    @State private var input=""
+    @State private var analyzing=false
+    @State private var stage=""
+    @State private var error=""
+    @State private var metadata:VideoMetadata?
+    @State private var showFormats=false
+    @State private var analysis:Task<Void,Never>?
+    @State private var generation=UUID()
+    @State private var activeRelay:RelaySite?
+    @State private var youtubeURL=""
+    @State private var showYouTube=false
+    @State private var pendingYouTube:VideoMetadata?
+    @State private var pendingBrowser=false
+    @State private var pendingFormats=false
+    @State private var bilibiliLogin=false
+    @State private var retryAfterLogin=false
+    private func L(_ text:String)->String{OmniLocalization.text(text,language:language)}
+    var body:some View{
+        ZStack{
+            OmniPalette.background.ignoresSafeArea()
+            if browser.web != nil && !browser.visible{PlatformWebContent(browser:browser).frame(maxWidth:390,maxHeight:780).opacity(0).allowsHitTesting(false).accessibilityHidden(true)}
+            ScrollView{
+                VStack(alignment:.leading,spacing:18){
+                    HStack(spacing:12){OmniBrand();Text("OmniDownloader").font(.system(size:24,weight:.heavy)).minimumScaleFactor(0.7).lineLimit(1);Text("v1.7.20").font(.caption.bold()).foregroundColor(OmniPalette.primary).padding(.horizontal,7).padding(.vertical,4).background(OmniPalette.primaryContainer,in:RoundedRectangle(cornerRadius:8));Spacer(minLength:0)}.padding(.vertical,6)
+                    OmniPlatformChips()
+                    VStack(spacing:12){
+                        HStack(spacing:10){OmniIcon(name:"link",size:20).foregroundColor(OmniPalette.primary);TextField(L("粘贴视频链接或分享文本…"),text:$input).textInputAutocapitalization(.never).disableAutocorrection(true).keyboardType(.URL).submitLabel(.go).onSubmit{start(input)}.accessibilityIdentifier("omni.video.url");if !input.isEmpty{Button{input=""}label:{OmniIcon(name:"xmark",size:20).foregroundColor(OmniPalette.secondary).frame(width:44,height:44)}.accessibilityLabel(L("清空"))};Button(action:paste){OmniIcon(name:"doc.on.clipboard",size:20).foregroundColor(OmniPalette.secondary).frame(width:44,height:44)}.accessibilityLabel(L("粘贴剪贴板"))}.padding(.horizontal,16).padding(.vertical,8).background(OmniPalette.surfaceVariant.opacity(0.35),in:RoundedRectangle(cornerRadius:22))
+                        HStack(spacing:12){OmniAction(title:L("粘贴剪贴板"),icon:"doc.on.clipboard",disabled:analyzing,action:paste);OmniAction(title:L(analyzing ? "取消解析":"立即解析"),icon:analyzing ? "xmark":"bolt.fill",prominent:true,disabled:!analyzing && input.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty){if analyzing{cancel()}else{start(input)}}.accessibilityIdentifier("omni.action.analyze")}
+                    }.padding(16).omniCard(radius:26)
+                    if analyzing{HStack(spacing:10){ProgressView();Text(stage).font(.subheadline).foregroundColor(OmniPalette.secondary)}.accessibilityIdentifier("omni.analysis.stage")}
+                    if !error.isEmpty{
+                        VStack(alignment:.leading,spacing:10){Text(error).font(.subheadline).foregroundColor(OmniPalette.error);if error.contains("AUTH_REQUIRED") || error.contains("CHALLENGE_REQUIRED") || error.contains("BROWSER_ASSIST_REQUIRED"){Button(L("打开内置浏览器验证")){validate()}.buttonStyle(OmniPressStyle())}}
+                            .padding(16).frame(maxWidth:.infinity,alignment:.leading).omniCard()
+                    }
+                    ForEach(preferences.relaySites){site in
+                        HStack(spacing:12){Text(String(site.name.prefix(1)).uppercased()).font(.title3.bold()).foregroundColor(OmniPalette.primary).frame(width:46,height:46).background(OmniPalette.primaryContainer,in:RoundedRectangle(cornerRadius:15));VStack(alignment:.leading,spacing:3){Text(site.name).font(.headline);Text(URL(string:site.url)?.host ?? site.url).font(.caption).foregroundColor(OmniPalette.secondary).lineLimit(1)};Spacer();Button{activeRelay=site}label:{HStack(spacing:5){OmniIcon(name:"bolt.fill",size:18);Text(L("直接解析")).font(.subheadline.bold())}.padding(12).background(OmniPalette.primaryContainer,in:Capsule())}.buttonStyle(OmniPressStyle())}.padding(14).omniCard(radius:24)
+                    }
+                    let active=downloadManager.tasks.filter{[.pending,.downloading,.processing].contains($0.status)}
+                    if !active.isEmpty{HStack{Text(L("进行中")+" (\(active.count))").font(.headline);Spacer()};ForEach(active.prefix(2)){task in TaskCard(task:task)}}
+                    Spacer(minLength:24)
+                }.padding(.horizontal,20).padding(.top,8)
+            }
+        }
+        .sheet(isPresented:$showFormats,onDismiss:{if pendingBrowser{pendingBrowser=false;validate()}}){if let metadata=metadata{FormatSelectorSheet(metadata:metadata,onMoreQuality:{pendingBrowser=true;showFormats=false})}}
+        .sheet(isPresented:$browser.visible,onDismiss:{
+            analysis?.cancel();analyzing=false;browser.close()
+            if pendingFormats{pendingFormats=false;showFormats=true}
+            else if retryAfterLogin{retryAfterLogin=false;start(input)}
+        }){PlatformBrowserSheet(browser:browser,login:bilibiliLogin,onDone:{browser.visible=false},onSaved:{if bilibiliLogin{retryAfterLogin=true}})}
+        .sheet(isPresented:$showYouTube,onDismiss:{if let value=pendingYouTube{pendingYouTube=nil;Task{await accept(.video(value))}}}){YouTubeBrowserSheet(url:youtubeURL){pendingYouTube=$0}}
+        .sheet(item:$activeRelay){RelayBrowserSheet(site:$0,initialVideoUrl:input)}
+        .onReceive(NotificationCenter.default.publisher(for:.omniAnalyzeURL)){if let url=$0.object as? String{input=url;start(url)}}
+        .onChange(of:scenePhase){if $0 == .background{cancel()}}
+        .onDisappear{if !browser.visible{cancel()}}
+    }
+    private func paste(){if let text=UIPasteboard.general.string{input=text}}
+    private func cancel(){generation=UUID();analysis?.cancel();analysis=nil;analyzing=false;stage="";browser.close()}
+    private func start(_ raw:String){
+        cancel();error="";let epoch=generation
+        let clean=raw.trimmingCharacters(in:.whitespacesAndNewlines)
+        let value=clean.range(of:#"^BV[a-zA-Z0-9]{10}$"#,options:.regularExpression) != nil ? "https://www.bilibili.com/video/"+clean:(UrlSniffer.extractFirstUrl(from:clean) ?? clean)
+        guard NativeMediaParser.safeURL(value) else{error=L("请输入有效链接");return}
+        input=value;analyzing=true;stage=L("正在读取视频信息…")
+        analysis=Task{
+            defer{if generation==epoch{analyzing=false;stage=""}}
+            do{
+                let url=await UrlSniffer.resolveRedirects(for:value);try Task.checkCancellation();guard generation==epoch else{return};input=url
+                if OmniPlatform.detect(url)=="YouTube"{youtubeURL=url;showYouTube=true;return}
+                let result:CapturedTarget
+                do{
+                    var native=try await MediaResolver.analyze(url)
+                    if native.siteName=="抖音",DouyinQuality.needsPage(native){
+                        stage=L("正在自动补全画质…")
+                        do{if case .video(let page)=try await browser.capture(url){native=try DouyinQuality.merge(native,page)}}
+                        catch is CancellationError{throw CancellationError()}
+                        catch{native.qualityWarning="已保留当前可用源；更高画质尚未确认，可在浏览器验证后重试。"}
+                    }
+                    result = .video(native)
+                }
+                catch MediaRouting.images(let post){result = .images(post)}
+                catch is CancellationError{throw CancellationError()}
+                catch{
+                    let message=error.localizedDescription
+                    if ["NO_MEDIA","MEDIA_ID_MISMATCH","RATE_LIMITED","ACCESS_DENIED","ACCESS_UNCONFIRMED","DRM","PREVIEW_ONLY"].contains(where:message.contains) || OmniPlatform.detect(url)=="哔哩哔哩"{throw error}
+                    stage=L("正在自动补全画质…");result=try await browser.capture(url)
+                }
+                guard generation==epoch,!Task.isCancelled else{return};await accept(result)
+            }catch is CancellationError{}
+            catch{if generation==epoch{self.error=error.localizedDescription}}
+        }
+    }
+    private func accept(_ result:CapturedTarget)async{
+        switch result{
+        case .video(let original):
+            stage=L("正在核对视频尺寸…")
+            let value:VideoMetadata
+            do{value=try await NativeMP4Probe.confirm(original)}catch{return}
+            guard !Task.isCancelled else{return}
+            metadata=value;MediaSources.shared.remember(value)
+            let present = !downloadManager.acceptRefreshed(value)
+            if browser.visible{pendingFormats=present;browser.visible=false}
+            else if present{showFormats=true}
+        case .images(let post):
+            if browser.visible{browser.visible=false}
+            NotificationCenter.default.post(name:.omniShowImages,object:post)
+        }
+    }
+    private func validate(){
+        if OmniPlatform.detect(input)=="哔哩哔哩"{
+            analysis?.cancel();bilibiliLogin=true;retryAfterLogin=false
+            analysis=Task{do{try await browser.prepare(input,login:true);browser.present()}catch{self.error=error.localizedDescription}}
+            return
+        }
+        bilibiliLogin=false
+        analysis?.cancel();error="";browser.present();analyzing=true;stage=L("等待平台验证…")
+        analysis=Task{
+            defer{analyzing=false;stage=""}
+            do{let value=try await browser.capture(input,reuse:true,budget:120);await accept(value)}
+            catch is CancellationError{}
+            catch{browser.notice=error.localizedDescription;self.error=error.localizedDescription}
+        }
+    }
+}
+
+
 struct RelayBrowserSheet: View {
     let site: RelaySite
     let initialVideoUrl: String
@@ -459,10 +173,10 @@ struct RelayBrowserSheet: View {
                         HStack(spacing: 10) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.blue)
+                                    .fill(OmniPalette.primary)
                                     .frame(width: 32, height: 32)
                                 Image(systemName: "bolt.fill")
-                                    .foregroundColor(.white)
+                                    .foregroundColor(OmniPalette.onPrimary)
                                     .font(.system(size: 15))
                             }
 
@@ -483,25 +197,25 @@ struct RelayBrowserSheet: View {
                             Button(action: { showSnifferSheet = true }) {
                                 Text("列表")
                                     .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(OmniPalette.primary)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 6)
-                                    .background(Color.blue.opacity(0.12))
+                                    .background(OmniPalette.primary.opacity(0.12))
                                     .cornerRadius(8)
                             }
 
                             Button(action: startDownloadLatest) {
                                 Text("下载最新")
                                     .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(OmniPalette.onPrimary)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 6)
-                                    .background(Color.blue)
+                                    .background(OmniPalette.primary)
                                     .cornerRadius(8)
                             }
                         }
                         .padding(12)
-                        .background(Color(UIColor.secondarySystemGroupedBackground))
+                        .background(OmniPalette.surface)
                         .cornerRadius(14)
                         .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 3)
                     }
@@ -527,7 +241,7 @@ struct RelayBrowserSheet: View {
                             }
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(sniffedMediaList.isEmpty ? Color.gray.opacity(0.15) : Color.blue.opacity(0.15))
+                            .background(sniffedMediaList.isEmpty ? Color.gray.opacity(0.15) : OmniPalette.primary.opacity(0.15))
                             .foregroundColor(sniffedMediaList.isEmpty ? .secondary : .blue)
                             .cornerRadius(12)
                         }
@@ -599,11 +313,21 @@ struct RelayBrowserSheet: View {
     }
 
     private func startDownload(item: SniffedMediaItem) {
+        var origin=URLComponents(string:site.url)
+        origin?.path="/";origin?.query=nil;origin?.fragment=nil;origin?.user=nil;origin?.password=nil
+        let title=item.title.isEmpty ? "\(site.name) 视频":item.title
+        let format=FormatOption(formatId:item.url,resolutionLabel:"浏览器确认源（尺寸未知）",ext:item.format.lowercased(),sourceUrl:item.url,sourceHeaders:["Referer":origin?.string ?? ""])
+        var metadata=VideoMetadata(url:item.url,title:title,siteName:OmniPlatform.detect(item.url),availableVideoFormats:[format])
+        metadata.sourceScope=PlatformSession.shared.generation(metadata.siteName)
+        metadata.qualityEvidence="用户确认的浏览器媒体源，下载后核对实际尺寸。"
+        MediaSources.shared.remember(metadata)
         let task = DownloadTask(
             url: item.url,
-            title: item.title.isEmpty ? "\(site.name) 视频" : item.title,
-            downloadType: .videoWithAudio,
-            selectedResolution: "中转提取原画"
+            title: title,
+            downloadType: item.format=="音频" ? .audioOnly:.videoWithAudio,
+            selectedResolution: format.resolutionLabel,
+            selectedVideoFormatId: format.formatId,
+            sourceReferer: origin?.string
         )
         downloadManager.addTask(task)
         showSnifferSheet = false
@@ -638,8 +362,8 @@ struct SnifferManagerSheet: View {
                         .font(.system(size: 13, weight: .medium))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(Color.blue.opacity(0.12))
-                        .foregroundColor(.blue)
+                        .background(OmniPalette.primary.opacity(0.12))
+                        .foregroundColor(OmniPalette.primary)
                         .cornerRadius(8)
                     }
 
@@ -661,11 +385,11 @@ struct SnifferManagerSheet: View {
                     Button(action: { items.removeAll() }) {
                         Image(systemName: "trash")
                             .font(.system(size: 14))
-                            .foregroundColor(.red)
+                            .foregroundColor(OmniPalette.error)
                     }
                 }
                 .padding(14)
-                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .background(OmniPalette.surface)
 
                 Divider()
 
@@ -691,7 +415,7 @@ struct SnifferManagerSheet: View {
                                 // 格式彩标
                                 Text(item.format)
                                     .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(OmniPalette.onPrimary)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 3)
                                     .background(badgeColor(for: item.format))
@@ -727,10 +451,10 @@ struct SnifferManagerSheet: View {
                                 }) {
                                     Text("下载")
                                         .font(.system(size: 12, weight: .bold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(OmniPalette.onPrimary)
                                         .padding(.horizontal, 10)
                                         .padding(.vertical, 5)
-                                        .background(Color.blue)
+                                        .background(OmniPalette.primary)
                                         .cornerRadius(6)
                                 }
                                 .buttonStyle(BorderlessButtonStyle())
@@ -833,7 +557,7 @@ struct RelayWebViewRepresentable: UIViewRepresentable {
         }
 
         private func injectCatCatchSniffScript(_ webView: WKWebView) {
-            let js = """
+            let js = #"""
             (function() {
                 if (window.__omniCatCatchInjected) return;
                 window.__omniCatCatchInjected = true;
@@ -922,7 +646,7 @@ struct RelayWebViewRepresentable: UIViewRepresentable {
                     return count;
                 };
             })();
-            """
+            """#
             webView.evaluateJavaScript(js, completionHandler: nil)
         }
     }

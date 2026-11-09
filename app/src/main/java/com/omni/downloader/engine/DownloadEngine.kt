@@ -5,7 +5,7 @@ import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Environment
 import android.os.SystemClock
-import android.util.Log
+import com.omni.downloader.engine.SafeLog as Log
 import android.webkit.CookieManager
 import com.omni.downloader.data.model.AudioFormat
 import com.omni.downloader.data.model.DownloadTask
@@ -16,6 +16,7 @@ import com.omni.downloader.data.model.VideoMetadata
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -69,11 +70,14 @@ object DownloadEngine {
 
                 // 初始化核心引擎
                 YoutubeDL.getInstance().init(appContext)
+                BundledEngineInstaller.install(appContext)
+                SharedPython.install(appContext)
                 try {
                     FFmpeg.getInstance().init(appContext)
                 } catch (fe: Exception) {
                     Log.w(TAG, "FFmpeg 已经初始化或忽略微异常: ${fe.message}")
                 }
+                FFmpegRuntime.ensure(appContext)
 
                 isEngineReady = true
                 initErrorMessage = null
@@ -113,17 +117,30 @@ object DownloadEngine {
     suspend fun fetchVideoMetadata(
         context: Context,
         rawUrl: String,
-        proxyUrl: String = ""
+        proxyUrl: String = "",
+        requestId: String? = null,
+        refreshSources: Boolean = false,
+        onPhase: (String) -> Unit = {}
     ): Result<VideoMetadata> = withContext(Dispatchers.IO) {
+        val processId = requestId ?: java.util.UUID.randomUUID().toString()
         var nativeFailure: String? = null
         val cleanUrl = UrlSniffer.sanitizeAndResolveUrl(rawUrl)
         val site = UrlSniffer.identifySite(cleanUrl)
 
         Log.d(TAG, "开始解析: site=$site, cleanUrl=$cleanUrl")
 
+        if (site == LinkNormalizer.PLATFORM_PINTEREST) {
+            return@withContext runCatching {
+                val json = SharedPython.run(context, "site-video", cleanUrl, site, proxyUrl, taskId = processId)
+                MetadataSnapshots.put(context, cleanUrl, site, proxyUrl, json)
+                parseMetadataFromJson(json, cleanUrl, site)
+            }
+        }
+
         // 1. 哔哩哔哩优先走原生直连解析 (免 Python 依赖，毫秒级，100% 成功率)
         if (site == "哔哩哔哩") {
-            val directResult = BilibiliDirectExtractor.extract(cleanUrl)
+            BilibiliDirectExtractor.syncSession(context)
+            val directResult = BilibiliDirectExtractor.extract(context, cleanUrl)
             if (directResult.isSuccess) {
                 return@withContext directResult
             }
@@ -142,13 +159,44 @@ object DownloadEngine {
         }
 
         // 3. 国内平台（抖音、快手、小红书）优先走原生直接解析，若失败自动降级到 yt-dlp
+        if (site == LinkNormalizer.PLATFORM_DOUYIN) {
+            return@withContext DouyinAutoResolver.resolve(context, cleanUrl, proxyUrl, refreshSources, onPhase) {
+                DomesticDirectExtractor.extract(cleanUrl, site,
+                    com.omni.downloader.data.repository.SessionRepository.getInstance(context).cookieHeader(site), cacheResult = false)
+            }
+        }
         if (DomesticDirectExtractor.isSupported(site)) {
-            val domesticResult = DomesticDirectExtractor.extract(cleanUrl, site)
+            val sessionCookie = com.omni.downloader.data.repository.SessionRepository
+                .getInstance(context).cookieHeader(site)
+            val domesticResult = DomesticDirectExtractor.extract(cleanUrl, site, sessionCookie)
             if (domesticResult.isSuccess) {
                 return@withContext domesticResult
             }
             Log.w(TAG, "$site 原生解析未命中，将降级尝试通用规则引擎: ${domesticResult.exceptionOrNull()?.message}")
             nativeFailure = domesticResult.exceptionOrNull()?.message
+            if (site in DomesticSourceRecovery.platforms &&
+                MediaErrors.classify(nativeFailure.orEmpty()) in setOf(MediaErrorCode.BROWSER_ASSIST_REQUIRED,
+                    MediaErrorCode.MEDIA_UNCONFIRMED, MediaErrorCode.EXTRACTOR_CHANGED, MediaErrorCode.NETWORK_ERROR, MediaErrorCode.UNKNOWN)) {
+                return@withContext runCatching {
+                    val json = SharedPython.run(context, "site-video", cleanUrl, site, proxyUrl, taskId = processId)
+                    MetadataSnapshots.put(context, cleanUrl, site, proxyUrl, json)
+                    val metadata = parseMetadataFromJson(json, cleanUrl, site)
+                    if (site == LinkNormalizer.PLATFORM_DOUYIN) DomesticDirectExtractor.confirmDouyinMetadata(metadata)
+                    else DomesticDirectExtractor.rememberMetadata(metadata).let { metadata }
+                }
+            }
+            if (nativeFailure.orEmpty().contains("[BROWSER_ASSIST_REQUIRED]")) return@withContext domesticResult
+            if (nativeFailure.orEmpty().contains("[NO_MEDIA]") || nativeFailure.orEmpty().contains("[MEDIA_ID_MISMATCH]") || nativeFailure.orEmpty().contains("[AUTH_REQUIRED]") || nativeFailure.orEmpty().contains("[CHALLENGE_REQUIRED]")) return@withContext domesticResult
+        }
+
+        // 3.5 Pixiv Ugoira 专用解析（帧资源 + MP4/GIF 导出）
+        if (site == LinkNormalizer.PLATFORM_PIXIV) {
+            return@withContext PixivExtractor.extract(context, cleanUrl)
+        }
+
+        // 3.6 小黑盒分享页（受限支持）
+        if (site == LinkNormalizer.PLATFORM_HEYBOX) {
+            return@withContext HeyboxExtractor.extract(context, cleanUrl)
         }
 
         // 4. 通用与海外平台走健壮版 yt-dlp 引擎
@@ -157,68 +205,42 @@ object DownloadEngine {
             return@withContext Result.failure(initRes.exceptionOrNull() ?: Exception("引擎未就绪"))
         }
 
+        val requestContext = RequestContextFactory.create(context, site)
         try {
-            val isXPlatform = site == "X (Twitter)"
-            val request = YoutubeDLRequest(cleanUrl).apply {
-                addOption("-J") // 完整 JSON 输出模式（支持单视频与多视频推文 Playlist）
-                if (!isXPlatform) {
-                    addOption("--no-playlist")
-                }
-                addOption("--no-check-certificate")
-                addOption("--no-warnings")
-                addOption("--no-cache-dir")
-                addOption("--ignore-config")
-                addOption("--geo-bypass")
-                addOption("--socket-timeout", "30")
-
-                if (proxyUrl.isNotBlank()) {
-                    addOption("--proxy", proxyUrl.trim())
-                }
-
-                when (site) {
-                    "哔哩哔哩" -> {
-                        addOption("--add-header", "Referer:https://www.bilibili.com")
-                    }
-                    "YouTube" -> {
-                        addOption("--extractor-args", "youtube:player_client=android,ios,mweb")
-                    }
-                    "X (Twitter)" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15")
-                    }
-                    "TikTok" -> {
-                        // 使用 yt-dlp 自身内置的真实客户端指纹，避免被 TikTok WAF 强校验拦截
-                    }
-                    "Instagram" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1")
-                    }
-                    "Facebook" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                    }
-                    "Pinterest" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                    }
-                    "抖音" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15")
-                        addOption("--add-header", "Referer:https://www.douyin.com/")
-                        val cookie = try { CookieManager.getInstance().getCookie("https://www.douyin.com/") } catch (_: Exception) { null }
-                        if (!cookie.isNullOrBlank()) addOption("--add-header", "Cookie:$cookie")
-                    }
-                    "快手" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15")
-                        addOption("--add-header", "Referer:https://www.kuaishou.com/")
-                    }
-                    "小红书" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                        addOption("--add-header", "Referer:https://www.xiaohongshu.com/")
-                    }
-                }
-            }
+            val allowPlaylist = site == LinkNormalizer.PLATFORM_X ||
+                LinkNormalizer.isCollectionUrl(cleanUrl, site)
+            val request = YtDlpOptionsFactory.metadataRequest(
+                url = cleanUrl,
+                site = site,
+                proxyUrl = proxyUrl,
+                allowPlaylist = allowPlaylist,
+                cookieFile = requestContext.cookieFile
+            )
+            Log.d(TAG, "yt-dlp 解析: site=$site, allowPlaylist=$allowPlaylist")
 
             // 自己执行并安全提取 JSON，防止因为控制台多余文本导致解析崩溃
-            val response = YoutubeDL.getInstance().execute(request)
-            val output = response.out
-            val jsonObject = extractValidJson(output)
-                ?: return@withContext Result.failure(Exception("解析输出未包含有效媒体数据，原始反馈: ${output.take(200)}"))
+            val jsonObject = try {
+                val output = YoutubeDL.getInstance().execute(request, processId).out
+                extractValidJson(output) ?: error("[MEDIA_UNCONFIRMED] 引擎没有返回媒体数据")
+            } catch (first: Exception) {
+                val message = first.message.orEmpty().lowercase()
+                if (site == LinkNormalizer.PLATFORM_INSTAGRAM && MediaErrors.classify(message) == MediaErrorCode.NETWORK_ERROR) {
+                    kotlinx.coroutines.delay(800)
+                    extractValidJson(YoutubeDL.getInstance().execute(request, processId).out) ?: error("[MEDIA_UNCONFIRMED] 重试后仍未取得目标媒体")
+                } else {
+                if (site != LinkNormalizer.PLATFORM_X || !listOf("no video could be found", "429", "timed out", "502", "503",
+                        "connection reset", "connection aborted", "remote end closed", "unexpected_eof", "server disconnected").any { it in message }) throw first
+                // Independent public endpoint: never sends the account cookie jar.
+                if (!proxyUrl.startsWith("https://", true)) {
+                    try { XPublicExtractor.extract(context, cleanUrl, proxyUrl) } catch (native: Exception) {
+                        if (MediaErrors.classify(native.message.orEmpty()) in setOf(MediaErrorCode.AUTH_REQUIRED, MediaErrorCode.RATE_LIMITED,
+                                MediaErrorCode.CONTENT_UNAVAILABLE, MediaErrorCode.MEDIA_ID_MISMATCH)) throw native
+                        SharedPython.run(context, "x-video", cleanUrl, site, proxyUrl, taskId = processId)
+                    }
+                } else SharedPython.run(context, "x-video", cleanUrl, site, proxyUrl, taskId = processId)
+                }
+            }
+            MetadataSnapshots.put(context, cleanUrl, site, proxyUrl, jsonObject)
 
             val metadata = parseMetadataFromJson(jsonObject, cleanUrl, site)
             Result.success(metadata)
@@ -226,6 +248,8 @@ object DownloadEngine {
             val errorMsg = formatDetailedError(e)
             Log.e(TAG, "yt-dlp 解析报错: $errorMsg", e)
             Result.failure(Exception(nativeFailure?.let { "原生解析失败: $it；通用引擎失败: $errorMsg" } ?: errorMsg, e))
+        } finally {
+            requestContext.cleanup()
         }
     }
 
@@ -262,7 +286,7 @@ object DownloadEngine {
                 requestBuilder.header("Referer", "https://www.xiaohongshu.com/")
             }
 
-            val clientBuilder = OkHttpClient.Builder()
+            val clientBuilder = OkHttpClient.Builder().proxySelector(NetworkProxy)
                 .followRedirects(true)
                 .followSslRedirects(true)
                 .connectTimeout(15, TimeUnit.SECONDS)
@@ -340,6 +364,40 @@ object DownloadEngine {
      * 运行实际下载任务
      */
     suspend fun executeDownload(
+        context: Context, task: DownloadTask, proxyUrl: String = "",
+        onProgressUpdate: (Float, String, String, TaskStatus) -> Unit
+    ): Result<String> = withContext(Dispatchers.IO) {
+        if (UrlSniffer.identifySite(task.url) == "哔哩哔哩") BilibiliDirectExtractor.syncSession(context)
+        val workspace = File(context.filesDir, "media_tasks/${task.id}").apply { mkdirs() }
+        val ready = File(workspace, "ready.txt")
+        val signature = java.security.MessageDigest.getInstance("SHA-256").digest("${task.url}|${task.selectedVideoFormatId}|${task.downloadType}|${task.qualitySelection}|${task.selectedImageIds}".toByteArray()).joinToString("") { "%02x".format(it) }
+        val record = if (ready.isFile) ready.readLines() else emptyList()
+        val existing = record.getOrNull(1)?.let { File(workspace, it) }
+        val staged = if (record.firstOrNull() == signature && existing?.isFile == true && existing.length() > 0 &&
+            (task.downloadType != DownloadType.GIF || GifInspector.inspect(existing) != null)) {
+            Result.success(existing.absolutePath)
+        } else executeStagedDownload(context, task, proxyUrl) { p, speed, eta, state ->
+            onProgressUpdate(p.coerceAtMost(97f), speed, eta,
+                if (state == TaskStatus.COMPLETED) TaskStatus.PROCESSING else state)
+        }
+        staged.fold(onSuccess = { path ->
+            try {
+                val source = File(path)
+                MediaVerifier.verifyTask(source, task, context)?.let {
+                    if (task.downloadType == DownloadType.GIF) ready.delete()
+                    error(it)
+                }
+                ready.writeText("$signature\n${source.relativeTo(workspace).path}")
+                onProgressUpdate(98f, "", "正在导出成品…", TaskStatus.PROCESSING)
+                val result = StorageExporter.export(context, source)
+                ready.delete()
+                source.delete()
+                Result.success(result)
+            } catch (e: Exception) { Result.failure(e) }
+        }, onFailure = { Result.failure(it) })
+    }
+
+    private suspend fun executeStagedDownload(
         context: Context,
         task: DownloadTask,
         proxyUrl: String = "",
@@ -349,9 +407,22 @@ object DownloadEngine {
         val cleanUrl = UrlSniffer.sanitizeAndResolveUrl(task.url)
         val site = UrlSniffer.identifySite(cleanUrl)
 
-        val publicDir = getDownloadDir(context).apply { mkdirs() }
-        val stagingDir = File(context.cacheDir, "staging").apply { mkdirs() }
+        val publicDir = File(context.filesDir, "media_tasks/${task.id}/output").apply { mkdirs() }
+        val stagingDir = File(context.filesDir, "media_tasks/${task.id}/staging").apply { mkdirs() }
         var domesticFailure: String? = null
+
+        if (task.downloadType in setOf(DownloadType.IMAGE, DownloadType.IMAGE_ZIP)) {
+            return@withContext runCatching {
+                onProgressUpdate(0f, "", "核验原作品并下载原图…", TaskStatus.DOWNLOADING)
+                val extra = mutableListOf("--ids", JSONArray(task.selectedImageIds).toString(), "--output", publicDir.path)
+                if (task.downloadType == DownloadType.IMAGE_ZIP) extra += "--archive"
+                ImagePostSnapshots.get(context, task.url, task.imagePlatform)?.let { extra += listOf("--manifest", it.path) }
+                val result = SharedPython.run(context, "download-images", task.url, task.imagePlatform, proxyUrl, task.id, extra)
+                val output = File(result.getString("path")).canonicalFile
+                check(output.parentFile == publicDir.canonicalFile && output.isFile && output.length() > 0) { "[POSTPROCESS_FAILED] 图片成品校验失败" }
+                output.path
+            }
+        }
 
         // 0. 保存封面专属逻辑
         if (task.downloadType == DownloadType.COVER) {
@@ -381,14 +452,16 @@ object DownloadEngine {
         }
 
         // 0.5 中转站直链或媒体直接下载链接，优先走 OkHttp 高速流式下载 (彻底避免 yt-dlp 启动开销与超长文件名报错)
-        val isDirectStream = task.selectedResolution == "中转直链" ||
+        val isDirectStream = (task.directMediaUrl.isNotBlank() || task.selectedResolution == "中转直链" ||
                 task.selectedResolution.startsWith("http") ||
                 UrlSniffer.isDirectMediaUrl(cleanUrl) ||
                 cleanUrl.contains("snapcdn.app") ||
-                cleanUrl.contains("twimg.com")
+                cleanUrl.contains("twimg.com")) && !(site == LinkNormalizer.PLATFORM_X && proxyUrl.startsWith("https://", true))
 
         if (isDirectStream) {
-            val targetStreamUrl = if (task.selectedResolution.startsWith("http")) {
+            val targetStreamUrl = if (task.directMediaUrl.isNotBlank()) {
+                task.directMediaUrl
+            } else if (task.selectedResolution.startsWith("http")) {
                 task.selectedResolution
             } else {
                 task.url.ifBlank { cleanUrl }
@@ -401,11 +474,23 @@ object DownloadEngine {
                 proxyUrl = proxyUrl,
                 stagingDir = stagingDir,
                 publicDir = publicDir,
-                onProgressUpdate = onProgressUpdate
+                onProgressUpdate = onProgressUpdate,
+                requestHeaders = task.directMediaHeaders.filterKeys { !it.equals("Cookie", true) && !it.equals("Authorization", true) }
             )
 
+
+            if (directResult.isFailure && site == "X (Twitter)" && task.mediaId.isNotBlank() &&
+                directResult.exceptionOrNull()?.message?.let { it.contains("403") || it.contains("410") || it.contains("过期") } == true) {
+                val refreshed = fetchVideoMetadata(context, task.url, proxyUrl).getOrNull()
+                val media = refreshed?.let { root -> (root.multiMediaList.ifEmpty { listOf(root) }).firstOrNull { it.mediaId == task.mediaId } }
+                val source = media?.availableVideoFormats?.firstOrNull { it.formatId == task.selectedVideoFormatId && !it.isVideoOnly }
+                if (source != null && source.sourceUrl.isNotBlank()) {
+                    directResult = downloadDirectMediaStream(context, task, source.sourceUrl, proxyUrl, stagingDir, publicDir, onProgressUpdate, source.sourceHeaders)
+                }
+            }
+
             // 如果首次下载失败且存在备用地址（如 selectedResolution 与 task.url 不一致），尝试备用地址
-            if (directResult.isFailure) {
+            if (directResult.isFailure && task.directMediaUrl.isBlank()) {
                 val fallbackUrl = when {
                     task.selectedResolution.startsWith("http") && task.url.isNotBlank() && task.url != task.selectedResolution -> task.url
                     !task.selectedResolution.startsWith("http") && cleanUrl.isNotBlank() && cleanUrl != targetStreamUrl -> cleanUrl
@@ -430,7 +515,7 @@ object DownloadEngine {
             }
 
             // 中转直链任务（或显式直链URL）若下载失败，绝对严禁降级到 yt-dlp，防止报出 Unsupported URL 并掩盖真实错误
-            if (task.selectedResolution == "中转直链" || task.selectedResolution.startsWith("http")) {
+            if (task.directMediaUrl.isNotBlank() || task.selectedResolution == "中转直链" || task.selectedResolution.startsWith("http")) {
                 val err = directResult.exceptionOrNull() ?: Exception("中转直链下载失败")
                 Log.e(TAG, "中转直链任务彻底失败: ${err.message}")
                 return@withContext Result.failure(err)
@@ -472,105 +557,57 @@ object DownloadEngine {
             Log.w(TAG, "TikTok 原生直连下载失败，尝试通用规则引擎下载: ${tiktokResult.exceptionOrNull()?.message}")
         }
 
+        // 3.5 Pixiv Ugoira 专用下载（不经过 yt-dlp）
+        if (site == LinkNormalizer.PLATFORM_PIXIV) {
+            return@withContext PixivExtractor.download(
+                context = context,
+                task = task,
+                stagingDir = stagingDir,
+                publicDir = publicDir,
+                onProgressUpdate = onProgressUpdate
+            )
+        }
+
+        // 3.6 小黑盒分享页（受限支持）
+        if (site == LinkNormalizer.PLATFORM_HEYBOX) {
+            return@withContext HeyboxExtractor.download(
+                context = context,
+                task = task,
+                proxyUrl = proxyUrl,
+                stagingDir = stagingDir,
+                publicDir = publicDir,
+                onProgressUpdate = onProgressUpdate
+            )
+        }
+
         // 4. 通用与海外媒体走 yt-dlp 引擎
         val initResult = ensureInitialized(context)
         if (initResult.isFailure) {
             return@withContext Result.failure(initResult.exceptionOrNull() ?: Exception("引擎未就绪"))
         }
 
+        val requestContext = RequestContextFactory.create(context, site)
+        var snapshotFile: File? = null
         try {
-            val request = YoutubeDLRequest(cleanUrl).apply {
-                addOption("-o", "${stagingDir.absolutePath}/%(title).50s-%(id).30s.%(ext)s")
-                addOption("--no-playlist")
-                addOption("--no-check-certificate")
-                addOption("--no-warnings")
-                addOption("--ignore-config")
-                addOption("--no-cache-dir")
-                addOption("--no-mtime")
-                addOption("--retries", "10")
-                addOption("--fragment-retries", "10")
-                addOption("--concurrent-fragments", "1")
-                addOption("--windows-filenames")
-                addOption("--restrict-filenames")
-                addOption("--no-part")
-
-                if (proxyUrl.isNotBlank()) {
-                    addOption("--proxy", proxyUrl.trim())
+            if (site in setOf(LinkNormalizer.PLATFORM_X, LinkNormalizer.PLATFORM_FACEBOOK, LinkNormalizer.PLATFORM_INSTAGRAM, LinkNormalizer.PLATFORM_PINTEREST)) {
+                var snapshot = MetadataSnapshots.get(context, cleanUrl, site, proxyUrl, task.mediaId)
+                if (snapshot == null) {
+                    fetchVideoMetadata(context, cleanUrl, proxyUrl).getOrThrow()
+                    snapshot = MetadataSnapshots.get(context, cleanUrl, site, proxyUrl, task.mediaId)
                 }
-
-                when (site) {
-                    "哔哩哔哩" -> {
-                        addOption("--add-header", "Referer:https://www.bilibili.com")
-                    }
-                    "YouTube" -> {
-                        addOption("--extractor-args", "youtube:player_client=android,ios,mweb")
-                    }
-                    "X (Twitter)" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15")
-                    }
-                    "TikTok" -> {
-                        // 使用 yt-dlp 自身内置的真实客户端指纹，避免被 TikTok WAF 强校验拦截
-                    }
-                    "Instagram" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1")
-                    }
-                    "Facebook" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                    }
-                    "Pinterest" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                    }
-                    "抖音" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15")
-                        addOption("--add-header", "Referer:https://www.douyin.com/")
-                        val cookie = try { CookieManager.getInstance().getCookie("https://www.douyin.com/") } catch (_: Exception) { null }
-                        if (!cookie.isNullOrBlank()) addOption("--add-header", "Cookie:$cookie")
-                    }
-                    "快手" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15")
-                        addOption("--add-header", "Referer:https://www.kuaishou.com/")
-                    }
-                    "小红书" -> {
-                        addOption("--add-header", "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                        addOption("--add-header", "Referer:https://www.xiaohongshu.com/")
-                    }
-                }
-
-                when (task.downloadType) {
-                    DownloadType.VIDEO_WITH_AUDIO -> {
-                        val h = extractHeightFromResolution(task.selectedResolution)
-                        if (h > 0) {
-                            addOption("-f", "bestvideo[height<=$h]+bestaudio/best[height<=$h]/best")
-                        } else {
-                            addOption("-f", "bestvideo+bestaudio/best")
-                        }
-                        addOption("--merge-output-format", "mp4")
-                    }
-                    DownloadType.VIDEO_ONLY -> {
-                        val h = extractHeightFromResolution(task.selectedResolution)
-                        if (h > 0) {
-                            addOption("-f", "bestvideo[height<=$h]/best[height<=$h]")
-                        } else {
-                            addOption("-f", "bestvideo/best")
-                        }
-                        addOption("--postprocessor-args", "ffmpeg:-an")
-                    }
-                    DownloadType.AUDIO_ONLY -> {
-                        addOption("-x")
-                        addOption("--audio-format", task.audioFormat.ext)
-                        addOption("--audio-quality", "0")
-                        addOption("-f", "bestaudio/best")
-                        addOption("--add-metadata")
-                    }
-                    DownloadType.GIF -> {
-                        addOption("-f", "bestvideo/best")
-                    }
-                    DownloadType.COVER -> {
-                        addOption("--write-thumbnail")
-                        addOption("--skip-download")
-                    }
-                }
+                check(snapshot != null) { "[MEDIA_ID_MISMATCH] 原媒体已不可定位，请重新解析并选择同一作品" }
+                snapshotFile = File.createTempFile("media-info-", ".json", context.cacheDir).apply { writeText(snapshot) }
             }
+            val plan = planForTask(task)
+            val request = YtDlpOptionsFactory.downloadRequest(
+                url = cleanUrl,
+                site = site,
+                proxyUrl = proxyUrl,
+                plan = plan,
+                outputPattern = "${stagingDir.absolutePath}/%(title).50s-%(id).30s.%(ext)s",
+                cookieFile = requestContext.cookieFile, infoFile = snapshotFile
+            )
+            Log.d(TAG, "yt-dlp 下载计划: ${YtDlpOptionsFactory.describe(plan)}, site=$site")
 
             onProgressUpdate(0f, "", "准备下载...", TaskStatus.DOWNLOADING)
 
@@ -611,27 +648,19 @@ object DownloadEngine {
                     Log.w(TAG, "首次下载检测到管道/句柄中断，正在自动无缝启用安全单流通道重试: $rootMsg")
                     onProgressUpdate(10f, "", "自动切换安全通道重试中...", TaskStatus.DOWNLOADING)
 
-                    val safeStagingDir = File(context.filesDir, "safe_staging").apply { mkdirs() }
+                    val safeStagingDir = File(context.filesDir, "media_tasks/${task.id}/safe_staging").apply { mkdirs() }
                     safeStagingDir.listFiles()?.filter { it.name.contains(task.id) }?.forEach { it.delete() }
 
-                    val safeRequest = YoutubeDLRequest(cleanUrl).apply {
-                        addOption("-o", "${safeStagingDir.absolutePath}/%(id)s.%(ext)s")
-                        addOption("--no-playlist")
-                        addOption("--no-check-certificate")
-                        addOption("--no-warnings")
-                        addOption("--ignore-config")
-                        addOption("--no-cache-dir")
-                        addOption("--no-mtime")
-                        addOption("--windows-filenames")
-                        addOption("--restrict-filenames")
-                        addOption("--no-part")
-                        addOption("--concurrent-fragments", "1")
-                        addOption("-f", "best/bestvideo+bestaudio")
-
-                        if (proxyUrl.isNotBlank()) {
-                            addOption("--proxy", proxyUrl.trim())
-                        }
-                    }
+                    // 只调整传输策略，保留同一选流计划、站点请求头与导出类型
+                    val safeRequest = YtDlpOptionsFactory.downloadRequest(
+                        url = cleanUrl,
+                        site = site,
+                        proxyUrl = proxyUrl,
+                        plan = plan,
+                        outputPattern = "${safeStagingDir.absolutePath}/%(id)s.%(ext)s",
+                        safeTransport = true,
+                        cookieFile = requestContext.cookieFile, infoFile = snapshotFile
+                    )
 
                     YoutubeDL.getInstance().execute(safeRequest, task.id) { progress, etaInSeconds, line ->
                         val etaStr = if (etaInSeconds > 0) "${etaInSeconds}秒" else ""
@@ -659,6 +688,12 @@ object DownloadEngine {
             val stagedFile = findGeneratedFile(stagingDir, task.id, lastReportedPath)
                 ?: findGeneratedFile(publicDir, task.id, lastReportedPath)
 
+            if (task.downloadType == DownloadType.VIDEO_ONLY && stagedFile != null && MediaVerifier.probe(stagedFile)?.hasAudio == true) {
+                val muted = File(stagingDir, "muted_${task.id}.mp4")
+                FFmpegExecutor.stripAudio(context, stagedFile, muted).getOrThrow()
+                check(MediaVerifier.probe(muted)?.hasAudio == false) { "[POSTPROCESS_FAILED] 仅视频成品仍包含音轨" }
+                muted.copyTo(stagedFile, overwrite = true); muted.delete()
+            }
             val finalFile = if (stagedFile != null && stagedFile.exists()) {
                 if (task.downloadType == DownloadType.GIF) {
                     onProgressUpdate(95f, "", "正在转换为 GIF 动图 (FFmpeg)...", TaskStatus.PROCESSING)
@@ -666,7 +701,7 @@ object DownloadEngine {
                     val cleanBase = if (baseName.length > 60) baseName.take(60) else baseName
                     val destGif = File(publicDir, "$cleanBase.gif")
 
-                    val isNativeGif = stagedFile.extension.equals("gif", ignoreCase = true) || isGifMagic(stagedFile)
+                    val isNativeGif = GifInspector.inspect(stagedFile) != null
                     if (isNativeGif) {
                         Log.d(TAG, "源文件本身即为标准 GIF 动图，执行直通转存: ${stagedFile.name}")
                         stagedFile.copyTo(destGif, overwrite = true)
@@ -678,15 +713,8 @@ object DownloadEngine {
                             stagedFile.delete()
                             destGif
                         } else {
-                            Log.w(TAG, "GIF 转换未通过，降级保留 MP4 原片: ${gifRes.exceptionOrNull()?.message}")
-                            val fallbackDest = File(publicDir, "$cleanBase.mp4")
-                            try {
-                                stagedFile.copyTo(fallbackDest, overwrite = true)
-                                stagedFile.delete()
-                            } catch (ce: Exception) {
-                                Log.e(TAG, "降级复制 MP4 失败", ce)
-                            }
-                            if (fallbackDest.exists() && fallbackDest.length() > 0) fallbackDest else stagedFile
+                            destGif.delete()
+                            throw IOException("[POSTPROCESS_FAILED] GIF 转换失败，请重试；未生成 GIF 成品", gifRes.exceptionOrNull())
                         }
                     }
                 } else {
@@ -733,10 +761,19 @@ object DownloadEngine {
             val errorMsg = formatDetailedError(e)
             onProgressUpdate(0f, "", "", TaskStatus.FAILED)
             Result.failure(Exception(domesticFailure?.let { "原生通道失败: $it；通用引擎失败: $errorMsg" } ?: errorMsg, e))
+        } finally {
+            snapshotFile?.delete()
+            requestContext.cleanup()
         }
     }
 
+    fun cancelMetadata(requestId: String) {
+        SharedPython.cancel(requestId)
+        runCatching { YoutubeDL.getInstance().destroyProcessById(requestId) }
+    }
+
     fun cancelTask(taskId: String) {
+        SharedPython.cancel(taskId)
         cancelledTaskIds.add(taskId)
         try {
             activeHttpCalls.remove(taskId)?.cancel()
@@ -776,6 +813,7 @@ object DownloadEngine {
      * 彻底拦截因防盗链、Cloudflare 拦截或接口报错导致将 HTML 网页或 JSON 错误保存为 MP4 的问题（防 MT 管理器 source error）
      */
     fun isValidMediaFile(file: File): Boolean {
+        if (GifInspector.inspect(file) != null) return true
         if (!file.exists() || file.length() < 1024) return false
         val header = ByteArray(32)
         val readBytes = try {
@@ -844,7 +882,9 @@ object DownloadEngine {
         val ffmpeg = FFmpegExecutor.getFFmpegBinary(context)
         if (ffmpeg != null) {
             val referer = getRefererForUrl(m3u8Url)
-            val cookie = try {
+            val cookieEnabled = com.omni.downloader.data.repository.SessionRepository.getInstance(context)
+                .isCookieEnabled(CookieRequestPolicy.platformFor(task.url, m3u8Url))
+            val cookie = if (!cookieEnabled) "" else try {
                 CookieManager.getInstance().getCookie(m3u8Url) ?: ""
             } catch (_: Exception) { "" }
 
@@ -852,7 +892,7 @@ object DownloadEngine {
             if (referer.isNotBlank()) headers["Referer"] = referer
             if (cookie.isNotBlank()) headers["Cookie"] = cookie
             if (m3u8Url.contains("greenvideo.cc")) headers["KdSystem"] = "GreenVideo"
-            headers.putAll(requestHeaders)
+            headers.putAll(CookieRequestPolicy.filter(requestHeaders, cookieEnabled))
             val headersText = headers.entries.joinToString("") { "${it.key}: ${it.value}\r\n" }
 
             val commands = mutableListOf(
@@ -918,6 +958,53 @@ object DownloadEngine {
     /**
      * 直接通过 OkHttp 执行网络音视频直链的高速流式下载 (跳过 yt-dlp，支持断点/平滑速率/避免超长文件名报错)
      */
+    internal suspend fun downloadDomesticMediaStream(
+        context: Context, task: DownloadTask, targetStreamUrl: String, proxyUrl: String,
+        stagingDir: File, publicDir: File,
+        onProgressUpdate: (Float, String, String, TaskStatus) -> Unit,
+        requestHeaders: Map<String, String>
+    ): Result<String> {
+        val site = UrlSniffer.identifySite(task.url)
+        // An individual CDN attempt is not the terminal task result. Keep the
+        // task active while recovery is still allowed; the caller publishes a
+        // final failure only after this whole operation returns.
+        val attemptProgress: (Float, String, String, TaskStatus) -> Unit = { progress, speed, eta, status ->
+            if (status != TaskStatus.FAILED) onProgressUpdate(progress, speed, eta, status)
+        }
+        var directResult = downloadDirectMediaStream(context, task, targetStreamUrl, proxyUrl,
+            stagingDir, publicDir, attemptProgress, requestHeaders)
+        if (directResult.isFailure && site in DomesticSourceRecovery.platforms && task.mediaId.isNotBlank() &&
+            DomesticSourceRecovery.canRecover(directResult.exceptionOrNull()) && !cancelledTaskIds.contains(task.id)) {
+            val rejected = mutableSetOf(targetStreamUrl)
+            var attempts = 0
+            suspend fun recover(metadata: VideoMetadata?) {
+                for (source in DomesticSourceRecovery.candidates(task, metadata, rejected).take(2)) {
+                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                    if (attempts++ >= 3 || cancelledTaskIds.contains(task.id) || directResult.isSuccess) break
+                    rejected += source.sourceUrl
+                    // A new URL must never append to a previous rendition's
+                    // partial bytes, even when both belong to the same post.
+                    File(stagingDir, "direct_${task.id}.media").delete()
+                    File(stagingDir, "direct_${task.id}.resume").delete()
+                    onProgressUpdate(0f, "", "正在切换同画质视频源…", TaskStatus.DOWNLOADING)
+                    directResult = downloadDirectMediaStream(context, task, source.sourceUrl, proxyUrl,
+                        stagingDir, publicDir, attemptProgress, DomesticMediaSource.headers(site) + source.sourceHeaders)
+                    if (!DomesticSourceRecovery.canRecover(directResult.exceptionOrNull())) break
+                }
+            }
+            recover(DomesticDirectExtractor.cachedMetadata(task.url))
+            if (directResult.isFailure && attempts < 3 && DomesticSourceRecovery.canRecover(directResult.exceptionOrNull()) &&
+                !cancelledTaskIds.contains(task.id)) {
+                onProgressUpdate(0f, "", "正在刷新目标作品的视频地址…", TaskStatus.DOWNLOADING)
+                val refreshed = fetchVideoMetadata(context, task.url, proxyUrl, refreshSources = true)
+                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                recover(refreshed.getOrNull())
+            }
+        }
+
+        return directResult
+    }
+
     internal suspend fun downloadDirectMediaStream(
         context: Context,
         task: DownloadTask,
@@ -945,8 +1032,11 @@ object DownloadEngine {
 
         // 先保存源媒体，实际输出扩展名由后处理决定。
         val tempFile = File(stagingDir, "direct_${task.id}.media")
+        val resumeFile = File(stagingDir, "direct_${task.id}.resume")
+        val sourceKey = java.security.MessageDigest.getInstance("SHA-256").digest(targetUrl.toByteArray())
+            .joinToString("") { "%02x".format(it) }
 
-        val clientBuilder = OkHttpClient.Builder()
+        val clientBuilder = OkHttpClient.Builder().proxySelector(NetworkProxy)
             .followRedirects(true)
             .followSslRedirects(true)
             .retryOnConnectionFailure(true)
@@ -975,7 +1065,12 @@ object DownloadEngine {
         var lastException: Exception? = null
 
         while (retryCount <= maxRetries) {
+            var openResponse: okhttp3.Response? = null
             try {
+                val resume = if (resumeFile.isFile) resumeFile.readLines() else emptyList()
+                if (tempFile.exists() && (resume.getOrNull(0) != sourceKey || resume.getOrNull(1).isNullOrBlank())) {
+                    tempFile.delete(); resumeFile.delete()
+                }
                 val existingBytes = if (tempFile.exists()) tempFile.length() else 0L
 
                 val reqBuilder = Request.Builder()
@@ -991,7 +1086,9 @@ object DownloadEngine {
                 }
 
                 // 核心凭证注入：同步 WebView 累积的 Session Cookie，彻底防止防盗链 403 导致下载假文件
-                val cookie = try {
+                val cookieEnabled = com.omni.downloader.data.repository.SessionRepository.getInstance(context)
+                    .isCookieEnabled(CookieRequestPolicy.platformFor(task.url, targetUrl))
+                val cookie = if (!cookieEnabled) null else try {
                     CookieManager.getInstance().getCookie(targetUrl) ?: (
                         if (targetUrl.contains("greenvideo")) CookieManager.getInstance().getCookie("https://greenvideo.cc/") else null
                     )
@@ -1003,23 +1100,24 @@ object DownloadEngine {
                 if (targetUrl.contains("greenvideo.cc")) {
                     reqBuilder.header("KdSystem", "GreenVideo")
                 }
-                requestHeaders.forEach { (name, value) -> reqBuilder.header(name, value) }
+                CookieRequestPolicy.filter(requestHeaders, cookieEnabled).forEach { (name, value) -> reqBuilder.header(name, value) }
 
                 // 支持 HTTP Range 断点续传
                 if (existingBytes > 0) {
                     reqBuilder.header("Range", "bytes=$existingBytes-")
+                    reqBuilder.header("If-Range", resume[1])
                     Log.d(TAG, "启用断点续传: 从字节 $existingBytes 继续拉取")
                 }
 
                 val call = client.newCall(reqBuilder.build())
                 activeHttpCalls[task.id] = call
 
-                val response = call.execute()
+                val response = call.execute().also { openResponse = it }
                 val responseCode = response.code
 
                 if (responseCode == 416) {
-                    // 416 表示范围无法满足，即本地已全部下载完毕
-                    Log.d(TAG, "服务器返回 416 Range Not Satisfiable，本地文件已为完整内容")
+                    try { HttpRangePolicy.evaluate(416, response.header("Content-Range"), existingBytes, -1) }
+                    catch (error: IOException) { tempFile.delete(); resumeFile.delete(); throw error }
                     lastException = null
                     break
                 }
@@ -1031,7 +1129,7 @@ object DownloadEngine {
                         404 -> "资源不存在或已失效 (HTTP 404 Not Found)"
                         else -> "HTTP 错误: $responseCode"
                     }
-                    throw IOException(customMsg)
+                    throw MediaHttpException(responseCode, customMsg)
                 }
 
                 val contentType = response.header("Content-Type", "")?.lowercase(Locale.ROOT) ?: ""
@@ -1060,18 +1158,16 @@ object DownloadEngine {
                     throw IOException("直链返回内容为网页/错误响应 ($contentType)，非媒体流: $errorSnippet")
                 }
 
-                val isPartial = (responseCode == 206)
-                val appendMode = isPartial && existingBytes > 0
                 val body = response.body ?: throw IOException("直链响应体为空")
 
                 val contentLength = body.contentLength()
-                val totalBytes = if (isPartial && contentLength > 0) {
-                    existingBytes + contentLength
-                } else if (contentLength > 0) {
-                    contentLength
-                } else {
-                    -1L
-                }
+                val range = try { HttpRangePolicy.evaluate(responseCode, response.header("Content-Range"), existingBytes, contentLength) }
+                    catch (error: IOException) { tempFile.delete(); resumeFile.delete(); throw error }
+                val appendMode = range.append
+                val totalBytes = range.total
+                val validator = response.header("ETag")?.takeUnless { it.startsWith("W/") }
+                    ?: response.header("Last-Modified").orEmpty()
+                resumeFile.writeText("$sourceKey\n$validator")
 
                 var downloadedBytes = if (appendMode) existingBytes else 0L
                 var lastReportTime = SystemClock.elapsedRealtime()
@@ -1116,11 +1212,13 @@ object DownloadEngine {
                         output.flush()
                     }
                 }
+                if (totalBytes > 0 && downloadedBytes != totalBytes) throw IOException("网络传输中断，媒体长度与响应总长不一致")
 
                 // 正常写完，清除异常标记并退出重试循环
                 lastException = null
                 break
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 lastException = e
                 activeHttpCalls.remove(task.id)
                 Log.w(TAG, "第 ${retryCount + 1} 次直链流式下载中断: ${e.message}")
@@ -1131,6 +1229,9 @@ object DownloadEngine {
                     Log.d(TAG, "任务已被用户取消，终止重连重试")
                     break
                 }
+                // A stale signed URL cannot be repaired by requesting it again.
+                // Return to the scoped domestic-source recovery path instead.
+                if (e is MediaHttpException && e.status in setOf(401, 403, 404, 405, 410)) break
 
                 retryCount++
                 if (retryCount <= maxRetries) {
@@ -1143,12 +1244,14 @@ object DownloadEngine {
                     kotlinx.coroutines.delay((600L * retryCount).coerceAtMost(2000L))
                 }
             } finally {
+                openResponse?.close()
                 activeHttpCalls.remove(task.id)
             }
         }
 
         if (lastException != null || cancelledTaskIds.contains(task.id)) {
             tempFile.delete()
+            resumeFile.delete()
             val failure = lastException ?: IOException("下载已取消")
             Log.e(TAG, "直链下载彻底失败: ${failure.message}", failure)
             val msg = formatDetailedError(failure)
@@ -1293,7 +1396,7 @@ object DownloadEngine {
         return null
     }
 
-    private fun parseMetadataFromJson(json: JSONObject, url: String, site: String): VideoMetadata {
+    internal fun parseMetadataFromJson(json: JSONObject, url: String, site: String): VideoMetadata {
         val entries = json.optJSONArray("entries")
         if (entries != null && entries.length() > 0) {
             val validEntries = mutableListOf<JSONObject>()
@@ -1308,10 +1411,10 @@ object DownloadEngine {
                 val subList = validEntries.mapIndexedNotNull { index, entryJson ->
                     val childUrl = MediaSelection.childUrl(url, site, index,
                         entryJson.optString("webpage_url"), entryJson.optString("original_url"),
-                        entryJson.optString("url"), entryJson.optString("id")) ?: return@mapIndexedNotNull null
+                        entryJson.optString("url"), entryJson.optString("id"), MetadataSnapshots.formatUrls(entryJson)) ?: return@mapIndexedNotNull null
                     parseSingleVideoMetadata(entryJson, childUrl, site, videoIndex = index + 1, totalVideos = validEntries.size)
                 }
-                require(subList.isNotEmpty()) { "合集没有返回可定位的分集链接，请使用具体视频链接" }
+                require(subList.isNotEmpty()) { "[MEDIA_UNCONFIRMED] 合集没有返回可定位的媒体，请重新解析" }
                 val selected = MediaSelection.initialIndex(url, url, subList.map { it.url })
                 val currentMeta = subList.getOrElse(selected) { parseSingleVideoMetadata(json, url, site) }
                 return currentMeta.copy(
@@ -1343,7 +1446,8 @@ object DownloadEngine {
         val thumbnail = json.optString("thumbnail", "")
 
         val formatsJson = json.optJSONArray("formats") ?: JSONArray()
-        val videoFormatsMap = mutableMapOf<Int, FormatOption>()
+        // 以 format_id 为键保留每个真实格式，不再用第一个同高度格式代表全部编码
+        val videoFormatsById = linkedMapOf<String, FormatOption>()
         val audioFormatsList = mutableListOf<FormatOption>()
         var hasTwitterRegularVideo = false
         var hasTwitterTweetVideo = false
@@ -1382,28 +1486,39 @@ object DownloadEngine {
                         isAudioOnly = true
                     )
                 )
-            } else if (h > 0) {
-                val label = when {
-                    h >= 2160 -> "4K (2160p)"
-                    h >= 1440 -> "2K (1440p)"
-                    h >= 1080 -> "1080p 全高清"
-                    h >= 720 -> "720p 高清"
-                    h >= 480 -> "480p 标清"
-                    h >= 360 -> "360p 流畅"
-                    else -> "${h}p"
-                }
+            } else if (h > 0 || w > 0 || (site in DomesticSourceRecovery.platforms && formatUrl.startsWith("http")) || (site == LinkNormalizer.PLATFORM_X && formatUrl.contains("video.twimg.com/tweet_video/"))) {
+                val label = if (w > 0 || h > 0) QualitySelector.label(w, h)
+                    else if (site == LinkNormalizer.PLATFORM_DOUYIN) "源视频（尺寸待确认）"
+                    else if (site == LinkNormalizer.PLATFORM_XHS) "原始源（尺寸待确认）" else "源动图（尺寸未知）"
 
-                val existing = videoFormatsMap[h]
-                if (existing == null || (sizeStr.isNotEmpty() && existing.approximateSize.isEmpty())) {
-                    videoFormatsMap[h] = FormatOption(
-                        formatId = f.optString("format_id", h.toString()),
+                val key = formatId.ifBlank { "$h-$vcodec-$w" }
+                val existing = videoFormatsById[key]
+                if (existing == null ||
+                    (sizeStr.isNotEmpty() && existing.approximateSize.isEmpty())
+                ) {
+                    videoFormatsById[key] = FormatOption(
+                        formatId = formatId.ifBlank { key },
                         resolutionLabel = label,
                         width = w,
                         height = h,
                         fps = f.optInt("fps", 30),
                         ext = f.optString("ext", "mp4"),
                         approximateSize = sizeStr,
-                        isVideoOnly = isVideoOnly
+                        isVideoOnly = isVideoOnly,
+                        sourceUrl = formatUrl,
+                        sourceHeaders = buildMap {
+                            val headers = f.optJSONObject("http_headers") ?: json.optJSONObject("http_headers")
+                            headers?.keys()?.forEach { key -> if (!key.equals("Cookie", true) && !key.equals("Authorization", true)) put(key, headers.optString(key)) }
+                        },
+                        dynamicRange = f.optString("dynamic_range"),
+                        videoBitrateKbps = f.optDouble("tbr", 0.0),
+                        isUpscaled = f.optBoolean("is_upscaled"),
+                        vcodec = vcodec.takeIf { it != "none" }.orEmpty(),
+                        acodec = acodec.takeIf { it != "none" && it != "unknown" }.orEmpty(),
+                        note = vcodec.takeIf { it.isNotBlank() && it != "none" }
+                            ?.substringBefore('.')
+                            ?.uppercase()
+                            .orEmpty()
                     )
                 }
             }
@@ -1412,26 +1527,9 @@ object DownloadEngine {
         // Twitter GIF 严格特征判定：仅当流来自 tweet_video 专用动图路径且无常规视频流与音频轨时，才标记为动图
         val isGifDetected = (site == "X (Twitter)" && hasTwitterTweetVideo && !hasTwitterRegularVideo && audioFormatsList.isEmpty())
 
-        val sortedVideoFormats = if (videoFormatsMap.isNotEmpty()) {
-            val sorted = videoFormatsMap.values.sortedByDescending { it.height }
-            if (isGifDetected) {
-                listOf(
-                    FormatOption(
-                        formatId = "gif",
-                        resolutionLabel = "GIF 动图 (原画循环)",
-                        ext = "gif",
-                        note = "直接导出为免播放器循环动图"
-                    )
-                ) + sorted
-            } else {
-                sorted
-            }
-        } else {
-            val baseList = listOf(
-                FormatOption(formatId = "best", resolutionLabel = "最佳画质 (自动)", ext = "mp4"),
-                FormatOption(formatId = "1080", resolutionLabel = "1080p 全高清", height = 1080, ext = "mp4"),
-                FormatOption(formatId = "720", resolutionLabel = "720p 高清", height = 720, ext = "mp4"),
-                FormatOption(formatId = "480", resolutionLabel = "480p 标清", height = 480, ext = "mp4")
+        val sortedVideoFormats = if (videoFormatsById.isNotEmpty()) {
+            val sorted = videoFormatsById.values.sortedWith(
+                compareByDescending<FormatOption> { it.width.toLong() * it.height }.thenByDescending { it.fps }
             )
             if (isGifDetected) {
                 listOf(
@@ -1439,12 +1537,15 @@ object DownloadEngine {
                         formatId = "gif",
                         resolutionLabel = "GIF 动图 (原画循环)",
                         ext = "gif",
-                        note = "直接导出为免播放器循环动图"
+                        note = "直接导出为免播放器循环动图",
+                        isSynthetic = true
                     )
-                ) + baseList
+                ) + sorted
             } else {
-                baseList
+                sorted
             }
+        } else {
+            error("[MEDIA_UNCONFIRMED] 本次未取得可验证的视频流，请重试或验证会话")
         }
 
         return VideoMetadata(
@@ -1455,27 +1556,45 @@ object DownloadEngine {
             thumbnailUrl = thumbnail,
             siteName = site,
             isGif = isGifDetected,
+            mediaId = json.optString("id"),
+            expectedDurationMs = duration.toLong() * 1000,
             availableVideoFormats = sortedVideoFormats,
-            availableAudioFormats = audioFormatsList
+            availableAudioFormats = audioFormatsList,
+            qualityWarning = json.optString("quality_warning")
         )
     }
 
+    /**
+     * 统一错误描述：先按稳定错误码分类，再对原始文本脱敏。
+     * 日志与 UI 都拿到 [CODE] 前缀，便于判断下一步动作。
+     */
     private fun formatDetailedError(e: Throwable): String {
         val root = getRootCause(e)
-        val msg = root.message ?: e.message ?: "未知异常"
-        return when {
-            msg.contains("instance not initialized", ignoreCase = true) ->
-                "核心引擎尚未初始化完成，请稍候重试"
-            msg.contains("Permission denied", ignoreCase = true) ->
-                "系统拦截了运行权限，请检查手机是否开启了安全隔离模式"
-            msg.contains("Unable to extract", ignoreCase = true) ->
-                "解析受限: 视频需要登录/大会员或平台更新了规则 ($msg)"
-            msg.contains("I/O operation on closed file", ignoreCase = true) || msg.contains("closed file", ignoreCase = true) ->
-                "下载写入异常 (I/O closed)，建议检查手机可用存储空间或尝试更换清晰度"
-            msg.contains("timed out", ignoreCase = true) || msg.contains("Connection refused", ignoreCase = true) || msg.contains("Failed to connect", ignoreCase = true) ->
-                "网络连接超时: 解析海外视频 (YouTube/X) 请在设置中开启或配置代理端口"
-            else -> msg
+        val raw = root.message ?: e.message ?: "未知异常"
+        val safe = LogSanitizer.sanitize(raw)
+        return MediaErrors.describe(MediaErrors.classify(safe), safe)
+    }
+
+    private fun planForTask(task: DownloadTask): YtDlpOptionsFactory.DownloadFormatPlan {
+        val quality = task.qualitySelection
+        val maxHeight = quality.maxHeight.takeIf { it > 0 }
+            ?: extractHeightFromResolution(task.selectedResolution)
+        // 直链任务的 format ID 来自另一套提取器，不能直接套用
+        val exactFormatId = if (UrlSniffer.isDirectMediaUrl(task.url) || task.url.contains("twimg.com")) {
+            ""
+        } else {
+            task.selectedVideoFormatId
         }
+        return YtDlpOptionsFactory.DownloadFormatPlan(
+            downloadType = task.downloadType,
+            selectedFormatId = exactFormatId,
+            selectedFormatIsMuxed = task.selectedVideoIsMuxed && exactFormatId.isNotBlank(),
+            maxHeight = maxHeight,
+            resolutionLabel = task.selectedResolution,
+            audioFormatExt = task.audioFormat.ext,
+            allowLowerQuality = quality.allowLowerQuality,
+            container = quality.container
+        )
     }
 
     private fun getRootCause(throwable: Throwable): Throwable {
@@ -1492,6 +1611,9 @@ object DownloadEngine {
             lower.contains("auto") || lower.contains("best") || lower.contains("默认")) {
             return 0
         }
+        if (lower.contains("8k") || lower.contains("4320")) return 4320
+        if (lower.contains("6k") || lower.contains("3240")) return 3240
+        if (lower.contains("5k") || lower.contains("2880")) return 2880
         if (lower.contains("4k") || lower.contains("2160")) return 2160
         if (lower.contains("2k") || lower.contains("1440")) return 1440
         val regex = Regex("(\\d{3,4})")

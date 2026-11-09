@@ -1,0 +1,13 @@
+allprojects { p ->
+    p.afterEvaluate {
+        if (p.path == ':app') {
+            p.tasks.register('writeOmniTestClasspath') {
+                dependsOn 'compileDebugUnitTestKotlin'
+                doLast {
+                    def testTask = p.tasks.named('testDebugUnitTest').get()
+                    new File(p.buildDir, 'junit-classpath.txt').setText(testTask.classpath.asPath, 'UTF-8')
+                }
+            }
+        }
+    }
+}

@@ -9,16 +9,30 @@ import com.omni.downloader.data.model.AudioFormat
 import com.omni.downloader.data.model.DownloadTask
 import com.omni.downloader.data.model.DownloadType
 import com.omni.downloader.data.model.FormatOption
+import com.omni.downloader.data.model.QualityMode
+import com.omni.downloader.data.model.QualitySelection
 import com.omni.downloader.data.model.RelaySite
 import com.omni.downloader.data.model.TaskStatus
 import com.omni.downloader.data.model.VideoMetadata
+import com.omni.downloader.data.repository.SessionPlatforms
+import com.omni.downloader.data.repository.SessionRepository
+import com.omni.downloader.data.repository.SessionStatus
 import com.omni.downloader.data.repository.SettingsRepository
 import com.omni.downloader.data.repository.TaskRepository
 import com.omni.downloader.engine.DownloadEngine
+import com.omni.downloader.engine.MediaErrorCode
+import com.omni.downloader.engine.MediaAnalysisRouter
+import com.omni.downloader.engine.MediaNavigationRequest
+import com.omni.downloader.engine.MediaPage
+import com.omni.downloader.engine.ParsedContent
 import com.omni.downloader.engine.DomesticMediaSource
 import com.omni.downloader.engine.UrlSniffer
 import com.omni.downloader.service.DownloadService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,10 +43,14 @@ import com.omni.downloader.ui.model.buildTaskListState
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import com.omni.downloader.ui.model.hasSourceQualityChoices
 import java.io.File
 import java.util.UUID
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+    private val _analysisStage = MutableStateFlow("")
+    val analysisStage: StateFlow<String> = _analysisStage.asStateFlow()
 
     private val repository = TaskRepository.getInstance(application)
     private val settingsRepository = SettingsRepository.getInstance(application)
@@ -55,6 +73,207 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val proxyUrl: StateFlow<String> = settingsRepository.proxyUrl
+    val requestedSessionPlatform = MutableStateFlow<String?>(null)
+    val imageInput = MutableStateFlow("")
+    val imagePost = MutableStateFlow<com.omni.downloader.data.model.ImagePost?>(null)
+    val imageBusy = MutableStateFlow(false)
+    val imageError = MutableStateFlow("")
+    val imageBrowserUrl = MutableStateFlow("")
+    private var analysisJob: Job? = null
+    private var analysisGeneration = 0L
+    private var analysisProcessId: String? = null
+    private var activeAnalysisInput = ""
+    private var activeAnalysisOrigin = MediaPage.VIDEO
+    private val _mediaNavigation = MutableStateFlow<MediaNavigationRequest?>(null)
+    val mediaNavigation = _mediaNavigation.asStateFlow()
+
+    fun consumeMediaNavigation(request: MediaNavigationRequest): Boolean {
+        if (_mediaNavigation.value != request || request.generation != analysisGeneration) return false
+        _mediaNavigation.value = null
+        return true
+    }
+
+    fun updateImageInput(value: String) {
+        if (imageInput.value != value) {
+            cancelMediaAnalysis()
+            imagePost.value = null; imageError.value = ""; imageBrowserUrl.value = ""
+        }
+        imageInput.value = value
+    }
+
+    fun pasteImageLink(context: Context) {
+        try {
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+            val text = clipboard?.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty()
+            val url = UrlSniffer.extractUrl(text)
+            if (url.isNullOrBlank()) _message.value = "剪贴板中未发现有效链接"
+            else updateImageInput(url)
+        } catch (_: Exception) { _message.value = "无法读取剪贴板" }
+    }
+
+    fun analyzeImages() = startRoutedAnalysis(imageInput.value, MediaPage.IMAGES)
+
+    private fun cancelMediaAnalysis() {
+        analysisGeneration++
+        _analysisStage.value = ""
+        analysisJob?.cancel()
+        analysisJob = null
+        analysisProcessId?.let(DownloadEngine::cancelMetadata)
+        analysisProcessId = null
+        _isAnalyzing.value = false
+        imageBusy.value = false
+        _mediaNavigation.value = null
+    }
+
+    private fun startRoutedAnalysis(input: String, origin: MediaPage, autoDownload: Boolean = false, context: Context? = null) {
+        val target = (UrlSniffer.extractUrl(input) ?: input).trim()
+        if (target.isBlank()) { _message.value = "请输入或粘贴作品链接"; return }
+        if (analysisJob?.isActive == true && activeAnalysisInput == target && activeAnalysisOrigin == origin) return
+        cancelMediaAnalysis()
+        val generation = analysisGeneration
+        val processId = "metadata-${UUID.randomUUID()}"
+        analysisProcessId = processId
+        activeAnalysisInput = target
+        activeAnalysisOrigin = origin
+        var destination = origin
+        var resolvedUrl = target
+        _metadata.value = null; imagePost.value = null
+        _showFormatSheet.value = false; _errorDialogDetail.value = null
+        imageError.value = ""; imageBrowserUrl.value = ""
+        fun showDestination(page: MediaPage) {
+            if (generation != analysisGeneration) return
+            _isAnalyzing.value = page == MediaPage.VIDEO
+            imageBusy.value = page == MediaPage.IMAGES
+            if (page == MediaPage.VIDEO) _inputUrl.value = resolvedUrl else imageInput.value = resolvedUrl
+            if (page != destination) _mediaNavigation.value = MediaNavigationRequest(generation, page)
+            destination = page
+        }
+        showDestination(origin)
+        analysisJob = viewModelScope.launch {
+            try {
+                resolvedUrl = UrlSniffer.sanitizeAndResolveUrl(target)
+                currentCoroutineContext().ensureActive()
+                // Browser assistance must receive the resolved target even when
+                // metadata parsing fails (short shares do not contain an ID).
+                showDestination(destination)
+                val site = com.omni.downloader.engine.LinkNormalizer.platformOf(resolvedUrl)
+                val proxy = proxyUrl.value
+                val douyinScope = if (site == com.omni.downloader.engine.LinkNormalizer.PLATFORM_DOUYIN)
+                    com.omni.downloader.engine.DouyinAutoResolver.scope(getApplication(), proxy) else null
+                if (site == com.omni.downloader.engine.LinkNormalizer.PLATFORM_DOUYIN) imageBrowserUrl.value = resolvedUrl
+                val router = MediaAnalysisRouter(
+                    video = { url: String -> DownloadEngine.fetchVideoMetadata(getApplication(), url, proxy, processId,
+                        onPhase = { if (generation == analysisGeneration) _analysisStage.value = it }).getOrThrow() },
+                    images = { url: String ->
+                        val imageUrl = MediaAnalysisRouter.imageInput(target, url)
+                        val json = com.omni.downloader.engine.SharedPython.run(getApplication(), "images", imageUrl, site, proxy, taskId = processId)
+                        val post = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+                            .decodeFromString<com.omni.downloader.data.model.ImagePost>(json.toString())
+                        check(post.resources.isNotEmpty()) { "[NO_MEDIA] 该作品没有可确认的图片资源" }
+                        currentCoroutineContext().ensureActive()
+                        com.omni.downloader.engine.ImagePostSnapshots.put(getApplication(), json)
+                        post
+                    }
+                )
+                val content = router.analyze(resolvedUrl, origin, ::showDestination)
+                currentCoroutineContext().ensureActive()
+                if (douyinScope != null && douyinScope != com.omni.downloader.engine.DouyinAutoResolver.scope(getApplication(), proxy))
+                    throw CancellationException("解析会话已改变")
+                if (generation != analysisGeneration) return@launch
+                when (content) {
+                    is ParsedContent.Video -> {
+                        showDestination(MediaPage.VIDEO)
+                        applyVideoMetadata(content.metadata, target, autoDownload && origin == MediaPage.VIDEO, context)
+                    }
+                    is ParsedContent.Images -> { showDestination(MediaPage.IMAGES); imagePost.value = content.post }
+                }
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) {
+                if (generation != analysisGeneration) return@launch
+                val detail = com.omni.downloader.engine.LogSanitizer.sanitize(error.message.orEmpty())
+                if (destination == MediaPage.IMAGES) imageError.value = detail
+                else { _errorDialogDetail.value = detail; _message.value = "解析失败，点击弹窗查看详情" }
+                if (com.omni.downloader.engine.MediaErrors.codeOf(error) in setOf(MediaErrorCode.AUTH_REQUIRED, MediaErrorCode.CHALLENGE_REQUIRED)) {
+                    val platform = UrlSniffer.identifySite(resolvedUrl)
+                    if (platform in SessionPlatforms.all) SessionRepository.getInstance(getApplication()).markStatus(platform, SessionStatus.NEEDS_AUTH)
+                }
+            } finally {
+                if (generation == analysisGeneration) {
+                    _isAnalyzing.value = false; imageBusy.value = false; analysisProcessId = null; _analysisStage.value = ""
+                }
+            }
+        }
+    }
+
+    override fun onCleared() { cancelMediaAnalysis(); super.onCleared() }
+    fun acceptBrowserVideo(item: String, url: String) {
+        com.omni.downloader.engine.DouyinAutoResolver.invalidate(url)
+        cancelMediaAnalysis()
+        val generation = analysisGeneration
+        _inputUrl.value = url
+        _metadata.value = null; _showFormatSheet.value = false; _errorDialogDetail.value = null
+        _isAnalyzing.value = true
+        analysisJob = viewModelScope.launch {
+            try {
+                val parsed = withContext(Dispatchers.Default) {
+                    com.omni.downloader.engine.DouyinVideoParser.parseItem(item, url)
+                }
+                val metadata = withContext(Dispatchers.IO) {
+                    com.omni.downloader.engine.DomesticDirectExtractor.confirmDouyinMetadata(parsed, verifyHighest = true, budgetMillis = 12_000)
+                }
+                currentCoroutineContext().ensureActive()
+                if (generation == analysisGeneration) applyVideoMetadata(metadata, url, false, null)
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) {
+                if (generation == analysisGeneration) _errorDialogDetail.value = com.omni.downloader.engine.LogSanitizer.sanitize(error.message.orEmpty())
+            } finally { if (generation == analysisGeneration) _isAnalyzing.value = false }
+        }
+    }
+
+    fun acceptBrowserImages(item: String, url: String) {
+        if (imageBusy.value) return
+        cancelMediaAnalysis()
+        val generation = analysisGeneration
+        val processId = "metadata-${UUID.randomUUID()}"
+        analysisProcessId = processId
+        imageBusy.value = true
+        analysisJob = viewModelScope.launch {
+            var file: File? = null
+            try {
+                file = File.createTempFile("browser-image-item-", ".json", getApplication<android.app.Application>().cacheDir)
+                file.writeText(item)
+                val json = com.omni.downloader.engine.SharedPython.run(getApplication(), "images-state", url, "抖音", proxyUrl.value,
+                    taskId = processId, extra = listOf("--state-file", file.path))
+                currentCoroutineContext().ensureActive()
+                if (generation != analysisGeneration) return@launch
+                com.omni.downloader.engine.ImagePostSnapshots.put(getApplication(), json)
+                imagePost.value = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }.decodeFromString<com.omni.downloader.data.model.ImagePost>(json.toString())
+                imageError.value = ""
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (e: Exception) { if (generation == analysisGeneration) imageError.value = com.omni.downloader.engine.LogSanitizer.sanitize(e.message.orEmpty()) }
+            finally {
+                file?.delete()
+                if (generation == analysisGeneration) { imageBusy.value = false; analysisProcessId = null }
+            }
+        }
+    }
+    fun downloadImages(ids: Set<String>, archive: Boolean) {
+        val post = imagePost.value ?: return
+        val selected = post.resources.filter { it.id in ids }
+        if (selected.isEmpty()) return
+        val group = UUID.randomUUID().toString()
+        val batches = if (archive) listOf(selected.map { it.id }) else selected.map { listOf(it.id) }
+        val jobs = batches.mapIndexed { index, batch -> DownloadTask(
+            id = UUID.randomUUID().toString(), url = post.url, title = "${post.title.take(70)} (${if (archive) "原图归档" else "${index + 1}/${selected.size}"})",
+            author = post.author, thumbnailUrl = selected.firstOrNull { it.id == batch.first() }?.url.orEmpty(),
+            downloadType = if (archive) DownloadType.IMAGE_ZIP else DownloadType.IMAGE,
+            imagePlatform = post.platform, selectedImageIds = batch, mediaId = post.contentId, schemaVersion = 4,
+            collectionId = if (batches.size > 1) group else null, collectionTitle = post.title,
+            episodeIndex = index + 1, episodeTotal = batches.size
+        ) }
+        repository.addTasks(jobs)
+        jobs.forEach { DownloadService.startDownload(getApplication(), it.id) }
+    }
     val downloadPath: StateFlow<String> = settingsRepository.downloadPath
     val appLanguage: StateFlow<String> = settingsRepository.appLanguage
     val themeMode: StateFlow<String> = settingsRepository.themeMode
@@ -114,6 +333,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedDownloadType = MutableStateFlow(DownloadType.VIDEO_WITH_AUDIO)
     val selectedDownloadType: StateFlow<DownloadType> = _selectedDownloadType.asStateFlow()
 
+    private val _qualityPolicy = MutableStateFlow<QualitySelection?>(QualitySelection())
+    val qualityPolicy = _qualityPolicy.asStateFlow()
+    fun selectQualityPolicy(policy: QualitySelection?) {
+        _qualityPolicy.value = policy
+        val meta = _metadata.value ?: return
+        val active = meta.multiMediaList.getOrElse(_selectedMultiMediaIndex.value) { meta }
+        if (policy != null && active.hasSourceQualityChoices()) {
+            runCatching { com.omni.downloader.engine.QualitySelector.select(active.availableVideoFormats, policy) }
+                .onSuccess { _selectedVideoFormat.value = it }.onFailure { _message.value = it.message }
+        }
+    }
+
     private val _selectedVideoFormat = MutableStateFlow<FormatOption?>(null)
     val selectedVideoFormat: StateFlow<FormatOption?> = _selectedVideoFormat.asStateFlow()
 
@@ -127,6 +358,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val message: StateFlow<String?> = _message.asStateFlow()
 
     fun updateInputUrl(url: String) {
+        if (_inputUrl.value != url) {
+            cancelMediaAnalysis()
+            _metadata.value = null; _showFormatSheet.value = false; _errorDialogDetail.value = null
+        }
         _inputUrl.value = url
     }
 
@@ -172,6 +407,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun selectVideoFormat(format: FormatOption) {
+        _qualityPolicy.value = null
         _selectedVideoFormat.value = format
     }
 
@@ -186,7 +422,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val text = item?.text?.toString() ?: ""
             val extracted = UrlSniffer.extractUrl(text)
             if (!extracted.isNullOrEmpty()) {
-                _inputUrl.value = extracted
+                updateInputUrl(extracted)
                 if (autoDownload) {
                     _message.value = "已读取剪贴板，正在解析..."
                     startAnalyze(rawUrl = extracted, autoDownload = true, context = context)
@@ -224,13 +460,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        viewModelScope.launch {
-            _isAnalyzing.value = true
-            val proxy = settingsRepository.proxyUrl.value
-            val result = DownloadEngine.fetchVideoMetadata(getApplication(), extracted, proxy)
-            _isAnalyzing.value = false
+        startRoutedAnalysis(extracted, MediaPage.VIDEO, autoDownload, context)
+    }
 
-            result.onSuccess { data ->
+    private fun applyVideoMetadata(data: VideoMetadata, extracted: String, autoDownload: Boolean, context: Context?) {
                 _metadata.value = data
                 _selectedMultiMediaIndex.value = com.omni.downloader.engine.MediaSelection.initialIndex(
                     extracted, data.url, data.multiMediaList.map { it.url }
@@ -239,7 +472,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _selectedVideoFormat.value = activeMeta.availableVideoFormats.firstOrNull()
                 // 默认下载类型始终锁定为原画视频 (VIDEO_WITH_AUDIO)，
                 // 彻底杜绝普通视频或短动效在粘贴自动下载时被私自执行 GIF 转码
-                _selectedDownloadType.value = DownloadType.VIDEO_WITH_AUDIO
+                _selectedDownloadType.value = if (activeMeta.isGif) DownloadType.VIDEO_ONLY else DownloadType.VIDEO_WITH_AUDIO
                 _selectedAudioFormat.value = AudioFormat.MP3
 
                 if (autoDownload && context != null) {
@@ -253,12 +486,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 } else {
                     _showFormatSheet.value = true
                 }
-            }.onFailure { err ->
-                val detail = err.message ?: "未知异常"
-                _errorDialogDetail.value = detail
-                _message.value = "解析失败，点击弹窗查看详情"
-            }
-        }
     }
 
     /**
@@ -271,7 +498,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         } else meta
 
         val type = _selectedDownloadType.value
-        val format = _selectedVideoFormat.value
+        val format = if (_qualityPolicy.value != null && currentMeta.hasSourceQualityChoices()) {
+            runCatching { com.omni.downloader.engine.QualitySelector.select(currentMeta.availableVideoFormats, _qualityPolicy.value!!) }
+                .getOrElse { _message.value = it.message; return }
+        } else _selectedVideoFormat.value
         val audioFormat = _selectedAudioFormat.value
         val resolutionLabel = when (type) {
             DownloadType.COVER -> "原图封面"
@@ -289,8 +519,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             downloadType = type,
             selectedResolution = resolutionLabel,
             audioFormat = audioFormat,
-            directMediaUrl = DomesticMediaSource.url(currentMeta, format),
-            directMediaHeaders = DomesticMediaSource.headers(currentMeta.siteName)
+            schemaVersion = 3,
+            qualitySelection = qualityFor(type, format, audioFormat),
+            selectedVideoFormatId = exactFormatId(format),
+            selectedVideoIsMuxed = format?.let { !it.isVideoOnly && !it.isAudioOnly } ?: false,
+            mediaId = currentMeta.mediaId,
+            expectedDurationMs = format?.sourceDurationMs?.takeIf { it > 0 } ?: currentMeta.expectedDurationMs,
+            selectedWidth = format?.width ?: 0,
+            selectedHeight = format?.height ?: 0,
+            requireAudio = (format?.acodec?.let { it.isNotBlank() && it != "none" } ?: false) || currentMeta.availableAudioFormats.isNotEmpty(),
+            directMediaUrl = if (currentMeta.siteName == "X (Twitter)" && format?.isVideoOnly == false) format.sourceUrl else DomesticMediaSource.url(currentMeta, format),
+            directMediaHeaders = DomesticMediaSource.headers(currentMeta.siteName) + format?.sourceHeaders.orEmpty()
         )
 
         repository.addTask(task)
@@ -305,6 +544,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 thumbnailUrl = currentMeta.thumbnailUrl,
                 downloadType = DownloadType.COVER,
                 selectedResolution = "原图封面",
+                schemaVersion = 3,
                 audioFormat = AudioFormat.MP3
             )
             repository.addTask(coverTask)
@@ -341,11 +581,48 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             thumbnailUrl = thumbnailUrl,
             downloadType = DownloadType.VIDEO_WITH_AUDIO,
             selectedResolution = "中转直链",
+            schemaVersion = 3,
             audioFormat = AudioFormat.MP3
         )
         repository.addTask(task)
         DownloadService.startDownload(context, task.id)
         _message.value = "已从备用站捕获并加入下载队列: $safeTitle"
+    }
+
+    /** 把 UI 上选中的格式转换为持久化的质量意图。 */
+    private fun qualityFor(
+        type: DownloadType,
+        format: FormatOption?,
+        audioFormat: AudioFormat
+    ): QualitySelection {
+        if (type != DownloadType.AUDIO_ONLY && type != DownloadType.COVER) _qualityPolicy.value?.let { return it }
+        val height = format?.let { if (it.width > 0 && it.height > 0) minOf(it.width, it.height) else it.height }?.takeIf { it > 0 } ?: 0
+        return when {
+            type == DownloadType.AUDIO_ONLY -> QualitySelection(
+                mode = QualityMode.BEST_AVAILABLE,
+                container = audioFormat.ext
+            )
+            type == DownloadType.COVER || format == null -> QualitySelection()
+            format.isSynthetic ||
+                format.formatId.lowercase() in setOf("best", "gif") -> QualitySelection(
+                mode = if (height > 0) QualityMode.MAX_HEIGHT else QualityMode.BEST_AVAILABLE,
+                maxHeight = height
+            )
+            else -> QualitySelection(
+                mode = QualityMode.EXACT_FORMAT,
+                maxHeight = height,
+                allowLowerQuality = false
+            )
+        }
+    }
+
+    /** 只有 yt-dlp 真实格式 ID 才能用于 -f；UI 兜底项与 B 站自定义 ID 一律忽略。 */
+    private fun exactFormatId(format: FormatOption?): String {
+        if (format == null || format.isSynthetic) return ""
+        val id = format.formatId.trim()
+        if (id.isBlank()) return ""
+        if (id.lowercase() in setOf("best", "gif", "1080", "720", "480", "360")) return ""
+        return id
     }
 
     /**
@@ -370,6 +647,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             thumbnailUrl = currentMeta.thumbnailUrl,
             downloadType = DownloadType.COVER,
             selectedResolution = "原图封面",
+            schemaVersion = 3,
             audioFormat = AudioFormat.MP3
         )
 
@@ -430,6 +708,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 type
             }
 
+            // 每个分集独立校验格式：根列表的 format ID 不一定存在于该分集中
+            val policy = _qualityPolicy.value ?: QualitySelection(mode = QualityMode.MAX_HEIGHT,
+                maxHeight = format?.let { minOf(it.width, it.height) } ?: 0)
+            val subFormat = if (sub.hasSourceQualityChoices()) {
+                runCatching { com.omni.downloader.engine.QualitySelector.select(sub.availableVideoFormats, policy) }.getOrNull()
+            } else sub.availableVideoFormats.firstOrNull()
             val task = DownloadTask(
                 id = UUID.randomUUID().toString().replace("-", "").take(12),
                 url = sub.url,
@@ -439,11 +723,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 downloadType = finalType,
                 selectedResolution = resolutionLabel,
                 audioFormat = audioFormat,
+                schemaVersion = 3,
+                qualitySelection = policy,
+                selectedVideoFormatId = if (sub.siteName == "哔哩哔哩") "" else exactFormatId(subFormat),
+                mediaId = sub.mediaId, expectedDurationMs = subFormat?.sourceDurationMs?.takeIf { it > 0 } ?: sub.expectedDurationMs,
+                selectedWidth = if (sub.siteName == "哔哩哔哩") 0 else subFormat?.width ?: 0,
+                selectedHeight = if (sub.siteName == "哔哩哔哩") 0 else subFormat?.height ?: 0,
+                requireAudio = sub.availableAudioFormats.isNotEmpty(),
+                selectedVideoIsMuxed = subFormat?.let { !it.isVideoOnly && !it.isAudioOnly } ?: false,
                 collectionId = collectionId,
                 collectionTitle = if (isCollection) collectionTitle else null,
                 episodeIndex = if (isCollection) index + 1 else 0,
                 episodeTotal = if (isCollection) totalEpisodes else 0,
-                directMediaUrl = DomesticMediaSource.url(sub, format),
+                directMediaUrl = if (sub.siteName == "X (Twitter)" && subFormat?.isVideoOnly == false) subFormat.sourceUrl else DomesticMediaSource.url(sub, subFormat),
                 directMediaHeaders = DomesticMediaSource.headers(sub.siteName)
             )
             tasksToAdd.add(task)
@@ -484,6 +776,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         startDownloadSelectedMultiMedia(context, meta.multiMediaList.indices.toSet())
     }
 
+    fun retryTask(context: Context, taskId: String) {
+        val task = repository.getTask(taskId) ?: return
+        if (task.status !in setOf(TaskStatus.FAILED, TaskStatus.CANCELLED, TaskStatus.WAITING_FOR_AUTH)) return
+        repository.updateTaskProgress(taskId, 0f, "", "", TaskStatus.PENDING)
+        DownloadService.startDownload(context, taskId)
+    }
+
     fun cancelTask(context: Context, taskId: String) {
         DownloadService.cancelDownload(context, taskId)
         _message.value = "任务已取消"
@@ -520,7 +819,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun retryCollection(context: Context, collectionId: String) {
         val allTasks = repository.tasks.value.filter { it.collectionId == collectionId }
-        val toRetry = allTasks.filter { it.status == TaskStatus.FAILED || it.status == TaskStatus.CANCELLED }
+        val toRetry = allTasks.filter { it.status == TaskStatus.FAILED || it.status == TaskStatus.WAITING_FOR_AUTH || it.status == TaskStatus.CANCELLED }
         toRetry.forEach { task ->
             repository.updateTaskProgress(task.id, 0f, "", "", TaskStatus.PENDING)
             DownloadService.startDownload(context, task.id)
@@ -569,8 +868,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             unfinished.forEach { task ->
                 if (task.localFilePath.isNotBlank()) {
                     try {
-                        val f = File(task.localFilePath)
-                        if (f.exists()) f.delete()
+                        if (task.localFilePath.startsWith("content://")) getApplication<android.app.Application>().contentResolver.delete(android.net.Uri.parse(task.localFilePath), null, null) else { val f = File(task.localFilePath); if (f.exists()) f.delete() }
                     } catch (ignored: Exception) {}
                 }
             }

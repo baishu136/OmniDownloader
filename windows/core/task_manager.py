@@ -8,6 +8,7 @@ import sys
 import re
 import json
 import uuid
+import time
 import asyncio
 import traceback
 import subprocess
@@ -17,13 +18,14 @@ from collections import OrderedDict
 
 from core.models import DownloadTask, TaskStatus, DownloadType, AudioFormat
 from core.config import config
+from core.session_store import protect
 from engine.url_sniffer import UrlSniffer
 from engine.bilibili_extractor import BilibiliDirectExtractor
 from engine.domestic_extractor import DomesticDirectExtractor
 from engine.tiktok_extractor import TikTokDirectExtractor
 from engine.ytdlp_engine import YtDlpEngine
 
-TASKS_STORAGE_FILE = Path(__file__).parent.parent / "tasks.json"
+TASKS_STORAGE_FILE = Path(os.environ["OMNI_STATE_DIR"]) / "tasks.json" if os.environ.get("OMNI_STATE_DIR") else (Path(os.environ.get("LOCALAPPDATA", Path.home())) / "OmniDownloader" / "tasks.json" if getattr(sys, "frozen", False) else Path(__file__).parent.parent / "tasks.json")
 
 
 class TaskManager:
@@ -47,8 +49,13 @@ class TaskManager:
         """恢复本地历史任务"""
         if TASKS_STORAGE_FILE.exists():
             try:
-                with open(TASKS_STORAGE_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
+                with open(TASKS_STORAGE_FILE, "rb") as f:
+                    raw = f.read()
+                    if raw.startswith(b'OMNI3:'): data = json.loads(protect(raw[6:], decrypt=True))
+                    else:
+                        data = json.loads(raw.decode('utf-8'))
+                        backup = TASKS_STORAGE_FILE.with_suffix('.pre-v3.bin')
+                        if not backup.exists(): backup.write_bytes(b'OMNI3:' + protect(raw))
                     for item in data:
                         task = DownloadTask(**item)
                         # 如果退出前任务是下载中或等待中，重启后重置为失败或取消
@@ -65,8 +72,10 @@ class TaskManager:
             # 最多保存最近 100 条任务
             recent = list(self.tasks.values())[-100:]
             data = [t.model_dump(by_alias=True) for t in recent]
-            with open(TASKS_STORAGE_FILE, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
+            TASKS_STORAGE_FILE.parent.mkdir(parents=True, exist_ok=True)
+            temporary = TASKS_STORAGE_FILE.with_suffix(".tmp")
+            temporary.write_bytes(b"OMNI3:" + protect(json.dumps(data, ensure_ascii=False).encode("utf-8")))
+            temporary.replace(TASKS_STORAGE_FILE)
         except Exception as e:
             print(f"[TaskManager] 保存任务记录失败: {e}")
 
@@ -123,7 +132,9 @@ class TaskManager:
         collection_id: Optional[str] = None,
         collection_title: Optional[str] = None,
         episode_index: int = 0,
-        episode_total: int = 0
+        episode_total: int = 0,
+        quality_selection=None, selected_video_format_id: str = "", media_id: str = "",
+        image_platform: str = "", selected_image_ids=None
     ) -> DownloadTask:
         """创建并投递新任务"""
         task_id = str(uuid.uuid4())[:8]
@@ -138,7 +149,9 @@ class TaskManager:
             author=author,
             thumbnailUrl=thumbnail_url,
             downloadType=download_type,
+            imagePlatform=image_platform, selectedImageIds=selected_image_ids or [],
             selectedResolution=selected_resolution,
+            qualitySelection=quality_selection, selectedVideoFormatId=selected_video_format_id, mediaId=media_id,
             audioFormat=audio_format,
             status=TaskStatus.PENDING,
             collectionId=collection_id,
@@ -155,6 +168,17 @@ class TaskManager:
         # 启动异步下载后台协程
         asyncio.create_task(self._process_task(task_id))
         return task
+
+    async def retry_task(self, task_id):
+        task = self.tasks.get(task_id)
+        if not task or task.status not in (TaskStatus.FAILED, TaskStatus.CANCELLED, TaskStatus.WAITING_FOR_AUTH): return False
+        task.status = TaskStatus.PENDING
+        task.error_message = ''; task.error_code = ''; task.progress = 0
+        self.cancel_events[task_id] = asyncio.Event()
+        self._save_persisted_tasks()
+        await self.broadcast_task_update(task)
+        asyncio.create_task(self._process_task(task_id))
+        return True
 
     async def cancel_task(self, task_id: str):
         """取消指定任务"""
@@ -250,25 +274,46 @@ class TaskManager:
             await self.broadcast_task_update(task)
 
             loop = asyncio.get_running_loop()
+            last_broadcast_time = [0.0]
+            last_status = [None]
+            last_prog = [-1.0]
 
             def on_progress(prog: float, speed: str, eta: str, status: TaskStatus):
+                if cancel_ev.is_set() or task.status == TaskStatus.CANCELLED: return
                 task.progress = prog
                 task.speed_text = speed
                 task.eta_text = eta
                 task.status = status
 
-                def _safe_broadcast():
-                    asyncio.create_task(self.broadcast_task_update(task))
+                now = time.monotonic()
+                is_status_changed = status != last_status[0]
+                is_prog_effective = abs(prog - last_prog[0]) >= 0.5 or prog >= 100.0
 
-                try:
-                    loop.call_soon_threadsafe(_safe_broadcast)
-                except Exception:
-                    pass
+                if is_status_changed or (now - last_broadcast_time[0] >= 0.25 and is_prog_effective):
+                    last_broadcast_time[0] = now
+                    last_status[0] = status
+                    last_prog[0] = prog
 
+                    def _safe_broadcast():
+                        asyncio.create_task(self.broadcast_task_update(task))
+
+                    try:
+                        loop.call_soon_threadsafe(_safe_broadcast)
+                    except Exception:
+                        pass
+
+            from engine.ffmpeg_helper import cancel_context
+            cancel_token = cancel_context.set(cancel_ev)
             try:
                 site = UrlSniffer.identify_site(task.url)
 
-                if site == "哔哩哔哩":
+                if task.download_type in (DownloadType.IMAGE, DownloadType.IMAGE_ZIP):
+                    from engine.images import ImageEngine
+                    final_path = await ImageEngine.download(task, on_progress, cancel_ev)
+                elif site in ("抖音", "小红书", "快手", "小黑盒", "Pixiv"):
+                    from engine.platforms import PlatformEngine
+                    final_path = await PlatformEngine.download(task, on_progress, cancel_ev)
+                elif site == "哔哩哔哩":
                     final_path = await BilibiliDirectExtractor.download(task, on_progress, cancel_ev)
                 elif DomesticDirectExtractor.is_supported(site) and (task.selected_resolution.startswith("http") or task.download_type in [DownloadType.AUDIO_ONLY, DownloadType.COVER, DownloadType.VIDEO_WITH_AUDIO]):
                     try:
@@ -285,6 +330,7 @@ class TaskManager:
                 else:
                     final_path = await YtDlpEngine.download(task, on_progress, cancel_ev)
 
+                if cancel_ev.is_set(): raise asyncio.CancelledError()
                 task.local_file_path = final_path
                 task.status = TaskStatus.COMPLETED
                 task.progress = 100.0
@@ -297,9 +343,17 @@ class TaskManager:
                 task.status = TaskStatus.CANCELLED
                 task.error_message = "下载已取消"
             except Exception as e:
+                if cancel_ev.is_set():
+                    task.status = TaskStatus.CANCELLED
+                    task.error_message = '下载已取消'
+                    task.error_code = 'CANCELLED'
+                    return
                 task.status = TaskStatus.FAILED
-                task.error_message = str(e)
-                err_msg = traceback.format_exc()
+                from engine.media_errors import sanitize, code
+                task.error_message = sanitize(e)
+                task.error_code = code(e)
+                if task.error_code in ("AUTH_REQUIRED", "CHALLENGE_REQUIRED"): task.status = TaskStatus.WAITING_FOR_AUTH
+                err_msg = __import__("engine.media_errors", fromlist=["sanitize"]).sanitize(traceback.format_exc())
                 print(f"[TaskManager] 任务 {task_id} 执行异常: {err_msg}")
                 try:
                     log_file = Path(config.download_dir) / "download_error.log"
@@ -308,6 +362,7 @@ class TaskManager:
                 except Exception:
                     pass
             finally:
+                cancel_context.reset(cancel_token)
                 self._save_persisted_tasks()
                 await self.broadcast_task_update(task)
 

@@ -12,12 +12,12 @@ public class MediaSaver {
     public func saveVideoToAlbum(fileUrl: URL) async throws {
         try await requestPhotoPermission()
         
-        let album = try await getOrCreateAlbum()
+        let album = PHPhotoLibrary.authorizationStatus(for:.readWrite) == .authorized ? try await getOrCreateAlbum():nil
         
         try await PHPhotoLibrary.shared().performChanges {
             let createAssetRequest = PHAssetCreationRequest.forAsset()
             createAssetRequest.addResource(with: .video, fileURL: fileUrl, options: nil)
-            guard let placeholder = createAssetRequest.placeholderForCreatedAsset,
+            guard let album=album,let placeholder = createAssetRequest.placeholderForCreatedAsset,
                   let albumChangeRequest = PHAssetCollectionChangeRequest(for: album) else { return }
             albumChangeRequest.addAssets([placeholder] as NSArray)
         }
@@ -26,12 +26,12 @@ public class MediaSaver {
     /// 保存图片到系统相册
     public func saveImageToAlbum(fileUrl: URL) async throws {
         try await requestPhotoPermission()
-        let album = try await getOrCreateAlbum()
+        let album = PHPhotoLibrary.authorizationStatus(for:.readWrite) == .authorized ? try await getOrCreateAlbum():nil
         
         try await PHPhotoLibrary.shared().performChanges {
             let createAssetRequest = PHAssetCreationRequest.forAsset()
             createAssetRequest.addResource(with: .photo, fileURL: fileUrl, options: nil)
-            guard let placeholder = createAssetRequest.placeholderForCreatedAsset,
+            guard let album=album,let placeholder = createAssetRequest.placeholderForCreatedAsset,
                   let albumChangeRequest = PHAssetCollectionChangeRequest(for: album) else { return }
             albumChangeRequest.addAssets([placeholder] as NSArray)
         }

@@ -31,6 +31,7 @@ import com.omni.downloader.ui.design.LocalTabActive
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material.icons.outlined.Check
@@ -38,8 +39,10 @@ import androidx.compose.material.icons.outlined.CleaningServices
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.SystemUpdateAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -57,11 +60,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,7 +74,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.flow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -79,8 +87,14 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.omni.downloader.data.model.RelaySite
+import com.omni.downloader.data.repository.SessionPlatforms
+import com.omni.downloader.data.repository.SessionRepository
+import com.omni.downloader.data.repository.SessionStatus
 import com.omni.downloader.engine.DownloadEngine
+import com.omni.downloader.engine.EngineDiagnostics
+import com.omni.downloader.engine.EngineDiagnosticsProbe
 import com.omni.downloader.ui.components.AddRelaySiteDialog
+import com.omni.downloader.ui.components.PlatformLoginSheet
 import com.omni.downloader.ui.components.RelaySiteCompatDialog
 import com.omni.downloader.ui.design.OmniCard
 import com.omni.downloader.ui.design.OmniDivider
@@ -108,6 +122,17 @@ fun SettingsScreen(
     val isUpdatingEngine by viewModel.isUpdatingEngine.collectAsStateWithLifecycle()
     val savedProxyUrl by viewModel.proxyUrl.collectAsStateWithLifecycle()
     var proxyInput by remember(savedProxyUrl) { mutableStateOf(savedProxyUrl) }
+    var proxyError by remember { mutableStateOf<String?>(null) }
+    var proxyResults by remember { mutableStateOf<List<com.omni.downloader.engine.ConnectivityResult>?>(null) }
+    var proxyTesting by remember { mutableStateOf(false) }
+    var proxyTestGeneration by remember { mutableStateOf(0L) }
+    var proxyTestJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    val proxyScope = rememberCoroutineScope()
+    fun invalidateProxyTest() {
+        proxyTestGeneration++
+        proxyTestJob?.cancel()
+        proxyTesting = false; proxyResults = null; proxyError = null
+    }
 
     val relaySites by viewModel.relaySites.collectAsStateWithLifecycle()
     val hasShownRelayCompatTip by viewModel.hasShownRelayCompatTip.collectAsStateWithLifecycle()
@@ -121,6 +146,52 @@ fun SettingsScreen(
 
     val savedDownloadPath by viewModel.downloadPath.collectAsStateWithLifecycle()
     var showPathDialog by remember { mutableStateOf(false) }
+
+    // ==================== 平台会话 ====================
+    val sessionRepository = remember { SessionRepository.getInstance(context) }
+    val sessionProfiles by sessionRepository.profiles.collectAsStateWithLifecycle()
+    val accountPlatforms = remember { SessionPlatforms.all.filterNot { it == "哔哩哔哩" } }
+    var selectedSessionPlatform by rememberSaveable { mutableStateOf(accountPlatforms.first()) }
+    var importSessionPlatform by rememberSaveable { mutableStateOf(SessionPlatforms.YOUTUBE) }
+    val sessionScope = rememberCoroutineScope()
+    var showPlatformLogin by remember { mutableStateOf(false) }
+    val requestedPlatform by viewModel.requestedSessionPlatform.collectAsStateWithLifecycle()
+    LaunchedEffect(requestedPlatform) {
+        requestedPlatform?.let { platform ->
+            selectedPage = SettingsPage.ACCOUNTS
+            if (platform == "哔哩哔哩") showBilibiliLoginSheet = true
+            else if (platform in accountPlatforms) selectedSessionPlatform = platform
+            viewModel.requestedSessionPlatform.value = null
+        }
+    }
+    LaunchedEffect(selectedSessionPlatform) {
+        if (selectedSessionPlatform !in accountPlatforms) selectedSessionPlatform = accountPlatforms.first()
+    }
+    val sessionPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val platform = importSessionPlatform
+            sessionScope.launch {
+                sessionRepository.importNetscapeFile(platform, uri)
+                    .onSuccess {
+                        Toast.makeText(context, strings.sessionImportSuccess, Toast.LENGTH_SHORT).show()
+                    }
+                    .onFailure {
+                        Toast.makeText(context, strings.sessionImportFailed, Toast.LENGTH_SHORT).show()
+                    }
+            }
+        }
+    }
+
+    var engineDiagnostics by remember { mutableStateOf<EngineDiagnostics?>(null) }
+    LaunchedEffect(tabActive, selectedPage) {
+        if (tabActive && selectedPage == SettingsPage.ENGINE) {
+            engineDiagnostics = withContext(Dispatchers.IO) {
+                EngineDiagnosticsProbe.probe(context)
+            }
+        }
+    }
 
     // 仅在组合期做字符串拼接，不在主线程执行 File.exists()/mkdirs() 等磁盘 I/O，
     // 这是之前切换到设置页时出现掉帧的主要原因之一。
@@ -136,16 +207,11 @@ fun SettingsScreen(
     ) { uri: Uri? ->
         if (uri != null) {
             try {
-                val docId = DocumentsContract.getTreeDocumentId(uri)
-                val resolvedPath = if (docId.startsWith("primary:")) {
-                    "${Environment.getExternalStorageDirectory().absolutePath}/${docId.substringAfter("primary:")}"
-                } else {
-                    uri.path ?: docId
-                }
-                if (resolvedPath.isNotBlank()) {
-                    viewModel.setDownloadPath(resolvedPath)
-                    Toast.makeText(context, "${strings.pathSaved}: $resolvedPath", Toast.LENGTH_SHORT).show()
-                }
+                context.contentResolver.takePersistableUriPermission(uri,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                viewModel.setDownloadPath(uri.toString())
+                Toast.makeText(context, "${strings.pathSaved}: $uri", Toast.LENGTH_SHORT).show()
+
             } catch (e: Exception) {
                 Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
@@ -304,6 +370,31 @@ fun SettingsScreen(
                         }
                     }
 
+                    item(key = "settings_engine_diagnostics") {
+                        OmniCard {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OmniIconBox(icon = Icons.Outlined.Info, size = 36, corner = 10)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = strings.engineDiagnosticsTitle,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Spacer(modifier = Modifier.height(1.dp))
+                                    Text(
+                                        text = engineDiagnostics?.summary
+                                            ?: strings.engineDiagnosticsUnavailable,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
 
                 }
 
@@ -316,8 +407,10 @@ fun SettingsScreen(
                         OmniCard {
                             OutlinedTextField(
                                 value = proxyInput,
-                                onValueChange = { proxyInput = it },
-                                modifier = Modifier.fillMaxWidth(),
+                                onValueChange = { invalidateProxyTest(); proxyInput = it },
+                                modifier = Modifier.fillMaxWidth().testTag("proxy_input"),
+                                isError = proxyError != null,
+                                supportingText = proxyError?.let { message -> { Text(message) } },
                                 placeholder = if (strings.proxyPlaceholder.isNotEmpty()) {
                                     { Text(strings.proxyPlaceholder, style = MaterialTheme.typography.bodyMedium) }
                                 } else null,
@@ -333,6 +426,7 @@ fun SettingsScreen(
                                 if (savedProxyUrl.isNotEmpty()) {
                                     OutlinedButton(
                                         onClick = {
+                                            invalidateProxyTest()
                                             proxyInput = ""
                                             viewModel.updateProxyUrl("")
                                             Toast.makeText(context, strings.proxyCleared, Toast.LENGTH_SHORT).show()
@@ -347,14 +441,47 @@ fun SettingsScreen(
                                 }
                                 Button(
                                     onClick = {
-                                        viewModel.updateProxyUrl(proxyInput)
-                                        Toast.makeText(context, strings.proxySaved, Toast.LENGTH_SHORT).show()
+                                        try {
+                                            viewModel.updateProxyUrl(proxyInput)
+                                            proxyError = null
+                                            Toast.makeText(context, strings.proxySaved, Toast.LENGTH_SHORT).show()
+                                        } catch (error: IllegalArgumentException) {
+                                            proxyError = error.message
+                                        }
                                     },
                                     modifier = Modifier.height(36.dp),
                                     contentPadding = PaddingValues(horizontal = 14.dp),
 
                                 ) {
                                     Text(strings.applyProxy, style = MaterialTheme.typography.labelLarge)
+                                }
+                            }
+                            OutlinedButton(
+                                enabled = !proxyTesting,
+                                modifier = Modifier.fillMaxWidth().testTag("proxy_test"),
+                                onClick = {
+                                    invalidateProxyTest()
+                                    val generation = proxyTestGeneration
+                                    val input = proxyInput
+                                    proxyTesting = true
+                                    proxyTestJob = proxyScope.launch {
+                                        try {
+                                            val results = com.omni.downloader.engine.ProxyConnectivityTester.test(input)
+                                            if (generation == proxyTestGeneration) proxyResults = results
+                                        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                                        catch (error: Exception) {
+                                            if (generation == proxyTestGeneration) proxyError = if (error is IllegalArgumentException) error.message else "连通性测试失败，请检查网络后重试"
+                                        } finally { if (generation == proxyTestGeneration) proxyTesting = false }
+                                    }
+                                }
+                            ) { Text(if (proxyTesting) "正在测试…" else "连通性测试") }
+                            proxyResults?.let { results ->
+                                Column(Modifier.testTag("proxy_result"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    results.forEach { result ->
+                                        Text("${result.name}：${result.message} · ${result.elapsedMs} ms",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = if (result.reachable) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error)
+                                    }
                                 }
                             }
                         }
@@ -412,6 +539,118 @@ fun SettingsScreen(
                 }
 
                 if (page == SettingsPage.ACCOUNTS) {
+                    // ==================== 平台会话 ====================
+                    item(key = "settings_session_header") {
+                        OmniSectionHeader(
+                            title = strings.sessionSection,
+                            subtitle = strings.sessionDesc
+                        )
+                    }
+                    item(key = "settings_session_card") {
+                        OmniCard {
+                            val info = sessionProfiles[selectedSessionPlatform]
+                            val status = info?.status ?: SessionStatus.MISSING
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OmniIconBox(icon = Icons.Outlined.AccountCircle, size = 36, corner = 10)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = strings.sessionPlatformLabel,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(1.dp))
+                                    Text(
+                                        text = selectedSessionPlatform,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                                SettingDropdown(
+                                    options = accountPlatforms.map { it to it },
+                                    currentValue = selectedSessionPlatform,
+                                    fallbackLabel = accountPlatforms.first(),
+                                    onSelect = { selectedSessionPlatform = it }
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text("禁用 Cookie", style = MaterialTheme.typography.titleSmall)
+                                    Text("仅影响 $selectedSessionPlatform 的后续解析和新下载；已保存会话继续加密保留。",
+                                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                androidx.compose.material3.Switch(
+                                    checked = info?.cookieEnabled == false,
+                                    onCheckedChange = { disabled -> sessionRepository.setCookieEnabled(selectedSessionPlatform, !disabled) }
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OmniStatusPill(
+                                    text = if (info?.cookieEnabled == false) "已禁用 · 会话保留" else when (status) {
+                                        SessionStatus.MISSING -> strings.sessionMissing
+                                        SessionStatus.IMPORTED -> strings.sessionImported
+                                        SessionStatus.NEEDS_AUTH -> strings.sessionNeedsAuth
+                                    },
+                                    color = if (info?.cookieEnabled == false) MaterialTheme.colorScheme.onSurfaceVariant else when (status) {
+                                        SessionStatus.MISSING -> MaterialTheme.colorScheme.onSurfaceVariant
+                                        SessionStatus.IMPORTED -> statusColors.success
+                                        SessionStatus.NEEDS_AUTH -> statusColors.warning
+                                    }
+                                )
+                                Spacer(modifier = Modifier.weight(1f))
+                                if (status != SessionStatus.MISSING) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            sessionRepository.clear(selectedSessionPlatform)
+                                            Toast.makeText(context, strings.sessionCleared, Toast.LENGTH_SHORT).show()
+                                        },
+                                        modifier = Modifier.height(36.dp),
+                                        contentPadding = PaddingValues(horizontal = 12.dp)
+                                    ) {
+                                        Text(strings.sessionClear, style = MaterialTheme.typography.labelLarge)
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
+                                Button(
+                                    onClick = { importSessionPlatform = selectedSessionPlatform; sessionPicker.launch(arrayOf("*/*")) },
+                                    modifier = Modifier.height(36.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp)
+                                ) {
+                                    Text(strings.sessionImport, style = MaterialTheme.typography.labelLarge)
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+                            if (selectedSessionPlatform == SessionPlatforms.YOUTUBE) {
+                                Text("Google 可能拒绝内置浏览器登录；遇到此情况请使用上方 cookies.txt 文件导入。", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Button(
+                                onClick = { showPlatformLogin = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(40.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Security,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(17.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(strings.sessionLogin, style = MaterialTheme.typography.labelLarge)
+                            }
+                        }
+                    }
+
                     // ==================== B站账号 ====================
                     item(key = "settings_bilibili_header") {
                         OmniSectionHeader(title = strings.bilibiliCookieSection)
@@ -806,6 +1045,26 @@ fun SettingsScreen(
             onAddSite = { site ->
                 viewModel.addRelaySite(site)
                 Toast.makeText(context, "已成功添加中转网站：${site.name}", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    if (tabActive && showPlatformLogin) {
+        PlatformLoginSheet(
+            platform = selectedSessionPlatform,
+            onDismissRequest = { showPlatformLogin = false },
+            onCookieCaptured = { cookie ->
+                showPlatformLogin = false
+                val platform = selectedSessionPlatform
+                sessionScope.launch {
+                    sessionRepository.importCookieHeader(platform, cookie)
+                        .onSuccess {
+                            Toast.makeText(context, strings.sessionImportSuccess, Toast.LENGTH_SHORT).show()
+                        }
+                        .onFailure {
+                            Toast.makeText(context, strings.sessionImportFailed, Toast.LENGTH_SHORT).show()
+                        }
+                }
             }
         )
     }

@@ -1,0 +1,63 @@
+name: iOS 1.7.20 SDK validation
+on:
+  push:
+    branches: ['codex/ui-1.7.20']
+    paths: ['OmniDownloader-iOS/**', '.github/workflows/ios-1.7.20.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve pinned native package
+        run: |
+          xcodebuild -version
+          xcodebuild -resolvePackageDependencies -project OmniDownloader-iOS/OmniDownloader.xcodeproj -scheme OmniDownloader -clonedSourcePackagesDirPath "$RUNNER_TEMP/packages" | tee resolve.log
+      - name: Run iPhone native and UI tests
+        shell: bash
+        run: |
+          set -o pipefail
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for a in d["devices"].values() for x in a if x["name"].startswith("iPhone")))')
+          xcodebuild test -project OmniDownloader-iOS/OmniDownloader.xcodeproj -scheme OmniDownloader -configuration Debug -destination "platform=iOS Simulator,id=$DEVICE" -clonedSourcePackagesDirPath "$RUNNER_TEMP/packages" -derivedDataPath "$RUNNER_TEMP/ios-build" -resultBundlePath "$RUNNER_TEMP/iOS-tests.xcresult" CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- | tee tests.log
+      - name: Build ARM64 unsigned IPA
+        if: success()
+        shell: bash
+        run: |
+          set -o pipefail
+          xcodebuild build -project OmniDownloader-iOS/OmniDownloader.xcodeproj -scheme OmniDownloader -configuration Release -destination 'generic/platform=iOS' -clonedSourcePackagesDirPath "$RUNNER_TEMP/packages" -derivedDataPath "$RUNNER_TEMP/ios-release" CODE_SIGNING_ALLOWED=NO | tee release.log
+          mkdir -p output/Payload
+          cp -R "$RUNNER_TEMP/ios-release/Build/Products/Release-iphoneos/OmniDownloader.app" output/Payload/
+          cd output && zip -qry OmniDownloader-1.7.20-unsigned.ipa Payload && rm -r Payload
+          shasum -a 256 OmniDownloader-1.7.20-unsigned.ipa > SHA256SUMS.txt
+      - name: Verify iPad layouts
+        if: success()
+        shell: bash
+        run: |
+          set -o pipefail
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for a in d["devices"].values() for x in a if x["name"].startswith("iPad")))')
+          xcodebuild test-without-building -project OmniDownloader-iOS/OmniDownloader.xcodeproj -scheme OmniDownloader -configuration Debug -only-testing:OmniDownloaderUITests -destination "platform=iOS Simulator,id=$DEVICE" -clonedSourcePackagesDirPath "$RUNNER_TEMP/packages" -derivedDataPath "$RUNNER_TEMP/ios-build" -resultBundlePath "$RUNNER_TEMP/iPad-tests.xcresult" CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- | tee ipad.log
+      - name: Export visual evidence
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p visual-review
+          for NAME in iOS-tests iPad-tests; do
+            BUNDLE="$RUNNER_TEMP/$NAME.xcresult"
+            xcrun xcresulttool export attachments --path "$BUNDLE" --output-path "visual-review/$NAME"
+            xcrun xcresulttool get test-results summary --path "$BUNDLE" > "visual-review/$NAME-summary.json"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: OmniDownloader-iOS-1.7.20
+          path: |
+            output/*
+            visual-review/**
+            *.log
+            ${{ runner.temp }}/iOS-tests.xcresult
+            ${{ runner.temp }}/iPad-tests.xcresult
+          retention-days: 14

@@ -228,8 +228,8 @@ private fun TaskListPane(
     val onDeleteTask = remember(viewModel) {
         { taskId: String, deleteFile: Boolean -> viewModel.deleteTask(taskId, deleteFile) }
     }
-    val onRetryTask = remember(viewModel) {
-        { url: String -> viewModel.startAnalyze(url) }
+    val onRetryTask = remember(viewModel, context) {
+        { taskId: String -> viewModel.retryTask(context, taskId) }
     }
 
     val onCancelCollection = remember(viewModel, context) {
@@ -242,7 +242,7 @@ private fun TaskListPane(
         { colId: String -> viewModel.retryCollection(context, colId) }
     }
     val onRetryEpisode = remember(context) {
-        { taskId: String -> com.omni.downloader.service.DownloadService.startDownload(context, taskId) }
+        { taskId: String -> viewModel.retryTask(context, taskId) }
     }
 
     val progressFlowProvider = remember(viewModel) { { id: String -> viewModel.getTaskProgress(id) } }

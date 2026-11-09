@@ -1,7 +1,7 @@
 package com.omni.downloader.engine
 
 import android.content.Context
-import android.util.Log
+import com.omni.downloader.engine.SafeLog as Log
 import com.omni.downloader.data.model.DownloadTask
 import com.omni.downloader.data.model.FormatOption
 import com.omni.downloader.data.model.TaskStatus
@@ -13,12 +13,9 @@ import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
 import okhttp3.Request
-import org.json.JSONObject
 import java.io.File
-import java.net.URLDecoder
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 
 /**
  * 国内短视频平台（抖音、快手、小红书）原生轻量直接解析器
@@ -31,9 +28,25 @@ object DomesticDirectExtractor {
     private const val MOBILE_UA =
         "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
     private const val DESKTOP_UA =
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
 
-    private val httpClient = OkHttpClient.Builder()
+    private val httpClient = OkHttpClient.Builder().proxySelector(NetworkProxy)
+        .addNetworkInterceptor { chain ->
+            val request = chain.request()
+            val url = request.url.toString()
+            val platform = CookieRequestPolicy.platformFor(url, url)
+            val repository = com.omni.downloader.data.repository.SessionRepository.currentOrNull()
+            val next = request.newBuilder()
+            if (repository != null && !repository.isCookieEnabled(platform)) next.removeHeader("Cookie")
+            else repository?.cookieHeader(platform, url)?.let { saved ->
+                // OkHttp's CookieJar may replace an explicit account header with visitor cookies.
+                val savedNames = com.omni.downloader.data.repository.CookieHeaderParser.parse(saved).map { it.first }.toSet()
+                val visitor = com.omni.downloader.data.repository.CookieHeaderParser.parse(request.header("Cookie").orEmpty())
+                    .filter { it.first !in savedNames }.joinToString("; ") { "${it.first}=${it.second}" }
+                next.header("Cookie", listOf(saved, visitor).filter { it.isNotBlank() }.joinToString("; "))
+            }
+            chain.proceed(next.build())
+        }
         .cookieJar(object : CookieJar {
             private val sessionCookies = mutableListOf<Cookie>()
             @Synchronized
@@ -53,6 +66,21 @@ object DomesticDirectExtractor {
 
     // 缓存已解析出的直链以供下载时直接复用
     private val directStreamCache = ConcurrentHashMap<String, DirectStreamInfo>()
+    private data class MetadataEntry(val value: VideoMetadata, val time: Long, val scope: String)
+    private val metadataCache = linkedMapOf<String, MetadataEntry>()
+    internal fun metadataScope(site: String) = "${NetworkProxy.configuredUrl}|${com.omni.downloader.data.repository.SessionRepository.currentOrNull()?.requestGeneration(site)}"
+
+    @Synchronized internal fun rememberMetadata(metadata: VideoMetadata, expectedScope: String? = null) {
+        if (metadata.siteName !in DomesticSourceRecovery.platforms) return
+        val scope = expectedScope ?: metadataScope(metadata.siteName)
+        if (expectedScope != null && scope != metadataScope(metadata.siteName)) return
+        if (metadataCache.size >= 64) metadataCache.remove(metadataCache.keys.first())
+        metadataCache[metadata.url] = MetadataEntry(metadata, System.nanoTime(), scope)
+    }
+
+    @Synchronized internal fun cachedMetadata(url: String): VideoMetadata? = metadataCache[url]?.takeIf {
+        System.nanoTime() - it.time < TimeUnit.MINUTES.toNanos(10) && it.scope == metadataScope(it.value.siteName)
+    }?.value
 
     data class DirectStreamInfo(
         val videoUrl: String,
@@ -69,12 +97,17 @@ object DomesticDirectExtractor {
     /**
      * 解析视频元数据
      */
-    suspend fun extract(url: String, site: String): Result<VideoMetadata> = withContext(Dispatchers.IO) {
+    suspend fun extract(
+        url: String,
+        site: String,
+        cookieHeader: String? = null,
+        cacheResult: Boolean = true
+    ): Result<VideoMetadata> = withContext(Dispatchers.IO) {
         try {
             when (site) {
-                "抖音" -> extractDouyin(url)
-                "快手" -> extractKuaishou(url)
-                "小红书" -> extractXiaohongshu(url)
+                "抖音" -> extractDouyin(url, cacheResult)
+                "快手" -> extractKuaishou(url, cookieHeader)
+                "小红书" -> extractXiaohongshu(url, cookieHeader)
                 else -> Result.failure(IllegalArgumentException("不支持的国内平台: $site"))
             }
         } catch (e: Exception) {
@@ -86,400 +119,232 @@ object DomesticDirectExtractor {
     /**
      * 抖音无水印直接解析
      */
-    private fun extractDouyin(rawUrl: String): Result<VideoMetadata> {
-        val resolvedUrl = followRedirects(rawUrl, MOBILE_UA)
-        Log.d(TAG, "抖音重定向目标: $resolvedUrl")
-
-        // 提取视频 ID：兼容 video/xxx, note/xxx, item_ids=xxx, 以及纯数字
-        val idMatcher = Pattern.compile("""(?:video|note|item_ids=)/?(\d+)""").matcher(resolvedUrl)
-        val videoId = if (idMatcher.find()) {
-            idMatcher.group(1) ?: ""
-        } else {
-            val fallbackMatcher = Pattern.compile("""(\d{18,20})""").matcher(resolvedUrl)
-            if (fallbackMatcher.find()) fallbackMatcher.group(1) ?: "" else ""
-        }
-
-        if (videoId.isNotEmpty()) {
-            // 1. 优先调用字节原生极速 Feed API (免登录、免 cookie、毫秒级下发无水印原画直链)
-            val apiResult = requestDouyinFeedApi(videoId, resolvedUrl)
-            if (apiResult != null) {
-                return Result.success(apiResult)
-            }
-        }
-
-        // 2. 备用：尝试抓取页面内嵌 SSR 数据
-        val html = fetchHtml(resolvedUrl, MOBILE_UA)
-        if (html.isNotEmpty()) {
-            val parseResult = parseDouyinHtml(html, resolvedUrl, videoId)
-            if (parseResult != null) {
-                directStreamCache[parseResult.url] = DirectStreamInfo(
-                    videoUrl = parseResult.availableVideoFormats.firstOrNull()?.formatId ?: "",
-                    headers = mapOf("User-Agent" to MOBILE_UA, "Referer" to "https://www.douyin.com/")
-                )
-                return Result.success(parseResult)
-            }
-        }
-
-        return Result.failure(Exception("未能从抖音提取到无水印视频流，将尝试通用引擎"))
-    }
-
-    private fun requestDouyinFeedApi(videoId: String, pageUrl: String): VideoMetadata? {
-        val apiUrl = "https://api.amemv.com/aweme/v1/feed/?aweme_id=$videoId"
-        try {
-            val req = Request.Builder()
-                .url(apiUrl)
-                .header("User-Agent", MOBILE_UA)
-                .build()
-            val body = httpClient.newCall(req).execute().use { response ->
-                if (!response.isSuccessful) return null
-                response.body?.string()
-            } ?: return null
-            val json = JSONObject(body)
-            val awemeList = json.optJSONArray("aweme_list") ?: return null
-
-            // 查找与 videoId 匹配的 item，若未找到则取首个
-            var matchedItem: JSONObject? = null
-            for (i in 0 until awemeList.length()) {
-                val item = awemeList.optJSONObject(i) ?: continue
-                if (item.optString("aweme_id") == videoId) {
-                    matchedItem = item
-                    break
-                }
-            }
-            if (matchedItem == null && awemeList.length() > 0) {
-                matchedItem = awemeList.optJSONObject(0)
-            }
-            if (matchedItem == null) return null
-
-            val title = matchedItem.optString("desc", "抖音视频_$videoId").trim()
-            val author = matchedItem.optJSONObject("author")?.optString("nickname", "抖音创作者") ?: "抖音创作者"
-            val duration = matchedItem.optInt("duration", 0) / 1000
-
-            val videoObj = matchedItem.optJSONObject("video")
-            val cover = videoObj?.optJSONObject("cover")?.optJSONArray("url_list")?.optString(0, "") ?: ""
-
-            // 提取播放直链 (play_addr -> url_list)
-            val playObj = videoObj?.optJSONObject("play_addr")
-            val urlList = playObj?.optJSONArray("url_list")
-            var videoDirectUrl = ""
-            if (urlList != null && urlList.length() > 0) {
-                for (i in 0 until urlList.length()) {
-                    val candidate = urlList.optString(i, "")
-                    if (candidate.isNotEmpty()) {
-                        videoDirectUrl = candidate
-                        break
-                    }
-                }
-            }
-
-            // 若在 play_addr 中未找到，遍历 bit_rate
-            if (videoDirectUrl.isEmpty()) {
-                val bitRates = videoObj?.optJSONArray("bit_rate")
-                if (bitRates != null && bitRates.length() > 0) {
-                    for (i in 0 until bitRates.length()) {
-                        val br = bitRates.optJSONObject(i) ?: continue
-                        val brUrls = br.optJSONObject("play_addr")?.optJSONArray("url_list")
-                        if (brUrls != null && brUrls.length() > 0) {
-                            videoDirectUrl = brUrls.optString(0, "")
-                            if (videoDirectUrl.isNotEmpty()) break
-                        }
-                    }
-                }
-            }
-
-            // 无水印替换 (playwm -> play)
-            val cleanVideoUrl = videoDirectUrl.replace("playwm", "play")
-
-            // 提取独立原声音频 (music -> play_url)
-            val musicObj = matchedItem.optJSONObject("music")
-            val musicUrl = musicObj?.optJSONObject("play_url")?.optJSONArray("url_list")?.optString(0, "") ?: ""
-
-            val audioOptions = mutableListOf<FormatOption>()
-            if (musicUrl.isNotEmpty()) {
-                audioOptions.add(
-                    FormatOption(
-                        formatId = musicUrl,
-                        resolutionLabel = "独立原声音频 (MP3)",
-                        ext = "mp3",
-                        isAudioOnly = true,
-                        note = "高品质原声"
-                    )
-                )
-            }
-
-            if (cleanVideoUrl.isNotEmpty()) {
-                val metadata = VideoMetadata(
-                    url = pageUrl,
-                    title = if (title.isNotBlank()) title else "抖音视频_$videoId",
-                    author = author,
-                    durationText = if (duration > 0) "${duration}秒" else "",
-                    thumbnailUrl = cover,
-                    siteName = "抖音",
-                    availableVideoFormats = listOf(
-                        FormatOption(
-                            formatId = cleanVideoUrl,
-                            resolutionLabel = "原画 (无水印)",
-                            ext = "mp4",
-                            note = "极速直连原画"
-                        )
-                    ),
-                    availableAudioFormats = audioOptions
-                )
-                directStreamCache[pageUrl] = DirectStreamInfo(
-                    videoUrl = cleanVideoUrl,
-                    headers = mapOf("User-Agent" to MOBILE_UA, "Referer" to "https://www.douyin.com/")
-                )
-                directStreamCache["https://www.douyin.com/video/$videoId"] = DirectStreamInfo(
-                    videoUrl = cleanVideoUrl,
-                    headers = mapOf("User-Agent" to MOBILE_UA, "Referer" to "https://www.douyin.com/")
-                )
-                return metadata
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "requestDouyinFeedApi 异常: ${e.message}", e)
-        }
-        return null
-    }
-
-    private fun parseDouyinHtml(html: String, pageUrl: String, videoId: String): VideoMetadata? {
-        var videoUrl = ""
-        var title = "抖音短视频"
-        var author = "抖音用户"
-        var coverUrl = ""
-
-        val routerMatcher = Pattern.compile("""window\._ROUTER_DATA\s*=\s*(\{.*?\});\s*</script>""").matcher(html)
-        if (routerMatcher.find()) {
-            val jsonStr = routerMatcher.group(1).orEmpty()
-            try {
-                val playMatcher = Pattern.compile(""""play_addr"\s*:\s*\{[^}]*?"url_list"\s*:\s*\[\s*"([^"]+)"""").matcher(jsonStr)
-                if (playMatcher.find()) {
-                    videoUrl = playMatcher.group(1)?.replace("""\/""", "/") ?: ""
-                }
-                val titleMatcher = Pattern.compile(""""desc"\s*:\s*"([^"]*)"""").matcher(jsonStr)
-                if (titleMatcher.find()) {
-                    title = titleMatcher.group(1)?.trim() ?: title
-                }
-                val authorMatcher = Pattern.compile(""""nickname"\s*:\s*"([^"]*)"""").matcher(jsonStr)
-                if (authorMatcher.find()) {
-                    author = authorMatcher.group(1)?.trim() ?: author
-                }
-                val coverMatcher = Pattern.compile(""""cover"\s*:\s*\{[^}]*?"url_list"\s*:\s*\[\s*"([^"]+)"""").matcher(jsonStr)
-                if (coverMatcher.find()) {
-                    coverUrl = coverMatcher.group(1)?.replace("""\/""", "/") ?: ""
-                }
-            } catch (ignored: Exception) {}
-        }
-
-        if (videoUrl.isEmpty()) {
-            val directMatcher = Pattern.compile("""https?://[a-zA-Z0-9_\-.]+(?:douyinvod|snssdk)\.com/[^\s"']+""").matcher(html)
-            if (directMatcher.find()) {
-                videoUrl = directMatcher.group(0) ?: ""
-            }
-        }
-
-        if (videoUrl.isNotEmpty()) {
-            val cleanVideoUrl = videoUrl.replace("playwm", "play")
-            return VideoMetadata(
-                url = pageUrl,
-                title = if (title.isNotBlank()) title else "抖音视频_$videoId",
-                author = author,
-                thumbnailUrl = coverUrl,
-                siteName = "抖音",
-                availableVideoFormats = listOf(
-                    FormatOption(
-                        formatId = cleanVideoUrl,
-                        resolutionLabel = "原画 (无水印)",
-                        ext = "mp4",
-                        note = "极速直连原画"
-                    )
-                )
+    private fun extractDouyin(rawUrl: String, cacheResult: Boolean = true): Result<VideoMetadata> {
+        // 合集/mix 链接必须交给能展开列表的引擎，不能静默只返回 URL 里的单个视频
+        if (LinkNormalizer.isCollectionUrl(rawUrl, LinkNormalizer.PLATFORM_DOUYIN)) {
+            return Result.failure(
+                Exception(MediaErrors.describe(MediaErrorCode.UNKNOWN, "抖音合集链接交由通用引擎展开"))
             )
         }
-        return null
+        val requestedId = LinkNormalizer.contentId(rawUrl, LinkNormalizer.PLATFORM_DOUYIN)
+            ?: return Result.failure(Exception("[MEDIA_ID_MISMATCH] 未能确认目标抖音作品 ID"))
+        val kind = if (LinkNormalizer.normalize(rawUrl).contentUrl.contains("/note/")) "note" else "video"
+        // Inspect every response, including the initial visit. An initial full
+        // SSR must not be discarded while only its redirected URL is retained.
+        val shareUrl = "https://www.iesdouyin.com/share/$kind/$requestedId/"
+        val pageDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(12)
+        repeat(2) { attempt ->
+            val request = Request.Builder().url(shareUrl).header("User-Agent", if (attempt == 0) MOBILE_UA else
+                "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36")
+                .header("Referer", "https://www.douyin.com/").build()
+            val shareCall = httpClient.newCall(request)
+            shareCall.timeout().deadlineNanoTime(pageDeadline)
+            shareCall.execute().use { response ->
+                if (!response.isSuccessful) {
+                    val code = when (response.code) {
+                        401 -> MediaErrorCode.AUTH_REQUIRED
+                        403 -> MediaErrorCode.BROWSER_ASSIST_REQUIRED
+                        429 -> MediaErrorCode.RATE_LIMITED
+                        404, 410 -> MediaErrorCode.CONTENT_UNAVAILABLE
+                        else -> MediaErrorCode.NETWORK_ERROR
+                    }
+                    return Result.failure(Exception(MediaErrors.describe(code, "抖音目标分享页 HTTP ${response.code}")))
+                }
+                val resolvedUrl = response.request.url.toString()
+                if (LinkNormalizer.platformOf(resolvedUrl) != LinkNormalizer.PLATFORM_DOUYIN ||
+                    LinkNormalizer.contentId(resolvedUrl, LinkNormalizer.PLATFORM_DOUYIN) != requestedId)
+                    return Result.failure(Exception("[MEDIA_ID_MISMATCH] 抖音分享页未停留在目标作品"))
+                val html = response.body?.string().orEmpty()
+                if (html.contains("_$" + "jsvmprt") && html.contains("byted_acrawler"))
+                    return Result.failure(Exception("[BROWSER_ASSIST_REQUIRED] 抖音页面需要执行网页脚本，尝试自动加载目标页面"))
+                val parsed = DouyinVideoParser.parseHtml(html, resolvedUrl)
+                if (parsed != null) {
+                    // The mobile SSR may expose only a low rendition. Inspect the
+                    // requested desktop detail too; never read the random feed.
+                    val richer = runCatching {
+                        val detailUrl = "https://www.douyin.com/aweme/v1/web/aweme/detail/?aid=6383&device_platform=webapp&aweme_id=$requestedId"
+                        val detailRequest = Request.Builder().url(detailUrl).header("User-Agent", DESKTOP_UA)
+                            .header("Referer", "https://www.douyin.com/video/$requestedId").build()
+                        val detailCall = httpClient.newBuilder().callTimeout(8, TimeUnit.SECONDS).build().newCall(detailRequest)
+                        detailCall.timeout().deadlineNanoTime(pageDeadline)
+                        detailCall.execute().use { detail ->
+                            if (!detail.isSuccessful) null else {
+                                val body = detail.body?.source()?.let { source ->
+                                    if (source.request(4_194_305)) null else source.readUtf8()
+                                }.orEmpty()
+                                DouyinVideoParser.parseHtml("<script>window._ROUTER_DATA=$body</script>", resolvedUrl)
+                            }
+                        }
+                    }.getOrNull()
+                    val merged = if (richer == null) parsed else DouyinQualityPolicy.merge(parsed, richer)
+                    val confirmed = confirmDouyinMetadata(merged, budgetMillis = 6_000, remember = cacheResult)
+                    return Result.success(confirmed)
+                }
+            }
+        }
+
+        return Result.failure(Exception("[BROWSER_ASSIST_REQUIRED] 抖音未返回目标作品详情，请在内置浏览器打开目标作品后提取"))
+    }
+
+    /** Worker-thread only. Confirm missing stream dimensions with bounded MP4
+     * ranges; never promote an upload's dimensions to every playback variant. */
+    internal fun confirmDouyinMetadata(metadata: VideoMetadata, verifyHighest: Boolean = false, budgetMillis: Long = 20_000,
+        remember: Boolean = true): VideoMetadata {
+        var probes = 0
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(budgetMillis)
+        val confirmedSources = mutableMapOf<String, HttpMp4Probe.Info>()
+        val topKeys = if (verifyHighest) QualitySelector.sorted(metadata.availableVideoFormats)
+            .map { DomesticSourceRecovery.resourceKey(it.sourceUrl) }.distinct().take(2).toSet() else emptySet()
+        val formats = metadata.availableVideoFormats.map { format ->
+            val playbackOutro = runCatching { java.net.URI(format.sourceUrl).path.contains("/playwm/") }.getOrDefault(false)
+            val key = DomesticSourceRecovery.resourceKey(format.sourceUrl)
+            if (format.dimensionsVerified || (format.width > 0 && format.height > 0 && !playbackOutro && key !in topKeys)) return@map format
+            val info = confirmedSources[key] ?: run {
+                if (probes >= (if (verifyHighest) 2 else 4) || System.nanoTime() >= deadline) return@map format
+                probes++
+                HttpMp4Probe.probe(format.sourceUrl, httpClient, DomesticMediaSource.headers("抖音"),
+                    minOf(6_000, TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime())))
+                    ?.also { confirmedSources[key] = it }
+            } ?: return@map format
+            format.copy(width = info.width, height = info.height, resolutionLabel = QualitySelector.label(info.width, info.height),
+                sourceDurationMs = info.durationMs ?: 0, dimensionsVerified = true)
+        }
+        return metadata.copy(availableVideoFormats = QualitySelector.sorted(formats)).also { if (remember) rememberMetadata(it) }
     }
 
     /**
      * 快手无水印直接解析
      */
-    private fun extractKuaishou(rawUrl: String): Result<VideoMetadata> {
-        val resolvedUrl = followRedirects(rawUrl, MOBILE_UA)
-        Log.d(TAG, "快手重定向目标: $resolvedUrl")
-
-        val html = fetchHtml(resolvedUrl, MOBILE_UA)
-        if (html.isEmpty()) {
-            return Result.failure(Exception("无法获取快手分享页面内容"))
-        }
-
-        var videoUrl = ""
-        var title = "快手短视频"
-        var author = "快手创作者"
-        var coverUrl = ""
-
-        // 1. 匹配无水印视频直链
-        val patterns = listOf(
-            Pattern.compile(""""srcNoMark"\s*:\s*"([^"]+)""""),
-            Pattern.compile(""""playUrl"\s*:\s*"([^"]+)""""),
-            Pattern.compile(""""photoUrl"\s*:\s*"([^"]+)""""),
-            Pattern.compile("""<video[^>]+src="([^"]+)""""),
-            Pattern.compile("""https?://[a-zA-Z0-9_\-.]+(?:kwaicdn|yximgs)\.com/[^\s"']+\.mp4""")
-        )
-
-        for (p in patterns) {
-            val m = p.matcher(html)
-            if (m.find()) {
-                val candidate = (if (m.groupCount() >= 1) m.group(1) else m.group(0)) ?: ""
-                if (candidate.isNotEmpty()) {
-                    videoUrl = candidate.replace("""\/""", "/")
-                    break
+    private fun extractKuaishou(rawUrl: String, cookieHeader: String?): Result<VideoMetadata> {
+        if (LinkNormalizer.isCollectionUrl(rawUrl, LinkNormalizer.PLATFORM_KUAISHOU))
+            return Result.failure(Exception("[MEDIA_UNCONFIRMED] 快手合集交由通用引擎展开"))
+        var current = LinkNormalizer.normalize(rawUrl).contentUrl
+        val requestedId = LinkNormalizer.contentId(current, LinkNormalizer.PLATFORM_KUAISHOU)
+        val client = httpClient.newBuilder().cookieJar(CookieJar.NO_COOKIES).followRedirects(false).followSslRedirects(false).build()
+        repeat(6) {
+            val uri = java.net.URI(current)
+            val host = uri.host.orEmpty().lowercase(java.util.Locale.ROOT)
+            if (uri.scheme !in setOf("http", "https") || !(host == "kuaishou.com" || host.endsWith(".kuaishou.com")))
+                return Result.failure(Exception("[MEDIA_ID_MISMATCH] 快手跳转到了非平台内容地址"))
+            val path = uri.path.orEmpty().lowercase()
+            if (path.contains("/login")) return Result.failure(Exception("[AUTH_REQUIRED] 请登录快手后重新解析原链接"))
+            if (path.contains("/captcha") || path.contains("/verify")) return Result.failure(Exception("[CHALLENGE_REQUIRED] 请在快手浏览器完成验证"))
+            val request = Request.Builder().url(current).header("User-Agent", DESKTOP_UA).header("Referer", "https://www.kuaishou.com/")
+            if (uri.scheme == "https" && !cookieHeader.isNullOrBlank()) request.header("Cookie", cookieHeader)
+            client.newCall(request.build()).execute().use { response ->
+                if (response.code in setOf(301, 302, 303, 307, 308)) {
+                    current = response.header("Location")?.let { response.request.url.resolve(it)?.toString() }
+                        ?: return Result.failure(Exception("[NETWORK_ERROR] 快手跳转缺少合法地址"))
+                    current = LinkNormalizer.normalize(current).contentUrl
+                } else {
+                    if (!response.isSuccessful) return Result.failure(Exception(MediaErrors.describe(MediaErrors.classify("HTTP ${response.code}", response.code))))
+                    if (requestedId != null && LinkNormalizer.contentId(current, LinkNormalizer.PLATFORM_KUAISHOU) != requestedId)
+                        return Result.failure(Exception("[MEDIA_ID_MISMATCH] 快手跳转后作品 ID 改变"))
+                    val html = response.body?.string().orEmpty()
+                    if (html.contains("验证码") && html.contains("captcha", true))
+                        return Result.failure(Exception("[CHALLENGE_REQUIRED] 请在快手浏览器完成验证"))
+                    val metadata = KuaishouNoteParser.parse(html, current)
+                    val headers = mapOf("User-Agent" to DESKTOP_UA, "Referer" to "https://www.kuaishou.com/")
+                    val stream = DirectStreamInfo(metadata.availableVideoFormats.first().formatId, headers)
+                    directStreamCache[current] = stream; directStreamCache[rawUrl] = stream
+                    return Result.success(metadata)
                 }
             }
         }
-
-        // 标题与创作者
-        val titleMatcher = Pattern.compile(""""caption"\s*:\s*"([^"]*)"""").matcher(html)
-        if (titleMatcher.find()) {
-            title = titleMatcher.group(1)?.trim() ?: title
-        } else {
-            val docTitle = Pattern.compile("""<title>(.*?)</title>""").matcher(html)
-            if (docTitle.find()) {
-                title = docTitle.group(1)?.replace(" - 快手", "")?.trim() ?: title
-            }
-        }
-
-        val authorMatcher = Pattern.compile(""""userName"\s*:\s*"([^"]*)"""").matcher(html)
-        if (authorMatcher.find()) {
-            author = authorMatcher.group(1)?.trim() ?: author
-        }
-
-        val coverMatcher = Pattern.compile(""""poster"\s*:\s*"([^"]+)"""").matcher(html)
-        if (coverMatcher.find()) {
-            coverUrl = coverMatcher.group(1)?.replace("""\/""", "/") ?: ""
-        }
-
-        if (videoUrl.isNotEmpty()) {
-            directStreamCache[resolvedUrl] = DirectStreamInfo(
-                videoUrl = videoUrl,
-                headers = mapOf("User-Agent" to MOBILE_UA, "Referer" to "https://www.kuaishou.com/")
-            )
-            return Result.success(
-                VideoMetadata(
-                    url = resolvedUrl,
-                    title = title,
-                    author = author,
-                    thumbnailUrl = coverUrl,
-                    siteName = "快手",
-                    availableVideoFormats = listOf(
-                        FormatOption(
-                            formatId = videoUrl,
-                            resolutionLabel = "原画 (无水印)",
-                            ext = "mp4",
-                            note = "极速直连原画"
-                        )
-                    )
-                )
-            )
-        }
-
-        return Result.failure(Exception("未能从快手页面提取到有效视频直链，将尝试通用引擎"))
+        return Result.failure(Exception("[NETWORK_ERROR] 快手跳转次数过多"))
     }
 
     /**
      * 小红书无水印直接解析
      */
-    private fun extractXiaohongshu(rawUrl: String): Result<VideoMetadata> {
-        val resolvedUrl = followRedirects(rawUrl, DESKTOP_UA)
-        Log.d(TAG, "小红书重定向目标: $resolvedUrl")
-
-        val html = fetchHtml(resolvedUrl, DESKTOP_UA)
-        if (html.isEmpty()) {
-            return Result.failure(Exception("无法获取小红书页面内容"))
-        }
-
-        var videoUrl = ""
-        var title = "小红书视频"
-        var author = "小红书作者"
-        var coverUrl = ""
-
-        // 1. 尝试解析 window.__INITIAL_STATE__
-        val stateMatcher = Pattern.compile("""window\.__INITIAL_STATE__\s*=\s*(.*?)</script>""").matcher(html)
-        if (stateMatcher.find()) {
-            val stateStr = stateMatcher.group(1)?.trim() ?: ""
-            // 规范化 JSON（小红书 SSR 可能包含 undefined）
-            val validJsonStr = stateStr.replace("undefined", "null")
-            try {
-                // 查找 masterUrl
-                val masterMatcher = Pattern.compile(""""masterUrl"\s*:\s*"([^"]+)"""").matcher(validJsonStr)
-                if (masterMatcher.find()) {
-                    videoUrl = masterMatcher.group(1)?.replace("""\/""", "/") ?: ""
-                }
-
-                // 查找 originVideoKey
-                if (videoUrl.isEmpty()) {
-                    val keyMatcher = Pattern.compile(""""originVideoKey"\s*:\s*"([^"]+)"""").matcher(validJsonStr)
-                    if (keyMatcher.find()) {
-                        val key = keyMatcher.group(1)
-                        if (!key.isNullOrEmpty()) {
-                            videoUrl = "https://sns-video-bd.xhscdn.com/$key"
+    private fun extractXiaohongshu(rawUrl: String, cookieHeader: String?): Result<VideoMetadata> {
+        var current = LinkNormalizer.normalize(rawUrl).contentUrl
+        val requestedId = LinkNormalizer.contentId(current, LinkNormalizer.PLATFORM_XHS)
+        val client = httpClient.newBuilder().followRedirects(false).followSslRedirects(false).build()
+        repeat(6) {
+            val uri = java.net.URI(current)
+            val host = uri.host.orEmpty().lowercase(java.util.Locale.ROOT)
+            val firstParty = host == "xiaohongshu.com" || host.endsWith(".xiaohongshu.com")
+            val shortLink = host in setOf("xhslink.cn", "xhslink.com") || host.endsWith(".xhslink.cn") || host.endsWith(".xhslink.com")
+            if (uri.scheme !in setOf("http", "https") || (!firstParty && !shortLink)) {
+                return Result.failure(Exception("[MEDIA_ID_MISMATCH] 小红书链接跳转到了非平台地址"))
+            }
+            val path = uri.path.orEmpty().lowercase(java.util.Locale.ROOT)
+            if (path.contains("/login") || path.contains("/passport"))
+                return Result.failure(Exception("[AUTH_REQUIRED] 请在小红书网页登录后重新解析原始分享链接"))
+            if (path.contains("/captcha") || path.contains("/verify") || path.contains("/challenge"))
+                return Result.failure(Exception("[CHALLENGE_REQUIRED] 请在小红书浏览器完成验证"))
+            val request = Request.Builder().url(current).header("User-Agent", MOBILE_UA)
+                .header("Referer", "https://www.xiaohongshu.com/")
+            // A note-domain account header must never be sent to the short-link domain.
+            if (firstParty && uri.scheme == "https" && !cookieHeader.isNullOrBlank()) request.header("Cookie", cookieHeader)
+            client.newCall(request.build()).execute().use { response ->
+                if (response.code in setOf(301, 302, 303, 307, 308)) {
+                    val target = response.header("Location")
+                        ?: return Result.failure(Exception("[NETWORK_ERROR] 小红书跳转缺少目标地址"))
+                    current = response.request.url.resolve(target)?.toString()
+                        ?: return Result.failure(Exception("[NETWORK_ERROR] 小红书跳转地址无效"))
+                } else {
+                    if (!response.isSuccessful) {
+                        return Result.failure(Exception(MediaErrors.describe(MediaErrors.classify("HTTP ${response.code}", response.code))))
+                    }
+                    val html = response.body?.string().orEmpty()
+                    if (html.isBlank()) return Result.failure(Exception("[NETWORK_ERROR] 无法获取小红书页面内容"))
+                    if (requestedId != null && LinkNormalizer.contentId(current, LinkNormalizer.PLATFORM_XHS) != requestedId)
+                        return Result.failure(Exception("[MEDIA_ID_MISMATCH] 小红书跳转后的笔记与原链接不一致"))
+                    var metadata = try {
+                        XiaohongshuNoteParser.parseVideo(html, current)
+                    } catch (error: Exception) {
+                        val code = MediaErrors.classify(error.message.orEmpty())
+                        if (code in setOf(MediaErrorCode.EXTRACTOR_CHANGED, MediaErrorCode.MEDIA_UNCONFIRMED)) {
+                            classifyXhsAuthHtml(html)?.let { return Result.failure(Exception(MediaErrors.describe(it))) }
+                        }
+                        return Result.failure(error)
+                    }
+                    XiaohongshuNoteParser.originalVideoUrl(html, current)?.let { original ->
+                        val info = HttpMp4Probe.probe(original, httpClient, mapOf("User-Agent" to MOBILE_UA, "Referer" to "https://www.xiaohongshu.com/"))
+                        if (info != null) {
+                            val format = FormatOption(formatId = original, sourceUrl = original,
+                                width = info.width, height = info.height, resolutionLabel = QualitySelector.label(info.width, info.height),
+                                approximateSize = info.fileBytes?.let { bytes ->
+                                    if (bytes >= 1073741824) String.format(java.util.Locale.ROOT, "%.2f GiB", bytes / 1073741824.0)
+                                    else String.format(java.util.Locale.ROOT, "%.1f MiB", bytes / 1048576.0)
+                                }.orEmpty(),
+                                note = "平台原始视频源 · 已探测尺寸")
+                            metadata = metadata.copy(availableVideoFormats = QualitySelector.sorted(metadata.availableVideoFormats + format).distinctBy { it.formatId })
+                        } else {
+                            metadata = metadata.copy(qualityWarning = "原始视频源暂未确认尺寸，当前画质列表不代表该作品的最高画质。可重试解析，或选择尺寸待确认的原始源。",
+                                availableVideoFormats = metadata.availableVideoFormats + FormatOption(formatId = original, sourceUrl = original,
+                                    resolutionLabel = "原始源（尺寸待确认）", note = "平台返回的原始视频地址，尺寸探测暂未成功"))
                         }
                     }
+                    val headers = mapOf("User-Agent" to MOBILE_UA, "Referer" to "https://www.xiaohongshu.com/")
+                    rememberMetadata(metadata)
+                    val stream = DirectStreamInfo(metadata.availableVideoFormats.first().formatId, headers)
+                    directStreamCache[current] = stream
+                    directStreamCache[rawUrl] = stream
+                    return Result.success(metadata)
                 }
-
-                val titleMatcher = Pattern.compile(""""title"\s*:\s*"([^"]*)"""").matcher(validJsonStr)
-                if (titleMatcher.find() && !titleMatcher.group(1).isNullOrBlank()) {
-                    title = titleMatcher.group(1)!!
-                } else {
-                    val descMatcher = Pattern.compile(""""desc"\s*:\s*"([^"]*)"""").matcher(validJsonStr)
-                    if (descMatcher.find() && !descMatcher.group(1).isNullOrBlank()) {
-                        title = descMatcher.group(1)!!
-                    }
-                }
-
-                val userMatcher = Pattern.compile(""""nickname"\s*:\s*"([^"]*)"""").matcher(validJsonStr)
-                if (userMatcher.find()) {
-                    author = userMatcher.group(1) ?: author
-                }
-
-                val coverMatcher = Pattern.compile(""""firstFrameFileid"\s*:\s*"([^"]+)"""").matcher(validJsonStr)
-                if (coverMatcher.find()) {
-                    coverUrl = "https://sns-webpic-qc.xhscdn.com/${coverMatcher.group(1)}"
-                }
-            } catch (ignored: Exception) {
             }
         }
+        return Result.failure(Exception("[NETWORK_ERROR] 小红书跳转次数过多"))
+    }
 
-        // 备选正则探测
-        if (videoUrl.isEmpty()) {
-            val cdnMatcher = Pattern.compile("""https?://[a-zA-Z0-9_\-.]*xhscdn\.com/[^\s"']+\.mp4""").matcher(html)
-            if (cdnMatcher.find()) {
-                videoUrl = cdnMatcher.group(0) ?: ""
-            }
+    private fun classifyXhsAuthHtml(html: String): MediaErrorCode? {
+        val lower = html.lowercase(java.util.Locale.ROOT)
+        return when {
+            lower.contains("验证码") && (lower.contains("滑块") || lower.contains("captcha")) -> MediaErrorCode.CHALLENGE_REQUIRED
+            lower.contains("登录后查看") || lower.contains("请先登录") || lower.contains("扫码登录") ||
+                lower.contains("/login?redirectpath") -> MediaErrorCode.AUTH_REQUIRED
+            else -> null
         }
+    }
 
-        if (videoUrl.isNotEmpty()) {
-            directStreamCache[resolvedUrl] = DirectStreamInfo(
-                videoUrl = videoUrl,
-                headers = mapOf("User-Agent" to DESKTOP_UA, "Referer" to "https://www.xiaohongshu.com/")
-            )
-            return Result.success(
-                VideoMetadata(
-                    url = resolvedUrl,
-                    title = title,
-                    author = author,
-                    thumbnailUrl = coverUrl,
-                    siteName = "小红书",
-                    availableVideoFormats = listOf(
-                        FormatOption(
-                            formatId = videoUrl,
-                            resolutionLabel = "原画 (无水印)",
-                            ext = "mp4",
-                            note = "极速直连原画"
-                        )
-                    )
-                )
-            )
-        }
-
-        return Result.failure(Exception("未能从小红书页面提取到视频直链，将尝试通用引擎"))
+    private fun isHttpMediaUrl(url: String): Boolean {
+        if (!url.startsWith("http://") && !url.startsWith("https://")) return false
+        // 防止把 HTML/JSON 地址误当媒体
+        val lower = url.lowercase(java.util.Locale.ROOT)
+        return !lower.endsWith(".html") && !lower.contains("/api/") && !lower.contains("javascript:")
     }
 
     /**
@@ -505,31 +370,41 @@ object DomesticDirectExtractor {
         if (!mediaUrl.startsWith("http")) {
             return@withContext Result.failure(Exception("未找到有效的国内媒体直链，请重新解析链接"))
         }
-        val headers = DomesticMediaSource.headers(site) + cached?.headers.orEmpty() + task.directMediaHeaders
+        val sessionCookie = com.omni.downloader.data.repository.SessionRepository
+            .getInstance(context).cookieHeader(site, mediaUrl)
+        val sessionHeaders = if (!sessionCookie.isNullOrBlank()) mapOf("Cookie" to sessionCookie) else emptyMap()
+        val headers = DomesticMediaSource.headers(site) + cached?.headers.orEmpty() +
+            task.directMediaHeaders + sessionHeaders
         // 共用已有的取消、重试、媒体校验和后处理，不能将视频简单改名为音频。
-        DownloadEngine.downloadDirectMediaStream(
+        DownloadEngine.downloadDomesticMediaStream(
             context, task, mediaUrl, proxyUrl, stagingDir, publicDir, onProgressUpdate, headers
         )
     }
 
-    private fun followRedirects(startUrl: String, userAgent: String): String {
+    private fun followRedirects(
+        startUrl: String,
+        userAgent: String,
+        cookieHeader: String? = null
+    ): String {
         return try {
-            val req = Request.Builder()
+            val builder = Request.Builder()
                 .url(startUrl)
                 .header("User-Agent", userAgent)
-                .build()
+            if (!cookieHeader.isNullOrBlank()) builder.header("Cookie", cookieHeader)
+            val req = builder.build()
             httpClient.newCall(req).execute().use { it.request.url.toString() }
         } catch (e: Exception) {
             startUrl
         }
     }
 
-    private fun fetchHtml(url: String, userAgent: String): String {
+    private fun fetchHtml(url: String, userAgent: String, cookieHeader: String? = null): String {
         return try {
-            val req = Request.Builder()
+            val builder = Request.Builder()
                 .url(url)
                 .header("User-Agent", userAgent)
-                .build()
+            if (!cookieHeader.isNullOrBlank()) builder.header("Cookie", cookieHeader)
+            val req = builder.build()
             httpClient.newCall(req).execute().use { if (it.isSuccessful) it.body?.string().orEmpty() else "" }
         } catch (e: Exception) {
             ""

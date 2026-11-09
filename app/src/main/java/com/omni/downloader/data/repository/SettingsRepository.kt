@@ -27,7 +27,18 @@ class SettingsRepository private constructor(context: Context) {
     private val _downloadPath = MutableStateFlow(prefs.getString(KEY_DOWNLOAD_PATH, "") ?: "")
     val downloadPath: StateFlow<String> = _downloadPath.asStateFlow()
 
-    private val _bilibiliCookie = MutableStateFlow(prefs.getString(KEY_BILIBILI_COOKIE, "") ?: "")
+    private val _homeRelayExpanded = MutableStateFlow(prefs.getBoolean(KEY_HOME_RELAY_EXPANDED, false))
+    val homeRelayExpanded: StateFlow<Boolean> = _homeRelayExpanded.asStateFlow()
+
+    fun setHomeRelayExpanded(expanded: Boolean) {
+        _homeRelayExpanded.value = expanded
+        prefs.edit().putBoolean(KEY_HOME_RELAY_EXPANDED, expanded).apply()
+    }
+
+    private val _bilibiliCookie = MutableStateFlow(
+        prefs.getString("bilibili_cookie_encrypted", null)?.let { SessionCrypto.decrypt(it) }
+            ?: prefs.getString(KEY_BILIBILI_COOKIE, "").orEmpty()
+    )
     val bilibiliCookie: StateFlow<String> = _bilibiliCookie.asStateFlow()
 
     private val _hasPromptedBilibiliLogin = MutableStateFlow(prefs.getBoolean(KEY_HAS_PROMPTED_BILIBILI_LOGIN, false))
@@ -48,6 +59,7 @@ class SettingsRepository private constructor(context: Context) {
     val themeMode: StateFlow<String> = _themeMode.asStateFlow()
 
     init {
+        com.omni.downloader.engine.NetworkProxy.configuredUrl = _proxyUrl.value
         // 新版本配置规范迁移：仅在首次升级到版本 40 时清理旧版内置固定 ID，绝不误伤用户保存的任何网站
         val lastConfigVersion = prefs.getInt(KEY_APP_CONFIG_VERSION, 0)
         val initialSites: List<RelaySite>
@@ -105,6 +117,9 @@ class SettingsRepository private constructor(context: Context) {
         _appLanguage = MutableStateFlow(initial)
         appLanguage = _appLanguage.asStateFlow()
 
+        if (_bilibiliCookie.value.isNotBlank()) {
+            prefs.edit().putString("bilibili_cookie_encrypted", SessionCrypto.encrypt(_bilibiliCookie.value)).remove(KEY_BILIBILI_COOKIE).commit()
+        }
         // 启动时自动注入保存的 B站 凭证
         com.omni.downloader.engine.BilibiliDirectExtractor.customUserCookie = _bilibiliCookie.value
     }
@@ -112,19 +127,20 @@ class SettingsRepository private constructor(context: Context) {
     fun setBilibiliCookie(cookie: String) {
         val clean = cookie.trim()
         _bilibiliCookie.value = clean
-        prefs.edit().putString(KEY_BILIBILI_COOKIE, clean).apply()
+        prefs.edit().putString("bilibili_cookie_encrypted", SessionCrypto.encrypt(clean)).remove(KEY_BILIBILI_COOKIE).apply()
         com.omni.downloader.engine.BilibiliDirectExtractor.customUserCookie = clean
     }
 
     fun clearBilibiliCookie() {
         _bilibiliCookie.value = ""
-        prefs.edit().remove(KEY_BILIBILI_COOKIE).apply()
+        prefs.edit().remove(KEY_BILIBILI_COOKIE).remove("bilibili_cookie_encrypted").apply()
         com.omni.downloader.engine.BilibiliDirectExtractor.customUserCookie = ""
     }
 
     fun setProxyUrl(url: String) {
-        val clean = url.trim()
+        val clean = com.omni.downloader.engine.ProxyConfiguration.parse(url)?.url.orEmpty()
         _proxyUrl.value = clean
+        com.omni.downloader.engine.NetworkProxy.configuredUrl = clean
         prefs.edit().putString(KEY_PROXY_URL, clean).apply()
     }
 
@@ -192,6 +208,7 @@ class SettingsRepository private constructor(context: Context) {
 
     companion object {
         private const val KEY_PROXY_URL = "key_proxy_url"
+        private const val KEY_HOME_RELAY_EXPANDED = "key_home_relay_expanded"
         private const val KEY_DOWNLOAD_PATH = "key_download_path"
         private const val KEY_BILIBILI_COOKIE = "key_bilibili_cookie"
         private const val KEY_HAS_PROMPTED_BILIBILI_LOGIN = "key_has_prompted_bilibili_login"

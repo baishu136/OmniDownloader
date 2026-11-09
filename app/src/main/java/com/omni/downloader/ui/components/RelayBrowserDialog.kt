@@ -82,7 +82,7 @@ fun RelayBrowserDialog(
                         view = web
                         cleanup = RelayAutomation.bind(web, session, initialVideoUrl, false,
                             onLocation = { currentUrl = it; canGoBack = web.canGoBack() },
-                            onTitle = { title = it }, onProgress = { progress = it })
+                            onTitle = { title = it }, onProgress = { progress = it }, pageUrl = site.url)
                         web.settings.setSupportZoom(true); web.settings.builtInZoomControls = true; web.settings.displayZoomControls = false
                         web.loadUrl(RelayAutomation.initialUrl(site.url, initialVideoUrl))
                     }

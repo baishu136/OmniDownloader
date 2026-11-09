@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 /// B 站与各平台凭证存储服务 (基于 UserDefaults 与 Keychain 思想)
 public class CookieStore: ObservableObject {
@@ -11,7 +12,8 @@ public class CookieStore: ObservableObject {
 
     @Published public var bilibiliCookie: String {
         didSet {
-            UserDefaults.standard.set(bilibiliCookie, forKey: kBilibiliCookie)
+            if bilibiliCookie.isEmpty { PlatformSession.shared.clear("哔哩哔哩") }
+            else { try? PlatformSession.shared.importHeader(bilibiliCookie.contains("=") ? bilibiliCookie : "SESSDATA=" + bilibiliCookie, site: "哔哩哔哩") }
         }
     }
 
@@ -41,7 +43,14 @@ public class CookieStore: ObservableObject {
     }
 
     private init() {
-        self.bilibiliCookie = UserDefaults.standard.string(forKey: kBilibiliCookie) ?? ""
+        let legacy = UserDefaults.standard.string(forKey: kBilibiliCookie) ?? ""
+        if !legacy.isEmpty {
+            do {
+                try PlatformSession.shared.importHeader(legacy.contains("=") ? legacy : "SESSDATA=" + legacy, site: "哔哩哔哩")
+                UserDefaults.standard.removeObject(forKey: kBilibiliCookie)
+            } catch { /* Keep the legacy value until secure migration succeeds. */ }
+        }
+        self.bilibiliCookie = ((try? PlatformSession.shared.cookies("哔哩哔哩")) ?? []).map { "\($0.name)=\($0.value)" }.joined(separator: "; ")
         self.autoSaveToAlbum = UserDefaults.standard.object(forKey: kAutoSaveToAlbum) as? Bool ?? true
 
         if let data = UserDefaults.standard.data(forKey: kRelaySites),
@@ -56,6 +65,7 @@ public class CookieStore: ObservableObject {
     
     /// 获取规范格式的 B 站 Cookie 请求头字符串
     public func getBilibiliCookieHeader() -> String {
+        guard PlatformSession.shared.enabled("哔哩哔哩") else { return "" }
         let raw = bilibiliCookie.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !raw.isEmpty else { return "" }
         if !raw.contains("=") && !raw.contains(";") {
@@ -68,6 +78,9 @@ public class CookieStore: ObservableObject {
     public func updateBilibiliCookie(_ cookie: String) {
         self.bilibiliCookie = cookie.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+    public func saveBilibiliCookies(fullCookie:String,sessdata:String){
+        updateBilibiliCookie(fullCookie.isEmpty ? "SESSDATA="+sessdata:fullCookie)
+    }
     
     /// 清除 B 站登录凭证
     public func clearBilibiliCookie() {
@@ -79,6 +92,7 @@ public class CookieStore: ObservableObject {
     }
 
     public func getBilibiliSessData() -> String? {
+        guard PlatformSession.shared.enabled("哔哩哔哩") else { return nil }
         let raw = bilibiliCookie.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !raw.isEmpty else { return nil }
         if raw.contains("SESSDATA=") {

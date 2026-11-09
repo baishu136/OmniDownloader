@@ -1,337 +1,1354 @@
 // !$*UTF8*$!
 {
-	archiveVersion = 1;
-	classes = {
+	"archiveVersion" = "1";
+	"classes" = {
 	};
-	objectVersion = 56;
-	objects = {
-
-/* Begin PBXBuildFile section */
-		222222223333444400000001 /* OmniDownloaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000001 /* OmniDownloaderApp.swift */; };
-		222222223333444400000003 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000003 /* Models.swift */; };
-		222222223333444400000004 /* AppStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000004 /* AppStrings.swift */; };
-		222222223333444400000005 /* UrlSniffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000005 /* UrlSniffer.swift */; };
-		222222223333444400000006 /* BilibiliExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000006 /* BilibiliExtractor.swift */; };
-		222222223333444400000007 /* DomesticExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000007 /* DomesticExtractor.swift */; };
-		222222223333444400000008 /* AVMuxer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000008 /* AVMuxer.swift */; };
-		222222223333444400000009 /* CookieStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000009 /* CookieStore.swift */; };
-		22222222333344440000000A /* MediaSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111111222233330000000A /* MediaSaver.swift */; };
-		22222222333344440000000B /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111111222233330000000B /* DownloadManager.swift */; };
-		22222222333344440000000C /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111111222233330000000C /* MainTabView.swift */; };
-		22222222333344440000000D /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111111222233330000000D /* HomeView.swift */; };
-		22222222333344440000000E /* FormatSelectorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111111222233330000000E /* FormatSelectorSheet.swift */; };
-		22222222333344440000000F /* TaskCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111111222233330000000F /* TaskCard.swift */; };
-		222222223333444400000010 /* CollectionTaskCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000010 /* CollectionTaskCard.swift */; };
-		222222223333444400000011 /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000011 /* TasksView.swift */; };
-		222222223333444400000012 /* BilibiliLoginSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000012 /* BilibiliLoginSheet.swift */; };
-		222222223333444400000013 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111112222333300000013 /* SettingsView.swift */; };
-		444444445555666600000014 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 333333334444555500000014 /* AVFoundation.framework */; };
-		444444445555666600000015 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 333333334444555500000015 /* Photos.framework */; };
-		444444445555666600000016 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 333333334444555500000016 /* WebKit.framework */; };
-/* End PBXBuildFile section */
-
-/* Begin PBXFileReference section */
-		555555556666777700000001 /* OmniDownloader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OmniDownloader.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		111111112222333300000001 /* OmniDownloaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/App/OmniDownloaderApp.swift"; sourceTree = "<group>"; };
-		111111112222333300000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "OmniDownloader/App/Info.plist"; sourceTree = "<group>"; };
-		111111112222333300000003 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Models/Models.swift"; sourceTree = "<group>"; };
-		111111112222333300000004 /* AppStrings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Models/AppStrings.swift"; sourceTree = "<group>"; };
-		111111112222333300000005 /* UrlSniffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Engines/UrlSniffer.swift"; sourceTree = "<group>"; };
-		111111112222333300000006 /* BilibiliExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Engines/BilibiliExtractor.swift"; sourceTree = "<group>"; };
-		111111112222333300000007 /* DomesticExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Engines/DomesticExtractor.swift"; sourceTree = "<group>"; };
-		111111112222333300000008 /* AVMuxer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Media/AVMuxer.swift"; sourceTree = "<group>"; };
-		111111112222333300000009 /* CookieStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Services/CookieStore.swift"; sourceTree = "<group>"; };
-		11111111222233330000000A /* MediaSaver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Services/MediaSaver.swift"; sourceTree = "<group>"; };
-		11111111222233330000000B /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Services/DownloadManager.swift"; sourceTree = "<group>"; };
-		11111111222233330000000C /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/MainTabView.swift"; sourceTree = "<group>"; };
-		11111111222233330000000D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Home/HomeView.swift"; sourceTree = "<group>"; };
-		11111111222233330000000E /* FormatSelectorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Home/FormatSelectorSheet.swift"; sourceTree = "<group>"; };
-		11111111222233330000000F /* TaskCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Tasks/TaskCard.swift"; sourceTree = "<group>"; };
-		111111112222333300000010 /* CollectionTaskCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Tasks/CollectionTaskCard.swift"; sourceTree = "<group>"; };
-		111111112222333300000011 /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Tasks/TasksView.swift"; sourceTree = "<group>"; };
-		111111112222333300000012 /* BilibiliLoginSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Settings/BilibiliLoginSheet.swift"; sourceTree = "<group>"; };
-		111111112222333300000013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OmniDownloader/Views/Settings/SettingsView.swift"; sourceTree = "<group>"; };
-		333333334444555500000014 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = "AVFoundation.framework"; path = "System/Library/Frameworks/AVFoundation.framework"; sourceTree = SDKROOT; };
-		333333334444555500000015 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = "Photos.framework"; path = "System/Library/Frameworks/Photos.framework"; sourceTree = SDKROOT; };
-		333333334444555500000016 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = "WebKit.framework"; path = "System/Library/Frameworks/WebKit.framework"; sourceTree = SDKROOT; };
-/* End PBXFileReference section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		99999999AAAA000000000002 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				444444445555666600000014 /* AVFoundation.framework in Frameworks */,
-				444444445555666600000015 /* Photos.framework in Frameworks */,
-				444444445555666600000016 /* WebKit.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
+	"objectVersion" = "56";
+	"objects" = {
+		"222222223333444400000001" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000001";
 		};
-/* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXGroup section */
-		888888889999AAAA00000001 = {
-			isa = PBXGroup;
-			children = (
-				111111112222333300000001 /* OmniDownloaderApp.swift */,
-				111111112222333300000002 /* Info.plist */,
-				111111112222333300000003 /* Models.swift */,
-				111111112222333300000004 /* AppStrings.swift */,
-				111111112222333300000005 /* UrlSniffer.swift */,
-				111111112222333300000006 /* BilibiliExtractor.swift */,
-				111111112222333300000007 /* DomesticExtractor.swift */,
-				111111112222333300000008 /* AVMuxer.swift */,
-				111111112222333300000009 /* CookieStore.swift */,
-				11111111222233330000000A /* MediaSaver.swift */,
-				11111111222233330000000B /* DownloadManager.swift */,
-				11111111222233330000000C /* MainTabView.swift */,
-				11111111222233330000000D /* HomeView.swift */,
-				11111111222233330000000E /* FormatSelectorSheet.swift */,
-				11111111222233330000000F /* TaskCard.swift */,
-				111111112222333300000010 /* CollectionTaskCard.swift */,
-				111111112222333300000011 /* TasksView.swift */,
-				111111112222333300000012 /* BilibiliLoginSheet.swift */,
-				111111112222333300000013 /* SettingsView.swift */,
-				888888889999AAAA00000003 /* Frameworks */,
-				888888889999AAAA00000002 /* Products */,
-			);
-			sourceTree = "<group>";
+		"222222223333444400000003" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000003";
 		};
-		888888889999AAAA00000002 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				555555556666777700000001 /* OmniDownloader.app */,
-			);
-			name = Products;
-			sourceTree = "<group>";
+		"222222223333444400000004" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000004";
 		};
-		888888889999AAAA00000003 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				333333334444555500000014 /* AVFoundation.framework */,
-				333333334444555500000015 /* Photos.framework */,
-				333333334444555500000016 /* WebKit.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
+		"222222223333444400000005" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000005";
 		};
-/* End PBXGroup section */
-
-/* Begin PBXNativeTarget section */
-		666666667777888800000001 /* OmniDownloader */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = AAAAAAAA0000111100000001 /* Build configuration list for PBXNativeTarget "OmniDownloader" */;
-			buildPhases = (
-				99999999AAAA000000000001 /* Sources */,
-				99999999AAAA000000000002 /* Frameworks */,
-				99999999AAAA000000000003 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = OmniDownloader;
-			productName = OmniDownloader;
-			productReference = 555555556666777700000001 /* OmniDownloader.app */;
-			productType = "com.apple.product-type.application";
+		"222222223333444400000006" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000006";
 		};
-/* End PBXNativeTarget section */
-
-/* Begin PBXProject section */
-		777777778888999900000001 /* Project object */ = {
-			isa = PBXProject;
-			attributes = {
-				BuildIndependentTargetsInParallel = 1;
-				LastUpgradeCheck = 1500;
-				TargetAttributes = {
-					666666667777888800000001 = {
-						CreatedOnToolsVersion = 15.0;
+		"222222223333444400000007" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000007";
+		};
+		"222222223333444400000008" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000008";
+		};
+		"222222223333444400000009" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000009";
+		};
+		"22222222333344440000000A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "11111111222233330000000A";
+		};
+		"22222222333344440000000B" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "11111111222233330000000B";
+		};
+		"22222222333344440000000C" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "11111111222233330000000C";
+		};
+		"22222222333344440000000D" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "11111111222233330000000D";
+		};
+		"22222222333344440000000E" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "11111111222233330000000E";
+		};
+		"22222222333344440000000F" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "11111111222233330000000F";
+		};
+		"222222223333444400000010" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000010";
+		};
+		"222222223333444400000011" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000011";
+		};
+		"222222223333444400000012" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000012";
+		};
+		"222222223333444400000013" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000013";
+		};
+		"444444445555666600000014" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "333333334444555500000014";
+		};
+		"444444445555666600000015" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "333333334444555500000015";
+		};
+		"444444445555666600000016" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "333333334444555500000016";
+		};
+		"222222223333444400000017" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000017";
+		};
+		"222222223333444400000018" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000018";
+		};
+		"222222223333444400000019" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "111111112222333300000019";
+		};
+		"22222222333344440000001A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "11111111222233330000001A";
+		};
+		"555555556666777700000001" = {
+			"isa" = "PBXFileReference";
+			"explicitFileType" = "wrapper.application";
+			"includeInIndex" = "0";
+			"path" = "OmniDownloader.app";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+		};
+		"111111112222333300000001" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/App/OmniDownloaderApp.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000002" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text.plist.xml";
+			"path" = "OmniDownloader/App/Info.plist";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000003" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Models/Models.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000004" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Models/AppStrings.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000005" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Engines/UrlSniffer.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000006" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Engines/BilibiliExtractor.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000007" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Engines/DomesticExtractor.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000008" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Media/AVMuxer.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000009" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Services/CookieStore.swift";
+			"sourceTree" = "<group>";
+		};
+		"11111111222233330000000A" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Services/MediaSaver.swift";
+			"sourceTree" = "<group>";
+		};
+		"11111111222233330000000B" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Services/DownloadManager.swift";
+			"sourceTree" = "<group>";
+		};
+		"11111111222233330000000C" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/MainTabView.swift";
+			"sourceTree" = "<group>";
+		};
+		"11111111222233330000000D" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/Home/HomeView.swift";
+			"sourceTree" = "<group>";
+		};
+		"11111111222233330000000E" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/Home/FormatSelectorSheet.swift";
+			"sourceTree" = "<group>";
+		};
+		"11111111222233330000000F" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/Tasks/TaskCard.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000010" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/Tasks/CollectionTaskCard.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000011" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/Tasks/TasksView.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000012" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/Settings/BilibiliLoginSheet.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000013" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/Settings/SettingsView.swift";
+			"sourceTree" = "<group>";
+		};
+		"333333334444555500000014" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "wrapper.framework";
+			"name" = "AVFoundation.framework";
+			"path" = "System/Library/Frameworks/AVFoundation.framework";
+			"sourceTree" = "SDKROOT";
+		};
+		"333333334444555500000015" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "wrapper.framework";
+			"name" = "Photos.framework";
+			"path" = "System/Library/Frameworks/Photos.framework";
+			"sourceTree" = "SDKROOT";
+		};
+		"333333334444555500000016" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "wrapper.framework";
+			"name" = "WebKit.framework";
+			"path" = "System/Library/Frameworks/WebKit.framework";
+			"sourceTree" = "SDKROOT";
+		};
+		"111111112222333300000017" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/OmniTheme.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000018" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Services/YouTubeCookies.swift";
+			"sourceTree" = "<group>";
+		};
+		"111111112222333300000019" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Engines/YouTubeBrowser.swift";
+			"sourceTree" = "<group>";
+		};
+		"11111111222233330000001A" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Services/YouTubeDownload.swift";
+			"sourceTree" = "<group>";
+		};
+		"99999999AAAA000000000002" = {
+			"isa" = "PBXFrameworksBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+				"444444445555666600000014",
+				"444444445555666600000015",
+				"444444445555666600000016",
+				"40B35080A359B047D9E4F694",
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"888888889999AAAA00000001" = {
+			"isa" = "PBXGroup";
+			"children" = (
+				"111111112222333300000001",
+				"111111112222333300000002",
+				"111111112222333300000003",
+				"111111112222333300000004",
+				"111111112222333300000005",
+				"111111112222333300000006",
+				"111111112222333300000007",
+				"111111112222333300000008",
+				"111111112222333300000009",
+				"11111111222233330000000A",
+				"11111111222233330000000B",
+				"11111111222233330000000C",
+				"111111112222333300000017",
+				"11111111222233330000001A",
+				"111111112222333300000019",
+				"111111112222333300000018",
+				"11111111222233330000000D",
+				"11111111222233330000000E",
+				"11111111222233330000000F",
+				"111111112222333300000010",
+				"111111112222333300000011",
+				"111111112222333300000012",
+				"111111112222333300000013",
+				"888888889999AAAA00000003",
+				"888888889999AAAA00000002",
+				"E770787682FB0AC21351ADBC",
+				"C0F70BEEE8B6FFB34F0E9D31",
+				"0B7359AF6CBA1775A68473FC",
+				"17F6FDBED3E4F9474124869D",
+				"89D9B35DBD8F9D8A1CC99D99",
+				"CE76B264CE7C2E30B9994A34",
+				"A1D4BE2D33A2EA7F7A41EFC4",
+				"A50D12F77EDDDECF027CA1BB",
+				"6E0AB1FBF21EA59216F93422",
+				"5C9F075BCD7EA99EEC41B94A",
+				"5B25591B1E457866B06928FC",
+				"9CD48C339358FF89AE6DC098",
+				"194E994E5D7CB617B71A90F4",
+				"5EAF12DF2055F74E7A083606",
+				"EA0C2F08EF4472572DD59E47",
+				"75D4A0C2967E782C0913717B",
+				"DE9F857F3CC92059809D35C6",
+				"8D617F78A0AA232882375B92",
+				"4A43E94BB43652945A3DC2F6",
+				"68A5FC4F57EFB7680479DF8A",
+				"D18BFD8C25D236FCE2C2D619",
+				"5EE2623ED68972C84565C325",
+				"47F830CA87B2FB9784B5112B",
+				"26EE40CFFABF742B7379175E",
+				"C7152CFF8B057DBA6A0503F5",
+				"01D6F711E3A01C5B405F0165",
+				"068889838B5A9AAD4E679B68",
+				"AAA92F79ADF21EEEC0040F6A",
+				"B298F395A9662042CE331B14",
+				"848700BBDFC6AD6166701FC3",
+				"BE07DC257055D9AEFCC61743",
+				"8AD71CD7DF157E6C70AADCA3",
+				"E123871BDFF7514D6C143E60",
+				"A3E833D80D3D01BF6B90B888",
+				"13AFB006A2A4BA24FF8EF210",
+				"6B13C83403BD63C658BF3558",
+				"E790CB9B586EEF5D47B8F6AE",
+				"CFFB9D7C1E2156BDE225AE2C",
+				"C2D64342EEDCF3F3A926A7A8",
+				"691307E9F9E94F49C647A8AC",
+				"BEADCBB274A1E050AE585453",
+				"20112BBB0499E9796D56141A",
+				"5DD23A050D03E570F4017A88",
+				"8D52871E0C23DE77F8554D92",
+				"33ED3A13B28C53E08CCF56A8",
+				"FAC5AB6A8B80277896409CEE",
+				"2E195CA93637E350AC33D0E7",
+				"A24407D8DFE56394A72BEDA7",
+			);
+			"sourceTree" = "<group>";
+		};
+		"888888889999AAAA00000002" = {
+			"isa" = "PBXGroup";
+			"children" = (
+				"555555556666777700000001",
+				"CA6E492D60C7DB9233C51325",
+				"2E48AC0517D658F248530BAA",
+			);
+			"name" = "Products";
+			"sourceTree" = "<group>";
+		};
+		"888888889999AAAA00000003" = {
+			"isa" = "PBXGroup";
+			"children" = (
+				"333333334444555500000014",
+				"333333334444555500000015",
+				"333333334444555500000016",
+			);
+			"name" = "Frameworks";
+			"sourceTree" = "<group>";
+		};
+		"666666667777888800000001" = {
+			"isa" = "PBXNativeTarget";
+			"buildConfigurationList" = "AAAAAAAA0000111100000001";
+			"buildPhases" = (
+				"99999999AAAA000000000001",
+				"99999999AAAA000000000002",
+				"99999999AAAA000000000003",
+			);
+			"buildRules" = (
+			);
+			"dependencies" = (
+			);
+			"name" = "OmniDownloader";
+			"productName" = "OmniDownloader";
+			"productReference" = "555555556666777700000001";
+			"productType" = "com.apple.product-type.application";
+			"packageProductDependencies" = (
+				"8A35306E82876C6378B16D9C",
+			);
+		};
+		"777777778888999900000001" = {
+			"isa" = "PBXProject";
+			"attributes" = {
+				"BuildIndependentTargetsInParallel" = "1";
+				"LastUpgradeCheck" = "1500";
+				"TargetAttributes" = {
+					"666666667777888800000001" = {
+						"CreatedOnToolsVersion" = "15.0";
 					};
 				};
 			};
-			buildConfigurationList = AAAAAAAA0000111100000002 /* Build configuration list for PBXProject "OmniDownloader" */;
-			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = zh_CN;
-			hasScannedForEncodings = 0;
-			knownRegions = (
-				en,
-				Base,
-				zh_CN,
+			"buildConfigurationList" = "AAAAAAAA0000111100000002";
+			"compatibilityVersion" = "Xcode 14.0";
+			"developmentRegion" = "zh_CN";
+			"hasScannedForEncodings" = "0";
+			"knownRegions" = (
+				"en",
+				"Base",
+				"zh_CN",
 			);
-			mainGroup = 888888889999AAAA00000001;
-			productRefGroup = 888888889999AAAA00000002 /* Products */;
-			projectDirPath = "";
-			projectRoot = "";
-			targets = (
-				666666667777888800000001 /* OmniDownloader */,
+			"mainGroup" = "888888889999AAAA00000001";
+			"productRefGroup" = "888888889999AAAA00000002";
+			"projectDirPath" = "";
+			"projectRoot" = "";
+			"targets" = (
+				"666666667777888800000001",
+				"B69A996A13D82F463031A702",
+				"F3E1FF654E5F5E6210D8F9B2",
+			);
+			"packageReferences" = (
+				"816E82F5F1DD31D7491DFBEF",
 			);
 		};
-/* End PBXProject section */
-
-/* Begin PBXResourcesBuildPhase section */
-		99999999AAAA000000000003 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
+		"99999999AAAA000000000003" = {
+			"isa" = "PBXResourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+				"0EF2CBDA0D98DCDD22F86324",
+				"15B2862BF7AB0DC80E1730A9",
+				"8E44743637BC10B2C7AE6012",
+				"C1371309EED01CED47A49755",
+				"3CE902649F8712BB54D1623D",
+				"2BC4D8B09B275E119358479C",
+				"67A8D85D19FCCFC9E7D725ED",
+				"64732B2A087F3D9AA01F64D2",
+				"A317A5F408A7B1B74A213587",
+				"74D2E227A785BE8471475520",
+				"BC9917D3AB3A731DB054A70B",
+				"576800180D78A57EFFC15C51",
+				"320CF3CD705C941957F342C1",
+				"21D697C995E92DDDD79CC4D0",
+				"D5AA1AAF6730291E9319B14D",
+				"5921A024FFF7AB0C1F9207DA",
+				"8521104D6E4FD33D4137D69A",
+				"7EE17692D16F4C36BE9B8CF6",
+				"077DB8FBBD08A9186B592394",
+				"009DB1B2017D0036F43660FA",
+				"2E3C5FABAB0AC154968CC54F",
+				"FF6200032C92482FEE8A8925",
+				"3864509B62ECDA02EAC7AD50",
+				"3B66849D13D2FB93247EA420",
+				"60B3ABBBBC91D32A5E5820DF",
+				"566BE13753E051CBFE69052D",
+				"7F9C79AD1BD5E2EE26D43594",
+				"C5A606EA51CBDE2B913AC04B",
 			);
-			runOnlyForDeploymentPostprocessing = 0;
+			"runOnlyForDeploymentPostprocessing" = "0";
 		};
-/* End PBXResourcesBuildPhase section */
-
-/* Begin PBXSourcesBuildPhase section */
-		99999999AAAA000000000001 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				222222223333444400000001 /* OmniDownloaderApp.swift in Sources */,
-				222222223333444400000003 /* Models.swift in Sources */,
-				222222223333444400000004 /* AppStrings.swift in Sources */,
-				222222223333444400000005 /* UrlSniffer.swift in Sources */,
-				222222223333444400000006 /* BilibiliExtractor.swift in Sources */,
-				222222223333444400000007 /* DomesticExtractor.swift in Sources */,
-				222222223333444400000008 /* AVMuxer.swift in Sources */,
-				222222223333444400000009 /* CookieStore.swift in Sources */,
-				22222222333344440000000A /* MediaSaver.swift in Sources */,
-				22222222333344440000000B /* DownloadManager.swift in Sources */,
-				22222222333344440000000C /* MainTabView.swift in Sources */,
-				22222222333344440000000D /* HomeView.swift in Sources */,
-				22222222333344440000000E /* FormatSelectorSheet.swift in Sources */,
-				22222222333344440000000F /* TaskCard.swift in Sources */,
-				222222223333444400000010 /* CollectionTaskCard.swift in Sources */,
-				222222223333444400000011 /* TasksView.swift in Sources */,
-				222222223333444400000012 /* BilibiliLoginSheet.swift in Sources */,
-				222222223333444400000013 /* SettingsView.swift in Sources */,
+		"99999999AAAA000000000001" = {
+			"isa" = "PBXSourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+				"222222223333444400000001",
+				"222222223333444400000003",
+				"222222223333444400000004",
+				"222222223333444400000005",
+				"222222223333444400000006",
+				"222222223333444400000007",
+				"222222223333444400000008",
+				"222222223333444400000009",
+				"22222222333344440000000A",
+				"22222222333344440000000B",
+				"22222222333344440000000C",
+				"222222223333444400000017",
+				"22222222333344440000001A",
+				"222222223333444400000019",
+				"222222223333444400000018",
+				"22222222333344440000000D",
+				"22222222333344440000000E",
+				"22222222333344440000000F",
+				"222222223333444400000010",
+				"222222223333444400000011",
+				"222222223333444400000012",
+				"222222223333444400000013",
+				"43C663A69919AFD7B95CEE67",
+				"D84C1ACC5B660250D1872E58",
+				"8216E2B72E9DF8CD5B28982C",
+				"B8E7C1392DAC51BD82E50490",
+				"48369FBA2FE3F18EBF580186",
+				"BDFB1061D9EB6D103C816B51",
+				"C737F0B463233A97CA07B183",
+				"EDA0578819137937595226AF",
+				"A05C1124E2836556D987CF5A",
+				"9AC546E293E2508AC15D6A0C",
+				"DC1136CB8EBE832A52349011",
+				"5B55AF68D68FBAA17EE9C63D",
+				"F07443A350AACA475EA1D26E",
+				"31E1AD71534FF3E05CFA6FB5",
+				"B4FFCAA572CE1535BDB4B9FC",
+				"A3A7B70F32CF2238F31E0D69",
 			);
-			runOnlyForDeploymentPostprocessing = 0;
+			"runOnlyForDeploymentPostprocessing" = "0";
 		};
-/* End PBXSourcesBuildPhase section */
-
-/* Begin XCBuildConfiguration section */
-		BBBBBBBB0000111100000003 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
+		"BBBBBBBB0000111100000003" = {
+			"isa" = "XCBuildConfiguration";
+			"buildSettings" = {
+				"ALWAYS_SEARCH_USER_PATHS" = "NO";
+				"CLANG_ANALYZER_NONNULL" = "YES";
+				"CLANG_CXX_LANGUAGE_STANDARD" = "gnu++20";
+				"CLANG_ENABLE_MODULES" = "YES";
+				"CLANG_ENABLE_OBJC_ARC" = "YES";
+				"COPY_PHASE_STRIP" = "NO";
+				"DEBUG_INFORMATION_FORMAT" = "dwarf";
+				"ENABLE_STRICT_OBJC_MSGSEND" = "YES";
+				"ENABLE_TESTABILITY" = "YES";
+				"GCC_DYNAMIC_NO_PIC" = "NO";
+				"GCC_NO_COMMON_BLOCKS" = "YES";
+				"GCC_OPTIMIZATION_LEVEL" = "0";
+				"GCC_PREPROCESSOR_DEFINITIONS" = (
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				"IPHONEOS_DEPLOYMENT_TARGET" = "15.0";
+				"MTL_ENABLE_DEBUG_INFO" = "INCLUDE_SOURCE";
+				"MTL_FAST_MATH" = "YES";
+				"ONLY_ACTIVE_ARCH" = "YES";
+				"SDKROOT" = "iphoneos";
+				"SWIFT_ACTIVE_COMPILATION_CONDITIONS" = "DEBUG";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
 			};
-			name = Debug;
+			"name" = "Debug";
 		};
-		BBBBBBBB0000111100000004 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_NO_COMMON_BLOCKS = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = "wholemodule";
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				VALIDATE_PRODUCT = YES;
+		"BBBBBBBB0000111100000004" = {
+			"isa" = "XCBuildConfiguration";
+			"buildSettings" = {
+				"ALWAYS_SEARCH_USER_PATHS" = "NO";
+				"CLANG_ANALYZER_NONNULL" = "YES";
+				"CLANG_CXX_LANGUAGE_STANDARD" = "gnu++20";
+				"CLANG_ENABLE_MODULES" = "YES";
+				"CLANG_ENABLE_OBJC_ARC" = "YES";
+				"COPY_PHASE_STRIP" = "NO";
+				"DEBUG_INFORMATION_FORMAT" = "dwarf-with-dsym";
+				"ENABLE_NS_ASSERTIONS" = "NO";
+				"ENABLE_STRICT_OBJC_MSGSEND" = "YES";
+				"GCC_NO_COMMON_BLOCKS" = "YES";
+				"IPHONEOS_DEPLOYMENT_TARGET" = "15.0";
+				"MTL_ENABLE_DEBUG_INFO" = "NO";
+				"MTL_FAST_MATH" = "YES";
+				"SDKROOT" = "iphoneos";
+				"SWIFT_COMPILATION_MODE" = "wholemodule";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+				"VALIDATE_PRODUCT" = "YES";
 			};
-			name = Release;
+			"name" = "Release";
 		};
-		BBBBBBBB0000111100000001 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = OmniDownloader/App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				LD_RUNPATH_SEARCH_PATHS = (
+		"BBBBBBBB0000111100000001" = {
+			"isa" = "XCBuildConfiguration";
+			"buildSettings" = {
+				"ASSETCATALOG_COMPILER_APPICON_NAME" = "AppIcon";
+				"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = "AccentColor";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"CODE_SIGNING_ALLOWED" = "NO";
+				"CODE_SIGNING_REQUIRED" = "NO";
+				"CURRENT_PROJECT_VERSION" = "79";
+				"GENERATE_INFOPLIST_FILE" = "NO";
+				"INFOPLIST_FILE" = "OmniDownloader/App/Info.plist";
+				"IPHONEOS_DEPLOYMENT_TARGET" = "15.0";
+				"LD_RUNPATH_SEARCH_PATHS" = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.omnidownloader.ios;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				"MARKETING_VERSION" = "1.7.20";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.omnidownloader.ios";
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"SWIFT_EMIT_LOC_STRINGS" = "YES";
+				"SWIFT_VERSION" = "5.0";
+				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"SWIFT_OBJC_BRIDGING_HEADER" = "OmniDownloader/Media/NativeProbe.h";
 			};
-			name = Debug;
+			"name" = "Debug";
 		};
-		BBBBBBBB0000111100000002 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = OmniDownloader/App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				LD_RUNPATH_SEARCH_PATHS = (
+		"BBBBBBBB0000111100000002" = {
+			"isa" = "XCBuildConfiguration";
+			"buildSettings" = {
+				"ASSETCATALOG_COMPILER_APPICON_NAME" = "AppIcon";
+				"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = "AccentColor";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"CODE_SIGNING_ALLOWED" = "NO";
+				"CODE_SIGNING_REQUIRED" = "NO";
+				"CURRENT_PROJECT_VERSION" = "79";
+				"GENERATE_INFOPLIST_FILE" = "NO";
+				"INFOPLIST_FILE" = "OmniDownloader/App/Info.plist";
+				"IPHONEOS_DEPLOYMENT_TARGET" = "15.0";
+				"LD_RUNPATH_SEARCH_PATHS" = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.omnidownloader.ios;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				"MARKETING_VERSION" = "1.7.20";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.omnidownloader.ios";
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"SWIFT_EMIT_LOC_STRINGS" = "YES";
+				"SWIFT_VERSION" = "5.0";
+				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"SWIFT_OBJC_BRIDGING_HEADER" = "OmniDownloader/Media/NativeProbe.h";
 			};
-			name = Release;
+			"name" = "Release";
 		};
-/* End XCBuildConfiguration section */
-
-/* Begin XCConfigurationList section */
-		AAAAAAAA0000111100000002 /* Build configuration list for PBXProject "OmniDownloader" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				BBBBBBBB0000111100000003 /* Debug */,
-				BBBBBBBB0000111100000004 /* Release */,
+		"AAAAAAAA0000111100000002" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = (
+				"BBBBBBBB0000111100000003",
+				"BBBBBBBB0000111100000004",
 			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
 		};
-		AAAAAAAA0000111100000001 /* Build configuration list for PBXNativeTarget "OmniDownloader" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				BBBBBBBB0000111100000001 /* Debug */,
-				BBBBBBBB0000111100000002 /* Release */,
+		"AAAAAAAA0000111100000001" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = (
+				"BBBBBBBB0000111100000001",
+				"BBBBBBBB0000111100000002",
 			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
 		};
-/* End XCConfigurationList section */
-
+		"E770787682FB0AC21351ADBC" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/App/OmniAppDelegate.swift";
+			"sourceTree" = "<group>";
+		};
+		"43C663A69919AFD7B95CEE67" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "E770787682FB0AC21351ADBC";
+		};
+		"C0F70BEEE8B6FFB34F0E9D31" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Engines/ImagePostEngine.swift";
+			"sourceTree" = "<group>";
+		};
+		"D84C1ACC5B660250D1872E58" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "C0F70BEEE8B6FFB34F0E9D31";
+		};
+		"0B7359AF6CBA1775A68473FC" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Engines/MediaSources.swift";
+			"sourceTree" = "<group>";
+		};
+		"8216E2B72E9DF8CD5B28982C" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "0B7359AF6CBA1775A68473FC";
+		};
+		"17F6FDBED3E4F9474124869D" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Engines/NativeMP4Probe.swift";
+			"sourceTree" = "<group>";
+		};
+		"B8E7C1392DAC51BD82E50490" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "17F6FDBED3E4F9474124869D";
+		};
+		"89D9B35DBD8F9D8A1CC99D99" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Engines/PlatformBrowser.swift";
+			"sourceTree" = "<group>";
+		};
+		"48369FBA2FE3F18EBF580186" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "89D9B35DBD8F9D8A1CC99D99";
+		};
+		"CE76B264CE7C2E30B9994A34" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Media/MediaArchive.swift";
+			"sourceTree" = "<group>";
+		};
+		"BDFB1061D9EB6D103C816B51" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "CE76B264CE7C2E30B9994A34";
+		};
+		"A1D4BE2D33A2EA7F7A41EFC4" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Media/NativeFFmpeg.swift";
+			"sourceTree" = "<group>";
+		};
+		"C737F0B463233A97CA07B183" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "A1D4BE2D33A2EA7F7A41EFC4";
+		};
+		"A50D12F77EDDDECF027CA1BB" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Media/NativeHLS.swift";
+			"sourceTree" = "<group>";
+		};
+		"EDA0578819137937595226AF" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "A50D12F77EDDDECF027CA1BB";
+		};
+		"6E0AB1FBF21EA59216F93422" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Media/NativeMediaPipeline.swift";
+			"sourceTree" = "<group>";
+		};
+		"A05C1124E2836556D987CF5A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "6E0AB1FBF21EA59216F93422";
+		};
+		"5C9F075BCD7EA99EEC41B94A" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Models/OmniLocalization.swift";
+			"sourceTree" = "<group>";
+		};
+		"9AC546E293E2508AC15D6A0C" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "5C9F075BCD7EA99EEC41B94A";
+		};
+		"5B25591B1E457866B06928FC" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Services/BackgroundTransfer.swift";
+			"sourceTree" = "<group>";
+		};
+		"DC1136CB8EBE832A52349011" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "5B25591B1E457866B06928FC";
+		};
+		"9CD48C339358FF89AE6DC098" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Services/PlatformSession.swift";
+			"sourceTree" = "<group>";
+		};
+		"5B55AF68D68FBAA17EE9C63D" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "9CD48C339358FF89AE6DC098";
+		};
+		"194E994E5D7CB617B71A90F4" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/ImagesView.swift";
+			"sourceTree" = "<group>";
+		};
+		"F07443A350AACA475EA1D26E" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "194E994E5D7CB617B71A90F4";
+		};
+		"5EAF12DF2055F74E7A083606" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/OmniComponents.swift";
+			"sourceTree" = "<group>";
+		};
+		"31E1AD71534FF3E05CFA6FB5" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "5EAF12DF2055F74E7A083606";
+		};
+		"EA0C2F08EF4472572DD59E47" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/strings.json";
+			"sourceTree" = "<group>";
+		};
+		"0EF2CBDA0D98DCDD22F86324" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "EA0C2F08EF4472572DD59E47";
+		};
+		"75D4A0C2967E782C0913717B" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/target-capture.js";
+			"sourceTree" = "<group>";
+		};
+		"15B2862BF7AB0DC80E1730A9" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "75D4A0C2967E782C0913717B";
+		};
+		"816E82F5F1DD31D7491DFBEF" = {
+			"isa" = "XCRemoteSwiftPackageReference";
+			"repositoryURL" = "https://github.com/jaywcjlove/ffmpeg-kit";
+			"requirement" = {
+				"kind" = "revision";
+				"revision" = "0bd85df8f9693061f6f979414662baaf876a3e20";
+			};
+		};
+		"8A35306E82876C6378B16D9C" = {
+			"isa" = "XCSwiftPackageProductDependency";
+			"package" = "816E82F5F1DD31D7491DFBEF";
+			"productName" = "ffmpegkit";
+		};
+		"40B35080A359B047D9E4F694" = {
+			"isa" = "PBXBuildFile";
+			"productRef" = "8A35306E82876C6378B16D9C";
+		};
+		"DE9F857F3CC92059809D35C6" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloaderTests/NativeMediaTests.swift";
+			"sourceTree" = "<group>";
+		};
+		"7A25AD0E68B3789842C26E7A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "DE9F857F3CC92059809D35C6";
+		};
+		"CA6E492D60C7DB9233C51325" = {
+			"isa" = "PBXFileReference";
+			"explicitFileType" = "wrapper.cfbundle";
+			"includeInIndex" = "0";
+			"path" = "OmniDownloaderTests.xctest";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+		};
+		"13100B89E8F7FB2D18AB5CFE" = {
+			"isa" = "PBXSourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+				"214000BEE83A9CB33D52EE6A",
+				"7A25AD0E68B3789842C26E7A",
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"67035E053215DB26ABBC5054" = {
+			"isa" = "PBXFrameworksBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"2E10E26C4CC7E02CEAEC0EA6" = {
+			"isa" = "PBXResourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+				"7304E423673A465D7A1E4D45",
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"A1E0222AA6A639C7357398F9" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Debug";
+			"buildSettings" = {
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.omnidownloader.omnidownloadertests";
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"SWIFT_VERSION" = "5.0";
+				"IPHONEOS_DEPLOYMENT_TARGET" = "15.0";
+				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"CODE_SIGNING_ALLOWED" = "NO";
+				"LD_RUNPATH_SEARCH_PATHS" = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/OmniDownloader.app/OmniDownloader";
+				"BUNDLE_LOADER" = "$(TEST_HOST)";
+			};
+		};
+		"7BD92B71B42F12D37CEF055C" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Release";
+			"buildSettings" = {
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.omnidownloader.omnidownloadertests";
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"SWIFT_VERSION" = "5.0";
+				"IPHONEOS_DEPLOYMENT_TARGET" = "15.0";
+				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"CODE_SIGNING_ALLOWED" = "NO";
+				"LD_RUNPATH_SEARCH_PATHS" = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/OmniDownloader.app/OmniDownloader";
+				"BUNDLE_LOADER" = "$(TEST_HOST)";
+			};
+		};
+		"D453707BB89479A461F52A27" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = (
+				"A1E0222AA6A639C7357398F9",
+				"7BD92B71B42F12D37CEF055C",
+			);
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
+		};
+		"833D606A92B46CAB3AAC0F41" = {
+			"isa" = "PBXContainerItemProxy";
+			"containerPortal" = "777777778888999900000001";
+			"proxyType" = "1";
+			"remoteGlobalIDString" = "666666667777888800000001";
+			"remoteInfo" = "OmniDownloader";
+		};
+		"2E34B18FFF0B6DCCB2E197FF" = {
+			"isa" = "PBXTargetDependency";
+			"target" = "666666667777888800000001";
+			"targetProxy" = "833D606A92B46CAB3AAC0F41";
+		};
+		"B69A996A13D82F463031A702" = {
+			"isa" = "PBXNativeTarget";
+			"buildConfigurationList" = "D453707BB89479A461F52A27";
+			"buildPhases" = (
+				"13100B89E8F7FB2D18AB5CFE",
+				"67035E053215DB26ABBC5054",
+				"2E10E26C4CC7E02CEAEC0EA6",
+			);
+			"buildRules" = (
+			);
+			"dependencies" = (
+				"2E34B18FFF0B6DCCB2E197FF",
+			);
+			"name" = "OmniDownloaderTests";
+			"productName" = "OmniDownloaderTests";
+			"productReference" = "CA6E492D60C7DB9233C51325";
+			"productType" = "com.apple.product-type.bundle.unit-test";
+		};
+		"8D617F78A0AA232882375B92" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloaderUITests/NavigationTests.swift";
+			"sourceTree" = "<group>";
+		};
+		"2319B7AE1B4CCBE5B96672F2" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "8D617F78A0AA232882375B92";
+		};
+		"2E48AC0517D658F248530BAA" = {
+			"isa" = "PBXFileReference";
+			"explicitFileType" = "wrapper.cfbundle";
+			"includeInIndex" = "0";
+			"path" = "OmniDownloaderUITests.xctest";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+		};
+		"D549CFC2A1DBAAF6FB215D8C" = {
+			"isa" = "PBXSourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+				"2319B7AE1B4CCBE5B96672F2",
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"78E36EE1F6DBFF4B61C4587B" = {
+			"isa" = "PBXFrameworksBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"2D4F5E67A3304B83C694FDE4" = {
+			"isa" = "PBXResourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"71EDB2F30F1085C71A3EF698" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Debug";
+			"buildSettings" = {
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.omnidownloader.omnidownloaderuitests";
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"SWIFT_VERSION" = "5.0";
+				"IPHONEOS_DEPLOYMENT_TARGET" = "15.0";
+				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"CODE_SIGNING_ALLOWED" = "NO";
+				"LD_RUNPATH_SEARCH_PATHS" = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"TEST_TARGET_NAME" = "OmniDownloader";
+			};
+		};
+		"E8F3B605CF50509C9F2FE6F8" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Release";
+			"buildSettings" = {
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.omnidownloader.omnidownloaderuitests";
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"SWIFT_VERSION" = "5.0";
+				"IPHONEOS_DEPLOYMENT_TARGET" = "15.0";
+				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"CODE_SIGNING_ALLOWED" = "NO";
+				"LD_RUNPATH_SEARCH_PATHS" = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"TEST_TARGET_NAME" = "OmniDownloader";
+			};
+		};
+		"5A7CE52FE99E1FDE405133DD" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = (
+				"71EDB2F30F1085C71A3EF698",
+				"E8F3B605CF50509C9F2FE6F8",
+			);
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
+		};
+		"5354BA53F62EBC051358AD65" = {
+			"isa" = "PBXContainerItemProxy";
+			"containerPortal" = "777777778888999900000001";
+			"proxyType" = "1";
+			"remoteGlobalIDString" = "666666667777888800000001";
+			"remoteInfo" = "OmniDownloader";
+		};
+		"E115D7876CCF6BCD7AC4D719" = {
+			"isa" = "PBXTargetDependency";
+			"target" = "666666667777888800000001";
+			"targetProxy" = "5354BA53F62EBC051358AD65";
+		};
+		"F3E1FF654E5F5E6210D8F9B2" = {
+			"isa" = "PBXNativeTarget";
+			"buildConfigurationList" = "5A7CE52FE99E1FDE405133DD";
+			"buildPhases" = (
+				"D549CFC2A1DBAAF6FB215D8C",
+				"78E36EE1F6DBFF4B61C4587B",
+				"2D4F5E67A3304B83C694FDE4",
+			);
+			"buildRules" = (
+			);
+			"dependencies" = (
+				"E115D7876CCF6BCD7AC4D719",
+			);
+			"name" = "OmniDownloaderUITests";
+			"productName" = "OmniDownloaderUITests";
+			"productReference" = "2E48AC0517D658F248530BAA";
+			"productType" = "com.apple.product-type.bundle.ui-testing";
+		};
+		"4A43E94BB43652945A3DC2F6" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/FFmpegKit-LGPL-3.txt";
+			"sourceTree" = "<group>";
+		};
+		"8E44743637BC10B2C7AE6012" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "4A43E94BB43652945A3DC2F6";
+		};
+		"68A5FC4F57EFB7680479DF8A" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/ffmpegkit-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"C1371309EED01CED47A49755" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "68A5FC4F57EFB7680479DF8A";
+		};
+		"D18BFD8C25D236FCE2C2D619" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.DAV1D.txt";
+			"sourceTree" = "<group>";
+		};
+		"3CE902649F8712BB54D1623D" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "D18BFD8C25D236FCE2C2D619";
+		};
+		"5EE2623ED68972C84565C325" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.GIFLIB.txt";
+			"sourceTree" = "<group>";
+		};
+		"2BC4D8B09B275E119358479C" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "5EE2623ED68972C84565C325";
+		};
+		"47F830CA87B2FB9784B5112B" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.JPEG.txt";
+			"sourceTree" = "<group>";
+		};
+		"67A8D85D19FCCFC9E7D725ED" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "47F830CA87B2FB9784B5112B";
+		};
+		"26EE40CFFABF742B7379175E" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LAME.txt";
+			"sourceTree" = "<group>";
+		};
+		"64732B2A087F3D9AA01F64D2" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "26EE40CFFABF742B7379175E";
+		};
+		"C7152CFF8B057DBA6A0503F5" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LIBOGG.txt";
+			"sourceTree" = "<group>";
+		};
+		"A317A5F408A7B1B74A213587" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "C7152CFF8B057DBA6A0503F5";
+		};
+		"01D6F711E3A01C5B405F0165" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LIBPNG.txt";
+			"sourceTree" = "<group>";
+		};
+		"74D2E227A785BE8471475520" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "01D6F711E3A01C5B405F0165";
+		};
+		"068889838B5A9AAD4E679B68" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LIBTHEORA.txt";
+			"sourceTree" = "<group>";
+		};
+		"BC9917D3AB3A731DB054A70B" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "068889838B5A9AAD4E679B68";
+		};
+		"AAA92F79ADF21EEEC0040F6A" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LIBVORBIS.txt";
+			"sourceTree" = "<group>";
+		};
+		"576800180D78A57EFFC15C51" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "AAA92F79ADF21EEEC0040F6A";
+		};
+		"B298F395A9662042CE331B14" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LIBVPX.txt";
+			"sourceTree" = "<group>";
+		};
+		"320CF3CD705C941957F342C1" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "B298F395A9662042CE331B14";
+		};
+		"848700BBDFC6AD6166701FC3" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.LIBWEBP.txt";
+			"sourceTree" = "<group>";
+		};
+		"21D697C995E92DDDD79CC4D0" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "848700BBDFC6AD6166701FC3";
+		};
+		"BE07DC257055D9AEFCC61743" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.OPENCORE-AMR.txt";
+			"sourceTree" = "<group>";
+		};
+		"D5AA1AAF6730291E9319B14D" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "BE07DC257055D9AEFCC61743";
+		};
+		"8AD71CD7DF157E6C70AADCA3" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.OPUS.txt";
+			"sourceTree" = "<group>";
+		};
+		"5921A024FFF7AB0C1F9207DA" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "8AD71CD7DF157E6C70AADCA3";
+		};
+		"E123871BDFF7514D6C143E60" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.SPEEX.txt";
+			"sourceTree" = "<group>";
+		};
+		"8521104D6E4FD33D4137D69A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "E123871BDFF7514D6C143E60";
+		};
+		"A3E833D80D3D01BF6B90B888" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.TIFF.txt";
+			"sourceTree" = "<group>";
+		};
+		"7EE17692D16F4C36BE9B8CF6" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "A3E833D80D3D01BF6B90B888";
+		};
+		"13AFB006A2A4BA24FF8EF210" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"077DB8FBBD08A9186B592394" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "13AFB006A2A4BA24FF8EF210";
+		};
+		"6B13C83403BD63C658BF3558" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavcodec-LICENSE.X264.txt";
+			"sourceTree" = "<group>";
+		};
+		"009DB1B2017D0036F43660FA" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "6B13C83403BD63C658BF3558";
+		};
+		"E790CB9B586EEF5D47B8F6AE" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavdevice-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"2E3C5FABAB0AC154968CC54F" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "E790CB9B586EEF5D47B8F6AE";
+		};
+		"CFFB9D7C1E2156BDE225AE2C" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavfilter-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"FF6200032C92482FEE8A8925" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "CFFB9D7C1E2156BDE225AE2C";
+		};
+		"C2D64342EEDCF3F3A926A7A8" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavformat-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"3864509B62ECDA02EAC7AD50" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "C2D64342EEDCF3F3A926A7A8";
+		};
+		"691307E9F9E94F49C647A8AC" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libavutil-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"3B66849D13D2FB93247EA420" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "691307E9F9E94F49C647A8AC";
+		};
+		"BEADCBB274A1E050AE585453" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libswresample-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"60B3ABBBBC91D32A5E5820DF" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "BEADCBB274A1E050AE585453";
+		};
+		"20112BBB0499E9796D56141A" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/libswscale-LICENSE.txt";
+			"sourceTree" = "<group>";
+		};
+		"566BE13753E051CBFE69052D" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "20112BBB0499E9796D56141A";
+		};
+		"5DD23A050D03E570F4017A88" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "folder.assetcatalog";
+			"path" = "OmniDownloader/Assets.xcassets";
+			"sourceTree" = "<group>";
+		};
+		"7F9C79AD1BD5E2EE26D43594" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "5DD23A050D03E570F4017A88";
+		};
+		"8D52871E0C23DE77F8554D92" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "file";
+			"path" = "OmniDownloaderTests/Fixtures/ugoira-deflated.bin";
+			"sourceTree" = "<group>";
+		};
+		"7304E423673A465D7A1E4D45" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "8D52871E0C23DE77F8554D92";
+		};
+		"33ED3A13B28C53E08CCF56A8" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloaderTests/LocalMediaServer.swift";
+			"sourceTree" = "<group>";
+		};
+		"214000BEE83A9CB33D52EE6A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "33ED3A13B28C53E08CCF56A8";
+		};
+		"FAC5AB6A8B80277896409CEE" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.c.c";
+			"path" = "OmniDownloader/Media/NativeProbe.c";
+			"sourceTree" = "<group>";
+		};
+		"B4FFCAA572CE1535BDB4B9FC" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "FAC5AB6A8B80277896409CEE";
+		};
+		"2E195CA93637E350AC33D0E7" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/OmniIcon.swift";
+			"sourceTree" = "<group>";
+		};
+		"A3A7B70F32CF2238F31E0D69" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "2E195CA93637E350AC33D0E7";
+		};
+		"A24407D8DFE56394A72BEDA7" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/LICENSE-MaterialIcons.txt";
+			"sourceTree" = "<group>";
+		};
+		"C5A606EA51CBDE2B913AC04B" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "A24407D8DFE56394A72BEDA7";
+		};
 	};
-	rootObject = 777777778888999900000001 /* Project object */;
+	"rootObject" = "777777778888999900000001";
 }

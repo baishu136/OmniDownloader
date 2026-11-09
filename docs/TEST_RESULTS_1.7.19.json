@@ -1,0 +1,47 @@
+{
+  "version": "1.7.19",
+  "date": "2026-11-09",
+  "android": {
+    "versionCode": 78,
+    "releaseBuild": "passed",
+    "lintRelease": "passed",
+    "releaseUITestsPassed": 1,
+    "device": "Android 15 x86_64 emulator",
+    "arm64NativeExecution": "not exercised; six packaged native payload hashes equal to 1.7.18",
+    "signatureMatchesPreviousRelease": true
+  },
+  "windows": {
+    "pytestPassed": 75,
+    "existingPydanticWarnings": 5,
+    "sharedCaptureFixturesPassed": 6,
+    "desktopExeRealLaunch": "passed",
+    "webExeRealLaunch": "passed",
+    "bothPackagedExecutablesHTTPVideoAndMultiframeGIFDecode": "passed",
+    "nativeWindowScreenshot": "unavailable; capture helper timed out twice",
+    "webVisualReview": "passed",
+    "localWebVersion": "1.7.19",
+    "localWebURL": "http://127.0.0.1:58000",
+    "originalHistoryAndDownloadDirectoryPreserved": true
+  },
+  "ios": {
+    "sdkRun": "https://github.com/baishu136/OmniDownloader/actions/runs/42556269823",
+    "sdkRunSourceCommit": "8aed9165f6d540a17dcd5c34841d2ed069d78019",
+    "environment": "macOS 15.8.2 / Xcode 16.4",
+    "iphoneTestsPassed": 10,
+    "ipadUITestsPassed": 2,
+    "releaseArchitecture": "ARM64",
+    "minimumOS": "15.0",
+    "signing": "unsigned IPA; developer signing required before installation",
+    "visualEvidenceRun": "https://github.com/baishu136/OmniDownloader/actions/runs/42550990085",
+    "visualReview": "iPhone/iPad light portrait and dark full-screen landscape passed",
+    "physicalDeviceTests": "not performed",
+    "allProductionPlatformAndAccountTests": "not performed",
+    "knownDifferences": [
+      "YouTube accessible browser formats differ from Android Python/yt-dlp coverage",
+      "No system share extension; clipboard and URL scheme are provided",
+      "Conversion is subject to iOS foreground/background scheduling",
+      "In-app proxy requires iOS 17; iOS 15/16 use system networking configuration"
+    ]
+  },
+  "evidence": "Versioned delivery folder release/1.7.19/qa; see PARITY_1.7.19_2026-11-08.md for scope"
+}

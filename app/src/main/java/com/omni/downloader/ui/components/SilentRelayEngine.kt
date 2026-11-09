@@ -47,7 +47,7 @@ fun SilentRelayEngine(
             AndroidView(factory = { context ->
                 WebView(context).also { web ->
                     view = web
-                    cleanup = RelayAutomation.bind(web, session, videoUrl, autoSubmit = true)
+                    cleanup = RelayAutomation.bind(web, session, videoUrl, autoSubmit = true, pageUrl = site.url)
                     web.loadUrl(RelayAutomation.initialUrl(site.url, videoUrl))
                 }
             })

@@ -1,7 +1,7 @@
 package com.omni.downloader.engine
 
 import android.content.Context
-import android.util.Log
+import com.omni.downloader.engine.SafeLog as Log
 import com.yausername.ffmpeg.FFmpeg
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -126,38 +126,41 @@ object FFmpegExecutor {
         inputFile: File,
         outputFile: File
     ): Result<Unit> = withContext(Dispatchers.IO) {
-        val ffmpeg = getFFmpegBinary(context)
-            ?: return@withContext Result.failure(Exception("未能找到 FFmpeg 核心执行组件"))
-
-        val filterGraph = "fps=15,scale='min(480,trunc(iw/2)*2)':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer"
-        val commands = listOf(
-            ffmpeg.absolutePath,
-            "-y",
-            "-i", inputFile.absolutePath,
-            "-vf", filterGraph,
-            "-loop", "0",
-            outputFile.absolutePath
-        )
-
-        val res = executeCommand(context, commands)
-        if (res.isSuccess && outputFile.exists() && outputFile.length() > 0) {
+        if (GifInspector.inspect(inputFile) != null) {
+            MediaVerifier.verifyGif(inputFile)?.let { return@withContext Result.failure(Exception(it)) }
+            if (inputFile.canonicalFile != outputFile.canonicalFile) inputFile.copyTo(outputFile, overwrite = true)
             return@withContext Result.success(Unit)
         }
-
-        // 简易备选指令（若复杂滤镜图遇到非标编码，平滑降级并保证 -loop 0 无限循环与偶数分辨率）
-        Log.w(TAG, "两阶段调色板 GIF 转换未通过，切换通用降级转换: ${res.exceptionOrNull()?.message}")
-        val fallbackCommands = listOf(
-            ffmpeg.absolutePath,
-            "-y",
-            "-i", inputFile.absolutePath,
-            "-vf", "fps=15,scale='min(480,trunc(iw/2)*2)':-2:flags=lanczos",
-            "-loop", "0",
-            outputFile.absolutePath
-        )
-        executeCommand(context, fallbackCommands)
+        val ffmpeg = getFFmpegBinary(context)
+            ?: return@withContext Result.failure(Exception("未能找到 FFmpeg 核心执行组件"))
+        outputFile.delete()
+        val palette = File.createTempFile("omni-gif-palette-", ".png", context.cacheDir)
+        val scale = "fps=15,scale='min(480,iw)':-1:flags=lanczos"
+        try {
+            // A single split graph buffers the whole video until palettegen
+            // finishes. Separate passes keep conversion memory bounded.
+            val paletteResult = executeCommand(context, listOf(ffmpeg.path, "-y", "-i", inputFile.path,
+                "-vf", "$scale,palettegen=max_colors=256:stats_mode=diff", "-frames:v", "1", "-update", "1", palette.path))
+            val result = if (paletteResult.isSuccess && palette.length() > 0) {
+                executeCommand(context, listOf(ffmpeg.path, "-y", "-i", inputFile.path, "-i", palette.path,
+                    "-filter_complex", "[0:v]$scale[v];[v][1:v]paletteuse=dither=bayer[gif]",
+                    "-map", "[gif]", "-an", "-c:v", "gif", "-loop", "0", "-f", "gif", outputFile.path))
+            } else paletteResult
+            if (result.isSuccess && MediaVerifier.verifyGif(outputFile) == null) return@withContext Result.success(Unit)
+            outputFile.delete()
+            Log.w(TAG, "调色板 GIF 转换未通过，尝试标准 GIF 编码: ${result.exceptionOrNull()?.message}")
+            val fallback = executeCommand(context, listOf(ffmpeg.path, "-y", "-i", inputFile.path,
+                "-vf", scale, "-an", "-pix_fmt", "rgb8", "-c:v", "gif", "-loop", "0", "-f", "gif", outputFile.path))
+            val error = MediaVerifier.verifyGif(outputFile)
+            if (fallback.isSuccess && error == null) Result.success(Unit)
+            else {
+                outputFile.delete()
+                Result.failure(Exception(error ?: "[POSTPROCESS_FAILED] GIF 转换失败", fallback.exceptionOrNull()))
+            }
+        } finally { palette.delete() }
     }
 
-    internal fun executeCommand(context: Context, commands: List<String>): Result<Unit> {
+    internal suspend fun executeCommand(context: Context, commands: List<String>): Result<Unit> {
         try {
             val nativeDir = File(context.applicationInfo.nativeLibraryDir)
             val packagesDir = File(context.noBackupFilesDir, "youtubedl-android/packages")
@@ -173,6 +176,7 @@ object FFmpegExecutor {
                     Log.w(TAG, "初始化 FFmpeg 运行时库微异常: ${fe.message}")
                 }
             }
+            FFmpegRuntime.ensure(context)
 
             val pb = ProcessBuilder(commands)
             pb.directory(context.cacheDir)
@@ -191,16 +195,26 @@ object FFmpegExecutor {
             Log.d(TAG, "执行 FFmpeg 调度: ${commands.joinToString(" ")}")
 
             val process = pb.start()
-            val output = process.inputStream.bufferedReader().use { it.readText() }
-            val exitCode = process.waitFor()
-
-            if (exitCode == 0) {
-                Log.d(TAG, "FFmpeg 执行成功完成")
-                return Result.success(Unit)
-            } else {
-                Log.e(TAG, "FFmpeg 报错退出 (code $exitCode): $output")
-                return Result.failure(Exception("FFmpeg 处理失败 (code $exitCode): ${output.takeLast(400)}"))
+            return kotlinx.coroutines.withTimeout(30L * 60 * 1000) {
+                kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+                    continuation.invokeOnCancellation { process.destroyForcibly() }
+                    Thread({
+                        val result = runCatching {
+                            val tail = StringBuilder()
+                            process.inputStream.bufferedReader().useLines { lines -> lines.forEach { line ->
+                                tail.append(line).append('\n')
+                                if (tail.length > 16000) tail.delete(0, tail.length - 12000)
+                            } }
+                            val code = process.waitFor()
+                            if (code != 0) error("FFmpeg处理失败 (code $code): ${LogSanitizer.sanitize(tail.toString()).takeLast(1500)}")
+                            Unit
+                        }
+                        if (continuation.isActive) continuation.resumeWith(Result.success(result))
+                    }, "omni-ffmpeg-output").apply { isDaemon = true; start() }
+                }
             }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "FFmpeg 进程启动异常", e)
             return Result.failure(e)

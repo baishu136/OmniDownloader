@@ -69,9 +69,11 @@ internal object RelayAutomation {
     /** Returns cleanup for the temporary popup WebViews owned by this session. */
     fun bind(
         view: WebView, session: RelayCaptureSession, videoUrl: String, autoSubmit: Boolean,
-        onLocation: (String) -> Unit = {}, onTitle: (String) -> Unit = {}, onProgress: (Int) -> Unit = {}
+        onLocation: (String) -> Unit = {}, onTitle: (String) -> Unit = {}, onProgress: (Int) -> Unit = {}, pageUrl: String = ""
     ): () -> Unit {
         val popups = mutableListOf<WebView>()
+        val popupIdentities = mutableMapOf<WebView, WebViewDesktopMode>()
+        val identity = WebViewDesktopMode(view)
         view.settings.apply {
             javaScriptEnabled = true; domStorageEnabled = true
             useWideViewPort = true; loadWithOverviewMode = true
@@ -79,8 +81,8 @@ internal object RelayAutomation {
             mediaPlaybackRequiresUserGesture = false; allowFileAccess = false
             cacheMode = WebSettings.LOAD_DEFAULT
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            userAgentString = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
         }
+        identity.apply(BrowserIdentity.prefersDesktopUrl(pageUrl))
         view.addJavascriptInterface(session, "OmniBridge")
         view.setDownloadListener { url, _, _, mime, _ -> session.capture(url, mime = mime.orEmpty(), explicit = true) }
         view.webChromeClient = object : WebChromeClient() {
@@ -89,26 +91,27 @@ internal object RelayAutomation {
             override fun onCreateWindow(owner: WebView?, isDialog: Boolean, isUserGesture: Boolean, message: android.os.Message?): Boolean {
                 val transport = message?.obj as? WebView.WebViewTransport ?: return false
                 val popup = WebView(view.context); popups.add(popup)
+                popupIdentities[popup] = WebViewDesktopMode(popup).also { it.apply(identity.desktop) }
                 popup.webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(child: WebView?, request: WebResourceRequest?): Boolean {
                         val url = request?.url ?: return true
                         if (url.scheme !in setOf("http", "https")) return true
                         if (!session.capture(url.toString(), explicit = isUserGesture) && url.host == android.net.Uri.parse(view.url.orEmpty()).host) view.loadUrl(url.toString())
-                        popup.post { popups.remove(popup); popup.stopLoading(); popup.destroy() }
+                        popup.post { popups.remove(popup); popupIdentities.remove(popup)?.close(); popup.stopLoading(); popup.destroy() }
                         return true
                     }
                 }
                 transport.webView = popup; message.sendToTarget(); return true
             }
-            override fun onCloseWindow(window: WebView?) { if (window != null && popups.remove(window)) window.destroy() }
+            override fun onCloseWindow(window: WebView?) { if (window != null && popups.remove(window)) { popupIdentities.remove(window)?.close(); window.destroy() } }
         }
         view.webViewClient = object : WebViewClient() {
             override fun onPageStarted(web: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
-                url?.let(onLocation); session.onStatus("正在连接中转站…")
+                identity.onPageStarted(); url?.let(onLocation); session.onStatus("正在连接中转站…")
             }
             override fun onPageCommitVisible(web: WebView?, url: String?) { if (web != null) install(web, videoUrl, autoSubmit) }
             override fun onPageFinished(web: WebView?, url: String?) {
-                url?.let(onLocation); if (web != null) install(web, videoUrl, autoSubmit)
+                identity.onPageFinished(); url?.let(onLocation); if (web != null) install(web, videoUrl, autoSubmit)
             }
             override fun shouldInterceptRequest(web: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                 if (request?.method.equals("GET", ignoreCase = true)) session.capture(request!!.url.toString())
@@ -124,6 +127,6 @@ internal object RelayAutomation {
                 if (autoSubmit && request?.isForMainFrame == true) session.fail("中转站页面加载失败，可使用窗口排查")
             }
         }
-        return { popups.toList().forEach { it.stopLoading(); it.destroy() }; popups.clear() }
+        return { identity.close(); popupIdentities.values.forEach { it.close() }; popupIdentities.clear(); popups.toList().forEach { it.stopLoading(); it.destroy() }; popups.clear() }
     }
 }

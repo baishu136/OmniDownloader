@@ -61,8 +61,10 @@ class ServerThread(threading.Thread):
 
 
 def main():
+    from engine.browser_assist import browser_assist
+    browser_assist.configure(webview)
     host = "127.0.0.1"
-    port = find_available_port(58000)
+    port = find_available_port(int(os.environ.get('OMNI_PORT', '58000')))
     server_url = f"http://{host}:{port}"
 
     print(f"[OmniApp] 正在启动本地核心服务: {server_url}")

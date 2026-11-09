@@ -1,316 +1,132 @@
 import SwiftUI
 import Photos
+import UniformTypeIdentifiers
+import ffmpegkit
 
-/// 设置视图：B站账号安全登录授权、自动存入系统相册配置、缓存清理与关于说明
-struct SettingsView: View {
-    @AppStorage("com.omni.downloader.appearance") private var appearance = "system"
-    @ObservedObject private var cookieStore = CookieStore.shared
-    @State private var isLoggedIn: Bool = false
-    @State private var sessdataMasked: String = ""
-    @State private var autoSaveToPhotos: Bool = true
-    @State private var showLoginSheet: Bool = false
-    @State private var showClearCacheSuccess: Bool = false
-    @State private var cacheSizeText: String = "0.0 MB"
-    @State private var photoAuthStatusText: String = "已授权"
-    @State private var showAddRelaySheet: Bool = false
-    @State private var showRelayCompatAlert: Bool = false
-    
-    private let strings = AppStrings.current
-    
-    var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text(strings.appearanceSection)) {
-                    Picker(strings.appearanceSection, selection: $appearance) {
-                        Text(strings.appearanceSystem).tag("system")
-                        Text(strings.appearanceLight).tag("light")
-                        Text(strings.appearanceDark).tag("dark")
-                    }
-                }
-                // MARK: - 哔哩哔哩账号登录
-                Section(header: Text(strings.bilibiliSection), footer: Text(strings.bilibiliLoginDesc)) {
-                    if isLoggedIn {
-                        HStack {
-                            Image(systemName: "checkmark.seal.fill")
-                                .foregroundColor(.green)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(strings.bilibiliLoggedIn)
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.primary)
-                                if !sessdataMasked.isEmpty {
-                                    Text("凭证: \(sessdataMasked)")
-                                        .font(.system(size: 12))
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            Button(role: .destructive, action: logoutBilibili) {
-                                Text(strings.bilibiliLogout)
-                                    .font(.system(size: 14))
-                            }
-                        }
-                    } else {
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack {
-                                Image(systemName: "person.crop.circle.badge.exclamationmark")
-                                    .foregroundColor(.orange)
-                                    .font(.system(size: 20))
-                                Text(strings.bilibiliNotLoggedIn)
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.orange)
-                            }
-                            
-                            Button(action: {
-                                showLoginSheet = true
-                            }) {
-                                HStack {
-                                    Spacer()
-                                    Image(systemName: "lock.shield.fill")
-                                    Text(strings.bilibiliAutoLoginBtn)
-                                    Spacer()
-                                }
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.white)
-                                .padding(.vertical, 10)
-                                .background(Color.orange)
-                                .cornerRadius(8)
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
-                }
-                
-                // MARK: - 下载与相册设置
-                Section(header: Text(strings.downloadSettingsSection), footer: Text(strings.autoSaveToAlbumDesc)) {
-                    Toggle(isOn: $autoSaveToPhotos) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "photo.on.rectangle.angled")
-                                .foregroundColor(.blue)
-                            Text(strings.autoSaveToAlbum)
-                                .font(.system(size: 15))
-                        }
-                    }
-                    .onChange(of: autoSaveToPhotos) { newValue in
-                        CookieStore.shared.setAutoSaveToPhotos(newValue)
-                    }
-                    
-                    HStack {
-                        Text("系统相册写入权限")
-                            .font(.system(size: 15))
-                        Spacer()
-                        Text(photoAuthStatusText)
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Button(action: clearDiskCache) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "trash")
-                                    .foregroundColor(.red)
-                                Text(strings.clearCache)
-                                    .foregroundColor(.red)
-                                    .font(.system(size: 15))
-                            }
-                        }
-                        Spacer()
-                        Text(cacheSizeText)
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
-                    }
-                }
-
-                // MARK: - 第三方中转解析网站 (Relay Sites)
-                Section(header: HStack {
-                    Text("第三方中转解析网站")
-                    Spacer()
-                    Text("\(cookieStore.relaySites.count) 个")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                }, footer: Text("自定义添加备用解析站点，在直连受限或失效时使用。")) {
-                    if cookieStore.relaySites.isEmpty {
-                        Text("暂未配置任何备用中转网站")
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
-                    } else {
-                        ForEach(cookieStore.relaySites) { site in
-                            HStack(spacing: 12) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .fill(Color.blue.opacity(0.12))
-                                        .frame(width: 28, height: 28)
-                                    Text(String(site.name.prefix(1)).uppercased())
-                                        .font(.system(size: 13, weight: .bold))
-                                        .foregroundColor(.blue)
-                                }
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(site.name)
-                                        .font(.system(size: 14, weight: .semibold))
-                                    Text(site.url)
-                                        .font(.system(size: 11))
-                                        .foregroundColor(.secondary)
-                                        .lineLimit(1)
-                                }
-                                Spacer()
-                            }
-                        }
-                        .onDelete { indexSet in
-                            for index in indexSet {
-                                let site = cookieStore.relaySites[index]
-                                cookieStore.removeRelaySite(id: site.id)
-                            }
-                        }
-                    }
-
-                    Button(action: handleOpenAddRelaySite) {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundColor(.blue)
-                            Text("添加中转网站")
-                                .foregroundColor(.blue)
-                                .font(.system(size: 15, weight: .medium))
-                        }
-                    }
-                }
-
-                // MARK: - 关于与版本
-                Section(header: Text(strings.about)) {
-                    HStack {
-                        Text("当前版本")
-                        Spacer()
-                        Text(strings.version)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("技术架构")
-                            .font(.system(size: 15, weight: .medium))
-                        Text(strings.openSourceInfo)
-                            .font(.system(size: 13))
-                            .foregroundColor(.secondary)
-                            .lineSpacing(4)
-                    }
-                    .padding(.vertical, 4)
-                }
-            }
-            .navigationTitle(strings.settingsTitle)
-            .navigationBarTitleDisplayMode(.inline)
-            .sheet(isPresented: $showLoginSheet) {
-                BilibiliLoginSheet {
-                    reloadLoginState()
-                }
-            }
-            .sheet(isPresented: $showAddRelaySheet) {
-                AddRelaySiteSheet()
-            }
-            .alert(isPresented: $showClearCacheSuccess) {
-                Alert(
-                    title: Text(strings.appName),
-                    message: Text(strings.clearCacheSuccess),
-                    dismissButton: .default(Text(strings.confirm))
-                )
-            }
-            .alert("第三方网页使用须知与兼容性提示", isPresented: $showRelayCompatAlert) {
-                Button("取消", role: .cancel) { }
-                Button("我已知晓并继续") {
-                    cookieStore.confirmRelayCompatTip()
-                    showAddRelaySheet = true
-                }
-            } message: {
-                Text("备用中转功能仅提供第三方网页快捷导航与直链下载支持，各站点交互、反爬机制及解析链路存在差异。若遇人机验证属于网页端行为。请勿输入个人隐私信息。")
-            }
-            .onAppear {
-                reloadLoginState()
-                checkPhotoPermission()
-                calculateCacheSize()
-            }
-        }
-        .navigationViewStyle(StackNavigationViewStyle())
+@MainActor struct SettingsView:View{
+    @EnvironmentObject private var manager:DownloadManager
+    @AppStorage("com.omni.downloader.appearance") private var appearance="system"
+    @AppStorage("omni.language") private var language="system"
+    @AppStorage("omni.concurrent") private var concurrent=3
+    @ObservedObject private var preferences=CookieStore.shared
+    @ObservedObject private var sessions=PlatformSession.shared
+    @StateObject private var browser=PlatformBrowser()
+    @State private var page:Page?
+    @State private var selectedSite="YouTube"
+    @State private var count=0
+    @State private var importing=false
+    @State private var choosingFolder=false
+    @State private var folder=""
+    @State private var proxy=UserDefaults.standard.string(forKey:"omni.proxy") ?? ""
+    @State private var message=""
+    @State private var cacheSize=""
+    @State private var addingRelay=false
+    @State private var clearingAccount=false
+    @State private var clearingHistory=false
+    @State private var engineInfo=""
+    @State private var loginTask:Task<Void,Never>?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private enum Page:String,CaseIterable,Identifiable{
+        case appearance,downloads,proxy,relay,accounts,engine,about
+        var id:String{rawValue}
+        var title:String{switch self{case .appearance:return "外观与语言";case .downloads:return "下载与存储";case .proxy:return "网络代理";case .relay:return "中转站";case .accounts:return "账号";case .engine:return "下载引擎";case .about:return "关于"}}
+        var summary:String{switch self{case .appearance:return "主题模式、界面语言";case .downloads:return "保存目录、缓存与数据清理";case .proxy:return "HTTP 与 SOCKS 代理连接";case .relay:return "添加、管理和删除解析站点";case .accounts:return "Cookie 与登录管理";case .engine:return "运行状态与组件更新";case .about:return "应用版本与支持平台"}}
+        var icon:String{switch self{case .appearance:return "paintpalette";case .downloads:return "folder";case .proxy:return "globe";case .relay:return "server.rack";case .accounts:return "person.crop.circle";case .engine:return "icloud.and.arrow.down";case .about:return "info.circle"}}
     }
-
-    private func handleOpenAddRelaySite() {
-        if !cookieStore.hasShownRelayCompatTip {
-            showRelayCompatAlert = true
-        } else {
-            showAddRelaySheet = true
+    private func L(_ text:String)->String{OmniLocalization.text(text,language:language)}
+    private var active:Bool{manager.tasks.contains{[.pending,.downloading,.processing].contains($0.status)}}
+    var body:some View{
+        ScrollView{
+            VStack(alignment:.leading,spacing:18){
+                OmniPageHeader(title:L(page?.title ?? "偏好设置"),back:page==nil ? nil:{withAnimation(reduceMotion ? nil:.easeInOut(duration:0.2)){page=nil;message=""}})
+                if let page=page{
+                    VStack(alignment:.leading,spacing:20){child(page)}.frame(maxWidth:.infinity,alignment:.leading).padding(20).omniCard(radius:24).transition(.opacity)
+                }else{
+                    VStack(spacing:4){ForEach(Page.allCases){item in
+                        Button{withAnimation(reduceMotion ? nil:.easeInOut(duration:0.2)){page=item;message=""};if item == .downloads{loadStorage()};if item == .accounts{reloadSession()};if item == .engine{inspectEngine()}}label:{
+                            HStack(spacing:22){OmniIcon(name:item.icon,size:24).foregroundColor(OmniPalette.primary).frame(width:30);VStack(alignment:.leading,spacing:5){Text(L(item.title)).font(.system(size:18));Text(L(item.summary)).font(.subheadline).foregroundColor(OmniPalette.secondary)};Spacer();OmniIcon(name:"chevron.right",size:20).foregroundColor(OmniPalette.secondary)}.padding(.vertical,21).contentShape(Rectangle())
+                        }.buttonStyle(OmniPressStyle()).accessibilityIdentifier("omni.settings."+item.rawValue)
+                    }}
+                }
+                if !message.isEmpty{Text(message).font(.subheadline).foregroundColor(OmniPalette.secondary).padding(.vertical,8)}
+            }.padding(.horizontal,24).padding(.top,8).padding(.bottom,24)
+        }.background(OmniPalette.background).foregroundColor(OmniPalette.onSurface).tint(OmniPalette.primary)
+        .onChange(of:selectedSite){_ in reloadSession()}.onChange(of:sessions.revision){_ in reloadSession()}
+        .fileImporter(isPresented:$importing,allowedContentTypes:[.plainText,.text,.data]){result in do{try sessions.importFile(result.get(),site:selectedSite);reloadSession();message=L("会话已保存，请重新解析原链接")}catch{message=error.localizedDescription}}
+        .fileImporter(isPresented:$choosingFolder,allowedContentTypes:[.folder]){result in
+            do{let url=try result.get(),access=url.startAccessingSecurityScopedResource();defer{if access{url.stopAccessingSecurityScopedResource()}};guard access else{throw OmniPlatform.error("EXPORT_FAILED","无法访问保存目录")};let bookmark=try url.bookmarkData(options:[],includingResourceValuesForKeys:nil,relativeTo:nil);UserDefaults.standard.set(bookmark,forKey:"omni.folderBookmark");folder=url.lastPathComponent;message=L("保存目录已更新")}
+            catch{message=error.localizedDescription}
+        }
+        .sheet(isPresented:$browser.visible,onDismiss:{loginTask?.cancel();browser.close();reloadSession()}){PlatformBrowserSheet(browser:browser,login:true,onDone:{browser.visible=false})}
+        .sheet(isPresented:$addingRelay){AddRelaySiteSheet()}
+        .confirmationDialog(L("清除所选平台的登录状态？"),isPresented:$clearingAccount,titleVisibility:.visible){Button(L("清除会话"),role:.destructive){sessions.clear(selectedSite);reloadSession()};Button(L("取消"),role:.cancel){}}
+        .confirmationDialog(L("清空记录会保留已下载的文件"),isPresented:$clearingHistory,titleVisibility:.visible){Button(L("清空已完成记录"),role:.destructive){manager.clearCompletedTasks()};Button(L("清空所有记录"),role:.destructive){manager.clearHistory()};Button(L("取消"),role:.cancel){}}
+    }
+    @ViewBuilder private func child(_ item:Page)->some View{
+        switch item{
+        case .appearance:
+            Text(L("主题模式")).font(.headline)
+            Picker(L("主题模式"),selection:$appearance){Text(L("跟随系统")).tag("system");Text(L("浅色")).tag("light");Text(L("深色")).tag("dark")}.pickerStyle(.segmented)
+            Text(L("界面语言")).font(.headline)
+            Picker(L("界面语言"),selection:$language){Text(L("跟随系统")).tag("system");Text("简体中文").tag("zh-CN");Text("繁體中文").tag("zh-TW");Text("English").tag("en");Text("日本語").tag("ja")}.pickerStyle(.menu)
+        case .downloads:
+            Text(L("保存目录")).font(.headline);Text(folder.isEmpty ? "文件 → OmniDownloader → Downloads":folder).font(.subheadline).foregroundColor(OmniPalette.secondary)
+            HStack{Button(L("选择保存目录")){choosingFolder=true};Spacer();Button(L("恢复默认")){UserDefaults.standard.removeObject(forKey:"omni.folderBookmark");folder=""}}
+            Divider();Toggle(L("自动保存到相册"),isOn:$preferences.autoSaveToAlbum)
+            Text(L("文件先保存到目录；相册权限不足时仍保留文件。")).font(.caption).foregroundColor(OmniPalette.secondary)
+            Picker(L("最大同时下载任务数"),selection:$concurrent){ForEach([1,2,3,5],id:\.self){Text("\($0)").tag($0)}}
+            Divider();HStack{Text(L("缓存"));Spacer();Text(cacheSize).foregroundColor(OmniPalette.secondary)}
+            Button(L("清理缓存")){clearCache()}.disabled(active)
+            Button(L("清空下载记录"),role:.destructive){clearingHistory=true}.disabled(active)
+        case .proxy:
+            TextField("http://127.0.0.1:7890",text:$proxy).textInputAutocapitalization(.never).disableAutocorrection(true).keyboardType(.URL).padding(14).background(OmniPalette.surfaceVariant.opacity(0.35),in:RoundedRectangle(cornerRadius:15))
+            Text(L("HTTP、HTTPS 与 SOCKS5；应用内代理需要 iOS 17 及以上。留空使用系统网络设置。")).font(.caption).foregroundColor(OmniPalette.secondary)
+            OmniAction(title:L("保存并应用"),icon:"checkmark",prominent:true){
+                let old=UserDefaults.standard.string(forKey:"omni.proxy") ?? "";UserDefaults.standard.set(proxy.trimmingCharacters(in:.whitespacesAndNewlines),forKey:"omni.proxy")
+                do{_ = try OmniNetwork.configuration();message=L("代理设置已保存，请重新解析原链接")}catch{UserDefaults.standard.set(old,forKey:"omni.proxy");message=error.localizedDescription}
+            }
+        case .relay:
+            if preferences.relaySites.isEmpty{Text(L("暂未配置中转站")).foregroundColor(OmniPalette.secondary)}
+            ForEach(preferences.relaySites){site in HStack{VStack(alignment:.leading,spacing:4){Text(site.name).font(.headline);Text(site.url).font(.caption).foregroundColor(OmniPalette.secondary).lineLimit(1)};Spacer();Button(role:.destructive){preferences.removeRelaySite(id:site.id)}label:{Image(systemName:"trash").frame(width:44,height:44)}.accessibilityLabel(L("删除")+site.name)}}
+            OmniAction(title:L("添加中转网站"),icon:"plus",prominent:true){addingRelay=true}
+        case .accounts:
+            Text(L("Cookie 与登录管理")).font(.headline)
+            Picker(L("平台"),selection:$selectedSite){ForEach(OmniPlatform.all,id:\.self){Text($0).tag($0)}}.pickerStyle(.menu)
+            Toggle(L("禁用 Cookie"),isOn:Binding(get:{!sessions.enabled(selectedSite)},set:{sessions.setEnabled(selectedSite,!$0)}))
+            Text(count>0 ? L("已保存")+" \(count) "+L("项 Cookie"):L("尚未导入会话")).font(.subheadline).foregroundColor(OmniPalette.secondary)
+            Text(L("禁用后新请求不使用会话，已保存会话继续保留。登录状态保存在本机钥匙串。")).font(.caption).foregroundColor(OmniPalette.secondary)
+            OmniAction(title:L("网页登录"),icon:"person.crop.circle",prominent:true,disabled:!sessions.enabled(selectedSite)){
+                guard let home=OmniPlatform.homes[selectedSite] else{return};browser.visible=true;loginTask=Task{do{try await browser.prepare(home,login:true);browser.present()}catch{browser.notice=error.localizedDescription}}
+            }
+            HStack{Button(L("导入 Cookies 文件")){importing=true};Spacer();Button(L("清除会话"),role:.destructive){clearingAccount=true}}
+        case .engine:
+            Text("FFmpeg · FFprobe · WebKit · URLSession").font(.headline)
+            Text(engineInfo.isEmpty ? L("正在检查组件…"):engineInfo).font(.caption.monospaced()).textSelection(.enabled)
+            Button(L("重新检查")){inspectEngine()}
+            Text(L("媒体组件随应用版本更新；不会下载并执行外部程序。")).font(.caption).foregroundColor(OmniPalette.secondary)
+            Link(L("检查应用更新"),destination:URL(string:"https://github.com/baishu136/OmniDownloader/releases")!)
+        case .about:
+            HStack{Text("OmniDownloader").font(.title2.bold());Spacer();Text("1.7.20").foregroundColor(OmniPalette.primary)}
+            Text(L("支持平台")).font(.headline);OmniPlatformChips()
+            Text("SwiftUI · WebKit · URLSession · FFmpegKit").font(.caption).foregroundColor(OmniPalette.secondary)
+            Link("GitHub",destination:URL(string:"https://github.com/baishu136/OmniDownloader")!)
+            Link(L("第三方组件与许可证"),destination:URL(string:"https://github.com/jaywcjlove/ffmpeg-kit/tree/0bd85df8f9693061f6f979414662baaf876a3e20")!)
         }
     }
-
-    // MARK: - 刷新登录状态
-    private func reloadLoginState() {
-        self.isLoggedIn = CookieStore.shared.isLoggedIn()
-        if let sess = CookieStore.shared.getBilibiliSessData(), !sess.isEmpty {
-            if sess.count > 8 {
-                self.sessdataMasked = "\(sess.prefix(4))****\(sess.suffix(4))"
-            } else {
-                self.sessdataMasked = "****"
-            }
-        } else {
-            self.sessdataMasked = ""
-        }
-        self.autoSaveToPhotos = CookieStore.shared.getAutoSaveToPhotos()
-    }
-    
-    // MARK: - 退出登录
-    private func logoutBilibili() {
-        CookieStore.shared.clearBilibiliCookies()
-        reloadLoginState()
-    }
-    
-    // MARK: - 相册权限检查
-    private func checkPhotoPermission() {
-        let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-        switch status {
-        case .authorized, .limited:
-            photoAuthStatusText = "已授权"
-        case .denied, .restricted:
-            photoAuthStatusText = "已拒绝 (请在系统设置中开启)"
-        case .notDetermined:
-            photoAuthStatusText = "首次保存时请求"
-        @unknown default:
-            photoAuthStatusText = "未知"
+    private func reloadSession(){count=sessions.count(selectedSite)}
+    private func loadStorage(){
+        if let bookmark=UserDefaults.standard.data(forKey:"omni.folderBookmark"){var stale=false;folder=(try? URL(resolvingBookmarkData:bookmark,options:[],relativeTo:nil,bookmarkDataIsStale:&stale).lastPathComponent) ?? ""}
+        let directory=FileManager.default.urls(for:.cachesDirectory,in:.userDomainMask)[0].appendingPathComponent("omni-transfers")
+        Task.detached{let files=FileManager.default.enumerator(at:directory,includingPropertiesForKeys:[.fileSizeKey]);var size:Int64=0
+            while let file=files?.nextObject() as? URL{size += Int64((try? file.resourceValues(forKeys:[.fileSizeKey]).fileSize) ?? 0)}
+            let label=ByteCountFormatter.string(fromByteCount:size,countStyle:.file);await MainActor.run{cacheSize=label}
         }
     }
-    
-    // MARK: - 计算与清理缓存
-    private func calculateCacheSize() {
-        DispatchQueue.global(qos: .background).async {
-            let tmpDir = NSTemporaryDirectory()
-            let fileManager = FileManager.default
-            var totalBytes: Int64 = 0
-            if let files = try? fileManager.contentsOfDirectory(atPath: tmpDir) {
-                for file in files {
-                    let path = (tmpDir as NSString).appendingPathComponent(file)
-                    if let attrs = try? fileManager.attributesOfItem(atPath: path),
-                       let size = attrs[.size] as? Int64 {
-                        totalBytes += size
-                    }
-                }
-            }
-            let mb = Double(totalBytes) / (1024.0 * 1024.0)
-            DispatchQueue.main.async {
-                self.cacheSizeText = String(format: "%.1f MB", mb)
-            }
-        }
-    }
-    
-    private func clearDiskCache() {
-        let tmpDir = NSTemporaryDirectory()
-        let fileManager = FileManager.default
-        if let files = try? fileManager.contentsOfDirectory(atPath: tmpDir) {
-            for file in files {
-                let path = (tmpDir as NSString).appendingPathComponent(file)
-                try? fileManager.removeItem(atPath: path)
-            }
-        }
-        calculateCacheSize()
-        showClearCacheSuccess = true
-    }
+    private func clearCache(){guard !active else{return};let directory=FileManager.default.urls(for:.cachesDirectory,in:.userDomainMask)[0].appendingPathComponent("omni-transfers");try? FileManager.default.removeItem(at:directory);loadStorage();message=L("缓存已清理")}
+    private func inspectEngine(){Task.detached{let result=FFmpegKit.executeWithArguments(["-version"]);let line=result.getOutput().components(separatedBy:.newlines).first ?? "FFmpeg";await MainActor.run{engineInfo=line}}}
 }
 
-/// 添加备用中转网站模态弹窗 (支持 URL 置顶与 700ms 防抖自动抓取网页标题)
+
 struct AddRelaySiteSheet: View {
     @Environment(\.presentationMode) private var presentationMode
     @State private var siteUrl: String = ""
@@ -340,7 +156,7 @@ struct AddRelaySiteSheet: View {
                                         .scaleEffect(0.7)
                                     Text("正在检索名称...")
                                         .font(.system(size: 11))
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(OmniPalette.primary)
                                 }
                             }
                         }
@@ -359,7 +175,7 @@ struct AddRelaySiteSheet: View {
                             if !siteUrl.isEmpty {
                                 Button(action: triggerManualFetch) {
                                     Image(systemName: "arrow.clockwise")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(OmniPalette.primary)
                                         .font(.system(size: 13))
                                 }
                                 .buttonStyle(BorderlessButtonStyle())

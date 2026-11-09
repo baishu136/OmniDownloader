@@ -20,3 +20,14 @@ ytdl_lib/
 scratch/
 *.log
 /release-smoke/build
+/.venv/
+/windows/build/
+/windows/dist/
+/windows/release/
+/windows/bin/*.exe
+!app/src/androidTest/assets/ugoira-source.zip
+__pycache__/
+.pytest_cache/
+
+/testdata/*.private.json
+/.local/
