@@ -63,7 +63,7 @@ class OptimizedReleaseTest {
         }
 
         navigate("Settings")
-        for (title in listOf("Appearance & language", "Downloads & storage", "Network proxy", "Relay sites", "Accounts", "Download engine", "About")) {
+        for (title in listOf("GIF", "Downloads & storage", "Network proxy", "Relay sites", "Accounts", "Download engine", "About")) {
             assertTrue("Missing category: " + title, device.wait(Until.hasObject(By.text(title)), 5000))
             device.findObject(By.text(title)).click()
             assertTrue("Missing child-page back action: " + title, device.wait(Until.hasObject(By.descContains("Back")), 5000))

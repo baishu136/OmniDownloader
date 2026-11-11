@@ -404,6 +404,8 @@ object DownloadEngine {
         onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit
     ): Result<String> = withContext(Dispatchers.IO) {
         cancelledTaskIds.remove(task.id)
+        if (task.downloadType == DownloadType.GIF && task.url.startsWith("content://"))
+            return@withContext LocalGifConverter.convert(context, task, onProgressUpdate)
         val cleanUrl = UrlSniffer.sanitizeAndResolveUrl(task.url)
         val site = UrlSniffer.identifySite(cleanUrl)
 

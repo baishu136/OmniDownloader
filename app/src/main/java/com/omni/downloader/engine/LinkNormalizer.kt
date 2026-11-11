@@ -1,5 +1,6 @@
 package com.omni.downloader.engine
 
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -212,6 +213,7 @@ object LinkNormalizer {
         classifyPage(current)?.let { return@withContext it }
 
         while (hops < maxHops) {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
             val builder = Request.Builder()
                 .url(current)
                 .header("User-Agent", userAgent)
@@ -219,7 +221,7 @@ object LinkNormalizer {
                 builder.header("Cookie", cookieHeader)
             }
             val result = try {
-                client.newCall(builder.build()).execute().use { response ->
+                awaitResponse(client.newCall(builder.build())).use { response ->
                     val code = response.code
                     val location = response.header("Location")
                     if (code in 300..399 && !location.isNullOrBlank()) {
@@ -235,7 +237,8 @@ object LinkNormalizer {
                         HopResult.Content(current)
                     }
                 }
-            } catch (e: Exception) {
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (e: Exception) {
                 return@withContext RedirectResult.Unavailable(current, null)
             }
 
@@ -262,6 +265,21 @@ object LinkNormalizer {
         }
         // 超过预算时返回最终地址，由上层决定是否继续；不再无限跟随。
         RedirectResult.Content(current)
+    }
+
+    private suspend fun awaitResponse(call: okhttp3.Call): okhttp3.Response = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+        val received = java.util.concurrent.atomic.AtomicReference<okhttp3.Response?>()
+        continuation.invokeOnCancellation { call.cancel(); received.getAndSet(null)?.close() }
+        call.enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, error: java.io.IOException) {
+                if (continuation.isActive) continuation.resumeWith(Result.failure(error))
+            }
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                received.set(response)
+                if (continuation.isActive) continuation.resumeWith(Result.success(response))
+                else received.getAndSet(null)?.close()
+            }
+        })
     }
 
     private sealed interface HopResult {

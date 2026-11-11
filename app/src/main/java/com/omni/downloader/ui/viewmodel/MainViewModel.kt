@@ -149,7 +149,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             destination = page
         }
         showDestination(origin)
-        analysisJob = viewModelScope.launch {
+        analysisJob = launchAnalysis launch@{
             try {
                 resolvedUrl = UrlSniffer.sanitizeAndResolveUrl(target)
                 currentCoroutineContext().ensureActive()
@@ -205,6 +205,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun launchAnalysis(block: suspend kotlinx.coroutines.CoroutineScope.() -> Unit): Job {
+        val token = UUID.randomUUID().toString()
+        val context = getApplication<Application>()
+        val held = runCatching { DownloadService.analysisLease(context, token, true) }.isSuccess
+        return viewModelScope.launch(block = block).also { job -> job.invokeOnCompletion {
+            if (held) runCatching { DownloadService.analysisLease(context, token, false) }
+        } }
+    }
+
     override fun onCleared() { cancelMediaAnalysis(); super.onCleared() }
     fun acceptBrowserVideo(item: String, url: String) {
         com.omni.downloader.engine.DouyinAutoResolver.invalidate(url)
@@ -213,7 +222,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _inputUrl.value = url
         _metadata.value = null; _showFormatSheet.value = false; _errorDialogDetail.value = null
         _isAnalyzing.value = true
-        analysisJob = viewModelScope.launch {
+        analysisJob = launchAnalysis launch@{
             try {
                 val parsed = withContext(Dispatchers.Default) {
                     com.omni.downloader.engine.DouyinVideoParser.parseItem(item, url)
@@ -237,7 +246,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val processId = "metadata-${UUID.randomUUID()}"
         analysisProcessId = processId
         imageBusy.value = true
-        analysisJob = viewModelScope.launch {
+        analysisJob = launchAnalysis launch@{
             var file: File? = null
             try {
                 file = File.createTempFile("browser-image-item-", ".json", getApplication<android.app.Application>().cacheDir)

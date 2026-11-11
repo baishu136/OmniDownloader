@@ -13,6 +13,7 @@ import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Gif
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,9 +26,10 @@ import com.omni.downloader.ui.localization.AppStrings
 import com.omni.downloader.ui.localization.LocalAppStrings
 
 internal enum class SettingsPage {
-    ROOT, APPEARANCE, DOWNLOADS, NETWORK, RELAY, ACCOUNTS, ENGINE, ABOUT;
+    ROOT, GIF, APPEARANCE, DOWNLOADS, NETWORK, RELAY, ACCOUNTS, ENGINE, ABOUT;
 
     fun title(s: AppStrings): String = when (this) {
+        GIF -> "GIF"
         ROOT -> s.settingsTitle
         APPEARANCE -> s.settingsAppearanceTitle
         DOWNLOADS -> s.settingsDownloadsTitle
@@ -39,6 +41,7 @@ internal enum class SettingsPage {
     }
 
     fun summary(s: AppStrings): String = when (this) {
+        GIF -> "管理 GIF · 本地视频转 GIF"
         APPEARANCE -> s.settingsAppearanceSummary
         DOWNLOADS -> s.settingsDownloadsSummary
         NETWORK -> s.settingsNetworkSummary
@@ -50,6 +53,7 @@ internal enum class SettingsPage {
     }
 
     val icon: ImageVector get() = when (this) {
+        GIF -> Icons.Outlined.Gif
         APPEARANCE -> Icons.Outlined.Palette
         DOWNLOADS -> Icons.Outlined.Folder
         NETWORK -> Icons.Outlined.Language
@@ -62,7 +66,7 @@ internal enum class SettingsPage {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun SettingsToolbar(page: SettingsPage, onBack: () -> Unit) {
+internal fun SettingsToolbar(page: SettingsPage, actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {}, onBack: () -> Unit) {
     val strings = LocalAppStrings.current
     TopAppBar(
         title = { Text(page.title(strings), maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -71,6 +75,7 @@ internal fun SettingsToolbar(page: SettingsPage, onBack: () -> Unit) {
                 Icon(Icons.AutoMirrored.Outlined.ArrowBack, strings.navigateBack)
             }
         },
+        actions = actions,
         windowInsets = WindowInsets(0, 0, 0, 0),
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
     )

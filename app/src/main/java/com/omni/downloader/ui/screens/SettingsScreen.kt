@@ -235,9 +235,14 @@ fun SettingsScreen(
     }
 
     Column(Modifier.fillMaxSize()) {
-        SettingsToolbar(selectedPage) { selectedPage = SettingsPage.ROOT }
+        SettingsToolbar(selectedPage, actions = {
+            if (selectedPage == SettingsPage.ROOT) SettingDropdown(options = listOf("system" to strings.appearanceSystem,
+                "light" to strings.appearanceLight, "dark" to strings.appearanceDark), currentValue = themeMode,
+                fallbackLabel = strings.appearanceSystem, onSelect = viewModel::setThemeMode)
+        }) { selectedPage = SettingsPage.ROOT }
         RetainedTabHost(selectedPage.ordinal, SettingsPage.entries.size, Modifier.weight(1f).fillMaxWidth()) { index ->
             val page = SettingsPage.entries[index]
+            if (page == SettingsPage.GIF) { GifSettingsPage(); return@RetainedTabHost }
             LazyColumn(
                 state = pageListStates[index],
                 modifier = Modifier.fillMaxSize().testTag("settings_page_" + page.name),
@@ -245,55 +250,18 @@ fun SettingsScreen(
                     else PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp)
             ) {
                 if (page == SettingsPage.ROOT) {
-                    items(SettingsPage.entries.filter { it != SettingsPage.ROOT }, key = { it.name }, contentType = { "category" }) { category ->
+                    item(key = "settings_language") {
+                        OmniSettingRow(icon = Icons.Outlined.Language, title = strings.languageSection) {
+                            SettingDropdown(options = listOf("zh-CN" to strings.languageZhCn, "zh-TW" to strings.languageZhTw,
+                                "en" to strings.languageEn, "ja" to strings.languageJa), currentValue = appLanguage,
+                                fallbackLabel = strings.languageZhCn, onSelect = viewModel::setAppLanguage)
+                        }
+                    }
+                    items(SettingsPage.entries.filter { it != SettingsPage.ROOT && it != SettingsPage.APPEARANCE }, key = { it.name }, contentType = { "category" }) { category ->
                         SettingsCategoryRow(category) { selectedPage = category }
                     }
                 }
-                if (page == SettingsPage.APPEARANCE) {
-                    // ==================== 外观 ====================
-                    item(key = "settings_appearance_card") {
-                        OmniCard(contentPadding = PaddingValues(0.dp)) {
-                            val languageOptions = listOf(
-                                "zh-CN" to strings.languageZhCn,
-                                "zh-TW" to strings.languageZhTw,
-                                "en" to strings.languageEn,
-                                "ja" to strings.languageJa
-                            )
-                            OmniSettingRow(
-                                icon = Icons.Outlined.Language,
-                                title = strings.languageSection
-                            ) {
-                                SettingDropdown(
-                                    options = languageOptions,
-                                    currentValue = appLanguage,
-                                    fallbackLabel = strings.languageZhCn,
-                                    onSelect = viewModel::setAppLanguage
-                                )
-                            }
-
-                            OmniDivider(startIndent = 62)
-
-                            val appearanceOptions = listOf(
-                                "system" to strings.appearanceSystem,
-                                "light" to strings.appearanceLight,
-                                "dark" to strings.appearanceDark
-                            )
-                            OmniSettingRow(
-                                icon = Icons.Outlined.Palette,
-                                title = strings.appearanceSection
-                            ) {
-                                SettingDropdown(
-                                    options = appearanceOptions,
-                                    currentValue = themeMode,
-                                    fallbackLabel = strings.appearanceSystem,
-                                    onSelect = viewModel::setThemeMode
-                                )
-                            }
-                        }
-                    }
-
-
-                }
+                if (page == SettingsPage.GIF) { item { GifSettingsPage() } }
 
                 if (page == SettingsPage.ENGINE) {
                     // ==================== 下载引擎 ====================

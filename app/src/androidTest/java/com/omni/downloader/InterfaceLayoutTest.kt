@@ -30,6 +30,9 @@ class InterfaceLayoutTest {
             .putString("key_proxy_url", "").putString("key_relay_sites", Json.encodeToString(
                 (1..40).map { RelaySite("ui-" + it, "Relay " + it, "https://example.org/" + it) }
             )).commit()
+        com.omni.downloader.data.repository.SettingsRepository.getInstance(context).apply {
+            setAppLanguage("en"); setThemeMode("light"); setProxyUrl("")
+        }
         File(context.filesDir, "download_tasks_v1.json").writeText("[]")
         val scenario = ActivityScenario.launch(MainActivity::class.java)
         fun screenshot(name: String) {
@@ -50,7 +53,7 @@ class InterfaceLayoutTest {
         fun category(name: String) {
             compose.onNodeWithTag("settings_category_" + name).performClick()
             compose.waitForIdle()
-            compose.onNodeWithTag("settings_page_" + name).assertIsDisplayed()
+            compose.onNodeWithTag(if (name == "GIF") "settings_gif" else "settings_page_" + name).assertIsDisplayed()
         }
         fun back() {
             scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
@@ -71,7 +74,12 @@ class InterfaceLayoutTest {
             compose.onNodeWithTag("home_link_input").performTextInput("https://example.org/retained")
             nav("Settings")
             screenshot("settings-root-light")
-            category("APPEARANCE")
+            compose.onNodeWithTag("settings_category_APPEARANCE").assertDoesNotExist()
+            compose.onNodeWithText(EnStrings.languageSection).assertIsDisplayed()
+            category("GIF")
+            compose.onNodeWithText("选择本地视频转 GIF").assertIsDisplayed()
+            scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+            compose.waitForIdle()
             compose.onNodeWithText(EnStrings.appearanceLight).performClick()
             compose.onNodeWithText(EnStrings.appearanceDark).performClick()
             compose.waitForIdle()
@@ -84,10 +92,9 @@ class InterfaceLayoutTest {
             screenshot("settings-appearance-dark")
             compose.onNodeWithText(EnStrings.appearanceDark).performClick()
             compose.onNodeWithText(EnStrings.appearanceLight).performClick()
-            back()
             category("NETWORK")
             val field = hasSetTextAction() and hasAnyAncestor(hasTestTag("settings_page_NETWORK"))
-            compose.onNode(field).performTextInput("http://127.0.0.1:7890")
+            compose.onNode(field).performTextReplacement("http://127.0.0.1:7890")
             back()
             category("NETWORK")
             compose.onNode(field).assertTextContains("http://127.0.0.1:7890")
@@ -115,13 +122,11 @@ class InterfaceLayoutTest {
                 }
                 back()
             }
-            category("APPEARANCE")
             compose.onNodeWithText(EnStrings.languageEn).performClick()
             compose.onNodeWithText(EnStrings.languageZhCn).performClick()
             compose.waitForIdle()
             assertEquals("zh-CN", prefs.getString("key_app_language", ""))
             screenshot("settings-appearance-zh")
-            back()
             screenshot("settings-root-zh")
             nav(ZhHansStrings.navHome)
             compose.onNodeWithContentDescription(ZhHansStrings.clear, useUnmergedTree = true).performClick()

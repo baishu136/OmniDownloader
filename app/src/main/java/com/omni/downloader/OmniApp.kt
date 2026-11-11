@@ -22,7 +22,7 @@ import java.util.concurrent.Executors
 class OmniApp : Application(), ImageLoaderFactory {
 
     companion object {
-        var appVersion: String = "1.7.19"
+        var appVersion: String = "1.7.22"
             private set
     }
 

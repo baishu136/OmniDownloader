@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 object UrlSniffer {
+    private val contentRedirects = ContentRedirectCache()
 
     private val URL_REGEX = Pattern.compile(
         """https?://[a-zA-Z0-9_\-.]+(?::[0-9]+)?(?:/[^\s]*)?""",
@@ -63,24 +64,11 @@ object UrlSniffer {
             return@withContext normalized.contentUrl
         }
 
-        val userAgent = if (normalized.platform == LinkNormalizer.PLATFORM_XHS ||
-            normalized.platform == LinkNormalizer.PLATFORM_BILIBILI ||
-            normalized.platform == LinkNormalizer.PLATFORM_PINTEREST
-        ) {
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        } else {
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
-        }
-
-        when (val result = LinkNormalizer.resolveRedirects(normalized.contentUrl, noRedirectClient, userAgent)) {
-            is LinkNormalizer.RedirectResult.Content ->
-                LinkNormalizer.normalize(result.url).contentUrl
-            is LinkNormalizer.RedirectResult.LoginRequired ->
-                result.contentUrl ?: normalized.contentUrl
-            is LinkNormalizer.RedirectResult.ChallengeRequired ->
-                result.contentUrl ?: normalized.contentUrl
-            is LinkNormalizer.RedirectResult.Unavailable ->
-                normalized.contentUrl
+        when (val result = resolveContent(rawUrl)) {
+            is LinkNormalizer.RedirectResult.Content -> LinkNormalizer.normalize(result.url).contentUrl
+            is LinkNormalizer.RedirectResult.LoginRequired -> result.contentUrl ?: normalized.contentUrl
+            is LinkNormalizer.RedirectResult.ChallengeRequired -> result.contentUrl ?: normalized.contentUrl
+            is LinkNormalizer.RedirectResult.Unavailable -> normalized.contentUrl
         }
     }
 
@@ -93,6 +81,10 @@ object UrlSniffer {
         if (!LinkNormalizer.isShortLink(normalized.contentUrl)) {
             return@withContext LinkNormalizer.RedirectResult.Content(normalized.contentUrl)
         }
+        val proxy = NetworkProxy.configuredUrl
+        contentRedirects.get(normalized.contentUrl, proxy)?.let {
+            return@withContext LinkNormalizer.RedirectResult.Content(it)
+        }
         val userAgent = if (normalized.platform == LinkNormalizer.PLATFORM_XHS ||
             normalized.platform == LinkNormalizer.PLATFORM_BILIBILI ||
             normalized.platform == LinkNormalizer.PLATFORM_PINTEREST
@@ -101,7 +93,11 @@ object UrlSniffer {
         } else {
             "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15"
         }
-        LinkNormalizer.resolveRedirects(normalized.contentUrl, noRedirectClient, userAgent)
+        LinkNormalizer.resolveRedirects(normalized.contentUrl, noRedirectClient, userAgent).also { result ->
+            if (result is LinkNormalizer.RedirectResult.Content && !isDirectMediaUrl(result.url) &&
+                !LinkNormalizer.isShortLink(result.url) && NetworkProxy.configuredUrl == proxy)
+                contentRedirects.put(normalized.contentUrl, proxy, result.url)
+        }
     }
 
     /**
