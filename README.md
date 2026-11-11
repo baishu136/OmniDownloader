@@ -1,6 +1,6 @@
 ## Release 1.7.20 · Windows / iOS UI update
 
-[Download release](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20) · Android **1.7.19** / Windows and iOS **1.7.20**. PC restores the desktop card/gradient theme and fixes icon edges; iOS aligns its main icons and button states with Android. iOS IPA requires developer signing and has not been tested on physical devices. [Changes and verification](docs/UI_1.7.20_2026-11-09.md) · [Platform limitations](docs/PARITY_1.7.19_2026-11-08.md).
+[Download release](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20) · Android **1.7.19** / Windows **1.7.20** / iOS **1.7.21**. PC restores the desktop card/gradient theme and fixes icon edges; iOS aligns its main icons and button states with Android. iOS IPA requires developer signing and has not been tested on physical devices. [Changes and verification](docs/UI_1.7.20_2026-11-09.md) · [Platform limitations](docs/PARITY_1.7.19_2026-11-08.md).
 
 <div align="center">
 
@@ -34,7 +34,7 @@
 | Platform | Target Devices | Core Tech Stack | Installation & Download |
 | :--- | :--- | :--- | :--- |
 | **🤖 Android Native** | Android Phones / Tablets / TV (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [Download Latest APK (v1.7.19)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) or via Releases |
-| **🍎 iOS Native** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + native FFmpeg | [IPA 1.7.20](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.20-unsigned.ipa) · [Signing / 签名 / 署名](OmniDownloader-iOS/README_IOS.md) |
+| **🍎 iOS Native** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + native FFmpeg | [IPA 1.7.21](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.21-unsigned.ipa) · [Signing / 签名 / 署名](OmniDownloader-iOS/README_IOS.md) |
 | **💻 Windows Desktop** | Windows 10 / 11 (64-bit) | Python 3 + FastAPI + Edge WebView2 standalone window + Built-in FFmpeg | Download [`OmniDownloader_Desktop-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Desktop-1.7.20.zip); Standalone portable app with multilingual guides |
 | **🌐 Web Background** | Windows PC, local browser | Lightweight system tray daemon + Local web service + Built-in FFmpeg | Download [`OmniDownloader_Web-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Web-1.7.20.zip); Silent tray app with browser download takeover |
 

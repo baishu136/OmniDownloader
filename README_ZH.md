@@ -1,6 +1,6 @@
 ## 1.7.20 正式发布 · Windows / iOS 界面更新
 
-[下载发行包](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20) · Android **1.7.19** / Windows、iOS **1.7.20**。PC 恢复旧版卡片与渐变风格并修复图标边缘；iOS 主要图标和按钮状态对齐 Android。iOS IPA 需要自行签名，尚未真机验收。[变更与验证](docs/UI_1.7.20_2026-11-09.md) · [平台差异与限制](docs/PARITY_1.7.19_2026-11-08.md)。
+[下载发行包](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20) · Android **1.7.19** / Windows **1.7.20** / iOS **1.7.21**。PC 恢复旧版卡片与渐变风格并修复图标边缘；iOS 主要图标和按钮状态对齐 Android。iOS IPA 需要自行签名，尚未真机验收。[变更与验证](docs/UI_1.7.20_2026-11-09.md) · [平台差异与限制](docs/PARITY_1.7.19_2026-11-08.md)。
 
 <div align="center">
 
@@ -34,7 +34,7 @@
 | 平台形态 | 适用设备 | 核心技术栈 | 获取与安装方式 |
 | :--- | :--- | :--- | :--- |
 | **🤖 Android 原生版** | Android 手机 / 平板 / 车机 / 电视 (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [下载最新 APK (v1.7.19)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) 或 Releases 页面 |
-| **🍎 iOS 原生版** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + 原生 FFmpeg + Photos 相簿 | [IPA 1.7.20](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.20-unsigned.ipa) · [Signing / 签名 / 署名](OmniDownloader-iOS/README_IOS.md) |
+| **🍎 iOS 原生版** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + 原生 FFmpeg + Photos 相簿 | [IPA 1.7.21](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.21-unsigned.ipa) · [Signing / 签名 / 署名](OmniDownloader-iOS/README_IOS.md) |
 | **💻 Windows 桌面版** | Windows 10 / 11 (64位) | Python 3 + FastAPI + Edge WebView2 原生独立窗口 + 内置 FFmpeg | 下载 [`OmniDownloader_Desktop-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Desktop-1.7.20.zip)，免环境解压即用，附带多国语言说明 |
 | **🌐 Web 网页纯后台版** | Windows 本机浏览器 | 轻量托盘守护进程 + 本地 Web 服务 + 内置 FFmpeg | 下载 [`OmniDownloader_Web-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Web-1.7.20.zip)，静默常驻托盘，支持浏览器原生接管下载 |
 
