@@ -106,7 +106,7 @@ import ffmpegkit
             Text(L("媒体组件随应用版本更新；不会下载并执行外部程序。")).font(.caption).foregroundColor(OmniPalette.secondary)
             Link(L("检查应用更新"),destination:URL(string:"https://github.com/baishu136/OmniDownloader/releases")!)
         case .about:
-            HStack{Text("OmniDownloader").font(.title2.bold());Spacer();Text("1.7.20").foregroundColor(OmniPalette.primary)}
+            HStack{Text("OmniDownloader").font(.title2.bold());Spacer();Text("1.7.21").foregroundColor(OmniPalette.primary)}
             Text(L("支持平台")).font(.headline);OmniPlatformChips()
             Text("SwiftUI · WebKit · URLSession · FFmpegKit").font(.caption).foregroundColor(OmniPalette.secondary)
             Link("GitHub",destination:URL(string:"https://github.com/baishu136/OmniDownloader")!)
