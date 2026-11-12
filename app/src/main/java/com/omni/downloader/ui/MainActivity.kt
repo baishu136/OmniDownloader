@@ -132,6 +132,7 @@ class MainActivity : ComponentActivity() {
                     val snackbarHostState = remember { SnackbarHostState() }
                     val message by viewModel.message.collectAsStateWithLifecycle()
                     var currentTab by rememberSaveable { mutableStateOf(0) }
+                    LaunchedEffect(Unit) { if (currentTab !in 0..3) currentTab = 0 }
                     val mediaNavigation by viewModel.mediaNavigation.collectAsStateWithLifecycle()
                     LaunchedEffect(sharedLinkGeneration.value) {
                         if (sharedLinkGeneration.value > 0) currentTab = sharedTargetTab.value
@@ -140,8 +141,8 @@ class MainActivity : ComponentActivity() {
                         mediaNavigation?.let { request ->
                             // An explicit visit to Tasks/Settings is not stolen by
                             // a slower parse finishing in a retained content tab.
-                            if (viewModel.consumeMediaNavigation(request) && (currentTab == 0 || currentTab == 4)) {
-                                currentTab = if (request.destination == com.omni.downloader.engine.MediaPage.IMAGES) 4 else 0
+                            if (viewModel.consumeMediaNavigation(request) && currentTab == 0) {
+                                currentTab = 0
                             }
                         }
                     }
@@ -209,7 +210,7 @@ class MainActivity : ComponentActivity() {
             tonalElevation = 0.dp
         ) {
             navItems.forEach { item ->
-                val selected = currentTab == item.index || (currentTab == 4 && item.index == 0)
+                val selected = currentTab == item.index
                 NavigationBarItem(
                     selected = selected,
                     onClick = {
@@ -246,13 +247,12 @@ class MainActivity : ComponentActivity() {
     ) {
         val onNavTasks = remember(onSelectTab) { { onSelectTab(1) } }
         val onNavSettings = remember(onSelectTab) { { onSelectTab(2) } }
-        RetainedTabHost(currentTab, 5, modifier.fillMaxSize()) { tab ->
+        RetainedTabHost(if (currentTab in 0..3) currentTab else 0, 4, modifier.fillMaxSize()) { tab ->
             when (tab) {
-                0 -> HomeScreen(viewModel, onNavTasks, onNavSettings, isActive = LocalTabActive.current, onImages = { onSelectTab(4) })
+                0 -> HomeScreen(viewModel, onNavTasks, onNavSettings, isActive = LocalTabActive.current)
                 1 -> TasksScreen(viewModel)
                 2 -> SettingsScreen(viewModel)
                 3 -> com.omni.downloader.ui.screens.BatchDownloadScreen(viewModel, onNavTasks, onSingle = { onSelectTab(0) })
-                4 -> com.omni.downloader.ui.screens.ImagesScreen(viewModel, onNavTasks, onBack = { onSelectTab(0) })
             }
         }
     }
@@ -276,7 +276,7 @@ class MainActivity : ComponentActivity() {
                 // Explicit share integrations may choose the photo-post workflow without typing
                 // the URL through an IME; ordinary shared links retain the video workflow.
                 if (intent.getStringExtra("com.omni.downloader.TARGET") == "images") {
-                    sharedTargetTab.value = 4
+                    sharedTargetTab.value = 0
                     viewModel.updateImageInput(url)
                     viewModel.analyzeImages()
                     sharedLinkGeneration.value += 1

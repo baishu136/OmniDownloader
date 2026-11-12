@@ -26,6 +26,12 @@ class SettingsRepository private constructor(context: Context) {
 
     private val _downloadPath = MutableStateFlow(prefs.getString(KEY_DOWNLOAD_PATH, "") ?: "")
     val downloadPath: StateFlow<String> = _downloadPath.asStateFlow()
+    private val _imageDownloadPath = MutableStateFlow(prefs.getString("key_image_download_path", "").orEmpty())
+    val imageDownloadPath = _imageDownloadPath.asStateFlow()
+    fun setImageDownloadPath(path: String) {
+        _imageDownloadPath.value = path.trim()
+        prefs.edit().putString("key_image_download_path", path.trim()).apply()
+    }
 
     private val _homeRelayExpanded = MutableStateFlow(prefs.getBoolean(KEY_HOME_RELAY_EXPANDED, false))
     val homeRelayExpanded: StateFlow<Boolean> = _homeRelayExpanded.asStateFlow()

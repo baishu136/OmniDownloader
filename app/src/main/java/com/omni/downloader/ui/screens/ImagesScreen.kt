@@ -34,67 +34,58 @@ import com.omni.downloader.data.model.ImageResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 
-@Composable fun ImagesScreen(viewModel: MainViewModel, onTasks: () -> Unit, onBack: (() -> Unit)? = null) {
-    val input by viewModel.imageInput.collectAsStateWithLifecycle()
+internal class HomeImageResults(
+    val post: ImagePost?, val selected: Set<String>, val error: String,
+    val onSelection: (Set<String>) -> Unit, val onPreview: (Int) -> Unit,
+    val onSave: (Boolean) -> Unit, val imageModel: (Int) -> Any,
+    val onBrowser: (() -> Unit)?
+)
+
+@Composable internal fun rememberHomeImageResults(viewModel: MainViewModel, active: Boolean): HomeImageResults {
     val post by viewModel.imagePost.collectAsStateWithLifecycle()
-    val busy by viewModel.imageBusy.collectAsStateWithLifecycle()
     val error by viewModel.imageError.collectAsStateWithLifecycle()
     val browserUrl by viewModel.imageBrowserUrl.collectAsStateWithLifecycle()
-    var showBrowser by remember { mutableStateOf(false) }
     var selected by remember(post) { mutableStateOf(post?.resources?.map { it.id }?.toSet().orEmpty()) }
-    var previewIndex by remember(post) { mutableStateOf<Int?>(null) }
+    var preview by remember(post) { mutableStateOf<Int?>(null) }
+    var browser by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val keyboard = LocalSoftwareKeyboardController.current
-    val downloadPath by viewModel.downloadPath.collectAsStateWithLifecycle()
-    val pathLabel = remember(downloadPath) {
-        if (downloadPath.isBlank()) "Download/OmniDownloader"
-        else if (downloadPath.startsWith("content://")) runCatching {
-            val uri = Uri.parse(downloadPath)
-            val treeId = DocumentsContract.getTreeDocumentId(uri)
-            if (uri.authority == "com.android.externalstorage.documents" && treeId.contains(':')) {
-                val volume = treeId.substringBefore(':').let { if (it == "primary") "内部存储" else it }
-                "$volume/${treeId.substringAfter(':')}"
-            } else treeId.ifBlank { "已授权文件夹" }
-        }.getOrDefault("已选文件夹")
-        else downloadPath
-    }
-    val chooseDirectory = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-        if (uri != null) try {
-            context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-            viewModel.setDownloadPath(uri.toString())
-        } catch (_: SecurityException) { Toast.makeText(context, "未获得该文件夹的保存权限，请重新选择", Toast.LENGTH_LONG).show() }
-    }
     val sessions = remember(context) { com.omni.downloader.data.repository.SessionRepository.getInstance(context) }
     val profiles by sessions.profiles.collectAsStateWithLifecycle()
-    fun request(current: com.omni.downloader.data.model.ImagePost, index: Int): ImageRequest {
-        val image = current.resources[index]
+    val currentPost = post
+    fun request(index: Int): ImageRequest {
+        val current = requireNotNull(currentPost); val image = current.resources[index]
         return ImageRequest.Builder(context).data(image.url)
             .addHeader("Referer", when (current.platform) { "Pixiv" -> "https://www.pixiv.net/"; "小红书" -> "https://www.xiaohongshu.com/"; "哔哩哔哩" -> "https://www.bilibili.com/"; "快手" -> "https://www.kuaishou.com/"; else -> current.url })
             .apply { if (profiles[current.platform]?.cookieEnabled != false) sessions.cookieHeader(current.platform, image.url)?.let { addHeader("Cookie", it) } }.build()
     }
-    post?.let { current -> previewIndex?.let { index ->
-        com.omni.downloader.ui.components.ImageViewer(current.resources.size, index, { request(current, it) },
-            onDismiss = { previewIndex = null }, onSave = { viewModel.downloadImages(setOf(current.resources[it].id), false) })
-    } }
-    if (showBrowser && browserUrl.isNotBlank()) com.omni.downloader.ui.components.DouyinImagesBrowser(browserUrl,
-        onDismiss = { showBrowser = false }, onCaptured = { item, url -> showBrowser = false; viewModel.acceptBrowserImages(item, url) })
-    ImagePostGrid(post, selected, onSelection = { selected = it }, onPreview = { previewIndex = it },
-        onSave = { archive -> viewModel.downloadImages(selected, archive); onTasks() },
-        imageModel = { index -> request(requireNotNull(post), index) }) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            onBack?.let { back -> IconButton(onClick = back) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回首页") } }
-            Text("图文下载", style = MaterialTheme.typography.headlineMedium)
+    if (active && currentPost != null) preview?.let { index ->
+        com.omni.downloader.ui.components.ImageViewer(currentPost!!.resources.size, index, { request(it) },
+            onDismiss = { preview = null }, onSave = { viewModel.downloadImages(setOf(currentPost!!.resources[it].id), false) })
+    }
+    if (active && browser && browserUrl.isNotBlank()) com.omni.downloader.ui.components.DouyinImagesBrowser(browserUrl,
+        onDismiss = { browser = false }, onCaptured = { item, url -> browser = false; viewModel.acceptBrowserImages(item, url) })
+    return HomeImageResults(currentPost, selected, error, { selected = it }, { preview = it },
+        { viewModel.downloadImages(selected, it) }, { request(it) },
+        if (error.isNotBlank() && browserUrl.isNotBlank()) ({ browser = true }) else null)
+}
+
+internal fun androidx.compose.foundation.lazy.LazyListScope.homeImageItems(state: HomeImageResults) {
+    if (state.error.isNotBlank()) item("home_image_error") {
+        Text(state.error, color = MaterialTheme.colorScheme.error)
+        state.onBrowser?.let { OutlinedButton(onClick = it) { Text("验证目标图文并提取") } }
+    }
+    state.post?.let { post ->
+        item("home_image_title") {
+            Text(post.title, style = MaterialTheme.typography.titleMedium)
+            Text("已选 ${state.selected.size} / ${post.resources.size}", Modifier.testTag("images_selection_count"))
         }
-        Text("抖音 · 快手 · bilibili · Pixiv · 小红书 · X · Pinterest", style = MaterialTheme.typography.bodyMedium)
-        ImageInputPanel(input, busy, pathLabel,
-            onInput = viewModel::updateImageInput,
-            onPaste = { viewModel.pasteImageLink(context) },
-            onAnalyze = { keyboard?.hide(); viewModel.analyzeImages() },
-            onChoosePath = { chooseDirectory.launch(downloadPath.takeIf { it.startsWith("content://") }?.let(Uri::parse)?.takeIf(DocumentsContract::isTreeUri)) },
-            onResetPath = viewModel::resetDownloadPath)
-        if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-        if (error.isNotEmpty()) Text(error, color = MaterialTheme.colorScheme.error)
-        if (error.isNotEmpty() && browserUrl.isNotBlank()) OutlinedButton(onClick = { showBrowser = true }) { Text("在浏览器打开目标图文并提取") }
+        item("home_image_actions") { ImageSelectionActions(state.selected.isNotEmpty(),
+            { state.onSelection(post.resources.map { it.id }.toSet()) }, { state.onSelection(emptySet()) }, state.onSave) }
+        items(post.resources.size, key = { "home_image:${post.resources[it].id}" }) { index ->
+            ImageSelectionCard(post.resources[index], index, post.resources[index].id in state.selected, state.imageModel(index),
+                { state.onSelection(if (post.resources[index].id in state.selected) state.selected - post.resources[index].id else state.selected + post.resources[index].id) },
+                { state.onPreview(index) }, Modifier.fillMaxWidth())
+        }
     }
 }
 

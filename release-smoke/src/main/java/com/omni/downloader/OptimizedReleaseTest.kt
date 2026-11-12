@@ -86,11 +86,7 @@ class OptimizedReleaseTest {
         assertTrue(device.hasObject(By.text("下载合集 / 多视频的全部分集")))
         assertTrue(device.hasObject(By.text("逐条添加")))
         navigate("Home")
-        assertTrue("Image floating button missing", device.wait(Until.hasObject(By.desc("图文下载")), 5000))
-        device.findObject(By.desc("图文下载")).click()
-        assertTrue("Image subpage missing", device.wait(Until.hasObject(By.text("图文下载")), 5000))
-        device.findObject(By.desc("返回首页")).click()
-        assertTrue(device.wait(Until.hasObject(By.text("Home")), 5000))
+        assertFalse("Obsolete image floating entry remains", device.hasObject(By.desc("图文下载")))
 
         val nativeDir = File(context.applicationInfo.nativeLibraryDir)
         assertFalse("Unused Aria2c executable still packaged", File(nativeDir, "libaria2c.so").exists())

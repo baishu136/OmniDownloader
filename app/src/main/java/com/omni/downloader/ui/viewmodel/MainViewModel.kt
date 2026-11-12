@@ -94,14 +94,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return true
     }
 
-    fun updateImageInput(value: String) {
-        if (imageInput.value != value) {
-            cancelMediaAnalysis()
-            imagePost.value = null; imageError.value = ""; imageBrowserUrl.value = ""
-        }
-        imageInput.value = value
-        inputDrafts.update { it.copy(images = value) }
-    }
+    fun updateImageInput(value: String) = updateInputUrl(value)
 
     fun pasteImageLink(context: Context) {
         try {
@@ -146,7 +139,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (generation != analysisGeneration) return
             _isAnalyzing.value = page == MediaPage.VIDEO
             imageBusy.value = page == MediaPage.IMAGES
-            if (page == MediaPage.VIDEO) _inputUrl.value = resolvedUrl else imageInput.value = resolvedUrl
+            _inputUrl.value = resolvedUrl; imageInput.value = resolvedUrl
             if (page != destination) _mediaNavigation.value = MediaNavigationRequest(generation, page)
             destination = page
         }
@@ -374,8 +367,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     init {
         viewModelScope.launch {
             inputDrafts.awaitLoaded()
-            _inputUrl.value = inputDrafts.draft.value.home
-            imageInput.value = inputDrafts.draft.value.images
+            _inputUrl.value = inputDrafts.draft.value.home.ifBlank { inputDrafts.draft.value.images }
+            imageInput.value = _inputUrl.value
             launch { _inputUrl.collect { text -> inputDrafts.update { it.copy(home = text) } } }
             launch { imageInput.collect { text -> inputDrafts.update { it.copy(images = text) } } }
         }
@@ -385,7 +378,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (_inputUrl.value != url) {
             cancelMediaAnalysis()
             _metadata.value = null; _showFormatSheet.value = false; _errorDialogDetail.value = null
+            imagePost.value = null; imageError.value = ""; imageBrowserUrl.value = ""
         }
+        imageInput.value = url
         _inputUrl.value = url
         inputDrafts.update { it.copy(home = url) }
     }

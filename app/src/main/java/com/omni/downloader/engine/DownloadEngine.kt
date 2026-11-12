@@ -389,7 +389,9 @@ object DownloadEngine {
                 }
                 ready.writeText("$signature\n${source.relativeTo(workspace).path}")
                 onProgressUpdate(98f, "", "正在导出成品…", TaskStatus.PROCESSING)
-                val result = StorageExporter.export(context, source)
+                val imageTarget = if (task.downloadType in setOf(DownloadType.IMAGE, DownloadType.IMAGE_ZIP))
+                    com.omni.downloader.data.repository.SettingsRepository.getInstance(context).imageDownloadPath.value.takeIf { it.isNotBlank() } else null
+                val result = StorageExporter.export(context, source, imageTarget)
                 ready.delete()
                 source.delete()
                 Result.success(result)

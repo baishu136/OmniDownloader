@@ -14,9 +14,9 @@ import java.io.IOException
 
 /** Source stays in private storage until the final destination has been committed. */
 object StorageExporter {
-    fun export(context: Context, source: File): String {
+    fun export(context: Context, source: File, targetOverride: String? = null): String {
         require(source.isFile && source.length() > 0) { "[EXPORT_FAILED] 暂存成品不存在" }
-        val target = SettingsRepository.getInstance(context).downloadPath.value
+        val target = targetOverride ?: SettingsRepository.getInstance(context).downloadPath.value
         val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(source.extension.lowercase()) ?: "application/octet-stream"
         var created: Uri? = null
         try {

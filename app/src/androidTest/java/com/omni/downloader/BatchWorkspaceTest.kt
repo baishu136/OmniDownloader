@@ -35,7 +35,7 @@ class BatchWorkspaceTest {
             ))))).commit()
         } else {
             assertEquals("https://example.org/home-retained", drafts.draft.value.home)
-            assertEquals("https://example.org/images-retained", drafts.draft.value.images)
+            assertEquals("https://example.org/home-retained", drafts.draft.value.images)
             assertEquals(3, drafts.draft.value.batchLinks.size)
             assertEquals("https://example.org/not-yet-added", drafts.draft.value.batchEntry)
             assertEquals(AudioFormat.OPUS, drafts.draft.value.batchOptions.audio)
@@ -52,15 +52,11 @@ class BatchWorkspaceTest {
             File(context.getExternalFilesDir(null), name).outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) };bitmap.recycle()
         }
         try {
-            compose.onNodeWithTag("images_fab").assertIsDisplayed()
+            compose.onNodeWithTag("images_fab").assertDoesNotExist()
             compose.onNodeWithTag("batch_entry").assertDoesNotExist()
             if (!restore) {
                 compose.onNodeWithTag("home_link_input").performTextReplacement("https://example.org/home-retained")
                 hideKeyboard()
-                compose.onNodeWithTag("images_fab").performClick()
-                compose.onNodeWithTag("images_link_input").performTextReplacement("https://example.org/images-retained")
-                hideKeyboard()
-                compose.onNodeWithContentDescription("返回首页").performClick()
             } else compose.onNodeWithTag("home_link_input").assertTextContains("https://example.org/home-retained")
             screenshot("home-1724.png")
             compose.onNodeWithContentDescription("批量", useUnmergedTree = true).performClick()

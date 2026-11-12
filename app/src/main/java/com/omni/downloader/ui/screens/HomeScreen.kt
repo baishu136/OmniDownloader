@@ -113,14 +113,15 @@ fun HomeScreen(
     viewModel: MainViewModel,
     onNavigateToTasks: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    isActive: Boolean = true,
-    onImages: () -> Unit = {}
+    isActive: Boolean = true
 ) {
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
     val inputUrl by viewModel.inputUrl.collectAsStateWithLifecycle()
     val isAnalyzing by viewModel.isAnalyzing.collectAsStateWithLifecycle()
+    val imageBusy by viewModel.imageBusy.collectAsStateWithLifecycle()
+    val imageResults = rememberHomeImageResults(viewModel, isActive)
     val metadata by viewModel.metadata.collectAsStateWithLifecycle()
     val showSheet by viewModel.showFormatSheet.collectAsStateWithLifecycle()
     val errorDialogDetail by viewModel.errorDialogDetail.collectAsStateWithLifecycle()
@@ -160,7 +161,7 @@ fun HomeScreen(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().testTag("home_list"),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 92.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item(key = "home_hero", contentType = "hero") {
@@ -175,13 +176,15 @@ fun HomeScreen(
                 HomeInputPanel(
                     viewModel = viewModel,
                     inputUrl = inputUrl,
-                    isAnalyzing = isAnalyzing,
+                    isAnalyzing = isAnalyzing || imageBusy,
                     onAnalyze = {
                         keyboardController?.hide()
                         viewModel.startAnalyze()
                     }
                 )
             }
+
+            homeImageItems(imageResults)
 
             relaySitesItems(
                 relaySites = relaySites,
@@ -198,13 +201,6 @@ fun HomeScreen(
                 )
             }
         }
-
-        androidx.compose.material3.ExtendedFloatingActionButton(
-            onClick = onImages,
-            icon = { Icon(Icons.Outlined.PhotoLibrary, contentDescription = null) },
-            text = { Text("图文") },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).testTag("images_fab").semantics { contentDescription = "图文下载" }
-        )
 
         // 中转站后台静默解析与浏览器排查浮层（脱离列表测量体系，避免重组污染列表）
         RelaySitesOverlays(

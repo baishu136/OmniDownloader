@@ -145,6 +145,15 @@ fun SettingsScreen(
     var showBilibiliLoginSheet by remember { mutableStateOf(false) }
 
     val savedDownloadPath by viewModel.downloadPath.collectAsStateWithLifecycle()
+    val imageSettings = remember(context) { com.omni.downloader.data.repository.SettingsRepository.getInstance(context) }
+    val imagePath by imageSettings.imageDownloadPath.collectAsStateWithLifecycle()
+    val imageDirectoryPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) try {
+            context.contentResolver.takePersistableUriPermission(uri,
+                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            imageSettings.setImageDownloadPath(uri.toString())
+        } catch (_: SecurityException) { Toast.makeText(context, "未获得文件夹权限，请重新选择", Toast.LENGTH_LONG).show() }
+    }
     var showPathDialog by remember { mutableStateOf(false) }
 
     // ==================== 平台会话 ====================
@@ -790,6 +799,17 @@ fun SettingsScreen(
                                     Spacer(modifier = Modifier.width(5.dp))
                                     Text(strings.chooseFolder, style = MaterialTheme.typography.labelLarge)
                                 }
+                            }
+                        }
+                    }
+
+                    item(key = "settings_image_path") {
+                        OmniCard(modifier = Modifier.testTag("settings_image_path")) {
+                            Text("图文下载路径", style = MaterialTheme.typography.titleMedium)
+                            Text(imagePath.ifBlank { "跟随默认下载路径" }, style = MaterialTheme.typography.bodySmall)
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedButton(onClick = { imageSettings.setImageDownloadPath("") }, enabled = imagePath.isNotBlank()) { Text("跟随默认路径") }
+                                Button(onClick = { imageDirectoryPicker.launch(null) }) { Text("选择图文文件夹") }
                             }
                         }
                     }
