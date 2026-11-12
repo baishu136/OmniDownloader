@@ -157,7 +157,8 @@ fun HomeScreen(
     val relayState = rememberRelaySitesState()
     val listState = rememberLazyListState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val imageColumns = (((maxWidth - 32.dp + 10.dp).value / 150.dp.value).toInt()).coerceIn(2, 3)
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().testTag("home_list"),
@@ -184,7 +185,7 @@ fun HomeScreen(
                 )
             }
 
-            homeImageItems(imageResults)
+            homeImageItems(imageResults, imageColumns)
 
             relaySitesItems(
                 relaySites = relaySites,

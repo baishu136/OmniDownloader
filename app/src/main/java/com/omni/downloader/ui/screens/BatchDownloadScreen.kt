@@ -47,7 +47,6 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
     LazyColumn(Modifier.fillMaxSize().testTag("batch_screen"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Text("批量下载", style = MaterialTheme.typography.headlineMedium)
-            Text("逐条添加或从分享文本智能识别，自动去重，每批最多 100 条链接。", style = MaterialTheme.typography.bodySmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = !draft.batchManual, onClick = { drafts.update { it.copy(batchManual = false) } }, label = { Text("智能识别") }, enabled = ready, modifier = Modifier.testTag("batch_smart_mode"))
                 FilterChip(selected = draft.batchManual, onClick = { drafts.update { it.copy(batchManual = true) } }, label = { Text("逐条添加") }, enabled = ready, modifier = Modifier.testTag("batch_manual_mode"))
@@ -76,14 +75,12 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
                 }
             }
             Row { Checkbox(checked = draft.batchOptions.allEpisodes, onCheckedChange = { value -> drafts.update { it.copy(batchOptions = it.batchOptions.copy(allEpisodes = value)) } }, enabled = ready && !running); Text("下载合集 / 多视频的全部分集", Modifier.padding(top = 12.dp)) }
-            Text("视频使用最高可用画质，图文保存为 ZIP。草稿和未完成链接自动保存，重新打开后可继续。", style = MaterialTheme.typography.bodySmall)
         }
         item {
             Button(onClick = { add()?.let { controller.start(it.joinToString("\n"), drafts.draft.value.batchOptions, preservePending = true) } }, enabled = ready && !running && (text.isNotBlank() || draft.batchLinks.isNotEmpty()), modifier = Modifier.fillMaxWidth().testTag("batch_start")) { Text("解析并加入下载队列") }
             if (running) { LinearProgressIndicator(Modifier.fillMaxWidth()); TextButton(onClick = controller::cancel) { Text("停止添加（已入队任务继续下载）") } }
             if (!running && plan.items.any { it.status != BatchStatus.QUEUED }) {
                 TextButton(onClick = controller::retry) { Text("继续 / 重试未入队条目") }
-                Text("继续处理沿用原批次的下载设置。", style = MaterialTheme.typography.bodySmall)
             }
             (error ?: draftError)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             Text("已入队 ${plan.items.count { it.status == BatchStatus.QUEUED }} / ${plan.items.size} 条链接 · ${plan.items.sumOf { it.taskIds.size }} 个任务")
@@ -101,7 +98,7 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
                 TextButton(onClick = { drafts.update { it.copy(batchLinks = it.batchLinks - url) } }) { Text("移除") }
             } }
         }
-        if (plan.items.isNotEmpty()) item { Text("批次处理记录", style = MaterialTheme.typography.titleMedium); Text("此处表示解析和入队状态，实际下载进度请查看任务页。", style = MaterialTheme.typography.bodySmall) }
+        if (plan.items.isNotEmpty()) item { Text("批次处理记录", style = MaterialTheme.typography.titleMedium) }
         items(plan.items, key = { it.id }) { item ->
             OutlinedCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
                 Text(item.url, maxLines = 2)

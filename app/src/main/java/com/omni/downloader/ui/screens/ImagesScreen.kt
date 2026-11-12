@@ -69,7 +69,7 @@ internal class HomeImageResults(
         if (error.isNotBlank() && browserUrl.isNotBlank()) ({ browser = true }) else null)
 }
 
-internal fun androidx.compose.foundation.lazy.LazyListScope.homeImageItems(state: HomeImageResults) {
+internal fun androidx.compose.foundation.lazy.LazyListScope.homeImageItems(state: HomeImageResults, columns: Int) {
     if (state.error.isNotBlank()) item("home_image_error") {
         Text(state.error, color = MaterialTheme.colorScheme.error)
         state.onBrowser?.let { OutlinedButton(onClick = it) { Text("验证目标图文并提取") } }
@@ -81,10 +81,19 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.homeImageItems(state
         }
         item("home_image_actions") { ImageSelectionActions(state.selected.isNotEmpty(),
             { state.onSelection(post.resources.map { it.id }.toSet()) }, { state.onSelection(emptySet()) }, state.onSave) }
-        items(post.resources.size, key = { "home_image:${post.resources[it].id}" }) { index ->
-            ImageSelectionCard(post.resources[index], index, post.resources[index].id in state.selected, state.imageModel(index),
-                { state.onSelection(if (post.resources[index].id in state.selected) state.selected - post.resources[index].id else state.selected + post.resources[index].id) },
-                { state.onPreview(index) }, Modifier.fillMaxWidth())
+        val rows = (post.resources.size + columns - 1) / columns
+        items(rows, key = { "home_photo_row:${post.resources[it * columns].id}" }) { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                repeat(columns) { column ->
+                    val index = row * columns + column
+                    val image = post.resources.getOrNull(index)
+                    if (image == null) Spacer(Modifier.weight(1f)) else key(image.id) {
+                        ImageSelectionCard(image, index, image.id in state.selected, state.imageModel(index),
+                            { state.onSelection(if (image.id in state.selected) state.selected - image.id else state.selected + image.id) },
+                            { state.onPreview(index) }, Modifier.weight(1f))
+                    }
+                }
+            }
         }
     }
 }
