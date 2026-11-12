@@ -74,6 +74,13 @@ class OptimizedReleaseTest {
         }
         navigate("Home")
 
+        val batchEntry = By.text("批量下载 · 多链接 / 分享文本")
+        assertTrue("Batch download entry missing after R8", device.wait(Until.hasObject(batchEntry), 5000))
+        device.findObject(batchEntry).click()
+        assertTrue("Batch download sheet missing after R8", device.wait(Until.hasObject(By.text("解析并加入下载队列")), 5000))
+        assertTrue(device.hasObject(By.text("下载合集 / 多视频的全部分集")))
+        device.pressBack()
+
         val nativeDir = File(context.applicationInfo.nativeLibraryDir)
         assertFalse("Unused Aria2c executable still packaged", File(nativeDir, "libaria2c.so").exists())
         val runtime = File(context.noBackupFilesDir, "youtubedl-android")

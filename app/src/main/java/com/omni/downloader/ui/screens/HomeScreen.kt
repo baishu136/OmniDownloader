@@ -130,6 +130,7 @@ fun HomeScreen(
 
     var showBilibiliGuideDialog by remember { mutableStateOf(false) }
     var showBilibiliLoginSheet by remember { mutableStateOf(false) }
+    var showBatch by rememberSaveable { mutableStateOf(false) }
     var showMediaCapture by remember { mutableStateOf(false) }
     var mediaCaptureUrl by remember { mutableStateOf("") }
     var continueAfterVerification by remember { mutableStateOf(false) }
@@ -152,6 +153,8 @@ fun HomeScreen(
     val relayState = rememberRelaySitesState()
     val listState = rememberLazyListState()
 
+    if (isActive && showBatch) com.omni.downloader.ui.components.BatchDownloadSheet(viewModel,
+        onDismiss = { showBatch = false }, onTasks = { showBatch = false; onNavigateToTasks() })
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
@@ -177,6 +180,10 @@ fun HomeScreen(
                         viewModel.startAnalyze()
                     }
                 )
+            }
+
+            item(key = "batch_download") {
+                OutlinedBatchEntry(onClick = { showBatch = true })
             }
 
             relaySitesItems(
@@ -716,4 +723,8 @@ private fun HomeActiveTasksSection(
             }
         }
     }
+}
+
+@Composable private fun OutlinedBatchEntry(onClick: () -> Unit) {
+    androidx.compose.material3.OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth().testTag("batch_entry")) { Text("批量下载 · 多链接 / 分享文本") }
 }
