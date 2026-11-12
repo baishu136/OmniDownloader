@@ -57,7 +57,7 @@ fun BilibiliGuideDialog(
             )
         },
         confirmButton = {
-            Button(
+            Button(shape = MaterialTheme.shapes.medium,
                 onClick = onLoginClick,
 
             ) {

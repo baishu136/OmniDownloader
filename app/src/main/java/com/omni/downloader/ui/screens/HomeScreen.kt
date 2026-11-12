@@ -236,7 +236,7 @@ fun HomeScreen(
                 }
             },
             confirmButton = {
-                Button(
+                Button(shape = MaterialTheme.shapes.medium,
                     onClick = {
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
                         val clip = ClipData.newPlainText("ErrorLog", errorDialogDetail)
@@ -503,7 +503,7 @@ private fun HomeInputPanel(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            FilledTonalButton(
+            FilledTonalButton(shape = MaterialTheme.shapes.medium,
                 onClick = { viewModel.checkClipboardAndPaste(context, autoDownload = true) },
                 modifier = Modifier
                     .weight(1f)
@@ -529,7 +529,7 @@ private fun HomeInputPanel(
                 )
             }
 
-            Button(
+            Button(shape = MaterialTheme.shapes.medium,
                 onClick = onAnalyze,
                 modifier = Modifier
                     .weight(1f)

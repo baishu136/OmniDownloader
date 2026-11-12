@@ -72,7 +72,7 @@ internal class HomeImageResults(
 internal fun androidx.compose.foundation.lazy.LazyListScope.homeImageItems(state: HomeImageResults, columns: Int) {
     if (state.error.isNotBlank()) item("home_image_error") {
         Text(state.error, color = MaterialTheme.colorScheme.error)
-        state.onBrowser?.let { OutlinedButton(onClick = it) { Text("验证目标图文并提取") } }
+        state.onBrowser?.let { OutlinedButton(shape = MaterialTheme.shapes.medium, onClick = it) { Text("验证目标图文并提取") } }
     }
     state.post?.let { post ->
         item("home_image_title") {
@@ -161,8 +161,8 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.homeImageItems(state
                 TextButton(onClick = onClear) { Text("清空选择") }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(enabled = hasSelection, onClick = { onSave(true) }, modifier = Modifier.testTag("images_zip")) { Text("打包 ZIP") }
-                Button(enabled = hasSelection, onClick = { onSave(false) }, modifier = Modifier.testTag("images_save")) { Text("保存") }
+                OutlinedButton(shape = MaterialTheme.shapes.medium, enabled = hasSelection, onClick = { onSave(true) }, modifier = Modifier.testTag("images_zip")) { Text("打包 ZIP") }
+                Button(shape = MaterialTheme.shapes.medium, enabled = hasSelection, onClick = { onSave(false) }, modifier = Modifier.testTag("images_save")) { Text("保存") }
             }
         }
     }

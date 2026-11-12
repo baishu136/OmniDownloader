@@ -492,7 +492,7 @@ fun FormatSelectorSheet(
                 Spacer(Modifier.height(8.dp))
             }
             if (currentMedia.siteName == "抖音" && onRequestBrowserQuality != null) {
-                OutlinedButton(onClick = onRequestBrowserQuality, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(shape = MaterialTheme.shapes.medium, onClick = onRequestBrowserQuality, modifier = Modifier.fillMaxWidth()) {
                     Text("浏览器读取更多画质")
                 }
                 Spacer(Modifier.height(8.dp))
@@ -587,7 +587,7 @@ fun FormatSelectorSheet(
                             else -> String.format(strings.batchDownloadVideos, count, resLabel) + coverSuffix
                         }
 
-                        Button(
+                        Button(shape = MaterialTheme.shapes.medium,
                             onClick = {
                                 if (selectedEpisodes.isNotEmpty()) {
                                     onDownloadSelectedMultiMedia(selectedEpisodes, saveCoverWithDownload)
@@ -610,7 +610,7 @@ fun FormatSelectorSheet(
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedButton(
+                        OutlinedButton(shape = MaterialTheme.shapes.medium,
                             onClick = {
                                 onDownloadSelectedMultiMedia(metadata.multiMediaList.indices.toSet(), saveCoverWithDownload)
                             },
@@ -628,7 +628,7 @@ fun FormatSelectorSheet(
                             )
                         }
                     } else {
-                        Button(
+                        Button(shape = MaterialTheme.shapes.medium,
                             onClick = { onConfirmDownload(saveCoverWithDownload) },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -660,7 +660,7 @@ fun FormatSelectorSheet(
 
                         if (metadata.multiMediaList.size > 1) {
                             Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedButton(
+                            OutlinedButton(shape = MaterialTheme.shapes.medium,
                                 onClick = { isCollectionMode = true },
                                 modifier = Modifier
                                     .fillMaxWidth()

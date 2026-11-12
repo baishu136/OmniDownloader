@@ -103,7 +103,7 @@ import org.json.JSONObject
                 }
                 if (!enabled) {
                     Text("抖音 Cookie 已禁用。浏览器辅助需要使用网页登录状态。", Modifier.padding(16.dp))
-                    Button(onClick = { sessions.setCookieEnabled(LinkNormalizer.PLATFORM_DOUYIN, true) }) { Text("开启 Cookie 并继续") }
+                    Button(shape = MaterialTheme.shapes.medium, onClick = { sessions.setCookieEnabled(LinkNormalizer.PLATFORM_DOUYIN, true) }) { Text("开启 Cookie 并继续") }
                 } else if (id == null) Text("尚未确认目标作品ID，请返回重新解析分享链接。", Modifier.padding(16.dp))
                 else {
                     Text(notice, Modifier.padding(horizontal = 12.dp), style = MaterialTheme.typography.bodySmall)
@@ -114,7 +114,7 @@ import org.json.JSONObject
                             browserProfile = profile
                         ).also { browser = it }.container
                     }, onRelease = { browser?.close(); browser = null })
-                    Button(enabled = !busy, modifier = Modifier.padding(12.dp), onClick = {
+                    Button(shape = MaterialTheme.shapes.medium, enabled = !busy, modifier = Modifier.padding(12.dp), onClick = {
                         val web = browser?.current ?: return@Button
                         if (LinkNormalizer.platformOf(web.url.orEmpty()) != LinkNormalizer.PLATFORM_DOUYIN ||
                             LinkNormalizer.contentId(web.url.orEmpty(), LinkNormalizer.PLATFORM_DOUYIN) != id) {

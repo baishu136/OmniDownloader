@@ -79,7 +79,7 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
                 modifier = Modifier.fillMaxWidth().testTag("batch_input"), minLines = if (draft.batchManual) 1 else 3, maxLines = if (draft.batchManual) 2 else 5)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = ::pasteAndAdd, enabled = ready, modifier = Modifier.testTag("batch_paste")) { Text("粘贴剪贴板") }
-                FilledTonalButton(onClick = { add() }, enabled = ready && text.isNotBlank(), modifier = Modifier.testTag("batch_add")) { Text(if (draft.batchManual) "添加链接" else "识别并添加") }
+                FilledTonalButton(shape = MaterialTheme.shapes.medium, onClick = { add() }, enabled = ready && text.isNotBlank(), modifier = Modifier.testTag("batch_add")) { Text(if (draft.batchManual) "添加链接" else "识别并添加") }
             }
             inputError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
@@ -97,7 +97,7 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
             Row { Checkbox(checked = draft.batchOptions.allEpisodes, onCheckedChange = { value -> drafts.update { it.copy(batchOptions = it.batchOptions.copy(allEpisodes = value)) } }, enabled = ready && !running); Text("下载合集 / 多视频的全部分集", Modifier.padding(top = 12.dp)) }
         }
         item {
-            Button(onClick = { add()?.let { controller.start(it.joinToString("\n"), drafts.draft.value.batchOptions, preservePending = true) } }, enabled = ready && !running && (text.isNotBlank() || draft.batchLinks.isNotEmpty()), modifier = Modifier.fillMaxWidth().testTag("batch_start")) { Text("解析并加入下载队列") }
+            Button(shape = MaterialTheme.shapes.medium, onClick = { add()?.let { controller.start(it.joinToString("\n"), drafts.draft.value.batchOptions, preservePending = true) } }, enabled = ready && !running && (text.isNotBlank() || draft.batchLinks.isNotEmpty()), modifier = Modifier.fillMaxWidth().testTag("batch_start")) { Text("解析并加入下载队列") }
             if (running) { LinearProgressIndicator(Modifier.fillMaxWidth()); TextButton(onClick = controller::cancel) { Text("停止添加（已入队任务继续下载）") } }
             if (!running && plan.items.any { it.status != BatchStatus.QUEUED }) {
                 TextButton(onClick = controller::retry) { Text("继续 / 重试未入队条目") }
@@ -132,7 +132,7 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
 @Composable private fun BatchChoice(label: String, enabled: Boolean, content: @Composable ColumnScope.(() -> Unit) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
-        OutlinedButton(onClick = { expanded = true }, enabled = enabled) { Text(label) }
+        OutlinedButton(shape = MaterialTheme.shapes.medium, onClick = { expanded = true }, enabled = enabled) { Text(label) }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) { content { expanded = false } }
     }
 }

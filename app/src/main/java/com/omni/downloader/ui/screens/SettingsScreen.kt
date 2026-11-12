@@ -317,7 +317,7 @@ fun SettingsScreen(
                             }
 
                             Spacer(modifier = Modifier.height(12.dp))
-                            Button(
+                            Button(shape = MaterialTheme.shapes.medium,
                                 onClick = { viewModel.updateEngine(context) },
                                 enabled = !isUpdatingEngine,
                                 modifier = Modifier
@@ -401,7 +401,7 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.End
                             ) {
                                 if (savedProxyUrl.isNotEmpty()) {
-                                    OutlinedButton(
+                                    OutlinedButton(shape = MaterialTheme.shapes.medium,
                                         onClick = {
                                             invalidateProxyTest()
                                             proxyInput = ""
@@ -416,7 +416,7 @@ fun SettingsScreen(
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
                                 }
-                                Button(
+                                Button(shape = MaterialTheme.shapes.medium,
                                     onClick = {
                                         try {
                                             viewModel.updateProxyUrl(proxyInput)
@@ -433,7 +433,7 @@ fun SettingsScreen(
                                     Text(strings.applyProxy, style = MaterialTheme.typography.labelLarge)
                                 }
                             }
-                            OutlinedButton(
+                            OutlinedButton(shape = MaterialTheme.shapes.medium,
                                 enabled = !proxyTesting,
                                 modifier = Modifier.fillMaxWidth().testTag("proxy_test"),
                                 onClick = {
@@ -474,7 +474,7 @@ fun SettingsScreen(
                             title = "${strings.relaySitesSection} (${relaySites.size})",
                             subtitle = strings.relaySitesDesc,
                             action = {
-                                Button(
+                                Button(shape = MaterialTheme.shapes.medium,
                                     onClick = {
                                         if (!hasShownRelayCompatTip) {
                                             showCompatDialog = true
@@ -585,7 +585,7 @@ fun SettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
                                 if (status != SessionStatus.MISSING) {
-                                    OutlinedButton(
+                                    OutlinedButton(shape = MaterialTheme.shapes.medium,
                                         onClick = {
                                             sessionRepository.clear(selectedSessionPlatform)
                                             Toast.makeText(context, strings.sessionCleared, Toast.LENGTH_SHORT).show()
@@ -597,7 +597,7 @@ fun SettingsScreen(
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
                                 }
-                                Button(
+                                Button(shape = MaterialTheme.shapes.medium,
                                     onClick = { importSessionPlatform = selectedSessionPlatform; sessionPicker.launch(arrayOf("*/*")) },
                                     modifier = Modifier.height(36.dp),
                                     contentPadding = PaddingValues(horizontal = 12.dp)
@@ -610,7 +610,7 @@ fun SettingsScreen(
                             if (selectedSessionPlatform == SessionPlatforms.YOUTUBE) {
                                 Text("Google 可能拒绝内置浏览器登录；遇到此情况请使用上方 cookies.txt 文件导入。", style = MaterialTheme.typography.bodySmall)
                             }
-                            Button(
+                            Button(shape = MaterialTheme.shapes.medium,
                                 onClick = { showPlatformLogin = true },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -658,7 +658,7 @@ fun SettingsScreen(
                             }
 
                             Spacer(modifier = Modifier.height(10.dp))
-                            Button(
+                            Button(shape = MaterialTheme.shapes.medium,
                                 onClick = { showBilibiliLoginSheet = true },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -696,7 +696,7 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.End
                             ) {
                                 if (savedBilibiliCookie.isNotEmpty()) {
-                                    OutlinedButton(
+                                    OutlinedButton(shape = MaterialTheme.shapes.medium,
                                         onClick = {
                                             bilibiliCookieInput = ""
                                             viewModel.clearBilibiliCookie()
@@ -710,7 +710,7 @@ fun SettingsScreen(
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
                                 }
-                                Button(
+                                Button(shape = MaterialTheme.shapes.medium,
                                     onClick = {
                                         viewModel.updateBilibiliCookie(bilibiliCookieInput)
                                         Toast.makeText(context, strings.bilibiliCookieSaved, Toast.LENGTH_SHORT).show()
@@ -772,7 +772,7 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.End
                             ) {
                                 if (savedDownloadPath.isNotBlank()) {
-                                    OutlinedButton(
+                                    OutlinedButton(shape = MaterialTheme.shapes.medium,
                                         onClick = {
                                             viewModel.resetDownloadPath()
                                             Toast.makeText(context, strings.pathReset, Toast.LENGTH_SHORT).show()
@@ -785,7 +785,7 @@ fun SettingsScreen(
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
                                 }
-                                Button(
+                                Button(shape = MaterialTheme.shapes.medium,
                                     onClick = { showPathDialog = true },
                                     modifier = Modifier.height(36.dp),
                                     contentPadding = PaddingValues(horizontal = 12.dp),
@@ -808,8 +808,8 @@ fun SettingsScreen(
                             Text("图文下载路径", style = MaterialTheme.typography.titleMedium)
                             Text(imagePath.ifBlank { "跟随默认下载路径" }, style = MaterialTheme.typography.bodySmall)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(onClick = { imageSettings.setImageDownloadPath("") }, enabled = imagePath.isNotBlank()) { Text("跟随默认路径") }
-                                Button(onClick = { imageDirectoryPicker.launch(null) }) { Text("选择图文文件夹") }
+                                OutlinedButton(shape = MaterialTheme.shapes.medium, onClick = { imageSettings.setImageDownloadPath("") }, enabled = imagePath.isNotBlank()) { Text("跟随默认路径") }
+                                Button(shape = MaterialTheme.shapes.medium, onClick = { imageDirectoryPicker.launch(null) }) { Text("选择图文文件夹") }
                             }
                         }
                     }
@@ -828,7 +828,7 @@ fun SettingsScreen(
                                 }
                             }
                             Spacer(modifier = Modifier.height(10.dp))
-                            OutlinedButton(
+                            OutlinedButton(shape = MaterialTheme.shapes.medium,
                                 onClick = {
                                     try {
                                         context.cacheDir?.deleteRecursively()
@@ -881,7 +881,7 @@ fun SettingsScreen(
                         }
                     }
                     item(key = "settings_github") {
-                        OutlinedButton(
+                        OutlinedButton(shape = MaterialTheme.shapes.medium,
                             onClick = {
                                 val url = "https://github.com/baishu136/OmniDownloader"
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -929,7 +929,7 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedButton(
+                    OutlinedButton(shape = MaterialTheme.shapes.medium,
                         onClick = {
                             dirPickerLauncher.launch(null)
                             showPathDialog = false
@@ -981,7 +981,7 @@ fun SettingsScreen(
                 }
             },
             confirmButton = {
-                Button(
+                Button(shape = MaterialTheme.shapes.medium,
                     onClick = {
                         val clean = inputPath.trim()
                         if (clean.isNotEmpty()) {
@@ -1071,7 +1071,7 @@ fun SettingsScreen(
                 Text(text = String.format(strings.deleteRelaySiteConfirmMessage, targetSite.name))
             },
             confirmButton = {
-                Button(
+                Button(shape = MaterialTheme.shapes.medium,
                     onClick = {
                         viewModel.removeRelaySite(targetSite.id)
                         siteToDelete = null
@@ -1106,7 +1106,7 @@ private fun SettingDropdown(
     val currentLabel = options.firstOrNull { it.first == currentValue }?.second ?: fallbackLabel
 
     Box {
-        OutlinedButton(
+        OutlinedButton(shape = MaterialTheme.shapes.medium,
             onClick = { expanded = true },
             modifier = Modifier.height(34.dp),
             contentPadding = PaddingValues(horizontal = 10.dp),

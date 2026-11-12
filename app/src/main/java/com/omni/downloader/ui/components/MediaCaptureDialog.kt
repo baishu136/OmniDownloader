@@ -76,7 +76,7 @@ fun MediaCaptureDialog(
                 Column(Modifier.padding(20.dp)) {
                     Text("$platform 的 Cookie 已禁用", style = MaterialTheme.typography.titleMedium)
                     Text("浏览器辅助会使用网页登录状态。可开启该平台 Cookie 后继续，或关闭窗口保持匿名解析。", Modifier.padding(vertical = 12.dp))
-                    Button(onClick = { sessions.setCookieEnabled(platform, true) }) { Text("开启 Cookie 并继续") }
+                    Button(shape = MaterialTheme.shapes.medium, onClick = { sessions.setCookieEnabled(platform, true) }) { Text("开启 Cookie 并继续") }
                     TextButton(onClick = onDismissRequest) { Text("关闭") }
                 }
             }
@@ -157,7 +157,7 @@ fun MediaCaptureDialog(
                     }) { Text(if (desktop) "桌面网站（切换手机版）" else "手机版（切换桌面网站）") }
                 }
                 candidate?.let { source ->
-                    Button(onClick = { onCaptured(source) }, modifier = Modifier.fillMaxWidth()) { Text("下载当前已捕获媒体（请确认来自目标内容）") }
+                    Button(shape = MaterialTheme.shapes.medium, onClick = { onCaptured(source) }, modifier = Modifier.fillMaxWidth()) { Text("下载当前已捕获媒体（请确认来自目标内容）") }
                 }
                 AndroidView(
                     modifier = Modifier.weight(1f),

@@ -325,7 +325,7 @@ fun OmniPillButton(
         )
     }
     if (primary) {
-        Button(
+        Button(shape = MaterialTheme.shapes.medium,
             onClick = onClick,
             modifier = modifier.height(40.dp),
             enabled = enabled,
@@ -333,7 +333,7 @@ fun OmniPillButton(
             content = content
         )
     } else {
-        FilledTonalButton(
+        FilledTonalButton(shape = MaterialTheme.shapes.medium,
             onClick = onClick,
             modifier = modifier,
             enabled = enabled,

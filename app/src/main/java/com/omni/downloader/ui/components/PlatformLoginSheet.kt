@@ -176,7 +176,7 @@ fun PlatformLoginSheet(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Button(onClick = { captureIfLoggedIn(force = true) }) {
+                    Button(shape = MaterialTheme.shapes.medium, onClick = { captureIfLoggedIn(force = true) }) {
                         Text(if (!config.automaticCapture) "我已登录，保存会话" else strings.sessionLoginDone)
                     }
                 }

@@ -430,7 +430,7 @@ fun CollectionTaskCard(
                 }
             },
             confirmButton = {
-                Button(
+                Button(shape = MaterialTheme.shapes.medium,
                     onClick = {
                         onDeleteCollection(collectionId, deleteLocalFiles)
                         showDeleteDialog = false
@@ -464,7 +464,7 @@ fun CollectionTaskCard(
                 )
             },
             confirmButton = {
-                Button(
+                Button(shape = MaterialTheme.shapes.medium,
                     onClick = {
                         onCancelCollection(collectionId)
                         showCancelDialog = false

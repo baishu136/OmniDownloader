@@ -59,7 +59,7 @@ internal fun ImageInputPanel(
                 DropdownMenuItem(text = { Text("恢复默认目录") }, onClick = { pathsExpanded = false; onResetPath() })
             }
         }
-        Button(onClick = onAnalyze, enabled = !busy && input.isNotBlank(), modifier = Modifier.heightIn(min = 48.dp).testTag("images_analyze")) {
+        Button(shape = MaterialTheme.shapes.medium, onClick = onAnalyze, enabled = !busy && input.isNotBlank(), modifier = Modifier.heightIn(min = 48.dp).testTag("images_analyze")) {
             Text(if (busy) "正在解析…" else "解析图文")
         }
     }

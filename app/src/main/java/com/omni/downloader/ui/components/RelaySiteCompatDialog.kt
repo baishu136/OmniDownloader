@@ -75,7 +75,7 @@ fun RelaySiteCompatDialog(
             }
         },
         confirmButton = {
-            Button(
+            Button(shape = MaterialTheme.shapes.medium,
                 onClick = onConfirm,
 
             ) {

@@ -18,6 +18,12 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
+import com.omni.downloader.ui.design.NavigationFillIcon
+import androidx.compose.ui.platform.testTag
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Home
@@ -188,7 +194,7 @@ class MainActivity : ComponentActivity() {
 
     /**
      * 底栏直接使用 M3 NavigationBar / NavigationBarItem（与 Mihon 手机端一致）：
-     * 选中指示器、涟漪与文字动画全部交给 M3 原生实现，页面侧不再维护自定义动画。
+     * 指示器、涟漪和标签保留 M3 动效；图标额外使用与切页同步的填充过渡。
      */
     @Composable
     private fun OmniNavigationBar(
@@ -198,10 +204,10 @@ class MainActivity : ComponentActivity() {
     ) {
         val navItems = remember(appStrings) {
             listOf(
-                NavItem(0, Icons.Outlined.Home, appStrings.navHome),
-                NavItem(3, Icons.AutoMirrored.Outlined.PlaylistPlay, "批量"),
-                NavItem(1, Icons.Outlined.Download, appStrings.navTasks),
-                NavItem(2, Icons.Outlined.Settings, appStrings.navSettings)
+                NavItem(0, Icons.Outlined.Home, Icons.Filled.Home, appStrings.navHome),
+                NavItem(3, Icons.AutoMirrored.Outlined.PlaylistPlay, Icons.AutoMirrored.Filled.PlaylistPlay, "批量"),
+                NavItem(1, Icons.Outlined.Download, Icons.Filled.Download, appStrings.navTasks),
+                NavItem(2, Icons.Outlined.Settings, Icons.Filled.Settings, appStrings.navSettings)
             )
         }
 
@@ -212,6 +218,7 @@ class MainActivity : ComponentActivity() {
             navItems.forEach { item ->
                 val selected = currentTab == item.index
                 NavigationBarItem(
+                    modifier = Modifier.testTag("nav_tab_${item.index}"),
                     selected = selected,
                     onClick = {
                         if (currentTab != item.index) {
@@ -219,10 +226,8 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     icon = {
-                        Icon(
-                            imageVector = item.icon,
-                            contentDescription = item.label
-                        )
+                        NavigationFillIcon(item.icon, item.selectedIcon, item.label, selected,
+                            Modifier.testTag("nav_icon_${item.index}"))
                     },
                     label = {
                         Text(
@@ -310,6 +315,7 @@ class MainActivity : ComponentActivity() {
     private data class NavItem(
         val index: Int,
         val icon: ImageVector,
+        val selectedIcon: ImageVector,
         val label: String
     )
 }

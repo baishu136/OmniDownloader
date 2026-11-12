@@ -382,7 +382,7 @@ private fun TaskErrorSection(errorMessage: String) {
                 }
             },
             confirmButton = {
-                Button(onClick = {
+                Button(shape = MaterialTheme.shapes.medium, onClick = {
                     val clip = android.content.ClipData.newPlainText("ErrorLog", errorMessage)
                     (context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager)?.setPrimaryClip(clip)
                     Toast.makeText(context, "已复制错误日志", Toast.LENGTH_SHORT).show()

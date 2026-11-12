@@ -162,7 +162,7 @@ fun RelaySiteCard(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                Button(
+                Button(shape = MaterialTheme.shapes.medium,
                     onClick = {
                         if (isResolving) onCancelResolve() else onStartResolve(site)
                     },

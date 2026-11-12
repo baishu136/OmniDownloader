@@ -247,7 +247,7 @@ fun AddRelaySiteDialog(
             }
         },
         confirmButton = {
-            Button(
+            Button(shape = MaterialTheme.shapes.medium,
                 onClick = {
                     val cleanName = nameInput.trim()
                     var cleanUrl = urlInput.trim()

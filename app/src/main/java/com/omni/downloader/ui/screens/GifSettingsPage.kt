@@ -67,7 +67,7 @@ internal fun GifSettingsPage() {
     }
     LazyColumn(Modifier.fillMaxSize().testTag("settings_gif"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-        Button(onClick = { picker.launch(arrayOf("video/*")) }, modifier = Modifier.fillMaxWidth()) { Text("选择本地视频转 GIF") }
+        Button(shape = MaterialTheme.shapes.medium, onClick = { picker.launch(arrayOf("video/*")) }, modifier = Modifier.fillMaxWidth()) { Text("选择本地视频转 GIF") }
         Text("转换任务在后台执行，可在任务页查看进度、取消或重试。")
         if (entries.isEmpty()) Text("暂无 GIF")
         }
