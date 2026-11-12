@@ -54,6 +54,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = TaskRepository.getInstance(application)
     private val settingsRepository = SettingsRepository.getInstance(application)
+    val inputDrafts = com.omni.downloader.data.repository.InputDraftRepository.getInstance(application)
 
     val tasks: StateFlow<List<DownloadTask>> = repository.tasks
     val taskStructure: StateFlow<List<DownloadTask>> = repository.taskStructure
@@ -99,6 +100,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             imagePost.value = null; imageError.value = ""; imageBrowserUrl.value = ""
         }
         imageInput.value = value
+        inputDrafts.update { it.copy(images = value) }
     }
 
     fun pasteImageLink(context: Context) {
@@ -369,12 +371,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            inputDrafts.awaitLoaded()
+            _inputUrl.value = inputDrafts.draft.value.home
+            imageInput.value = inputDrafts.draft.value.images
+            launch { _inputUrl.collect { text -> inputDrafts.update { it.copy(home = text) } } }
+            launch { imageInput.collect { text -> inputDrafts.update { it.copy(images = text) } } }
+        }
+    }
+
     fun updateInputUrl(url: String) {
         if (_inputUrl.value != url) {
             cancelMediaAnalysis()
             _metadata.value = null; _showFormatSheet.value = false; _errorDialogDetail.value = null
         }
         _inputUrl.value = url
+        inputDrafts.update { it.copy(home = url) }
     }
 
     fun updateProxyUrl(url: String) {

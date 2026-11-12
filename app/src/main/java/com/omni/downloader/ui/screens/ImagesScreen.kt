@@ -31,8 +31,10 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.omni.downloader.ui.components.ImageInputPanel
 import com.omni.downloader.data.model.ImagePost
 import com.omni.downloader.data.model.ImageResource
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 
-@Composable fun ImagesScreen(viewModel: MainViewModel, onTasks: () -> Unit) {
+@Composable fun ImagesScreen(viewModel: MainViewModel, onTasks: () -> Unit, onBack: (() -> Unit)? = null) {
     val input by viewModel.imageInput.collectAsStateWithLifecycle()
     val post by viewModel.imagePost.collectAsStateWithLifecycle()
     val busy by viewModel.imageBusy.collectAsStateWithLifecycle()
@@ -79,7 +81,10 @@ import com.omni.downloader.data.model.ImageResource
     ImagePostGrid(post, selected, onSelection = { selected = it }, onPreview = { previewIndex = it },
         onSave = { archive -> viewModel.downloadImages(selected, archive); onTasks() },
         imageModel = { index -> request(requireNotNull(post), index) }) {
-        Text("图文下载", style = MaterialTheme.typography.headlineMedium)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            onBack?.let { back -> IconButton(onClick = back) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回首页") } }
+            Text("图文下载", style = MaterialTheme.typography.headlineMedium)
+        }
         Text("抖音 · 快手 · bilibili · Pixiv · 小红书 · X · Pinterest", style = MaterialTheme.typography.bodyMedium)
         ImageInputPanel(input, busy, pathLabel,
             onInput = viewModel::updateImageInput,

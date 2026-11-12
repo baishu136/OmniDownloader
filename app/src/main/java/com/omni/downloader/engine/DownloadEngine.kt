@@ -530,12 +530,23 @@ object DownloadEngine {
         if (site == "哔哩哔哩") {
             val directResult = BilibiliDirectExtractor.download(
                 context = context,
-                task = task,
+                task = if (task.downloadType == DownloadType.GIF) task.copy(downloadType = DownloadType.VIDEO_ONLY) else task,
                 stagingDir = stagingDir,
                 publicDir = publicDir,
                 onProgressUpdate = onProgressUpdate
             )
             if (directResult.isSuccess) {
+                if (task.downloadType == DownloadType.GIF) {
+                    val input = File(directResult.getOrThrow())
+                    val output = File(publicDir, "${input.nameWithoutExtension}.gif")
+                    onProgressUpdate(92f, "", "正在转换 GIF…", TaskStatus.PROCESSING)
+                    return@withContext try {
+                        FFmpegExecutor.convertToGif(context, input, output).getOrThrow()
+                        Result.success(output.path)
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                    catch (error: Exception) { output.delete(); Result.failure(error) }
+                    finally { input.delete() }
+                }
                 return@withContext directResult
             }
             val err = directResult.exceptionOrNull() ?: Exception("B站直连下载执行失败")

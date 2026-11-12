@@ -19,10 +19,30 @@ import java.util.UUID
 @Serializable data class BatchPlan(val items: List<BatchItem> = emptyList(), val options: BatchOptions = BatchOptions())
 
 object BatchInput {
+    fun merge(existing: List<String>, text: String, single: Boolean = false): List<String> {
+        val added = links(text)
+        require(!single || added.size == 1) { "逐条添加每次只接受一条链接，多条分享文本请使用智能识别" }
+        return (existing + added).distinct().also {
+            require(it.size <= 100) { "每批最多 100 条链接，请分批添加" }
+            require(it.sumOf { link -> link.length + 1 } <= 100_000) { "链接文本过长，请分批添加" }
+        }
+    }
+    fun preservePending(previous: BatchPlan, incoming: BatchPlan): BatchPlan {
+        val known = previous.items.associateBy { it.url }
+        val rows = (previous.items.filter { it.status != BatchStatus.QUEUED } + incoming.items.map { known[it.url] ?: it }).distinctBy { it.url }
+        require(rows.size <= 100) { "加上未完成链接后超过 100 条，请先继续处理原批次" }
+        return incoming.copy(items = rows)
+    }
     fun links(text: String): List<String> {
         require(text.length <= 100_000) { "文本过长，请分批添加" }
-        val pattern = Regex("""https?://[^\s<>"'，。；、（）【】]+|(?<![A-Za-z0-9])BV[A-Za-z0-9]{10}(?![A-Za-z0-9])""")
-        val links = pattern.findAll(text).map { LinkNormalizer.normalize(it.value.trimEnd('.', ',', ';', '!', ')', ']', '}')).contentUrl }
+        val pattern = Regex("""https?://[^\s<>"'，。；、（）【】！？「」『』]+|(?<![A-Za-z0-9])(?:BV[A-Za-z0-9]{10}|av\d+)(?![A-Za-z0-9])""", RegexOption.IGNORE_CASE)
+        val clean = text.replace("\u200B", "").replace("\uFEFF", "")
+        val links = pattern.findAll(clean).map { match ->
+            val value = match.value.trimEnd('.', ',', ';', '!', ')', ']', '}')
+            val normalizedCase = if (value.contains("://")) value.substringBefore("://").lowercase() + "://" + value.substringAfter("://")
+                else if (value.startsWith("bv", true)) "BV" + value.substring(2) else value.lowercase()
+            LinkNormalizer.normalize(normalizedCase).contentUrl
+        }
             .filter { runCatching { URI(it).let { u -> u.scheme in setOf("http", "https") && u.host != null && u.userInfo == null } }.getOrDefault(false) }
             .distinct().toList()
         require(links.isNotEmpty()) { "没有找到有效链接" }

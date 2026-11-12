@@ -32,10 +32,10 @@ class BatchDownloads(context: Context, private val scope: CoroutineScope) {
         } } catch (_: Exception) { _error.value = "上次批次记录无法读取，可以重新添加链接" }
         finally { loaded.complete(Unit) }
     } }
-    fun start(text: String, options: BatchOptions) {
+    fun start(text: String, options: BatchOptions, preservePending: Boolean = false) {
         if (job?.isActive == true) return
         val links = runCatching { BatchInput.links(text) }.getOrElse { _error.value = it.message; return }
-        launch(BatchPlan(links.map { BatchItem(url = it) }, options))
+        launch(BatchPlan(links.map { BatchItem(url = it) }, options), preservePending)
     }
     fun retry() { if (job?.isActive != true) launch(null) }
     fun cancel() {
@@ -43,13 +43,13 @@ class BatchDownloads(context: Context, private val scope: CoroutineScope) {
         job?.cancel()
         activeProcess?.let(DownloadEngine::cancelMetadata)
     }
-    private fun launch(plan: BatchPlan?) {
+    private fun launch(plan: BatchPlan?, preservePending: Boolean = false) {
         _error.value = null
         val token = UUID.randomUUID().toString()
         val held = runCatching { DownloadService.analysisLease(context, token, true) }.isSuccess
         job = scope.launch(Dispatchers.IO) {
             loaded.await()
-            try { queue.run(plan) }
+            try { queue.run(if (plan != null && preservePending) BatchInput.preservePending(queue.plan.value, plan) else plan) }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) { _error.value = LogSanitizer.sanitize(error.message.orEmpty()) }
         }.also { it.invokeOnCompletion { if (held) runCatching { DownloadService.analysisLease(context, token, false) } } }

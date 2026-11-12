@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material.icons.automirrored.outlined.PlaylistPlay
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -140,8 +140,8 @@ class MainActivity : ComponentActivity() {
                         mediaNavigation?.let { request ->
                             // An explicit visit to Tasks/Settings is not stolen by
                             // a slower parse finishing in a retained content tab.
-                            if (viewModel.consumeMediaNavigation(request) && (currentTab == 0 || currentTab == 3)) {
-                                currentTab = if (request.destination == com.omni.downloader.engine.MediaPage.IMAGES) 3 else 0
+                            if (viewModel.consumeMediaNavigation(request) && (currentTab == 0 || currentTab == 4)) {
+                                currentTab = if (request.destination == com.omni.downloader.engine.MediaPage.IMAGES) 4 else 0
                             }
                         }
                     }
@@ -198,7 +198,7 @@ class MainActivity : ComponentActivity() {
         val navItems = remember(appStrings) {
             listOf(
                 NavItem(0, Icons.Outlined.Home, appStrings.navHome),
-                NavItem(3, Icons.Outlined.PhotoLibrary, "图文"),
+                NavItem(3, Icons.AutoMirrored.Outlined.PlaylistPlay, "批量"),
                 NavItem(1, Icons.Outlined.Download, appStrings.navTasks),
                 NavItem(2, Icons.Outlined.Settings, appStrings.navSettings)
             )
@@ -209,11 +209,11 @@ class MainActivity : ComponentActivity() {
             tonalElevation = 0.dp
         ) {
             navItems.forEach { item ->
-                val selected = currentTab == item.index
+                val selected = currentTab == item.index || (currentTab == 4 && item.index == 0)
                 NavigationBarItem(
                     selected = selected,
                     onClick = {
-                        if (!selected) {
+                        if (currentTab != item.index) {
                             onTabSelected(item.index)
                         }
                     },
@@ -246,12 +246,13 @@ class MainActivity : ComponentActivity() {
     ) {
         val onNavTasks = remember(onSelectTab) { { onSelectTab(1) } }
         val onNavSettings = remember(onSelectTab) { { onSelectTab(2) } }
-        RetainedTabHost(currentTab, 4, modifier.fillMaxSize()) { tab ->
+        RetainedTabHost(currentTab, 5, modifier.fillMaxSize()) { tab ->
             when (tab) {
-                0 -> HomeScreen(viewModel, onNavTasks, onNavSettings, isActive = LocalTabActive.current)
+                0 -> HomeScreen(viewModel, onNavTasks, onNavSettings, isActive = LocalTabActive.current, onImages = { onSelectTab(4) })
                 1 -> TasksScreen(viewModel)
                 2 -> SettingsScreen(viewModel)
-                3 -> com.omni.downloader.ui.screens.ImagesScreen(viewModel, onNavTasks)
+                3 -> com.omni.downloader.ui.screens.BatchDownloadScreen(viewModel, onNavTasks, onSingle = { onSelectTab(0) })
+                4 -> com.omni.downloader.ui.screens.ImagesScreen(viewModel, onNavTasks, onBack = { onSelectTab(0) })
             }
         }
     }
@@ -264,12 +265,18 @@ class MainActivity : ComponentActivity() {
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
             val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT) ?: ""
+            val sharedLinks = runCatching { com.omni.downloader.engine.BatchInput.links(sharedText) }.getOrDefault(emptyList())
+            if (intent.getStringExtra("com.omni.downloader.TARGET") != "images" && sharedLinks.size > 1) {
+                viewModel.inputDrafts.update { it.copy(batchText = sharedText.take(100_000), batchManual = false) }
+                sharedTargetTab.value = 3; sharedLinkGeneration.value += 1
+                return
+            }
             val url = UrlSniffer.extractUrl(sharedText) ?: sharedText
             if (url.isNotBlank()) {
                 // Explicit share integrations may choose the photo-post workflow without typing
                 // the URL through an IME; ordinary shared links retain the video workflow.
                 if (intent.getStringExtra("com.omni.downloader.TARGET") == "images") {
-                    sharedTargetTab.value = 3
+                    sharedTargetTab.value = 4
                     viewModel.updateImageInput(url)
                     viewModel.analyzeImages()
                     sharedLinkGeneration.value += 1

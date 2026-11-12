@@ -43,10 +43,15 @@ class OptimizedReleaseTest {
             fail("Home navigation missing; foreground=" + device.currentPackageName + "; target=" + context.packageName)
         }
         fun navigate(label: String) {
-            val item = device.findObjects(By.text(label)).maxByOrNull { it.visibleBounds.centerY() }
-            assertNotNull("Navigation missing: " + label, item)
-            item!!.click()
-            device.waitForIdle()
+            val deadline = SystemClock.elapsedRealtime() + 5000
+            while (SystemClock.elapsedRealtime() < deadline) {
+                try {
+                    val item = device.findObjects(By.text(label)).maxByOrNull { it.visibleBounds.centerY() }
+                    if (item != null) { item.click();device.waitForIdle();return }
+                } catch (_: androidx.test.uiautomator.StaleObjectException) { }
+                Thread.sleep(50)
+            }
+            fail("Navigation missing: " + label)
         }
         repeat(3) {
             navigate("Tasks")
@@ -74,12 +79,18 @@ class OptimizedReleaseTest {
         }
         navigate("Home")
 
-        val batchEntry = By.text("批量下载 · 多链接 / 分享文本")
+        val batchEntry = By.text("批量")
         assertTrue("Batch download entry missing after R8", device.wait(Until.hasObject(batchEntry), 5000))
         device.findObject(batchEntry).click()
         assertTrue("Batch download sheet missing after R8", device.wait(Until.hasObject(By.text("解析并加入下载队列")), 5000))
         assertTrue(device.hasObject(By.text("下载合集 / 多视频的全部分集")))
-        device.pressBack()
+        assertTrue(device.hasObject(By.text("逐条添加")))
+        navigate("Home")
+        assertTrue("Image floating button missing", device.wait(Until.hasObject(By.desc("图文下载")), 5000))
+        device.findObject(By.desc("图文下载")).click()
+        assertTrue("Image subpage missing", device.wait(Until.hasObject(By.text("图文下载")), 5000))
+        device.findObject(By.desc("返回首页")).click()
+        assertTrue(device.wait(Until.hasObject(By.text("Home")), 5000))
 
         val nativeDir = File(context.applicationInfo.nativeLibraryDir)
         assertFalse("Unused Aria2c executable still packaged", File(nativeDir, "libaria2c.so").exists())

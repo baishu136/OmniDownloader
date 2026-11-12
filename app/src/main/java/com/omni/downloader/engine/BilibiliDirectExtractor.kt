@@ -49,17 +49,17 @@ object BilibiliDirectExtractor {
     }
 
     private data class Account(val id: String = "", val name: String = "", val verified: Boolean = false, val checkedAt: Long = System.currentTimeMillis())
-    private fun verifyAccount(context: Context): Account {
+    private suspend fun verifyAccount(context: Context): Account {
         val account = if (!getCookieHeader().contains("SESSDATA=")) Account() else runCatching {
-            httpClient.newCall(Request.Builder().url("https://api.bilibili.com/x/web-interface/nav")
+            BiliHttp.read(httpClient, Request.Builder().url("https://api.bilibili.com/x/web-interface/nav")
                 .header("User-Agent", PC_USER_AGENT).header("Referer", "https://www.bilibili.com/")
-                .header("Cookie", getCookieHeader()).build()).execute().use { response ->
+                .header("Cookie", getCookieHeader()).build()) { response ->
                 val json = JSONObject(response.body?.string().orEmpty())
                 val data = json.optJSONObject("data")
                 if (json.optInt("code", -1) == 0 && data?.optBoolean("isLogin") == true && data.optLong("mid") > 0)
                     Account(data.optString("mid"), data.optString("uname"), true) else Account()
             }
-        }.getOrDefault(Account())
+        }.getOrElse { if (it is kotlinx.coroutines.CancellationException) throw it; Account() }
         com.omni.downloader.data.repository.SessionRepository.getInstance(context)
             .recordAccountValidation("哔哩哔哩", account.id, account.name, account.verified)
         return account
@@ -73,15 +73,14 @@ object BilibiliDirectExtractor {
     /**
      * 获取基础会话 Cookie 并拼接用户自定义凭证
      */
-    private fun ensureCookies() {
+    private suspend fun ensureCookies() {
         if (cookieMap.containsKey("buvid3")) return
         try {
             val req = Request.Builder()
                 .url("https://www.bilibili.com")
                 .header("User-Agent", PC_USER_AGENT)
                 .build()
-            val resp = httpClient.newCall(req).execute()
-            val headers = resp.headers("Set-Cookie")
+            val headers = BiliHttp.read(httpClient, req) { it.headers("Set-Cookie") }
             for (header in headers) {
                 val parts = header.split(";")
                 if (parts.isNotEmpty()) {
@@ -92,12 +91,13 @@ object BilibiliDirectExtractor {
                 }
             }
             Log.d(TAG, "已获取 B 站会话 Cookie: ${cookieMap.keys}")
-        } catch (e: Exception) {
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (e: Exception) {
             Log.w(TAG, "获取 B 站初始 Cookie 忽略: ${e.message}")
         }
     }
 
-    private fun getCookieHeader(): String {
+    private suspend fun getCookieHeader(): String {
         ensureCookies()
         val baseCookie = cookieMap.entries.joinToString("; ") { "${it.key}=${it.value}" }
         val user = customUserCookie.trim()
@@ -126,36 +126,36 @@ object BilibiliDirectExtractor {
         try {
             syncSession(context)
             var resolvedUrl = UrlSniffer.sanitizeAndResolveUrl(rawUrl)
-            var bvid = extractBvid(resolvedUrl)
+            var inputBvid = extractBvid(resolvedUrl)
 
-            // 若仍包含 b23.tv 且未提取出 bvid，进行直连页面重定向探测
-            if (bvid == null && resolvedUrl.contains("b23.tv")) {
+            // 若仍包含 b23.tv 且未提取出 inputBvid，进行直连页面重定向探测
+            if (inputBvid == null && resolvedUrl.contains("b23.tv")) {
                 try {
                     val req = Request.Builder()
                         .url(resolvedUrl)
                         .header("User-Agent", PC_USER_AGENT)
                         .build()
-                    val resp = httpClient.newCall(req).execute()
-                    val finalUrl = resp.request.url.toString()
-                    bvid = extractBvid(finalUrl)
-                    if (bvid != null) {
+                    val finalUrl = BiliHttp.read(httpClient, req) { it.request.url.toString() }
+                    inputBvid = extractBvid(finalUrl)
+                    if (inputBvid != null) {
                         resolvedUrl = finalUrl
                     }
-                } catch (ignored: Exception) {
+                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (ignored: Exception) {
                 }
             }
 
-            if (bvid == null) {
+            if (inputBvid == null) {
                 return@withContext Result.failure(IllegalArgumentException("未能识别到 B 站视频 ID (BV/av)，请确认链接是否有效"))
             }
 
             ensureCookies()
 
             // 1. 获取视频元数据
-            val viewApiUrl = if (bvid.startsWith("BV", ignoreCase = true)) {
-                "https://api.bilibili.com/x/web-interface/view?bvid=$bvid"
+            val viewApiUrl = if (inputBvid.startsWith("BV", ignoreCase = true)) {
+                "https://api.bilibili.com/x/web-interface/view?bvid=$inputBvid"
             } else {
-                "https://api.bilibili.com/x/web-interface/view?aid=${bvid.substring(2)}"
+                "https://api.bilibili.com/x/web-interface/view?aid=${inputBvid.substring(2)}"
             }
 
             val viewRequest = Request.Builder()
@@ -165,8 +165,7 @@ object BilibiliDirectExtractor {
                 .header("Cookie", getCookieHeader())
                 .build()
 
-            val viewResponse = httpClient.newCall(viewRequest).execute()
-            val viewBody = viewResponse.body?.string() ?: ""
+            val viewBody = BiliHttp.read(httpClient, viewRequest) { it.body?.string().orEmpty() }
             val viewJson = JSONObject(viewBody)
 
             if (viewJson.optInt("code", -1) != 0) {
@@ -175,6 +174,7 @@ object BilibiliDirectExtractor {
             }
 
             val data = viewJson.getJSONObject("data")
+            val bvid = data.optString("bvid").ifBlank { requireNotNull(inputBvid) }
             val account = verifyAccount(context)
             val exclusive = exclusive(data)
             if (exclusive == true && !account.verified) error("[AUTH_REQUIRED] 该内容为充电专属，请验证拥有对应权益的账号")
@@ -367,7 +367,8 @@ object BilibiliDirectExtractor {
 
             Log.d(TAG, "B站解析成功: $finalTitle, 分集数: ${multiMediaList.size}")
             Result.success(meta)
-        } catch (e: Exception) {
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (e: Exception) {
             Log.e(TAG, "B站解析异常", e)
             Result.failure(e)
         }
@@ -384,7 +385,7 @@ object BilibiliDirectExtractor {
         onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val bvid = extractBvid(task.url)
+            var bvid = extractBvid(task.url)
                 ?: return@withContext Result.failure(Exception("无法解析 B 站视频 ID"))
 
             onProgressUpdate(0f, "", "正在获取高清直链...", TaskStatus.DOWNLOADING)
@@ -397,21 +398,22 @@ object BilibiliDirectExtractor {
                 "https://api.bilibili.com/x/web-interface/view?aid=${bvid.substring(2)}"
             }
 
-            val viewResp = httpClient.newCall(
+            val viewRequest = (
                 Request.Builder()
                     .url(viewApiUrl)
                     .header("User-Agent", PC_USER_AGENT)
                     .header("Referer", "https://www.bilibili.com")
                     .header("Cookie", getCookieHeader())
                     .build()
-            ).execute()
+            )
 
-            val viewJson = JSONObject(viewResp.body?.string() ?: "")
+            val viewJson = BiliHttp.read(httpClient, viewRequest) { JSONObject(it.body?.string().orEmpty()) }
             if (viewJson.optInt("code", -1) != 0) {
                 return@withContext Result.failure(Exception("获取视频元数据失败: ${viewJson.optString("message")}"))
             }
 
             val dataObj = viewJson.getJSONObject("data")
+            bvid = dataObj.optString("bvid").ifBlank { bvid }
             if (exclusive(dataObj) == true && !verifyAccount(context).verified) error("[AUTH_REQUIRED] 充电专属需要验证对应权益账号")
             var cid = dataObj.optLong("cid", 0)
             var realTitle = dataObj.optString("title", task.title)
@@ -437,7 +439,7 @@ object BilibiliDirectExtractor {
 
             val selectedPart = pages?.optJSONObject((pageNum ?: 1) - 1)
             val expectedPartMs = (selectedPart?.optLong("duration") ?: dataObj.optLong("duration")) * 1000
-            if (task.mediaId.isNotBlank() && task.mediaId != "$bvid:$cid") error("[MEDIA_ID_MISMATCH] 目标分P发生变化")
+            if (task.mediaId.isNotBlank() && task.mediaId !in setOf("$bvid:$cid", "av${dataObj.optLong("aid")}:$cid")) error("[MEDIA_ID_MISMATCH] 目标分P发生变化")
             val reqHeight = task.qualitySelection.maxHeight.takeIf { it > 0 } ?: extractHeightFromResolution(task.selectedResolution)
             val durlQn = when {
                 reqHeight >= 2160 -> 120
@@ -527,6 +529,8 @@ object BilibiliDirectExtractor {
                             onProgressUpdate(95f, "", "正在音画无损合成 (FFmpeg)...", TaskStatus.PROCESSING)
                             val mergeRes = if (tempAudio.exists() && tempAudio.length() > 0) {
                                 FFmpegExecutor.mergeVideoAndAudio(context, tempVideo, tempAudio, mergedFile)
+                            } else if (!task.requireAudio) {
+                                FFmpegExecutor.stripAudio(context, tempVideo, mergedFile)
                             } else {
                                 error("[POSTPROCESS_FAILED] 目标音轨缺失，不能将无声视频作为音画成品")
                             }
@@ -536,7 +540,8 @@ object BilibiliDirectExtractor {
                             } else {
                                 Log.w(TAG, "FFmpeg 混流未通过，将启用 DURL 渐进式备选直链: ${mergeRes.exceptionOrNull()?.message}")
                             }
-                        } catch (e: Exception) {
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                        catch (e: Exception) {
                             Log.w(TAG, "DASH 下载或合成异常: ${e.message}")
                         } finally {
                             tempVideo.delete()
@@ -605,11 +610,7 @@ object BilibiliDirectExtractor {
 
                 onProgressUpdate(92f, "", "封装 MP4 格式...", TaskStatus.PROCESSING)
                 val mergedFile = File(stagingDir, "bili_${task.id}_final.mp4")
-                val res = FFmpegExecutor.stripAudio(context, tempVideo, mergedFile)
-                if (res.isFailure) {
-                    // 若 stripAudio 失败，直接作为 mp4 封装
-                    tempVideo.copyTo(mergedFile, overwrite = true)
-                }
+                FFmpegExecutor.stripAudio(context, tempVideo, mergedFile).getOrThrow()
 
                 var finalPublicFile = File(publicDir, "$cleanTitle.mp4")
                 try {
@@ -652,35 +653,12 @@ object BilibiliDirectExtractor {
                 }
 
                 val ext = task.audioFormat.ext
-                val finalExt = if (ext == "mp3") "mp3" else "m4a"
                 val tempAudio = File(stagingDir, "bili_${task.id}_raw_audio.m4s")
-
-                downloadStreamToFile(
-                    url = bestAudioUrl,
-                    backups = bestAudioBackups,
-                    bvid = bvid,
-                    dest = tempAudio,
-                    startProgress = 0f,
-                    progressWeight = 90f,
-                    stepTitle = "下载音频数据",
-                    onProgressUpdate = onProgressUpdate
-                )
-
-                val finalAudioStaging = File(stagingDir, "bili_${task.id}_final.$finalExt")
-                if (finalExt == "m4a") {
-                    // 原声即为 aac/m4a，直接重命名封装
-                    tempAudio.copyTo(finalAudioStaging, overwrite = true)
-                } else {
-                    onProgressUpdate(92f, "", "正在转换为 ${finalExt.uppercase()}...", TaskStatus.PROCESSING)
-                    val extractRes = FFmpegExecutor.extractAudio(context, tempAudio, finalAudioStaging, finalExt)
-                    if (extractRes.isFailure) {
-                        Log.w(TAG, "转码 MP3 降级为原生 M4A 导出")
-                        tempAudio.copyTo(File(stagingDir, "bili_${task.id}_final.m4a"), overwrite = true)
-                    }
-                }
-
-                val actualExt = if (finalAudioStaging.exists()) finalExt else "m4a"
-                val actualStaging = if (finalAudioStaging.exists()) finalAudioStaging else File(stagingDir, "bili_${task.id}_final.m4a")
+                downloadStreamToFile(bestAudioUrl, bestAudioBackups, bvid, tempAudio, 0f, 90f, "下载音频数据", onProgressUpdate)
+                val actualStaging = File(stagingDir, "bili_${task.id}_final.$ext")
+                onProgressUpdate(92f, "", "正在导出 ${ext.uppercase()}...", TaskStatus.PROCESSING)
+                FFmpegExecutor.extractAudio(context, tempAudio, actualStaging, ext).getOrThrow()
+                val actualExt = ext
 
                 var finalPublicFile = File(publicDir, "$cleanTitle.$actualExt")
                 try {
@@ -701,7 +679,8 @@ object BilibiliDirectExtractor {
             }
 
             Result.failure(Exception("未知下载模式"))
-        } catch (e: Exception) {
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (e: Exception) {
             Log.e(TAG, "B站直连下载执行失败", e)
             Result.failure(e)
         }
@@ -710,84 +689,24 @@ object BilibiliDirectExtractor {
     /**
      * 流式下载单个分块到沙盒文件并上报瞬时网速和精准进度
      */
-    private fun downloadStreamToFile(
-        url: String,
-        backups: List<String>,
-        bvid: String,
-        dest: File,
-        startProgress: Float,
-        progressWeight: Float,
-        stepTitle: String,
-        onProgressUpdate: (progress: Float, speed: String, eta: String, status: TaskStatus) -> Unit
+    private suspend fun downloadStreamToFile(
+        url: String, backups: List<String>, bvid: String, dest: File,
+        startProgress: Float, progressWeight: Float, stepTitle: String,
+        onProgressUpdate: (Float, String, String, TaskStatus) -> Unit
     ) {
-        val targetUrls = mutableListOf(url).apply { addAll(backups) }
-        var lastErr: Exception? = null
-
-        for (targetUrl in targetUrls) {
-            try {
-                val req = Request.Builder()
-                    .url(targetUrl)
-                    .header("User-Agent", PC_USER_AGENT)
-                    .header("Referer", "https://www.bilibili.com/video/$bvid")
-                    .header("Cookie", getCookieHeader())
-                    .build()
-
-                val resp = httpClient.newCall(req).execute()
-                if (!resp.isSuccessful) {
-                    throw IOException("HTTP 错误: ${resp.code}")
-                }
-
-                val body = resp.body ?: throw IOException("返回内容为空")
-                val totalBytes = body.contentLength()
-                val inputStream = body.byteStream()
-                val outputStream = FileOutputStream(dest)
-
-                val buffer = ByteArray(64 * 1024)
-                var bytesRead: Int
-                var downloadedBytes = 0L
-                var lastTime = SystemClock.elapsedRealtime()
-                var bytesSinceLast = 0L
-
-                outputStream.use { out ->
-                    inputStream.use { inp ->
-                        while (inp.read(buffer).also { bytesRead = it } != -1) {
-                            out.write(buffer, 0, bytesRead)
-                            downloadedBytes += bytesRead
-                            bytesSinceLast += bytesRead
-
-                            val now = SystemClock.elapsedRealtime()
-                            if (now - lastTime >= 150) {
-                                val speedBytesPerSec = (bytesSinceLast * 1000) / (now - lastTime)
-                                val speedStr = formatBytes(speedBytesPerSec) + "/s"
-                                val fraction = if (totalBytes > 0) downloadedBytes.toFloat() / totalBytes else 0.5f
-                                val currentProgress = startProgress + fraction * progressWeight
-
-                                val etaStr = if (totalBytes > 0 && speedBytesPerSec > 0) {
-                                    val remainingBytes = totalBytes - downloadedBytes
-                                    val etaSec = remainingBytes / speedBytesPerSec
-                                    "${etaSec}秒"
-                                } else ""
-
-                                onProgressUpdate(currentProgress, speedStr, etaStr, TaskStatus.DOWNLOADING)
-                                lastTime = now
-                                bytesSinceLast = 0L
-                            }
-                        }
-                    }
-                }
-                return // 成功下载并退出
-            } catch (e: Exception) {
-                lastErr = e
-                Log.w(TAG, "下载流尝试失败，切换备选流: ${e.message}")
-            }
+        BiliStreamDownloader(httpClient).download(url, backups, dest,
+            mapOf("User-Agent" to PC_USER_AGENT, "Referer" to "https://www.bilibili.com/video/$bvid")) { bytes, total, speed ->
+            val fraction = if (total > 0) bytes.toFloat() / total else 0f
+            onProgressUpdate(startProgress + fraction * progressWeight,
+                if (speed > 0) formatBytes(speed) + "/s" else "",
+                if (total > 0 && speed > 0) "${(total - bytes).coerceAtLeast(0) / speed}秒" else stepTitle, TaskStatus.DOWNLOADING)
         }
-        throw lastErr ?: IOException("所有 CDN 流均下载失败")
     }
 
     /**
      * 当 DASH 双流或 FFmpeg 混流出现异常时，直接从 B 站官方拉取渐进式一体化 MP4 直链 (无须混流，100% 成功)
      */
-    private fun downloadDurlDirectly(
+    private suspend fun downloadDurlDirectly(
         bvid: String,
         cid: Long,
         qn: Int,
@@ -804,8 +723,7 @@ object BilibiliDirectExtractor {
                 .header("Cookie", getCookieHeader())
                 .build()
 
-            val resp = httpClient.newCall(req).execute()
-            val body = resp.body?.string() ?: ""
+            val body = BiliHttp.read(httpClient, req) { it.body?.string().orEmpty() }
             val json = JSONObject(body)
             val durlArray = json.optJSONObject("data")?.optJSONArray("durl") ?: return false
             if (durlArray.length() == 0) return false
@@ -826,7 +744,8 @@ object BilibiliDirectExtractor {
                 onProgressUpdate = onProgressUpdate
             )
             return true
-        } catch (e: Exception) {
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (e: Exception) {
             Log.w(TAG, "DURL 渐进式直链备选下载失败: ${e.message}")
             return false
         }
@@ -904,10 +823,10 @@ object BilibiliDirectExtractor {
             .thenBy { it.fps }.thenBy { it.qnId }.thenBy { it.bandwidth })
     }
 
-    private fun fetchPlayInfo(url: String): JSONObject {
-        fun get(target: String): JSONObject = httpClient.newCall(Request.Builder().url(target)
+    private suspend fun fetchPlayInfo(url: String): JSONObject {
+        suspend fun get(target: String): JSONObject = BiliHttp.read(httpClient, Request.Builder().url(target)
             .header("User-Agent", PC_USER_AGENT).header("Referer", "https://www.bilibili.com/")
-            .header("Cookie", getCookieHeader()).build()).execute().use { response ->
+            .header("Cookie", getCookieHeader()).build()) { response ->
                 if (response.code == 404) JSONObject().put("code", -404)
                 else {
                     if (!response.isSuccessful) error("[${if (response.code == 429) "RATE_LIMITED" else if (response.code == 412) "CHALLENGE_REQUIRED" else "NETWORK_ERROR"}] B站播放请求 HTTP ${response.code}")
@@ -942,12 +861,14 @@ object BilibiliDirectExtractor {
     }
 
     /** Only follow higher quality IDs actually advertised by the server, once. */
-    private fun expandPlayInfo(json: JSONObject, url: String): JSONObject {
+    private suspend fun expandPlayInfo(json: JSONObject, url: String): JSONObject {
         validatePlayback(json)
         val data = json.optJSONObject("data") ?: return json
         val supported = data.optJSONArray("accept_quality") ?: return json
         val higher = (0 until supported.length()).map { supported.optInt(it) }.filter { it > 120 }.maxOrNull() ?: return json
-        val extra = runCatching { fetchPlayInfo(url.replace("qn=120", "qn=$higher")) }.getOrNull() ?: return json
+        val extra = try { fetchPlayInfo(url.replace("qn=120", "qn=$higher")) }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { return json }
         val oldVideo = data.optJSONObject("dash")?.optJSONArray("video")
         val newVideo = extra.optJSONObject("data")?.optJSONObject("dash")?.optJSONArray("video")
         if (extra.optInt("code") != 0 || newVideo == null) return json

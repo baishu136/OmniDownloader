@@ -71,6 +71,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -81,6 +83,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import com.omni.downloader.data.model.RelaySite
 import com.omni.downloader.ui.components.FormatSelectorSheet
 import com.omni.downloader.ui.components.MediaCaptureDialog
@@ -110,7 +113,8 @@ fun HomeScreen(
     viewModel: MainViewModel,
     onNavigateToTasks: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    isActive: Boolean = true
+    isActive: Boolean = true,
+    onImages: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -130,7 +134,6 @@ fun HomeScreen(
 
     var showBilibiliGuideDialog by remember { mutableStateOf(false) }
     var showBilibiliLoginSheet by remember { mutableStateOf(false) }
-    var showBatch by rememberSaveable { mutableStateOf(false) }
     var showMediaCapture by remember { mutableStateOf(false) }
     var mediaCaptureUrl by remember { mutableStateOf("") }
     var continueAfterVerification by remember { mutableStateOf(false) }
@@ -153,13 +156,11 @@ fun HomeScreen(
     val relayState = rememberRelaySitesState()
     val listState = rememberLazyListState()
 
-    if (isActive && showBatch) com.omni.downloader.ui.components.BatchDownloadSheet(viewModel,
-        onDismiss = { showBatch = false }, onTasks = { showBatch = false; onNavigateToTasks() })
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().testTag("home_list"),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 92.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item(key = "home_hero", contentType = "hero") {
@@ -182,10 +183,6 @@ fun HomeScreen(
                 )
             }
 
-            item(key = "batch_download") {
-                OutlinedBatchEntry(onClick = { showBatch = true })
-            }
-
             relaySitesItems(
                 relaySites = relaySites,
                 relayState = relayState,
@@ -201,6 +198,13 @@ fun HomeScreen(
                 )
             }
         }
+
+        androidx.compose.material3.ExtendedFloatingActionButton(
+            onClick = onImages,
+            icon = { Icon(Icons.Outlined.PhotoLibrary, contentDescription = null) },
+            text = { Text("图文") },
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).testTag("images_fab").semantics { contentDescription = "图文下载" }
+        )
 
         // 中转站后台静默解析与浏览器排查浮层（脱离列表测量体系，避免重组污染列表）
         RelaySitesOverlays(
@@ -723,8 +727,4 @@ private fun HomeActiveTasksSection(
             }
         }
     }
-}
-
-@Composable private fun OutlinedBatchEntry(onClick: () -> Unit) {
-    androidx.compose.material3.OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth().testTag("batch_entry")) { Text("批量下载 · 多链接 / 分享文本") }
 }

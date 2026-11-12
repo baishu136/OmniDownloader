@@ -6,6 +6,20 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BatchDownloadTest {
+    @Test fun smartInputRecognizesChineseSharePunctuationAvIdsAndInvisibleCharacters() {
+        assertEquals(listOf("https://b23.tv/share", "https://www.bilibili.com/video/av123"), BatchInput.links("分享 HTTPS://b23.tv/sha\u200Bre！视频 av123。"))
+    }
+    @Test fun manualAndSmartInputMergeDeduplicatesAndRejectsMultipleManualLinks() {
+        assertEquals(listOf("https://example.org/a", "https://example.org/b"), BatchInput.merge(listOf("https://example.org/a"), "分享：https://example.org/a\nhttps://example.org/b"))
+        assertTrue(runCatching { BatchInput.merge(emptyList(), "https://example.org/a https://example.org/b", single = true) }.isFailure)
+    }
+    @Test fun newInputPreservesUnfinishedRowsAndTheIdentityOfPreviouslySubmittedLinks() {
+        val pending = BatchItem("pending", "https://example.org/a", BatchStatus.RESOLVING)
+        val queued = BatchItem("queued", "https://example.org/b", BatchStatus.QUEUED, taskIds = listOf("saved"))
+        val result = BatchInput.preservePending(BatchPlan(listOf(pending, queued)), BatchPlan(listOf(BatchItem(url = queued.url), BatchItem(url = "https://example.org/c"))))
+        assertEquals(3, result.items.size);assertEquals("pending", result.items.first().id)
+        assertEquals("queued", result.items[1].id);assertEquals(BatchStatus.QUEUED, result.items[1].status)
+    }
     @Test fun shareTextDeduplicatesWithoutLosingEpisodesOrSignedParameters() {
         val input = "分享 https://x.com/author/status/123/video/1\nhttps://x.com/author/status/123/video/2\n" +
             "https://x.com/author/status/123/video/1\nhttps://www.xiaohongshu.com/explore/abc?xsec_token=secret&xsec_source=pc_share"
