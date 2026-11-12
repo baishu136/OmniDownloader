@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.ContentPaste
+import com.omni.downloader.ui.localization.LocalAppStrings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,17 +33,28 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
     var inputError by remember { mutableStateOf<String?>(null) }
     var confirmClear by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val strings = LocalAppStrings.current
     val keyboard = LocalSoftwareKeyboardController.current
     val text = if (draft.batchManual) draft.batchEntry else draft.batchText
     fun setText(value: String) { if (value.length <= 100_000) drafts.update { if (it.batchManual) it.copy(batchEntry = value) else it.copy(batchText = value) } }
-    fun add(): List<String>? = try {
+    fun add(pastedText: String? = null): List<String>? = try {
         val current = drafts.draft.value
-        val value = if (current.batchManual) current.batchEntry else current.batchText
+        val value = pastedText ?: if (current.batchManual) current.batchEntry else current.batchText
         val links = if (value.isBlank()) current.batchLinks else BatchInput.merge(current.batchLinks, value, current.batchManual)
         require(links.isNotEmpty()) { "请先填入链接" }
         drafts.update { it.copy(batchLinks = links, batchText = if (current.batchManual) it.batchText else "", batchEntry = if (current.batchManual) "" else it.batchEntry) }
         inputError = null; keyboard?.hide(); links
     } catch (failure: Exception) { inputError = failure.message; null }
+    fun pasteAndAdd() {
+        try {
+            val value = (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
+                .primaryClip?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty()
+            require(value.isNotBlank()) { "剪贴板为空" }
+            require(value.length <= 100_000) { "文本过长，请分批添加" }
+            setText(value)
+            add(value)
+        } catch (failure: Exception) { inputError = failure.message ?: "无法读取剪贴板" }
+    }
     if (confirmClear) AlertDialog(onDismissRequest = { confirmClear = false }, title = { Text("清空已填链接？") },
         text = { Text("未完成批次仍会保留，可继续处理。") },
         confirmButton = { TextButton(onClick = { drafts.update { it.copy(batchText = "", batchEntry = "", batchLinks = emptyList()) }; confirmClear = false }) { Text("清空输入") } },
@@ -53,12 +68,17 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
             }
             OutlinedTextField(value = text, onValueChange = ::setText, enabled = ready,
                 label = { Text(if (draft.batchManual) "填入一条链接或单条分享文本" else "粘贴多条链接或完整分享文本") },
+                trailingIcon = {
+                    if (text.isNotEmpty()) IconButton(onClick = { setText(""); inputError = null }, enabled = ready,
+                        modifier = Modifier.testTag("batch_clear_icon")) {
+                        Icon(Icons.Outlined.Clear, contentDescription = strings.clear, modifier = Modifier.size(19.dp))
+                    } else IconButton(onClick = ::pasteAndAdd, enabled = ready, modifier = Modifier.testTag("batch_paste_icon")) {
+                        Icon(Icons.Outlined.ContentPaste, contentDescription = strings.paste, modifier = Modifier.size(19.dp))
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().testTag("batch_input"), minLines = if (draft.batchManual) 1 else 3, maxLines = if (draft.batchManual) 2 else 5)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = {
-                    runCatching { (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).primaryClip?.getItemAt(0)?.coerceToText(context)?.toString() }
-                        .onSuccess { setText(it.orEmpty().take(100_000)) }.onFailure { inputError = "无法读取剪贴板" }
-                }, enabled = ready) { Text("粘贴剪贴板") }
+                TextButton(onClick = ::pasteAndAdd, enabled = ready, modifier = Modifier.testTag("batch_paste")) { Text("粘贴剪贴板") }
                 FilledTonalButton(onClick = { add() }, enabled = ready && text.isNotBlank(), modifier = Modifier.testTag("batch_add")) { Text(if (draft.batchManual) "添加链接" else "识别并添加") }
             }
             inputError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
