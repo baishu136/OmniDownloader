@@ -2,6 +2,7 @@ package com.omni.downloader.data.repository
 
 import android.content.Context
 import com.omni.downloader.engine.BatchOptions
+import com.omni.downloader.engine.BatchLinkTasks
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +15,9 @@ import kotlinx.serialization.json.Json
 @Serializable data class InputDraft(
     val home: String = "", val images: String = "",
     val batchText: String = "", val batchEntry: String = "", val batchLinks: List<String> = emptyList(),
-    val batchManual: Boolean = false, val batchOptions: BatchOptions = BatchOptions()
+    val batchManual: Boolean = false, val batchOptions: BatchOptions = BatchOptions(),
+    val batchTasks: Map<String, BatchLinkTasks> = emptyMap(),
+    val batchInputIds: Map<String, String> = emptyMap()
 )
 
 /** Hydration replays edits made before loading; one IO writer always saves the latest snapshot. */

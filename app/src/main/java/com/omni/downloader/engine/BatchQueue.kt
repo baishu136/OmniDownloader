@@ -17,10 +17,14 @@ import java.util.UUID
 @Serializable data class BatchOptions(val type: DownloadType = DownloadType.VIDEO_WITH_AUDIO,
     val audio: AudioFormat = AudioFormat.MP3, val allEpisodes: Boolean = false)
 @Serializable data class BatchItem(val id: String = UUID.randomUUID().toString(), val url: String,
-    val status: BatchStatus = BatchStatus.PENDING, val note: String = "", val taskIds: List<String> = emptyList())
+    val status: BatchStatus = BatchStatus.PENDING, val note: String = "", val taskIds: List<String> = emptyList(),
+    val inputRetired: Boolean = false)
+@Serializable data class BatchLinkTasks(val rowId: String, val taskIds: List<String>)
 @Serializable data class BatchPlan(val items: List<BatchItem> = emptyList(), val options: BatchOptions = BatchOptions())
 
 object BatchInput {
+    fun current(item: BatchItem, urls: List<String>, ids: Map<String, String>): Boolean =
+        item.url in urls && ids[item.url] == item.id
     fun merge(existing: List<String>, text: String, single: Boolean = false): List<String> {
         val added = links(text)
         require(!single || added.size == 1) { "逐条添加每次只接受一条链接，多条分享文本请使用智能识别" }
@@ -30,8 +34,9 @@ object BatchInput {
         }
     }
     fun preservePending(previous: BatchPlan, incoming: BatchPlan): BatchPlan {
-        val known = previous.items.associateBy { it.url }
-        val rows = (previous.items.filter { it.status != BatchStatus.QUEUED } + incoming.items.map { known[it.url] ?: it }).distinctBy { it.url }
+        val active = previous.items.filter { !it.inputRetired }
+        val known = active.associateBy { it.url }
+        val rows = (active.filter { it.status != BatchStatus.QUEUED } + incoming.items.map { known[it.url] ?: it }).distinctBy { it.url }
         require(rows.size <= 100) { "加上未完成链接后超过 100 条，请先继续处理原批次" }
         return incoming.copy(items = rows)
     }
@@ -57,7 +62,8 @@ object BatchInput {
 
 /** Rows keep input order; independent platforms may resolve concurrently. */
 class BatchQueue(private val submit: suspend (BatchItem, BatchOptions) -> List<String>,
-    private val parallelism: Int = 2, private val save: (BatchPlan) -> Unit = {}) {
+    private val parallelism: Int = 2, private val include: (BatchItem) -> Boolean = { true },
+    private val save: (BatchPlan) -> Unit = {}) {
     init { require(parallelism in 1..4) }
     private val lock = Any()
     private val _plan = MutableStateFlow(BatchPlan())
@@ -79,10 +85,17 @@ class BatchQueue(private val submit: suspend (BatchItem, BatchOptions) -> List<S
         check(!_running.value) { "请先停止批次解析" }
         publish(BatchPlan(options = _plan.value.options))
     }
+    fun removeInputs(urls: Set<String>) = synchronized(lock) {
+        publish(_plan.value.copy(items = _plan.value.items.filter { it.url !in urls }))
+    }
+    fun retireInputs(urls: Set<String>) = synchronized(lock) {
+        val next = _plan.value.copy(items = _plan.value.items.map { if (it.url in urls) it.copy(inputRetired = true) else it })
+        if (next != _plan.value) publish(next)
+    }
     // All mutations and persistence share a lock, so late saves cannot overwrite newer rows.
     private fun publish(plan: BatchPlan) { save(plan); _plan.value = plan }
     private fun update(id: String, change: (BatchItem) -> BatchItem) = synchronized(lock) {
-        publish(_plan.value.copy(items = _plan.value.items.map { if (it.id == id) change(it) else it }))
+        publish(_plan.value.copy(items = _plan.value.items.filter { it.inputRetired || include(it) }.map { if (it.id == id) change(it) else it }))
     }
     private fun platform(item: BatchItem): String = LinkNormalizer.platformOf(item.url).let {
         if (it != LinkNormalizer.PLATFORM_GENERIC) it else runCatching { URI(item.url).host?.lowercase(java.util.Locale.ROOT) }.getOrNull() ?: item.url
@@ -90,8 +103,8 @@ class BatchQueue(private val submit: suspend (BatchItem, BatchOptions) -> List<S
     suspend fun run(newPlan: BatchPlan? = null) {
         synchronized(lock) { check(!_running.value) { "批次正在运行" }; _running.value = true }
         try {
-            synchronized(lock) { if (newPlan != null) publish(newPlan) }
-            val pending = _plan.value.items.filter { it.status != BatchStatus.QUEUED }.toMutableList()
+            synchronized(lock) { if (newPlan != null) publish(newPlan.copy(items = newPlan.items.filter { it.inputRetired || include(it) })) }
+            val pending = _plan.value.items.filter { !it.inputRetired && it.status != BatchStatus.QUEUED }.toMutableList()
             val busy = mutableSetOf<String>()
             coroutineScope {
                 repeat(parallelism) {
@@ -99,6 +112,7 @@ class BatchQueue(private val submit: suspend (BatchItem, BatchOptions) -> List<S
                         while (true) {
                             currentCoroutineContext().ensureActive()
                             val item = synchronized(lock) {
+                                pending.removeAll { row -> !include(row) || _plan.value.items.none { it.id == row.id && !it.inputRetired } }
                                 pending.firstOrNull { platform(it) !in busy }?.also { row ->
                                     pending.remove(row); busy.add(platform(row))
                                     update(row.id) { it.copy(status = BatchStatus.RESOLVING, note = "正在解析") }

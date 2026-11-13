@@ -230,10 +230,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         } }
     }
 
-    private val batchOwner = lazy { com.omni.downloader.engine.BatchDownloads(getApplication(), viewModelScope) }
+    private val batchOwner = lazy { com.omni.downloader.engine.BatchDownloads(getApplication(), viewModelScope, inputDrafts) }
     val batchDownloads get() = batchOwner.value
 
-    override fun onCleared() { if (batchOwner.isInitialized()) batchOwner.value.cancel(); cancelMediaAnalysis(); super.onCleared() }
+    override fun onCleared() { if (batchOwner.isInitialized()) batchOwner.value.close(); cancelMediaAnalysis(); super.onCleared() }
     fun acceptBrowserVideo(item: String, url: String) {
         com.omni.downloader.engine.DouyinAutoResolver.invalidate(url)
         cancelMediaAnalysis()

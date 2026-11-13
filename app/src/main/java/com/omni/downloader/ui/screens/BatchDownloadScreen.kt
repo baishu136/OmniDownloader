@@ -25,11 +25,14 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
     val controller = viewModel.batchDownloads
     val drafts = viewModel.inputDrafts
     val draft by drafts.draft.collectAsStateWithLifecycle()
-    val ready by drafts.ready.collectAsStateWithLifecycle()
+    val draftReady by drafts.ready.collectAsStateWithLifecycle()
+    val batchReady by controller.ready.collectAsStateWithLifecycle()
+    val ready = draftReady && batchReady
     val draftError by drafts.error.collectAsStateWithLifecycle()
     val plan by controller.queue.plan.collectAsStateWithLifecycle()
     val running by controller.queue.running.collectAsStateWithLifecycle()
     val error by controller.error.collectAsStateWithLifecycle()
+    val preparations by controller.preparationStates.collectAsStateWithLifecycle()
     var inputError by remember { mutableStateOf<String?>(null) }
     var confirmHistory by remember { mutableStateOf(false) }
     var confirmClear by remember { mutableStateOf(false) }
@@ -41,9 +44,7 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
     fun add(pastedText: String? = null): List<String>? = try {
         val current = drafts.draft.value
         val value = pastedText ?: if (current.batchManual) current.batchEntry else current.batchText
-        val links = if (value.isBlank()) current.batchLinks else BatchInput.merge(current.batchLinks, value, current.batchManual)
-        require(links.isNotEmpty()) { "请先填入链接" }
-        drafts.update { it.copy(batchLinks = links, batchText = if (current.batchManual) it.batchText else "", batchEntry = if (current.batchManual) "" else it.batchEntry) }
+        val links = controller.addLinks(value, current.batchManual)
         inputError = null; keyboard?.hide(); links
     } catch (failure: Exception) { inputError = failure.message; null }
     fun pasteAndAdd() {
@@ -57,8 +58,8 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
         } catch (failure: Exception) { inputError = failure.message ?: "无法读取剪贴板" }
     }
     if (confirmClear) AlertDialog(onDismissRequest = { confirmClear = false }, title = { Text("清空已填链接？") },
-        text = { Text("未完成批次仍会保留，可继续处理。") },
-        confirmButton = { TextButton(onClick = { drafts.update { it.copy(batchText = "", batchEntry = "", batchLinks = emptyList()) }; confirmClear = false }) { Text("清空输入") } },
+        text = { Text("对应解析结果会清除，已入队的下载任务会继续。") },
+        confirmButton = { TextButton(onClick = { controller.clearInput(); confirmClear = false }) { Text("清空输入") } },
         dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("取消") } })
     if (confirmHistory) AlertDialog(onDismissRequest = { confirmHistory = false }, title = { Text("清空批次处理记录？") },
         text = { Text("已填链接和下载任务会保留，正在下载的任务不受影响。") },
@@ -104,7 +105,7 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
         item {
             Button(shape = MaterialTheme.shapes.medium, onClick = { add()?.let { controller.start(it.joinToString("\n"), drafts.draft.value.batchOptions, preservePending = true) } }, enabled = ready && !running && (text.isNotBlank() || draft.batchLinks.isNotEmpty()), modifier = Modifier.fillMaxWidth().testTag("batch_start")) { Text("解析并加入下载队列") }
             if (running) { LinearProgressIndicator(Modifier.fillMaxWidth()); TextButton(onClick = controller::cancel) { Text("停止添加（已入队任务继续下载）") } }
-            if (!running && plan.items.any { it.status != BatchStatus.QUEUED }) {
+            if (!running && plan.items.any { !it.inputRetired && it.status != BatchStatus.QUEUED }) {
                 TextButton(onClick = controller::retry) { Text("继续 / 重试未入队条目") }
             }
             (error ?: draftError)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -119,8 +120,14 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
         }
         items(draft.batchLinks, key = { "draft:$it" }) { url ->
             OutlinedCard(Modifier.fillMaxWidth()) { Row(Modifier.padding(12.dp)) {
-                Text(url, Modifier.weight(1f), maxLines = 3)
-                TextButton(onClick = { drafts.update { it.copy(batchLinks = it.batchLinks - url) } }) { Text("移除") }
+                Column(Modifier.weight(1f)) {
+                    Text(url, maxLines = 3)
+                    val preparation = preparations[url]
+                    val note = if (url in draft.batchTasks && preparation == null) "已加入下载队列" else preparation?.note
+                    note?.let { Text(it, style = MaterialTheme.typography.bodySmall,
+                        color = if (preparation?.status == BatchPreparationStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
+                TextButton(onClick = { controller.removeLink(url) }) { Text("移除") }
             } }
         }
         if (plan.items.isNotEmpty()) item {
