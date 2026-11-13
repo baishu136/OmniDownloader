@@ -3,6 +3,8 @@ package com.omni.downloader.engine
 import com.omni.downloader.data.model.AudioFormat
 import com.omni.downloader.data.model.DownloadType
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +38,9 @@ object BatchInput {
     fun links(text: String): List<String> {
         require(text.length <= 100_000) { "文本过长，请分批添加" }
         val pattern = Regex("""https?://[^\s<>"'，。；、（）【】！？「」『』]+|(?<![A-Za-z0-9])(?:BV[A-Za-z0-9]{10}|av\d+)(?![A-Za-z0-9])""", RegexOption.IGNORE_CASE)
+        // Keep raw redirect/query values after '=' intact, but separate pasted adjacent share URLs.
         val clean = text.replace("\u200B", "").replace("\uFEFF", "")
+            .replace(Regex("(?<!=)(?=https?://)", RegexOption.IGNORE_CASE), "\n")
         val links = pattern.findAll(clean).map { match ->
             val value = match.value.trimEnd('.', ',', ';', '!', ')', ']', '}')
             val normalizedCase = if (value.contains("://")) value.substringBefore("://").lowercase() + "://" + value.substringAfter("://")
@@ -51,14 +55,16 @@ object BatchInput {
     }
 }
 
-/** One failing link must not block others. QUEUED means submitted, not downloaded. */
+/** Rows keep input order; independent platforms may resolve concurrently. */
 class BatchQueue(private val submit: suspend (BatchItem, BatchOptions) -> List<String>,
-    private val save: (BatchPlan) -> Unit = {}) {
+    private val parallelism: Int = 2, private val save: (BatchPlan) -> Unit = {}) {
+    init { require(parallelism in 1..4) }
+    private val lock = Any()
     private val _plan = MutableStateFlow(BatchPlan())
     val plan = _plan.asStateFlow()
     private val _running = MutableStateFlow(false)
     val running = _running.asStateFlow()
-    fun restore(plan: BatchPlan, taskExists: (String) -> Boolean = { true }) {
+    fun restore(plan: BatchPlan, taskExists: (String) -> Boolean = { true }) = synchronized(lock) {
         check(!_running.value)
         _plan.value = plan.copy(items = plan.items.map { item ->
             when {
@@ -69,28 +75,52 @@ class BatchQueue(private val submit: suspend (BatchItem, BatchOptions) -> List<S
             }
         })
     }
-    private fun publish(plan: BatchPlan) { _plan.value = plan; save(plan) }
-    private fun update(id: String, change: (BatchItem) -> BatchItem) =
+    fun clearHistory() = synchronized(lock) {
+        check(!_running.value) { "请先停止批次解析" }
+        publish(BatchPlan(options = _plan.value.options))
+    }
+    // All mutations and persistence share a lock, so late saves cannot overwrite newer rows.
+    private fun publish(plan: BatchPlan) { save(plan); _plan.value = plan }
+    private fun update(id: String, change: (BatchItem) -> BatchItem) = synchronized(lock) {
         publish(_plan.value.copy(items = _plan.value.items.map { if (it.id == id) change(it) else it }))
+    }
+    private fun platform(item: BatchItem): String = LinkNormalizer.platformOf(item.url).let {
+        if (it != LinkNormalizer.PLATFORM_GENERIC) it else runCatching { URI(item.url).host?.lowercase(java.util.Locale.ROOT) }.getOrNull() ?: item.url
+    }
     suspend fun run(newPlan: BatchPlan? = null) {
-        check(_running.compareAndSet(false, true)) { "批次正在运行" }
+        synchronized(lock) { check(!_running.value) { "批次正在运行" }; _running.value = true }
         try {
-            if (newPlan != null) publish(newPlan)
-            val pending = _plan.value.items.filter { it.status != BatchStatus.QUEUED }
-            for (item in pending) {
-                currentCoroutineContext().ensureActive()
-                update(item.id) { it.copy(status = BatchStatus.RESOLVING, note = "正在解析") }
-                try {
-                    val ids = submit(item, _plan.value.options)
-                    require(ids.isNotEmpty()) { "未生成下载任务" }
-                    update(item.id) { it.copy(status = BatchStatus.QUEUED, note = "已加入 ${ids.size} 个下载任务", taskIds = ids) }
-                } catch (cancelled: CancellationException) { throw cancelled }
-                catch (error: Exception) { update(item.id) { it.copy(status = BatchStatus.FAILED, note = LogSanitizer.sanitize(error.message.orEmpty()).take(500)) } }
+            synchronized(lock) { if (newPlan != null) publish(newPlan) }
+            val pending = _plan.value.items.filter { it.status != BatchStatus.QUEUED }.toMutableList()
+            val busy = mutableSetOf<String>()
+            coroutineScope {
+                repeat(parallelism) {
+                    launch {
+                        while (true) {
+                            currentCoroutineContext().ensureActive()
+                            val item = synchronized(lock) {
+                                pending.firstOrNull { platform(it) !in busy }?.also { row ->
+                                    pending.remove(row); busy.add(platform(row))
+                                    update(row.id) { it.copy(status = BatchStatus.RESOLVING, note = "正在解析") }
+                                }
+                            } ?: break
+                            try {
+                                val ids = submit(item, _plan.value.options)
+                                require(ids.isNotEmpty()) { "未生成下载任务" }
+                                update(item.id) { it.copy(status = BatchStatus.QUEUED, note = "已加入 ${ids.size} 个下载任务", taskIds = ids) }
+                            } catch (cancelled: CancellationException) { throw cancelled }
+                            catch (error: Exception) { update(item.id) { it.copy(status = BatchStatus.FAILED, note = LogSanitizer.sanitize(error.message.orEmpty()).take(500)) } }
+                            finally { synchronized(lock) { busy.remove(platform(item)) } }
+                        }
+                    }
+                }
             }
         } finally {
-            try { publish(_plan.value.copy(items = _plan.value.items.map {
-                if (it.status in setOf(BatchStatus.RESOLVING, BatchStatus.PENDING)) it.copy(status = BatchStatus.CANCELLED, note = "未入队，可继续处理") else it
-            })) } finally { _running.value = false }
+            synchronized(lock) {
+                try { publish(_plan.value.copy(items = _plan.value.items.map {
+                    if (it.status in setOf(BatchStatus.RESOLVING, BatchStatus.PENDING)) it.copy(status = BatchStatus.CANCELLED, note = "未入队，可继续处理") else it
+                })) } finally { _running.value = false }
+            }
         }
     }
 }

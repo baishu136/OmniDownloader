@@ -31,6 +31,7 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
     val running by controller.queue.running.collectAsStateWithLifecycle()
     val error by controller.error.collectAsStateWithLifecycle()
     var inputError by remember { mutableStateOf<String?>(null) }
+    var confirmHistory by remember { mutableStateOf(false) }
     var confirmClear by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val strings = LocalAppStrings.current
@@ -59,6 +60,10 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
         text = { Text("未完成批次仍会保留，可继续处理。") },
         confirmButton = { TextButton(onClick = { drafts.update { it.copy(batchText = "", batchEntry = "", batchLinks = emptyList()) }; confirmClear = false }) { Text("清空输入") } },
         dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("取消") } })
+    if (confirmHistory) AlertDialog(onDismissRequest = { confirmHistory = false }, title = { Text("清空批次处理记录？") },
+        text = { Text("已填链接和下载任务会保留，正在下载的任务不受影响。") },
+        confirmButton = { TextButton(enabled = !running, modifier = Modifier.testTag("batch_confirm_clear_history"), onClick = { controller.clearHistory(); confirmHistory = false }) { Text("清空记录") } },
+        dismissButton = { TextButton(onClick = { confirmHistory = false }) { Text("取消") } })
     LazyColumn(Modifier.fillMaxSize().testTag("batch_screen"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Text("批量下载", style = MaterialTheme.typography.headlineMedium)
@@ -94,7 +99,7 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
                     AudioFormat.entries.forEach { value -> DropdownMenuItem(text = { Text(value.ext.uppercase()) }, onClick = { drafts.update { it.copy(batchOptions = it.batchOptions.copy(audio = value)) }; close() }) }
                 }
             }
-            Row { Checkbox(checked = draft.batchOptions.allEpisodes, onCheckedChange = { value -> drafts.update { it.copy(batchOptions = it.batchOptions.copy(allEpisodes = value)) } }, enabled = ready && !running); Text("下载合集 / 多视频的全部分集", Modifier.padding(top = 12.dp)) }
+            Row { Checkbox(modifier = Modifier.testTag("batch_all_episodes"), checked = draft.batchOptions.allEpisodes, onCheckedChange = { value -> drafts.update { it.copy(batchOptions = it.batchOptions.copy(allEpisodes = value)) } }, enabled = ready && !running); Text("下载合集 / 多视频的全部分集", Modifier.padding(top = 12.dp)) }
         }
         item {
             Button(shape = MaterialTheme.shapes.medium, onClick = { add()?.let { controller.start(it.joinToString("\n"), drafts.draft.value.batchOptions, preservePending = true) } }, enabled = ready && !running && (text.isNotBlank() || draft.batchLinks.isNotEmpty()), modifier = Modifier.fillMaxWidth().testTag("batch_start")) { Text("解析并加入下载队列") }
@@ -118,7 +123,12 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
                 TextButton(onClick = { drafts.update { it.copy(batchLinks = it.batchLinks - url) } }) { Text("移除") }
             } }
         }
-        if (plan.items.isNotEmpty()) item { Text("批次处理记录", style = MaterialTheme.typography.titleMedium) }
+        if (plan.items.isNotEmpty()) item {
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text("批次处理记录", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                TextButton(enabled = !running, onClick = { confirmHistory = true }, modifier = Modifier.testTag("batch_clear_history")) { Text("清空记录") }
+            }
+        }
         items(plan.items, key = { it.id }) { item ->
             OutlinedCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
                 Text(item.url, maxLines = 2)

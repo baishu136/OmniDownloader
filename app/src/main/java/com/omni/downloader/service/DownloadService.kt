@@ -140,7 +140,9 @@ class DownloadService : Service() {
         val generation = ++taskGeneration
         startForeground(NOTIFICATION_ID, buildProgressNotification(next, 0f, "准备下载..."))
 
-        runningJob = serviceScope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+        // Register the worker before dispatching it. Network reads must never run inline
+        // while the caller owns the service monitor.
+        val worker = serviceScope.launch(start = kotlinx.coroutines.CoroutineStart.LAZY) {
           try {
             val proxy = com.omni.downloader.data.repository.SettingsRepository.getInstance(applicationContext).proxyUrl.value
             var lastNotificationTime = 0L
@@ -201,16 +203,21 @@ class DownloadService : Service() {
           } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
           catch (error: Exception) {
               synchronized(this@DownloadService) { if (currentRunningTaskId == next.id) repository.markFailed(next.id, error.message ?: "任务执行异常") }
-          } finally {
-              synchronized(this@DownloadService) {
-                  isProcessing = false
-                  currentRunningTaskId = null
-                  runningJob = null
-                  // Schedule the next worker: cached exports must not recursively drain the queue.
-                  serviceScope.launch { synchronized(this@DownloadService) { processNextTask() } }
-              }
           }
         }
+        runningJob = worker
+        // Completion also runs when cancellation wins before the worker body starts.
+        worker.invokeOnCompletion {
+            synchronized(this@DownloadService) {
+                if (taskGeneration == generation) {
+                    isProcessing = false
+                    currentRunningTaskId = null
+                    runningJob = null
+                    serviceScope.launch { synchronized(this@DownloadService) { processNextTask() } }
+                }
+            }
+        }
+        worker.start()
     }
 
     private fun showAnalysisNotification() {

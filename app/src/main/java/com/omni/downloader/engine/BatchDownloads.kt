@@ -5,6 +5,9 @@ import com.omni.downloader.data.model.*
 import com.omni.downloader.data.repository.*
 import com.omni.downloader.service.DownloadService
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.encodeToString
@@ -17,7 +20,9 @@ class BatchDownloads(context: Context, private val scope: CoroutineScope) {
     private val json = Json { ignoreUnknownKeys = true }
     private val loaded = CompletableDeferred<Unit>()
     private var job: Job? = null
-    @Volatile private var processId: String? = null
+    private val processIds = ConcurrentHashMap.newKeySet<String>()
+    private val admission = Mutex()
+    private val reservedTaskIds = mutableSetOf<String>()
     private val _error = MutableStateFlow<String?>(null)
     val error = _error.asStateFlow()
     val queue = BatchQueue(::submit) { plan ->
@@ -39,9 +44,16 @@ class BatchDownloads(context: Context, private val scope: CoroutineScope) {
     }
     fun retry() { if (job?.isActive != true) launch(null) }
     fun cancel() {
-        val activeProcess = processId
         job?.cancel()
-        activeProcess?.let(DownloadEngine::cancelMetadata)
+        processIds.toList().forEach(DownloadEngine::cancelMetadata)
+    }
+    fun clearHistory() {
+        if (job?.isActive == true) return
+        job = scope.launch(Dispatchers.IO) {
+            loaded.await()
+            try { queue.clearHistory(); _error.value = null }
+            catch (error: Exception) { _error.value = LogSanitizer.sanitize(error.message.orEmpty()) }
+        }
     }
     private fun launch(plan: BatchPlan?, preservePending: Boolean = false) {
         _error.value = null
@@ -49,7 +61,14 @@ class BatchDownloads(context: Context, private val scope: CoroutineScope) {
         val held = runCatching { DownloadService.analysisLease(context, token, true) }.isSuccess
         job = scope.launch(Dispatchers.IO) {
             loaded.await()
-            try { queue.run(if (plan != null && preservePending) BatchInput.preservePending(queue.plan.value, plan) else plan) }
+            try {
+                val next = if (plan != null && preservePending) BatchInput.preservePending(queue.plan.value, plan) else plan
+                admission.withLock {
+                    reservedTaskIds.clear()
+                    reservedTaskIds.addAll((next ?: queue.plan.value).items.flatMap { it.taskIds })
+                }
+                queue.run(next)
+            }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) { _error.value = LogSanitizer.sanitize(error.message.orEmpty()) }
         }.also { it.invokeOnCompletion { if (held) runCatching { DownloadService.analysisLease(context, token, false) } } }
@@ -57,8 +76,9 @@ class BatchDownloads(context: Context, private val scope: CoroutineScope) {
     private suspend fun submit(item: BatchItem, options: BatchOptions): List<String> {
         val repository = TaskRepository.getInstance(context)
         repository.awaitLoaded()
-        val pid = "batch-parse-${UUID.randomUUID()}"; processId = pid
+        val pid = "batch-parse-${UUID.randomUUID()}"; processIds.add(pid)
         try {
+            currentCoroutineContext().ensureActive()
             val proxy = SettingsRepository.getInstance(context).proxyUrl.value
             val url = when (val resolved = UrlSniffer.resolveContent(item.url)) {
                 is LinkNormalizer.RedirectResult.Content -> resolved.url
@@ -83,12 +103,17 @@ class BatchDownloads(context: Context, private val scope: CoroutineScope) {
                 }
             }
             currentCoroutineContext().ensureActive()
-            require((queue.plan.value.items.flatMap { it.taskIds } + tasks.map { it.id }).distinct().size <= 500) { "每批最多 500 个下载任务，请分批添加" }
-            // Stable IDs let a restored/retried row find tasks submitted before a process interruption.
-            val missing = tasks.filter { repository.getTask(it.id) == null }
-            repository.addTasks(missing)
-            for (task in tasks) if (repository.getTask(task.id)?.status == TaskStatus.PENDING) DownloadService.startDownload(context, task.id)
-            return tasks.map { it.id }
-        } finally { processId = null }
+            return admission.withLock {
+                currentCoroutineContext().ensureActive()
+                val ids = tasks.map { it.id }
+                require((reservedTaskIds + ids).size <= 500) { "每批最多 500 个下载任务，请分批添加" }
+                reservedTaskIds.addAll(ids)
+                // Reserve before submission: another completed resolver must count these tasks too.
+                val missing = tasks.filter { repository.getTask(it.id) == null }
+                repository.addTasks(missing)
+                for (task in tasks) if (repository.getTask(task.id)?.status == TaskStatus.PENDING) DownloadService.startDownload(context, task.id)
+                ids
+            }
+        } finally { processIds.remove(pid); DownloadEngine.cancelMetadata(pid) }
     }
 }

@@ -69,6 +69,9 @@ object YtDlpOptionsFactory {
     ): YoutubeDLRequest = YoutubeDLRequest(if (infoFile != null) emptyList() else listOf(url)).apply {
         infoFile?.let { addOption("--load-info-json", it.path) }
         addOption("-o", outputPattern)
+        // Format probing can create a temporary file before downloading. An absolute
+        // output template alone does not set its directory when Android's cwd is '/'.
+        File(outputPattern).parentFile?.let { addOption("--paths", "temp:${it.path}") }
         addOption("--no-playlist")
         addDiagnosticsOptions()
         addNetworkOptions(proxyUrl)
