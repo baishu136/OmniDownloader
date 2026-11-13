@@ -36,7 +36,7 @@ internal object DouyinVideoParser {
             val width = address.number("width").toInt().coerceAtLeast(0)
             val height = address.number("height").toInt().coerceAtLeast(0)
             ((address["url_list"] ?: address["urlList"]) as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
-                .filter(::mediaUrl).forEach { source ->
+                .filter(::mediaUrl).map(::playbackUrl).distinct().forEach { source ->
                     formats += FormatOption(formatId = source, sourceUrl = source, width = width, height = height,
                         resolutionLabel = if (width > 0 || height > 0) QualitySelector.label(width, height) else "源视频（尺寸未知）",
                         vcodec = address.text("codec_type").ifBlank { address.text("codecType") }.ifBlank { codec }, fps = fps,
@@ -82,6 +82,18 @@ internal object DouyinVideoParser {
     private fun addresses(value: JsonObject) = value.filterKeys { it.startsWith("play_addr") || it.startsWith("playAddr") }
         .values.mapNotNull { it as? JsonObject }
     private fun mediaUrl(url: String) = runCatching { URI(url).let { it.scheme in setOf("https", "http") && !it.host.isNullOrBlank() && it.userInfo == null } }.getOrDefault(false)
+    /** Legacy share streams append a platform outro. Keep the media ID and rendition
+     * parameters on the standard playback route; never rewrite signed/CDN URLs. */
+    internal fun playbackUrl(url: String): String = runCatching {
+        val uri = URI(url)
+        val fields = uri.rawQuery.orEmpty().split('&').filter(String::isNotBlank)
+        val allowed = setOf("video_id", "ratio", "line", "logo_name", "watermark", "media_type")
+        val knownQuery = fields.all { it.substringBefore('=') in allowed } &&
+            fields.any { it.substringBefore('=') == "video_id" && it.substringAfter('=', "").isNotBlank() }
+        if (uri.scheme == "https" && uri.host.equals("aweme.snssdk.com", true) && uri.userInfo == null &&
+            uri.port in setOf(-1, 443) && uri.path == "/aweme/v1/playwm/" && knownQuery)
+            url.replaceFirst("/aweme/v1/playwm/", "/aweme/v1/play/") else url
+    }.getOrDefault(url)
     private fun JsonObject.obj(key: String) = this[key] as? JsonObject
     private fun JsonObject.text(key: String) = (this[key] as? JsonPrimitive)?.contentOrNull.orEmpty()
     private fun JsonObject.number(key: String) = (this[key] as? JsonPrimitive)?.longOrNull ?: 0L

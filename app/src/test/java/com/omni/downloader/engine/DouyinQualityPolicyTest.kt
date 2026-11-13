@@ -15,6 +15,10 @@ class DouyinQualityPolicyTest {
         assertTrue(DouyinQualityPolicy.needsPage(metadata(format("low"))))
         assertFalse(DouyinQualityPolicy.needsPage(metadata(format("high", 1080, 1920))))
         assertTrue(DouyinQualityPolicy.needsPage(metadata(format("high", 1080, 1920)).copy(referenceWidth = 2160, referenceHeight = 3840)))
+        assertFalse(DouyinQualityPolicy.needsPage(metadata(format("native720")).copy(referenceWidth = 720, referenceHeight = 1280)))
+        assertTrue(DouyinQualityPolicy.needsPage(metadata(format("unknown", 0, 0)).copy(referenceWidth = 720, referenceHeight = 1280)))
+        assertFalse(DouyinQualityPolicy.needsPage(metadata(format("complete", 1080, 1920), format("backup", 0, 0))
+            .copy(referenceWidth = 1080, referenceHeight = 1920)))
     }
     @Test fun mergeKeepsAllSourcesAndNeverPromotesTheUploadReference() {
         val low = metadata(format("low")).copy(referenceWidth = 2160, referenceHeight = 3840)
@@ -23,6 +27,13 @@ class DouyinQualityPolicyTest {
         assertEquals(2, merged.availableVideoFormats.size)
         assertEquals(2160, merged.referenceWidth)
         assertEquals(720, merged.availableVideoFormats.last().width)
+    }
+    @Test fun advertisedPageUpdatesDoNotEraseMeasuredDimensionsForTheSameUrl() {
+        val measured = metadata(format("same").copy(dimensionsVerified = true))
+        val advertised = metadata(format("same", 1080, 1920))
+        val merged = DouyinQualityPolicy.merge(measured, advertised)
+        assertEquals(720, merged.availableVideoFormats.single().width)
+        assertTrue(merged.availableVideoFormats.single().dimensionsVerified)
     }
     @Test fun portraitAndLandscapeReferencesAreNotCombinedIntoASquare() {
         val result = DouyinQualityPolicy.merge(metadata(format("a")).copy(referenceWidth = 1080, referenceHeight = 1920),

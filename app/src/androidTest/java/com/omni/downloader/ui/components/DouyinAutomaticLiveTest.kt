@@ -37,15 +37,20 @@ class DouyinAutomaticLiveTest {
         try {
             NetworkProxy.configuredUrl = proxy
             DouyinAutoResolver.invalidate(url!!)
-            val metadataResult = DownloadEngine.fetchVideoMetadata(context, url, proxy, refreshSources = true)
+            var firstPreviewMs: Long? = null
+            val metadataResult = DownloadEngine.fetchVideoMetadata(context, url, proxy, refreshSources = true,
+                onPreview = { if (firstPreviewMs == null) firstPreviewMs = (System.nanoTime() - started) / 1_000_000 })
+            val metadataMs = (System.nanoTime() - started) / 1_000_000
+            row.put("metadataElapsedMs", metadataMs).put("firstPreviewMs", firstPreviewMs ?: JSONObject.NULL)
+            assertTrue("Automatic parsing exceeded the total deadline and cleanup allowance: $metadataMs ms", metadataMs < 18_000)
             val metadata = metadataResult.getOrNull()
             if (metadata == null) {
                 val error = metadataResult.exceptionOrNull()!!
                 val code = MediaErrors.codeOf(error)
-                row.put("status", "SITE_OR_NETWORK_REQUIRES_ASSISTANCE").put("errorCode", code.code)
+                row.put("status", if (code == MediaErrorCode.NO_MEDIA) "TARGET_IS_IMAGE" else "SITE_OR_NETWORK_REQUIRES_ASSISTANCE").put("errorCode", code.code)
                     .put("error", LogSanitizer.sanitize(error.message.orEmpty()))
                 assertTrue("Unexpected implementation error: $error", code in setOf(MediaErrorCode.AUTH_REQUIRED,
-                    MediaErrorCode.CHALLENGE_REQUIRED, MediaErrorCode.BROWSER_ASSIST_REQUIRED, MediaErrorCode.NETWORK_ERROR))
+                    MediaErrorCode.CHALLENGE_REQUIRED, MediaErrorCode.BROWSER_ASSIST_REQUIRED, MediaErrorCode.NETWORK_ERROR, MediaErrorCode.NO_MEDIA))
                 return@runBlocking
             }
             val selected = metadata.availableVideoFormats.first()

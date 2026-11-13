@@ -6,6 +6,9 @@ internal data class DouyinPageResult(val status: DouyinPageStatus, val item: Str
 /** Android foreground adapter; absence means no background activity is started. */
 internal fun interface DouyinPageLoader {
     suspend fun capture(url: String, proxy: String, scope: String): DouyinPageResult
+
+    suspend fun captureProgressive(url: String, proxy: String, scope: String,
+        onCandidate: suspend (String) -> Unit): DouyinPageResult = capture(url, proxy, scope)
 }
 
 internal object DouyinPageCapture {

@@ -64,7 +64,10 @@ object UrlSniffer {
             return@withContext normalized.contentUrl
         }
 
-        when (val result = resolveContent(rawUrl)) {
+        val result = resolveContent(rawUrl)
+        if (normalized.platform == LinkNormalizer.PLATFORM_DOUYIN)
+            return@withContext DouyinResolution.redirectTarget(result)
+        when (result) {
             is LinkNormalizer.RedirectResult.Content -> LinkNormalizer.normalize(result.url).contentUrl
             is LinkNormalizer.RedirectResult.LoginRequired -> result.contentUrl ?: normalized.contentUrl
             is LinkNormalizer.RedirectResult.ChallengeRequired -> result.contentUrl ?: normalized.contentUrl
@@ -93,10 +96,15 @@ object UrlSniffer {
         } else {
             "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15"
         }
-        LinkNormalizer.resolveRedirects(normalized.contentUrl, noRedirectClient, userAgent).also { result ->
-            if (result is LinkNormalizer.RedirectResult.Content && !isDirectMediaUrl(result.url) &&
-                !LinkNormalizer.isShortLink(result.url) && NetworkProxy.configuredUrl == proxy)
-                contentRedirects.put(normalized.contentUrl, proxy, result.url)
+        val result = if (normalized.platform == LinkNormalizer.PLATFORM_DOUYIN) {
+            kotlinx.coroutines.withTimeoutOrNull(4_000) {
+                LinkNormalizer.resolveRedirects(normalized.contentUrl, noRedirectClient, userAgent)
+            } ?: LinkNormalizer.RedirectResult.Unavailable(normalized.contentUrl, null)
+        } else LinkNormalizer.resolveRedirects(normalized.contentUrl, noRedirectClient, userAgent)
+        result.also { resolved ->
+            if (resolved is LinkNormalizer.RedirectResult.Content && !isDirectMediaUrl(resolved.url) &&
+                !LinkNormalizer.isShortLink(resolved.url) && NetworkProxy.configuredUrl == proxy)
+                contentRedirects.put(normalized.contentUrl, proxy, resolved.url)
         }
     }
 

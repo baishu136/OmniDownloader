@@ -126,6 +126,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (analysisJob?.isActive == true && activeAnalysisInput == target && activeAnalysisOrigin == origin) return
         cancelMediaAnalysis()
         val generation = analysisGeneration
+        val douyinBudget = if (com.omni.downloader.engine.LinkNormalizer.platformOf(target) == com.omni.downloader.engine.LinkNormalizer.PLATFORM_DOUYIN)
+            com.omni.downloader.engine.DouyinResolutionBudget() else null
+        var previewShown = false
         val processId = "metadata-${UUID.randomUUID()}"
         analysisProcessId = processId
         activeAnalysisInput = target
@@ -158,7 +161,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (site == com.omni.downloader.engine.LinkNormalizer.PLATFORM_DOUYIN) imageBrowserUrl.value = resolvedUrl
                 val router = MediaAnalysisRouter(
                     video = { url: String -> DownloadEngine.fetchVideoMetadata(getApplication(), url, proxy, processId,
-                        onPhase = { if (generation == analysisGeneration) _analysisStage.value = it }).getOrThrow() },
+                        onPhase = { if (generation == analysisGeneration) _analysisStage.value = it },
+                        resolutionDeadlineNanos = douyinBudget?.deadlineNanos,
+                        onPreview = { candidate -> withContext(Dispatchers.Main.immediate) {
+                            if (!autoDownload && generation == analysisGeneration &&
+                                (douyinScope == null || douyinScope == com.omni.downloader.engine.DouyinAutoResolver.scope(getApplication(), proxy))) {
+                                if (!previewShown) {
+                                    showDestination(MediaPage.VIDEO)
+                                    applyVideoMetadata(candidate, target, false, null)
+                                    previewShown = true
+                                } else updateProgressiveMetadata(candidate)
+                            }
+                        } }).getOrThrow() },
                     images = { url: String ->
                         val imageUrl = MediaAnalysisRouter.imageInput(target, url)
                         val json = com.omni.downloader.engine.SharedPython.run(getApplication(), "images", imageUrl, site, proxy, taskId = processId)
@@ -178,11 +192,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 when (content) {
                     is ParsedContent.Video -> {
                         showDestination(MediaPage.VIDEO)
-                        applyVideoMetadata(content.metadata, target, autoDownload && origin == MediaPage.VIDEO, context)
+                        if (previewShown) updateProgressiveMetadata(content.metadata)
+                        else applyVideoMetadata(content.metadata, target, autoDownload && origin == MediaPage.VIDEO, context)
                     }
                     is ParsedContent.Images -> { showDestination(MediaPage.IMAGES); imagePost.value = content.post }
                 }
-            } catch (cancelled: CancellationException) { throw cancelled }
+            } catch (cancelled: CancellationException) {
+                if (generation == analysisGeneration && previewShown) {
+                    _showFormatSheet.value = false
+                    _metadata.value = null
+                }
+                throw cancelled
+            }
             catch (error: Exception) {
                 if (generation != analysisGeneration) return@launch
                 val detail = com.omni.downloader.engine.LogSanitizer.sanitize(error.message.orEmpty())
@@ -481,6 +502,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         startRoutedAnalysis(extracted, MediaPage.VIDEO, autoDownload, context)
+    }
+
+    /** A late enhancement updates choices, never reopens a dismissed sheet or queues another task. */
+    internal fun updateProgressiveMetadata(data: VideoMetadata) {
+        val current = _metadata.value ?: return
+        if (current.mediaId != data.mediaId || current.siteName != data.siteName) return
+        val selected = _selectedVideoFormat.value
+        _metadata.value = data
+        _selectedVideoFormat.value = if (_qualityPolicy.value == null && selected != null)
+            data.availableVideoFormats.firstOrNull { it.sourceUrl == selected.sourceUrl && it.formatId == selected.formatId } ?: selected
+        else data.availableVideoFormats.firstOrNull()
     }
 
     private fun applyVideoMetadata(data: VideoMetadata, extracted: String, autoDownload: Boolean, context: Context?) {

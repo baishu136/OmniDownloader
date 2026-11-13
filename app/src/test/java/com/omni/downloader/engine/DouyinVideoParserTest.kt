@@ -31,6 +31,22 @@ class DouyinVideoParserTest {
         assertEquals(0, format.width); assertEquals(0, format.height)
         assertEquals("源视频（尺寸未知）", format.resolutionLabel)
         assertTrue(format.sourceUrl.contains("ratio=720p"))
+        assertTrue(format.sourceUrl.contains("/aweme/v1/play/?"))
+    }
+
+    @Test fun legacyPlaybackRouteKeepsTheExactMediaAndRenditionParameters() {
+        val query = "video_id=v02012345678&ratio=720p&line=0&logo_name=douyin"
+        assertEquals("https://aweme.snssdk.com/aweme/v1/play/?$query",
+            DouyinVideoParser.playbackUrl("https://aweme.snssdk.com/aweme/v1/playwm/?$query"))
+    }
+
+    @Test fun signedUnknownAndUnrelatedUrlsAreNeverRewritten() {
+        for (source in listOf("https://aweme.snssdk.com/aweme/v1/playwm/?video_id=v02012345678&signature=keep%2Fexact",
+                "https://cdn.test/aweme/v1/playwm/?video_id=v02012345678",
+                "https://aweme.snssdk.com.evil.test/aweme/v1/playwm/?video_id=v02012345678",
+                "https://aweme.snssdk.com/aweme/v1/playwm/?ratio=720p",
+                "https://aweme.snssdk.com/aweme/v1/playwm/?video_id=v02012345678&unknown=value"))
+            assertEquals(source, DouyinVideoParser.playbackUrl(source))
     }
 
     @Test fun photoPostsAndUnusableVideoDoNotPretendVideoSuccess() {

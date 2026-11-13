@@ -18,13 +18,12 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import java.util.concurrent.Executor
 import kotlin.coroutines.resume
-import kotlin.math.min
 
 /** Foreground-only, noninteractive page loading behind the existing app UI. */
 @SuppressLint("SetJavaScriptEnabled")
 internal class AndroidDouyinPageCapture(
     private val activity: ComponentActivity,
-    private val budgetMillis: Long = 15_000,
+    private val budgetMillis: Long = 8_000,
     private val interceptor: ((WebResourceRequest) -> WebResourceResponse?)? = null
 ) : DouyinPageLoader {
     companion object { private val gate = Mutex() }
@@ -35,8 +34,14 @@ internal class AndroidDouyinPageCapture(
 
     fun close() { closed = true; dispose?.invoke() }
 
-    override suspend fun capture(url: String, proxy: String, scope: String): DouyinPageResult = withContext(Dispatchers.Main.immediate) {
-        gate.withLock {
+    override suspend fun capture(url: String, proxy: String, scope: String): DouyinPageResult =
+        captureProgressive(url, proxy, scope) {}
+
+    override suspend fun captureProgressive(url: String, proxy: String, scope: String,
+        onCandidate: suspend (String) -> Unit): DouyinPageResult = withContext(Dispatchers.Main.immediate) {
+        var best: String? = null
+        var sawLoginPrompt = false
+        withTimeoutOrNull(budgetMillis) { gate.withLock {
             val id = LinkNormalizer.contentId(url, LinkNormalizer.PLATFORM_DOUYIN)
                 ?: return@withLock DouyinPageResult(DouyinPageStatus.EMPTY)
             val session = SessionRepository.getInstance(activity)
@@ -126,7 +131,6 @@ internal class AndroidDouyinPageCapture(
                         web.loadUrl("https://www.douyin.com/video/$id")
                 }
                 val started = android.os.SystemClock.elapsedRealtime()
-                var best: String? = null
                 var fingerprint = ""
                 var changed = started
                 while (android.os.SystemClock.elapsedRealtime() - started < budgetMillis) {
@@ -134,11 +138,10 @@ internal class AndroidDouyinPageCapture(
                     if (closed || disposed || !activity.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
                         return@withLock DouyinPageResult(DouyinPageStatus.UNAVAILABLE)
                     if (scope != DouyinAutoResolver.scope(activity, proxy)) return@withLock DouyinPageResult(DouyinPageStatus.SCOPE_CHANGED)
+                    // Inspect target-bound media before considering an optional login overlay.
                     val state = evaluate(web, DOUYIN_PAGE_STATE)?.let { runCatching { JSONObject(it) }.getOrNull() }
-                    when (state?.optString("status")) {
-                        "challenge" -> return@withLock DouyinPageResult(DouyinPageStatus.CHALLENGE_REQUIRED)
-                        "auth" -> return@withLock DouyinPageResult(DouyinPageStatus.AUTH_REQUIRED)
-                    }
+                    if (state?.optString("status") == "challenge")
+                        return@withLock DouyinPageResult(DouyinPageStatus.CHALLENGE_REQUIRED, best)
                     if (LinkNormalizer.contentId(web.url.orEmpty(), LinkNormalizer.PLATFORM_DOUYIN) == id) {
                         evaluate(web, DouyinVideoBrowserScript.extract(id, requestDetail = false))
                         val output = evaluate(web, "window.__omniVideoResult || null")?.let { runCatching { JSONObject(it) }.getOrNull() }
@@ -149,25 +152,29 @@ internal class AndroidDouyinPageCapture(
                                 return@withLock DouyinPageResult(DouyinPageStatus.UNAVAILABLE)
                             if (scope != DouyinAutoResolver.scope(activity, proxy)) return@withLock DouyinPageResult(DouyinPageStatus.SCOPE_CHANGED)
                             val signature = metadata.availableVideoFormats.map { listOf(it.sourceUrl, it.width, it.height, it.fps, it.vcodec, it.dynamicRange) }.toString()
-                            if (signature != fingerprint) { fingerprint = signature; changed = android.os.SystemClock.elapsedRealtime() }
-                            best = item
+                            if (signature != fingerprint) {
+                                fingerprint = signature; changed = android.os.SystemClock.elapsedRealtime()
+                                best = item
+                                onCandidate(item)
+                            }
                             val now = android.os.SystemClock.elapsedRealtime()
-                            val candidate = metadata.availableVideoFormats.first()
-                            val gap = metadata.referenceWidth.toLong() * metadata.referenceHeight > candidate.width.toLong() * candidate.height
-                            val minimum = if (min(candidate.width, candidate.height) >= 1080) 2500 else 7000
-                            if (!gap && now - started >= minimum && now - changed >= 1500)
+                            if (!DouyinQualityPolicy.needsPage(metadata) && now - changed >= 600)
                                 return@withLock DouyinPageResult(DouyinPageStatus.FOUND, best)
                         }
                     }
+                    when (state?.optString("status")) {
+                        "auth" -> if (best == null) return@withLock DouyinPageResult(DouyinPageStatus.AUTH_REQUIRED)
+                        "login_prompt" -> sawLoginPrompt = true
+                    }
                     if (networkFailed && finished) break
-                    delay(400)
+                    delay(200)
                 }
-                DouyinPageResult(if (best != null) DouyinPageStatus.FOUND else DouyinPageStatus.TIMEOUT, best)
+                DouyinPageResult(if (best != null) DouyinPageStatus.TIMEOUT else if (sawLoginPrompt) DouyinPageStatus.AUTH_REQUIRED else DouyinPageStatus.TIMEOUT, best)
             } finally {
                 cleanup(); dispose = null
                 proxyLease?.release()
             }
-        }
+        } } ?: DouyinPageResult(if (best == null && sawLoginPrompt) DouyinPageStatus.AUTH_REQUIRED else DouyinPageStatus.TIMEOUT, best)
     }
 
     private suspend fun evaluate(web: WebView, code: String): String? = suspendCancellableCoroutine { continuation ->
@@ -190,6 +197,7 @@ internal val DOUYIN_PAGE_STATE = """
 const nodes=Array.from(document.querySelectorAll('[class*="captcha"],[id*="captcha"],[role="dialog"],[class*="login-panel"]')).slice(0,32).filter(visible);
 const text=nodes.map(n=>n.innerText || '').join(' ');
 const challenge=/请完成.{0,16}验证|拖动.{0,16}滑块|按住左边按钮|验证后继续/.test(text)||Array.from(document.querySelectorAll('iframe[src*="captcha"],iframe[src*="verifycenter"]')).some(visible);
-const auth=/登录后.{0,12}(观看|高清)|请先登录|扫码登录/.test(text)||/\/(?:login|passport)\b/.test(location.pathname);
-return JSON.stringify({status:challenge?'challenge':auth?'auth':'normal'});})()
+const auth=/登录后.{0,12}观看|请先登录/.test(text)||/\/(?:login|passport)\b/.test(location.pathname);
+const prompt=/扫码登录|登录后.{0,12}高清/.test(text);
+return JSON.stringify({status:challenge?'challenge':auth?'auth':prompt?'login_prompt':'normal'});})()
 """.trimIndent()

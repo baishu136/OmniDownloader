@@ -110,7 +110,8 @@ object DomesticDirectExtractor {
                 "小红书" -> extractXiaohongshu(url, cookieHeader)
                 else -> Result.failure(IllegalArgumentException("不支持的国内平台: $site"))
             }
-        } catch (e: Exception) {
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (e: Exception) {
             Log.e(TAG, "解析 $site 异常: ${e.message}", e)
             Result.failure(e)
         }
@@ -119,7 +120,7 @@ object DomesticDirectExtractor {
     /**
      * 抖音无水印直接解析
      */
-    private fun extractDouyin(rawUrl: String, cacheResult: Boolean = true): Result<VideoMetadata> {
+    private suspend fun extractDouyin(rawUrl: String, cacheResult: Boolean = true): Result<VideoMetadata> {
         // 合集/mix 链接必须交给能展开列表的引擎，不能静默只返回 URL 里的单个视频
         if (LinkNormalizer.isCollectionUrl(rawUrl, LinkNormalizer.PLATFORM_DOUYIN)) {
             return Result.failure(
@@ -132,15 +133,14 @@ object DomesticDirectExtractor {
         // Inspect every response, including the initial visit. An initial full
         // SSR must not be discarded while only its redirected URL is retained.
         val shareUrl = "https://www.iesdouyin.com/share/$kind/$requestedId/"
-        val pageDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(12)
+        val pageDeadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(DouyinResolutionBudget.NATIVE_MILLIS)
         repeat(2) { attempt ->
             val request = Request.Builder().url(shareUrl).header("User-Agent", if (attempt == 0) MOBILE_UA else
                 "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36")
                 .header("Referer", "https://www.douyin.com/").build()
-            val shareCall = httpClient.newCall(request)
-            shareCall.timeout().deadlineNanoTime(pageDeadline)
-            shareCall.execute().use { response ->
-                if (!response.isSuccessful) {
+            val response = readDouyinPage(request, pageDeadline)
+            run {
+                if (response.code !in 200..299) {
                     val code = when (response.code) {
                         401 -> MediaErrorCode.AUTH_REQUIRED
                         403 -> MediaErrorCode.BROWSER_ASSIST_REQUIRED
@@ -150,41 +150,63 @@ object DomesticDirectExtractor {
                     }
                     return Result.failure(Exception(MediaErrors.describe(code, "抖音目标分享页 HTTP ${response.code}")))
                 }
-                val resolvedUrl = response.request.url.toString()
+                val resolvedUrl = response.url
                 if (LinkNormalizer.platformOf(resolvedUrl) != LinkNormalizer.PLATFORM_DOUYIN ||
                     LinkNormalizer.contentId(resolvedUrl, LinkNormalizer.PLATFORM_DOUYIN) != requestedId)
                     return Result.failure(Exception("[MEDIA_ID_MISMATCH] 抖音分享页未停留在目标作品"))
-                val html = response.body?.string().orEmpty()
-                if (html.contains("_$" + "jsvmprt") && html.contains("byted_acrawler"))
-                    return Result.failure(Exception("[BROWSER_ASSIST_REQUIRED] 抖音页面需要执行网页脚本，尝试自动加载目标页面"))
+                val html = response.html
                 val parsed = DouyinVideoParser.parseHtml(html, resolvedUrl)
                 if (parsed != null) {
-                    // The mobile SSR may expose only a low rendition. Inspect the
-                    // requested desktop detail too; never read the random feed.
-                    val richer = runCatching {
-                        val detailUrl = "https://www.douyin.com/aweme/v1/web/aweme/detail/?aid=6383&device_platform=webapp&aweme_id=$requestedId"
-                        val detailRequest = Request.Builder().url(detailUrl).header("User-Agent", DESKTOP_UA)
-                            .header("Referer", "https://www.douyin.com/video/$requestedId").build()
-                        val detailCall = httpClient.newBuilder().callTimeout(8, TimeUnit.SECONDS).build().newCall(detailRequest)
-                        detailCall.timeout().deadlineNanoTime(pageDeadline)
-                        detailCall.execute().use { detail ->
-                            if (!detail.isSuccessful) null else {
-                                val body = detail.body?.source()?.let { source ->
-                                    if (source.request(4_194_305)) null else source.readUtf8()
-                                }.orEmpty()
-                                DouyinVideoParser.parseHtml("<script>window._ROUTER_DATA=$body</script>", resolvedUrl)
-                            }
-                        }
-                    }.getOrNull()
-                    val merged = if (richer == null) parsed else DouyinQualityPolicy.merge(parsed, richer)
-                    val confirmed = confirmDouyinMetadata(merged, budgetMillis = 6_000, remember = cacheResult)
-                    return Result.success(confirmed)
+                    // Return usable metadata immediately. The bounded page stage and
+                    // one final sparse probe own enhancement; do not repeat them here.
+                    if (cacheResult) rememberMetadata(parsed)
+                    return Result.success(parsed)
                 }
+                if (html.contains("_$" + "jsvmprt") && html.contains("byted_acrawler"))
+                    return Result.failure(Exception("[BROWSER_ASSIST_REQUIRED] 抖音页面需要执行网页脚本，尝试自动加载目标页面"))
             }
         }
 
         return Result.failure(Exception("[BROWSER_ASSIST_REQUIRED] 抖音未返回目标作品详情，请在内置浏览器打开目标作品后提取"))
     }
+
+    private data class DouyinPage(val code: Int, val url: String, val html: String)
+
+    internal suspend fun enrichDouyinMetadata(metadata: VideoMetadata): VideoMetadata? {
+        return try {
+            val id = metadata.mediaId
+            val request = Request.Builder()
+                .url("https://www.douyin.com/aweme/v1/web/aweme/detail/?aid=6383&device_platform=webapp&aweme_id=$id")
+                .header("User-Agent", DESKTOP_UA).header("Referer", "https://www.douyin.com/video/$id").build()
+            val page = readDouyinPage(request, System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(DouyinResolutionBudget.DETAIL_MILLIS))
+            if (page.code !in 200..299) null
+            else DouyinVideoParser.parseHtml("<script>window._ROUTER_DATA=${page.html}</script>", metadata.url)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { null }
+    }
+
+    private suspend fun readDouyinPage(request: Request, deadline: Long): DouyinPage =
+        kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+            val call = httpClient.newCall(request)
+            call.timeout().deadlineNanoTime(deadline)
+            continuation.invokeOnCancellation { call.cancel() }
+            call.enqueue(object : okhttp3.Callback {
+                override fun onFailure(call: okhttp3.Call, error: java.io.IOException) {
+                    if (continuation.isActive) continuation.resumeWith(Result.failure(error))
+                }
+                override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                    val result = runCatching { response.use {
+                        val source = it.body?.source()
+                        val html = if (source == null || source.request(4_194_305)) "" else source.readUtf8()
+                        DouyinPage(it.code, it.request.url.toString(), html)
+                    } }
+                    if (continuation.isActive) continuation.resumeWith(result)
+                }
+            })
+        }
+
+    private data class ProbeEntry(val info: HttpMp4Probe.Info, val at: Long)
+    private val douyinProbes = linkedMapOf<String, ProbeEntry>()
 
     /** Worker-thread only. Confirm missing stream dimensions with bounded MP4
      * ranges; never promote an upload's dimensions to every playback variant. */
@@ -194,18 +216,26 @@ object DomesticDirectExtractor {
         val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(budgetMillis)
         val confirmedSources = mutableMapOf<String, HttpMp4Probe.Info>()
         val topKeys = if (verifyHighest) QualitySelector.sorted(metadata.availableVideoFormats)
-            .map { DomesticSourceRecovery.resourceKey(it.sourceUrl) }.distinct().take(2).toSet() else emptySet()
+            .map { DomesticSourceRecovery.resourceKey(it.sourceUrl) }.distinct().take(1).toSet() else emptySet()
+        val scope = metadataScope(LinkNormalizer.PLATFORM_DOUYIN)
         val formats = metadata.availableVideoFormats.map { format ->
             val playbackOutro = runCatching { java.net.URI(format.sourceUrl).path.contains("/playwm/") }.getOrDefault(false)
             val key = DomesticSourceRecovery.resourceKey(format.sourceUrl)
             if (format.dimensionsVerified || (format.width > 0 && format.height > 0 && !playbackOutro && key !in topKeys)) return@map format
-            val info = confirmedSources[key] ?: run {
-                if (probes >= (if (verifyHighest) 2 else 4) || System.nanoTime() >= deadline) return@map format
+            val cacheKey = "${metadata.mediaId}|$scope|${format.sourceUrl}"
+            val cached = synchronized(douyinProbes) { douyinProbes[cacheKey] }
+                ?.takeIf { System.nanoTime() - it.at < TimeUnit.MINUTES.toNanos(5) }?.info
+            val info = confirmedSources[key] ?: cached ?: run {
+                if (probes >= (if (verifyHighest) 1 else 4) || System.nanoTime() >= deadline || Thread.currentThread().isInterrupted) return@map format
                 probes++
                 HttpMp4Probe.probe(format.sourceUrl, httpClient, DomesticMediaSource.headers("抖音"),
                     minOf(6_000, TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime())))
-                    ?.also { confirmedSources[key] = it }
+                    ?.also { info -> synchronized(douyinProbes) {
+                        if (douyinProbes.size >= 64) douyinProbes.remove(douyinProbes.keys.first())
+                        if (scope == metadataScope(LinkNormalizer.PLATFORM_DOUYIN)) douyinProbes[cacheKey] = ProbeEntry(info, System.nanoTime())
+                    } }
             } ?: return@map format
+            confirmedSources[key] = info
             format.copy(width = info.width, height = info.height, resolutionLabel = QualitySelector.label(info.width, info.height),
                 sourceDurationMs = info.durationMs ?: 0, dimensionsVerified = true)
         }

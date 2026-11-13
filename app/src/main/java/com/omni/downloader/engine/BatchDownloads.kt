@@ -80,14 +80,17 @@ class BatchDownloads(context: Context, private val scope: CoroutineScope) {
         try {
             currentCoroutineContext().ensureActive()
             val proxy = SettingsRepository.getInstance(context).proxyUrl.value
-            val url = when (val resolved = UrlSniffer.resolveContent(item.url)) {
+            val deadline = if (LinkNormalizer.platformOf(item.url) == LinkNormalizer.PLATFORM_DOUYIN)
+                DouyinResolutionBudget().deadlineNanos else null
+            val recovered = UrlSniffer.resolveContent(item.url)
+            val url = if (deadline != null) DouyinResolution.redirectTarget(recovered) else when (val resolved = recovered) {
                 is LinkNormalizer.RedirectResult.Content -> resolved.url
                 is LinkNormalizer.RedirectResult.LoginRequired -> error("[AUTH_REQUIRED] 请登录后单独解析此链接")
                 is LinkNormalizer.RedirectResult.ChallengeRequired -> error("[CHALLENGE_REQUIRED] 请完成验证后重试")
                 is LinkNormalizer.RedirectResult.Unavailable -> error("链接暂时不可访问")
             }
             val router = MediaAnalysisRouter(
-                video = { link: String -> DownloadEngine.fetchVideoMetadata(context, link, proxy, pid).getOrThrow() },
+                video = { link: String -> DownloadEngine.fetchVideoMetadata(context, link, proxy, pid, resolutionDeadlineNanos = deadline).getOrThrow() },
                 images = { link: String ->
                     val raw = SharedPython.run(context, "images", MediaAnalysisRouter.imageInput(item.url, link), UrlSniffer.identifySite(link), proxy, taskId = pid)
                     ImagePostSnapshots.put(context, raw)

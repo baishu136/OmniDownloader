@@ -9,7 +9,10 @@ internal object DouyinQualityPolicy {
         val best = metadata?.availableVideoFormats?.firstOrNull() ?: return true
         val edge = min(best.width, best.height)
         val reference = metadata.referenceWidth.toLong() * metadata.referenceHeight
-        return edge <= 720 || reference > best.width.toLong() * best.height ||
+        val playback = best.width.toLong() * best.height
+        if (best.width <= 0 || best.height <= 0) return true
+        if (reference > 0) return reference > playback
+        return (edge <= 720 && reference <= 0) || reference > playback ||
             metadata.availableVideoFormats.any { it.width == 0 || it.height == 0 }
     }
 
@@ -22,6 +25,7 @@ internal object DouyinQualityPolicy {
             author = base.author.ifBlank { extra.author }, thumbnailUrl = base.thumbnailUrl.ifBlank { extra.thumbnailUrl },
             expectedDurationMs = base.expectedDurationMs.takeIf { it > 0 } ?: extra.expectedDurationMs,
             referenceWidth = reference.referenceWidth, referenceHeight = reference.referenceHeight,
-            availableVideoFormats = QualitySelector.sorted(extra.availableVideoFormats + base.availableVideoFormats).distinctBy { it.sourceUrl })
+            availableVideoFormats = QualitySelector.sorted((extra.availableVideoFormats + base.availableVideoFormats)
+                .groupBy { it.sourceUrl }.values.map { variants -> variants.firstOrNull { it.dimensionsVerified } ?: variants.first() }))
     }
 }

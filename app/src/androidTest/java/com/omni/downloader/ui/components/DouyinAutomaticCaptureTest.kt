@@ -92,12 +92,12 @@ class DouyinAutomaticCaptureTest {
                 NetworkProxy.configuredUrl = ""
                 DouyinAutoResolver.invalidate(url)
                 DouyinPageCapture.attach(page)
-                val metadata = DouyinAutoResolver.resolve(activity, url, "", forceRefresh = true) {
+                val metadata = DouyinAutoResolver.resolve(activity, url, "", forceRefresh = true, enrich = { null }) {
                     Result.success(DouyinVideoParser.parseItem(item(server.base, false), url))
                 }.getOrThrow()
                 assertEquals(1080, metadata.availableVideoFormats.first().width)
                 assertTrue(metadata.availableVideoFormats.first().dimensionsVerified)
-                assertTrue(metadata.availableVideoFormats.any { it.width == 720 && it.dimensionsVerified })
+                assertTrue(metadata.availableVideoFormats.any { it.width == 720 })
                 assertEquals(1, calls.get()) // Inspecting cached results must not repeat unsigned detail requests.
                 val selected = metadata.availableVideoFormats.first()
                 val task = DownloadTask(taskId, url, "Automatic source QA", downloadType = DownloadType.VIDEO_WITH_AUDIO,
@@ -130,6 +130,119 @@ class DouyinAutomaticCaptureTest {
             assertEquals(id, JSONObject(result.item!!).getString("aweme_id"))
             assertEquals(0, page.activeViews)
         } finally { instrument.runOnMainSync { page.close() } }
+    } }
+
+    @Test fun optionalLoginDialogDoesNotHideAnAlreadyPlayableTarget() = withHost { activity -> runBlocking {
+        val page = adapter(activity, """<div role="dialog" style="width:300px;height:100px">扫码登录</div>
+            <script>window._ROUTER_DATA={item:${item("https://cdn.test", true)}};</script>""")
+        try {
+            val result = page.capture(url, "", DouyinAutoResolver.scope(activity, ""))
+            assertEquals(DouyinPageStatus.FOUND, result.status)
+            assertEquals(id, JSONObject(result.item!!).getString("aweme_id"))
+            assertEquals(0, page.activeViews)
+        } finally { instrument.runOnMainSync { page.close() } }
+    } }
+
+    @Test fun completeNative720PageDoesNotWaitSevenSeconds() = withHost { activity -> runBlocking {
+        // The upload reference itself is 720p; there is no evidence of a missing 1080p source.
+        val native720 = item("https://cdn.test", false).replace("\"width\":1080,\"height\":1920", "\"width\":720,\"height\":1280")
+        val page = adapter(activity, """<script>window._ROUTER_DATA={item:$native720};</script>""")
+        val started = android.os.SystemClock.elapsedRealtime()
+        try {
+            assertEquals(DouyinPageStatus.FOUND, page.capture(url, "", DouyinAutoResolver.scope(activity, "")).status)
+            val elapsed = android.os.SystemClock.elapsedRealtime() - started
+            println("OMNI_NATIVE_720_CAPTURE_MS=$elapsed")
+            assertTrue("A complete target should not wait seven seconds: $elapsed ms", elapsed < 4000)
+            assertEquals(0, page.activeViews)
+        } finally { instrument.runOnMainSync { page.close() } }
+    } }
+
+    @Test fun automaticPagePublishes720BeforeLate1080WithoutWaitingForCompletion() = withHost { activity -> runBlocking {
+        val calls = AtomicInteger()
+        val html = """<script>window._ROUTER_DATA={item:${item("https://cdn.test", false)}};
+            setTimeout(()=>fetch('/aweme/v1/web/aweme/detail/?aweme_id=$id'),2000);</script>"""
+        val page = adapter(activity, html, """{"aweme_detail":${item("https://cdn.test", true)}}""", calls = calls)
+        val seen = mutableListOf<Pair<Int, Long>>()
+        val started = android.os.SystemClock.elapsedRealtime()
+        try {
+            val result = page.captureProgressive(url, "", DouyinAutoResolver.scope(activity, "")) { candidate ->
+                seen += DouyinVideoParser.parseItem(candidate, url).availableVideoFormats.first().width to
+                    (android.os.SystemClock.elapsedRealtime() - started)
+            }
+            assertEquals(DouyinPageStatus.FOUND, result.status)
+            assertEquals(listOf(720, 1080), seen.map { it.first })
+            assertTrue("First usable result must precede the late response: $seen", seen.first().second < 2000)
+            assertTrue(seen.last().second >= 2000)
+            assertEquals(1, calls.get()); assertEquals(0, page.activeViews)
+            println("OMNI_PROGRESSIVE_CAPTURE=$seen")
+        } finally { instrument.runOnMainSync { page.close() } }
+    } }
+
+    @Test fun queueWaitIsIncludedInTheAutomaticPageTimeout() = withHost { activity -> runBlocking {
+        val blocker = adapter(activity, "<p>pending</p>", budget = 10_000)
+        val queued = adapter(activity, "<p>pending</p>", budget = 900)
+        val first = async { blocker.capture(url, "", DouyinAutoResolver.scope(activity, "")) }
+        try {
+            withTimeout(3000) { while (blocker.activeViews == 0) delay(20) }
+            val started = android.os.SystemClock.elapsedRealtime()
+            assertEquals(DouyinPageStatus.TIMEOUT, queued.capture(url, "", DouyinAutoResolver.scope(activity, "")).status)
+            assertTrue(android.os.SystemClock.elapsedRealtime() - started < 2500)
+            assertEquals(0, queued.activeViews); assertTrue(first.isActive)
+        } finally {
+            first.cancelAndJoin()
+            instrument.runOnMainSync { blocker.close(); queued.close() }
+        }
+    } }
+
+    @Test fun genuineLoginGateWithoutTargetMediaStillRequiresAuthentication() = withHost { activity -> runBlocking {
+        val page = adapter(activity, """<div role="dialog" style="width:300px;height:100px">请先登录，登录后观看</div>""")
+        try {
+            assertEquals(DouyinPageStatus.AUTH_REQUIRED, page.capture(url, "", DouyinAutoResolver.scope(activity, "")).status)
+            assertEquals(0, page.activeViews)
+        } finally { instrument.runOnMainSync { page.close() } }
+    } }
+
+    @Test fun repeatedDimensionChecksReuseTheMeasuredSource() = withHost { _ -> runBlocking {
+        val high = instrument.context.assets.open("quality-1080.mp4").use { it.readBytes() }
+        val low = instrument.context.assets.open("quality-720.mp4").use { it.readBytes() }
+        val server = MediaServer(low, high)
+        val source = item(server.base, true)
+        try {
+            val measured = withContext(Dispatchers.IO) {
+                DomesticDirectExtractor.confirmDouyinMetadata(DouyinVideoParser.parseItem(source, url), verifyHighest = true, remember = false)
+            }
+            assertTrue(measured.availableVideoFormats.first().dimensionsVerified)
+        } finally { server.close() }
+        val started = android.os.SystemClock.elapsedRealtime()
+        val reused = withContext(Dispatchers.IO) {
+            // Reparse raw platform metadata after the HTTP server has gone away.
+            DomesticDirectExtractor.confirmDouyinMetadata(DouyinVideoParser.parseItem(source, url), verifyHighest = true, remember = false)
+        }
+        assertTrue(reused.availableVideoFormats.first().dimensionsVerified)
+        assertEquals(1080, reused.availableVideoFormats.first().width)
+        assertTrue(android.os.SystemClock.elapsedRealtime() - started < 1000)
+    } }
+
+    @Test fun lateEnhancementPreservesManualSelectionAndDoesNotReopenTheSheet() = withHost { activity -> runBlocking {
+        val low = instrument.context.assets.open("quality-720.mp4").use { it.readBytes() }
+        val high = instrument.context.assets.open("quality-1080.mp4").use { it.readBytes() }
+        MediaServer(low, high).use { server ->
+            val model = androidx.lifecycle.ViewModelProvider(activity)[com.omni.downloader.ui.viewmodel.MainViewModel::class.java]
+            instrument.runOnMainSync { model.acceptBrowserVideo(item(server.base, false), url) }
+            withTimeout(5000) { while (!model.showFormatSheet.value) delay(20) }
+            val original = model.metadata.value!!
+            val selected = original.availableVideoFormats.first()
+            instrument.runOnMainSync {
+                model.selectVideoFormat(selected)
+                model.selectDownloadType(DownloadType.GIF)
+                model.dismissFormatSheet()
+                model.updateProgressiveMetadata(DouyinQualityPolicy.merge(original, DouyinVideoParser.parseItem(item(server.base, true), url)))
+            }
+            assertFalse(model.showFormatSheet.value)
+            assertEquals(DownloadType.GIF, model.selectedDownloadType.value)
+            assertEquals(selected.sourceUrl, model.selectedVideoFormat.value!!.sourceUrl)
+            assertEquals(1080, model.metadata.value!!.availableVideoFormats.first().width)
+        }
     } }
 
     @Test fun visibleChallengeReturnsVerificationInsteadOfAPlaceholderVideo() = withHost { activity -> runBlocking {

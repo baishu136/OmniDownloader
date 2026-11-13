@@ -120,8 +120,12 @@ object DownloadEngine {
         proxyUrl: String = "",
         requestId: String? = null,
         refreshSources: Boolean = false,
-        onPhase: (String) -> Unit = {}
+        onPhase: (String) -> Unit = {},
+        resolutionDeadlineNanos: Long? = null,
+        onPreview: suspend (VideoMetadata) -> Unit = {}
     ): Result<VideoMetadata> = withContext(Dispatchers.IO) {
+        val douyinBudget = if (LinkNormalizer.platformOf(rawUrl) == LinkNormalizer.PLATFORM_DOUYIN)
+            resolutionDeadlineNanos?.let { DouyinResolutionBudget(it) } ?: DouyinResolutionBudget() else null
         val processId = requestId ?: java.util.UUID.randomUUID().toString()
         var nativeFailure: String? = null
         val cleanUrl = UrlSniffer.sanitizeAndResolveUrl(rawUrl)
@@ -160,7 +164,8 @@ object DownloadEngine {
 
         // 3. 国内平台（抖音、快手、小红书）优先走原生直接解析，若失败自动降级到 yt-dlp
         if (site == LinkNormalizer.PLATFORM_DOUYIN) {
-            return@withContext DouyinAutoResolver.resolve(context, cleanUrl, proxyUrl, refreshSources, onPhase) {
+            return@withContext DouyinAutoResolver.resolve(context, cleanUrl, proxyUrl, refreshSources, onPhase,
+                budget = douyinBudget ?: DouyinResolutionBudget(), onPreview = onPreview) {
                 DomesticDirectExtractor.extract(cleanUrl, site,
                     com.omni.downloader.data.repository.SessionRepository.getInstance(context).cookieHeader(site), cacheResult = false)
             }
