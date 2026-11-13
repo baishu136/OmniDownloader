@@ -48,8 +48,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import com.omni.downloader.ui.design.TabProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import com.omni.downloader.ui.components.OmniOptionMenu
+import com.omni.downloader.ui.components.OmniOptionMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -1126,36 +1126,12 @@ private fun SettingDropdown(
             )
         }
 
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
+        OmniOptionMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { (code, label) ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = if (code == currentValue) FontWeight.Bold else FontWeight.Normal,
-                            color = if (code == currentValue) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurface
-                        )
-                    },
-                    onClick = {
-                        onSelect(code)
-                        expanded = false
-                    },
-                    leadingIcon = if (code == currentValue) {
-                        {
-                            Icon(
-                                imageVector = Icons.Outlined.Check,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    } else null
-                )
+                OmniOptionMenuItem(label = label, selected = code == currentValue, onClick = {
+                    onSelect(code)
+                    expanded = false
+                })
             }
         }
     }

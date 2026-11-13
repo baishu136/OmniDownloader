@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.omni.downloader.data.model.*
 import com.omni.downloader.engine.*
+import com.omni.downloader.ui.components.OmniOptionMenu
+import com.omni.downloader.ui.components.OmniOptionMenuItem
 import com.omni.downloader.ui.viewmodel.MainViewModel
 
 @Composable fun BatchDownloadScreen(viewModel: MainViewModel, onTasks: () -> Unit, onSingle: () -> Unit) {
@@ -93,11 +95,11 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 BatchChoice(draft.batchOptions.type.label, ready && !running) { close ->
                     listOf(DownloadType.VIDEO_WITH_AUDIO, DownloadType.VIDEO_ONLY, DownloadType.AUDIO_ONLY, DownloadType.GIF).forEach { value ->
-                        DropdownMenuItem(text = { Text(value.label) }, onClick = { drafts.update { it.copy(batchOptions = it.batchOptions.copy(type = value)) }; close() })
+                        OmniOptionMenuItem(label = value.label, selected = value == draft.batchOptions.type, onClick = { drafts.update { it.copy(batchOptions = it.batchOptions.copy(type = value)) }; close() })
                     }
                 }
                 if (draft.batchOptions.type == DownloadType.AUDIO_ONLY) BatchChoice(draft.batchOptions.audio.ext.uppercase(), ready && !running) { close ->
-                    AudioFormat.entries.forEach { value -> DropdownMenuItem(text = { Text(value.ext.uppercase()) }, onClick = { drafts.update { it.copy(batchOptions = it.batchOptions.copy(audio = value)) }; close() }) }
+                    AudioFormat.entries.forEach { value -> OmniOptionMenuItem(label = value.ext.uppercase(), selected = value == draft.batchOptions.audio, onClick = { drafts.update { it.copy(batchOptions = it.batchOptions.copy(audio = value)) }; close() }) }
                 }
             }
             Row { Checkbox(modifier = Modifier.testTag("batch_all_episodes"), checked = draft.batchOptions.allEpisodes, onCheckedChange = { value -> drafts.update { it.copy(batchOptions = it.batchOptions.copy(allEpisodes = value)) } }, enabled = ready && !running); Text("下载合集 / 多视频的全部分集", Modifier.padding(top = 12.dp)) }
@@ -150,6 +152,6 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
     var expanded by remember { mutableStateOf(false) }
     Box {
         OutlinedButton(shape = MaterialTheme.shapes.medium, onClick = { expanded = true }, enabled = enabled) { Text(label) }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) { content { expanded = false } }
+        OmniOptionMenu(expanded = expanded, onDismissRequest = { expanded = false }) { content { expanded = false } }
     }
 }

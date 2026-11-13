@@ -54,9 +54,9 @@ internal fun ImageInputPanel(
                     .semantics { contentDescription = "保存路径：$pathLabel" }) {
                 Text(pathLabel, maxLines = 2, overflow = TextOverflow.Ellipsis, textDecoration = TextDecoration.Underline)
             }
-            DropdownMenu(expanded = pathsExpanded, onDismissRequest = { pathsExpanded = false }) {
-                DropdownMenuItem(text = { Text("选择文件夹") }, onClick = { pathsExpanded = false; onChoosePath() })
-                DropdownMenuItem(text = { Text("恢复默认目录") }, onClick = { pathsExpanded = false; onResetPath() })
+            OmniOptionMenu(expanded = pathsExpanded, onDismissRequest = { pathsExpanded = false }) {
+                OmniOptionMenuItem(label = "选择文件夹", onClick = { pathsExpanded = false; onChoosePath() })
+                OmniOptionMenuItem(label = "恢复默认目录", onClick = { pathsExpanded = false; onResetPath() })
             }
         }
         Button(shape = MaterialTheme.shapes.medium, onClick = onAnalyze, enabled = !busy && input.isNotBlank(), modifier = Modifier.heightIn(min = 48.dp).testTag("images_analyze")) {
