@@ -66,6 +66,61 @@ def test_original_priority_and_no_watermark_claim_for_unknown():
     assert media.resource('file:///tmp/a','1','Pixiv') is None
 
 
+def test_xhs_prefers_same_asset_source_over_watermarked_h5_image(monkeypatch):
+    asset = '1040g2sg327co2ik7n8e05pgsope0u3qtkjikbqo'
+    preview = f'https://sns-webpic-qc.xhscdn.com/202611131946/0123456789abcdef0123456789abcdef/{asset}!h5_1080jpg'
+    monkeypatch.setattr(media, 'xhs_target', lambda *a: ('https://www.xiaohongshu.com/explore/fixture', 'fixture', {
+        'type': 'normal', 'imageList': [{'fileId': asset, 'url': preview, 'width': 1080, 'height': 1920}]}))
+    monkeypatch.setattr(media, 'probe_image_dimensions', lambda *a: (1080, 1920))
+    image = media.resolve_xhs(None, 'https://xhslink.cn/o/fixture')[-1][0]
+    assert image['url'] == f'https://ci.xiaohongshu.com/{asset}?imageView2/format/jpg'
+    assert image['id'] == f'fixture:{asset}'
+
+
+def test_xhs_old_snapshot_download_does_not_reuse_watermarked_preview(tmp_path, monkeypatch):
+    asset = '1040g2sg327co2ik7n8e05pgsope0u3qtkjikbqo'
+    preview = f'https://sns-webpic-qc.xhscdn.com/202611131946/0123456789abcdef0123456789abcdef/{asset}!h5_1080jpg'
+    url = 'https://www.xiaohongshu.com/explore/fixture'
+    post = {'url': url, 'platform': '小红书', 'contentId': 'fixture',
+            'resources': [media.resource(preview, 'fixture', '小红书', identifier=asset)]}
+    png = b'\x89PNG\r\n\x1a\n' + b'unchanged-platform-image'
+    seen = []
+    class Response:
+        status_code = 200
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def raise_for_status(self): pass
+        def iter_content(self, *args): yield png
+    class Client:
+        def get(self, source, **kwargs): seen.append(source); return Response()
+        def close(self): pass
+    monkeypatch.setattr(media, 'session', lambda *a: Client())
+    result = media.download_images(url, '小红书', [f'fixture:{asset}'], tmp_path, post=post)
+    assert seen == [f'https://ci.xiaohongshu.com/{asset}?imageView2/format/jpg']
+    assert Path(result['path']).read_bytes() == png
+
+
+@pytest.mark.parametrize('source', [
+    'https://sns-webpic-qc.xhscdn.com.evil.test/20261113/hash/1040g2sg327co2ik7n8e05pgsope0u3qtkjikbqo!h5_1080jpg',
+    'https://other.test/1040g2sg327co2ik7n8e05pgsope0u3qtkjikbqo!h5_1080jpg',
+    'https://user:password@sns-webpic-qc.xhscdn.com/1040g2sg327co2ik7n8e05pgsope0u3qtkjikbqo!h5_1080jpg',
+    'https://sns-webpic-qc.xhscdn.com/path/%2e%2e%2fsecret!h5_1080jpg'])
+def test_xhs_image_source_does_not_rewrite_unrelated_or_unsafe_urls(source):
+    assert media.xhs_original_image_url({'url': source}) is None
+
+
+def test_xhs_source_does_not_invent_original_bytes_or_erase_original_parameters():
+    source = 'https://ci.xiaohongshu.com/1040g2sg327co2ik7n8e05pgsope0u3qtkjikbqo?imageView2/format/png&signature=KEEP%2FEXACT'
+    assert media.xhs_original_image_url({'url': source}) == source
+    assert media.choose_xhs_image({'original': source}) == (source, True)
+    assert media.xhs_original_image_url({'fileId': '../secret', 'url': 'https://unrelated.test/file.jpg'}) is None
+
+
+def test_unlocatable_h5_image_does_not_silently_fall_back_to_preview():
+    with pytest.raises(media.MediaError, match='MEDIA_UNCONFIRMED'):
+        media.choose_xhs_image({'url': 'https://sns-webpic-qc.xhscdn.com/unknown!h5_1080jpg'})
+
+
 def test_html_is_rejected_as_image():
     with pytest.raises(media.MediaError,match='POSTPROCESS_FAILED'):
         media.image_extension(b'<html>login required</html>')

@@ -55,7 +55,8 @@ object XiaohongshuNoteParser {
         return VideoMetadata(
             url = url, title = note.text("title").ifBlank { note.text("desc") }.ifBlank { "小红书视频" },
             author = note.obj("user")?.text("nickname").orEmpty(),
-            thumbnailUrl = image?.text("urlDefault").orEmpty().ifBlank { image?.text("urlPre").orEmpty() },
+            thumbnailUrl = XiaohongshuImageSource.originalUrl(image) ?: image?.text("urlDefault").orEmpty()
+                .ifBlank { image?.text("urlPre").orEmpty() }.ifBlank { image?.text("url").orEmpty() },
             siteName = LinkNormalizer.PLATFORM_XHS, mediaId = id, expectedDurationMs = duration,
             durationText = if (duration > 0) "%02d:%02d".format(duration / 60_000, duration / 1000 % 60) else "",
             availableVideoFormats = QualitySelector.sorted(formats.distinctBy { it.formatId })

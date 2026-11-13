@@ -276,8 +276,9 @@ object DownloadEngine {
         onProgressUpdate?.invoke(10f, "", "正在获取高清封面...", TaskStatus.DOWNLOADING)
 
         try {
+            val sourceUrl = XiaohongshuImageSource.downloadUrl(coverUrl)
             val requestBuilder = Request.Builder()
-                .url(coverUrl)
+                .url(sourceUrl)
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
             // 根据目标地址配置防盗链 Referer
@@ -322,9 +323,9 @@ object DownloadEngine {
             val contentType = response.header("Content-Type", "") ?: ""
 
             val ext = when {
-                coverUrl.contains(".png", ignoreCase = true) || contentType.contains("image/png") -> "png"
-                coverUrl.contains(".webp", ignoreCase = true) || contentType.contains("image/webp") -> "webp"
-                coverUrl.contains(".gif", ignoreCase = true) || contentType.contains("image/gif") -> "gif"
+                sourceUrl.contains(".png", ignoreCase = true) || contentType.contains("image/png") -> "png"
+                sourceUrl.contains(".webp", ignoreCase = true) || contentType.contains("image/webp") -> "webp"
+                sourceUrl.contains(".gif", ignoreCase = true) || contentType.contains("image/gif") -> "gif"
                 else -> "jpg"
             }
 

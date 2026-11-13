@@ -58,6 +58,38 @@ class XiaohongshuNoteParserTest {
         assertCode("EXTRACTOR_CHANGED", """<script>window.__INITIAL_STATE__={};</script><script>{"masterUrl":"https://cdn.example/unrelated.mp4"}</script>""")
     }
 
+    @Test fun mobileVideoCoverUsesTheSameAssetWithoutH5WatermarkProcessing() {
+        val asset = "1040g2sg327co2ik7n8e05pgsope0u3qtkjikbqo"
+        val image = """"imageList":[{"fileId":"$asset","url":"https://sns-webpic-qc.xhscdn.com/202611131946/0123456789abcdef0123456789abcdef/$asset!h5_1080jpg"}],"""
+        val note = video().replace("\"video\":", image + "\"video\":")
+        assertEquals("https://ci.xiaohongshu.com/$asset?imageView2/format/jpg",
+            XiaohongshuNoteParser.parseVideo(mobile(note), url).thumbnailUrl)
+    }
+
+    @Test fun oldH5CoverWithoutFileIdStillKeepsItsExactAssetIdentity() {
+        val asset = "1040g2sg327co2ik7n8e05pgsope0u3qtkjikbqo"
+        assertEquals("https://ci.xiaohongshu.com/$asset?imageView2/format/jpg",
+            XiaohongshuImageSource.originalUrl("https://sns-webpic-qc.xhscdn.com/202611131946/hash/$asset!h5_1080jpg"))
+    }
+
+    @Test fun unknownHostsCredentialsAndTraversalDoNotBecomeImageSources() {
+        for (url in listOf("https://sns-webpic-qc.xhscdn.com.evil.test/image!h5_1080jpg",
+                "https://user:password@sns-webpic-qc.xhscdn.com/1040g2sg327co2ik7n8e05pgsope0u3qtkjikbqo!h5_1080jpg",
+                "https://sns-webpic-qc.xhscdn.com/%2e%2e%2fsecret!h5_1080jpg"))
+            assertNull(XiaohongshuImageSource.originalUrl(url))
+    }
+
+    @Test fun suppliedAssetSourceKeepsFormatAndSignature() {
+        val url = "https://ci.xiaohongshu.com/1040g2sg327co2ik7n8e05pgsope0u3qtkjikbqo?imageView2/format/png&signature=KEEP%2FEXACT"
+        assertEquals(url, XiaohongshuImageSource.originalUrl(url))
+    }
+
+    @Test fun unlocatableStyledCoverIsNotSilentlyDownloadedAsTheOriginal() {
+        val error = runCatching { XiaohongshuImageSource.downloadUrl("https://sns-webpic-qc.xhscdn.com/unknown!h5_1080jpg") }.exceptionOrNull()
+        assertEquals(MediaErrorCode.MEDIA_UNCONFIRMED, MediaErrors.codeOf(error!!))
+        assertEquals("https://unrelated.test/image.jpg", XiaohongshuImageSource.downloadUrl("https://unrelated.test/image.jpg"))
+    }
+
     private fun assertCode(code: String, html: String) {
         val error = runCatching { XiaohongshuNoteParser.parseVideo(html, url) }.exceptionOrNull()
         assertNotNull(error)

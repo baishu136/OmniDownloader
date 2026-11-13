@@ -156,6 +156,49 @@ def choose_image(image):
     return (urls[0], False) if urls else ('', False)
 
 
+def xhs_original_image_url(image):
+    """Request the same note-bound asset without H5 watermark/style processing."""
+    def asset(value):
+        return value if isinstance(value, str) and len(value) <= 512 and re.fullmatch(
+            r'(?:[A-Za-z0-9_-]+/){0,7}[A-Za-z0-9_-]{16,160}', value) else ''
+    token = asset(image.get('fileId'))
+    if not token:
+        sources = [image.get(k) for k in ('url', 'urlDefault', 'urlPre')]
+        sources += [item.get('url') for item in image.get('infoList') or [] if isinstance(item, dict)]
+        for source in sources:
+            if not isinstance(source, str): continue
+            try: parts = urlsplit(source)
+            except ValueError: continue
+            host = (parts.hostname or '').lower()
+            if parts.scheme not in ('http', 'https') or parts.username or parts.password: continue
+            if host == 'ci.xiaohongshu.com':
+                # Already an asset-source URL: keep its exact format and query.
+                return source
+            if not (host.startswith('sns-webpic-') and host.endswith('.xhscdn.com')): continue
+            token = asset(parts.path.rsplit('/', 1)[-1].split('!', 1)[0])
+            if token: break
+    return f'https://ci.xiaohongshu.com/{token}?imageView2/format/jpg' if token else None
+
+
+def choose_xhs_image(image):
+    source, original = choose_image(image)
+    if original:
+        clean = xhs_original_image_url({'url': source})
+        return (clean, False) if clean and clean != source else (source, True)
+    clean = xhs_original_image_url(image)
+    if not clean and xhs_styled_preview(source):
+        raise MediaError('MEDIA_UNCONFIRMED', '未能从小红书预览地址定位标准图片源，请重新解析')
+    return clean or source, False
+
+
+def xhs_styled_preview(source):
+    try:
+        parts = urlsplit(source)
+        host = (parts.hostname or '').lower()
+        return host.startswith('sns-webpic-') and host.endswith('.xhscdn.com') and '!' in parts.path
+    except (ValueError, TypeError): return False
+
+
 def find_douyin_item(value, identifier, depth=0):
     if depth > 25: return None
     if isinstance(value, dict):
@@ -285,8 +328,11 @@ def resolve_xhs(client, url):
     if note.get('type') == 'video': raise MediaError('NO_MEDIA', '这是视频笔记，图文页不把视频封面当图文')
     resources = []
     for image in note.get('imageList') or []:
-        source, original = choose_image(image)
-        resources.append(resource(source, identifier, '小红书', image.get('width'), image.get('height'), original, image.get('fileId')))
+        source, original = choose_xhs_image(image)
+        selected = resource(source, identifier, '小红书', image.get('width'), image.get('height'), original, image.get('fileId'))
+        if selected and not original and (urlsplit(source).hostname or '').lower() == 'ci.xiaohongshu.com':
+            selected['watermark'] = 'PLATFORM_SOURCE'
+        resources.append(selected)
     # H5 image URLs can be smaller than the upload dimensions in page metadata.
     pending = [r for r in resources if r and not r['original']]
     def confirm(image):
@@ -708,6 +754,7 @@ def resolve_site_video(url, platform, cookie_file=None, proxy=''):
             warning = '原始视频源暂未确认尺寸，当前列表不代表该作品的最高画质。' if any(f.get('format_note') == '原始源（尺寸待确认）' for f in formats) else ''
             return dict(id=identifier, title=note.get('title') or note.get('desc') or identifier,
                         uploader=(note.get('user') or {}).get('nickname') or '', webpage_url=canonical,
+                        thumbnail=choose_xhs_image((note.get('imageList') or [{}])[0])[0],
                         duration=duration / 1000, formats=formats, extractor='OmniXiaohongshu', quality_warning=warning,
                         http_headers={'Referer': 'https://www.xiaohongshu.com/', 'User-Agent': client.headers['User-Agent']})
         if platform == '抖音':
@@ -831,6 +878,15 @@ def download_images(url, platform, selected_ids, output, archive=False, cookie_f
         for index, identifier in enumerate(selected_ids):
             if cancel and cancel.is_set(): raise MediaError('CANCELLED', '用户取消')
             image = by_id[identifier]
+            if platform == '小红书':
+                # Plans saved by older versions may still contain H5 preview URLs.
+                # Do not silently fall back to those watermarked bytes on failure.
+                source = xhs_original_image_url(image)
+                if not source and xhs_styled_preview(image['url']):
+                    raise MediaError('MEDIA_UNCONFIRMED', '旧任务未能定位标准图片源，请重新解析；未下载水印预览图')
+                if source and source != image['url']:
+                    image = {**image, 'url': source, 'original': False, 'watermark': 'PLATFORM_SOURCE'}
+                    by_id[identifier] = image
             partial = directory / f'image-{index:03}.part'
             size = 0; prefix = bytearray()
             with client.get(image['url'], headers=image['headers'], timeout=(12, 30), stream=True) as response:
