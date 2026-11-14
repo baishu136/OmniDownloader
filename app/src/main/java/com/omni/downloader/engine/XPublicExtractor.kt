@@ -15,6 +15,7 @@ internal object XPublicExtractor {
         .callTimeout(35, TimeUnit.SECONDS).build()
 
     fun extract(context: Context, url: String, proxyUrl: String = ""): JSONObject {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(35)
         val identifier = Regex("/status/(\\d+)").find(url)?.groupValues?.get(1)
             ?: error("[MEDIA_ID_MISMATCH] 需要单条 X 帖子链接")
         // Same token expression as upstream TwitterIE; evaluate only a validated numeric ID.
@@ -31,7 +32,12 @@ internal object XPublicExtractor {
         } finally { process.destroy() }
         val request = Request.Builder().url("https://cdn.syndication.twimg.com/tweet-result?id=$identifier&token=$token")
             .header("User-Agent", "Googlebot").build()
-        val data = client.newCall(request).execute().use { response ->
+        val data = confirmedStatus(identifier) { attempt ->
+            val remaining = deadline - System.nanoTime()
+            check(remaining > 0) { "[NETWORK_ERROR] 公开接口解析已超时" }
+            val call = client.newCall(if (attempt == 0) request else request.newBuilder().header("Cache-Control", "no-cache").build())
+            call.timeout().timeout(remaining, TimeUnit.NANOSECONDS)
+            call.execute().use { response ->
             when (response.code) {
                 401, 403 -> error("[AUTH_REQUIRED] 官方公开接口未允许访问目标内容")
                 404, 410 -> error("[CONTENT_UNAVAILABLE] 目标内容当前不可用")
@@ -50,8 +56,8 @@ internal object XPublicExtractor {
                 output.toByteArray()
             }
             JSONObject(String(bytes, Charsets.UTF_8))
+            }
         }
-        check(data.optString("id_str", data.optString("id")) == identifier) { "[MEDIA_ID_MISMATCH] 公开接口未确认原帖子" }
         val media = data.optJSONArray("mediaDetails") ?: error("[MEDIA_UNCONFIRMED] 未取得目标帖子的媒体信息")
         val entries = JSONArray()
         val requestedIndex = Regex("/video/(\\d+)").find(url)?.groupValues?.get(1)?.toIntOrNull()
@@ -103,6 +109,11 @@ internal object XPublicExtractor {
         return if (entries.length() == 1) entries.getJSONObject(0) else JSONObject().put("_type", "playlist")
             .put("id", identifier).put("title", identifier).put("entries", entries)
     }
+
+    internal fun confirmedStatus(identifier: String, fetch: (Int) -> JSONObject): JSONObject =
+        XPublicPolicy.confirmed(fetch) { data -> XPublicPolicy.verifyRoot(identifier,
+            data.optString("id_str").takeUnless { data.isNull("id_str") },
+            data.optString("id").takeUnless { data.isNull("id") }) }
 
     /** HLS video variants may be silent; their companion audio renditions must
      * remain in the same snapshot for exact-video+bestaudio selection. */

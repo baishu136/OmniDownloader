@@ -233,13 +233,11 @@ object DownloadEngine {
                     kotlinx.coroutines.delay(800)
                     extractValidJson(YoutubeDL.getInstance().execute(request, processId).out) ?: error("[MEDIA_UNCONFIRMED] 重试后仍未取得目标媒体")
                 } else {
-                if (site != LinkNormalizer.PLATFORM_X || !listOf("no video could be found", "429", "timed out", "502", "503",
-                        "connection reset", "connection aborted", "remote end closed", "unexpected_eof", "server disconnected").any { it in message }) throw first
+                if (site != LinkNormalizer.PLATFORM_X || !XPublicPolicy.shouldTryPublic(message)) throw first
                 // Independent public endpoint: never sends the account cookie jar.
                 if (!proxyUrl.startsWith("https://", true)) {
                     try { XPublicExtractor.extract(context, cleanUrl, proxyUrl) } catch (native: Exception) {
-                        if (MediaErrors.classify(native.message.orEmpty()) in setOf(MediaErrorCode.AUTH_REQUIRED, MediaErrorCode.RATE_LIMITED,
-                                MediaErrorCode.CONTENT_UNAVAILABLE, MediaErrorCode.MEDIA_ID_MISMATCH)) throw native
+                        if (!XPublicPolicy.canTrySecondary(native.message.orEmpty())) throw native
                         SharedPython.run(context, "x-video", cleanUrl, site, proxyUrl, taskId = processId)
                     }
                 } else SharedPython.run(context, "x-video", cleanUrl, site, proxyUrl, taskId = processId)

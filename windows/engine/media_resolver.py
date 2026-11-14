@@ -657,12 +657,22 @@ def twitter_status(url, cookie_file=None, proxy='', public_only=False):
             errors.append(type(error).__name__)
     # Public, official syndication endpoint, isolated from the account cookie jar.
     # Calling the endpoint directly avoids yt-dlp's authenticated GraphQL preflight.
-    with yt_dlp.YoutubeDL(ydl_options(None, proxy)) as engine:
+    public_options = dict(ydl_options(None, proxy), socket_timeout=12, extractor_retries=0)
+    with yt_dlp.YoutubeDL(public_options) as engine:
         extractor = engine.get_info_extractor('Twitter')
-        status = extractor._download_json('https://cdn.syndication.twimg.com/tweet-result', identifier,
-            headers={'User-Agent': 'Googlebot'}, query={'id': identifier, 'token': extractor._generate_syndication_token(identifier)})
-    if not isinstance(status, dict) or str(status.get('id_str', status.get('id', ''))) != identifier:
-        raise MediaError('MEDIA_UNCONFIRMED', '官方公开接口未确认目标媒体；不会改用其他帖子')
+        token = extractor._generate_syndication_token(identifier)
+        for attempt in range(2):
+            headers = {'User-Agent': 'Googlebot'}
+            if attempt: headers['Cache-Control'] = 'no-cache'
+            status = extractor._download_json('https://cdn.syndication.twimg.com/tweet-result', identifier,
+                headers=headers, query={'id': identifier, 'token': token})
+            actual = str((status.get('id_str') or status.get('id')) or '').strip() if isinstance(status, dict) else ''
+            if actual.isascii() and actual.isdigit():
+                if actual != identifier:
+                    raise MediaError('MEDIA_ID_MISMATCH', '官方公开接口明确返回其他帖子，已拒绝使用')
+                break
+            if attempt:
+                raise MediaError('MEDIA_UNCONFIRMED', '官方公开接口未返回可确认的帖子ID，请重试或验证会话')
     status['_omni_media'] = status.get('mediaDetails') or []
     return status, 'public_syndication', identifier
 
