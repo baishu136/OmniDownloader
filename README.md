@@ -1,6 +1,6 @@
-## Release 1.7.29 · Android batch downloads and GIF tools
+## Release 1.7.34 · Android parsing and batch updates
 
-[Download Android 1.7.29](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.29) · Adds parallel batch parsing, recoverable drafts, local video-to-GIF conversion and navigation animations, with Bilibili and background download fixes. Windows **1.7.20** and iOS **1.7.21** remain available from the [previous release](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20).
+[Download Android 1.7.34](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.34) · Adds batch pre-parsing and automatic removal of completed inputs, Cherry Studio Mobile-style menus, and fixes for X public responses, Xiaohongshu image sources and Douyin parsing waits. Windows **1.7.20** and iOS **1.7.21** remain available from the [previous release](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20).
 
 <div align="center">
 
@@ -14,7 +14,7 @@
 </p>
 
 [![Release](https://img.shields.io/github/v/release/baishu136/OmniDownloader?color=blue&label=Release)](https://github.com/baishu136/OmniDownloader/releases)
-[![Android](https://img.shields.io/badge/Android-v1.7.29-green.svg)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-v1.7.34-green.svg)](https://developer.android.com)
 [![iOS](https://img.shields.io/badge/iOS-SwiftUI%20Native-orange.svg)](OmniDownloader-iOS)
 [![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
@@ -33,7 +33,7 @@
 
 | Platform | Target Devices | Core Tech Stack | Installation & Download |
 | :--- | :--- | :--- | :--- |
-| **🤖 Android Native** | Android Phones / Tablets / TV (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [Download Latest APK (v1.7.29)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) or via Releases |
+| **🤖 Android Native** | Android Phones / Tablets / TV (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [Download Latest APK (v1.7.34)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) or via Releases |
 | **🍎 iOS Native** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + native FFmpeg | [IPA 1.7.21](https://github.com/baishu136/OmniDownloader/releases/download/v1.7.20/OmniDownloader-1.7.21-unsigned.ipa) · [Signing / 签名 / 署名](OmniDownloader-iOS/README_IOS.md) |
 | **💻 Windows Desktop** | Windows 10 / 11 (64-bit) | Python 3 + FastAPI + Edge WebView2 standalone window + Built-in FFmpeg | Download [`OmniDownloader_Desktop-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/download/v1.7.20/OmniDownloader_Desktop-1.7.20.zip); Standalone portable app with multilingual guides |
 | **🌐 Web Background** | Windows PC, local browser | Lightweight system tray daemon + Local web service + Built-in FFmpeg | Download [`OmniDownloader_Web-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/download/v1.7.20/OmniDownloader_Web-1.7.20.zip); Silent tray app with browser download takeover |
@@ -57,7 +57,7 @@
 
 ## 📲 Quick Downloads
 
-- **Android Latest APK**: [`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) (or [`OmniDownloader-1.7.29-arm64-v8a.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.29-arm64-v8a.apk))
+- **Android Latest APK**: [`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) (or [`OmniDownloader-1.7.34-arm64-v8a.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.34-arm64-v8a.apk))
 - **iOS Sideload Guide**: See [`OmniDownloader-iOS/README_IOS.md`](OmniDownloader-iOS/README_IOS.md)
 - **Windows Portable ZIPs**: Located in [GitHub Release](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20)
 
