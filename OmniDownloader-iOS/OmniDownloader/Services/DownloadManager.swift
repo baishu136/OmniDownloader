@@ -39,7 +39,7 @@ extension Notification.Name { static let omniAnalyzeURL=Notification.Name("omniA
     }
     static func includingCovers(_ rows:[DownloadTask])->[DownloadTask] {
         rows.flatMap{source->[DownloadTask] in
-            guard source.saveCover,[.videoWithAudio,.videoOnly,.audioOnly,.gif].contains(source.downloadType) else{return [source]}
+            guard source.saveCover == true,[.videoWithAudio,.videoOnly,.audioOnly,.gif].contains(source.downloadType) else{return [source]}
             var task=source;task.saveCover=false
             let cover=DownloadTask(id:source.id+"-cover",url:source.url,title:source.title+"_cover",author:source.author,thumbnailUrl:source.thumbnailUrl,downloadType:.cover,collectionId:source.collectionId,collectionTitle:source.collectionTitle,episodeIndex:source.episodeIndex,episodeTotal:source.episodeTotal,mediaId:source.mediaId)
             return [task,cover]

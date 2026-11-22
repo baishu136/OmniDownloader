@@ -58,7 +58,7 @@ final class MobileParityTests:XCTestCase {
         XCTAssertEqual(try batch.makeTasks(.video(value),group:"group")[0].selectedVideoFormatId,"720")
         let covered=DownloadManager.includingCovers([DownloadTask(url:"https://example.com/a.mp4",title:"fixture",saveCover:true)])
         XCTAssertEqual(covered.count,2);XCTAssertEqual(covered[1].downloadType,.cover)
-        XCTAssertFalse(covered[0].saveCover)
+        XCTAssertEqual(covered[0].saveCover,false)
         XCTAssertEqual(DownloadManager.includingCovers(covered).count,2)
     }
 }
