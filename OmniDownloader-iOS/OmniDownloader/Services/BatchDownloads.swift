@@ -102,7 +102,7 @@ struct BatchEntry:Identifiable,Codable {
             guard values.count<=100 else{throw OmniPlatform.error("BATCH_LIMIT","单条链接最多 100 个媒体，请在首页选择范围")}
             let output=try values.enumerated().map { index,value -> DownloadTask in
                 let kind=mode == .auto ? DownloadType.videoWithAudio:mode
-                let formats=MediaQuality.sorted(value.availableVideoFormats.filter{!$0.isAudioOnly && (maxHeight==0 || ($0.height>0 && min($0.width,$0.height)<=maxHeight))})
+                let formats=MediaQuality.sorted(value.availableVideoFormats.filter{!$0.isAudioOnly && (maxHeight==0 || ($0.width>0 && $0.height>0 && min($0.width,$0.height)<=maxHeight))})
                 let selected=kind == .audioOnly ? value.availableAudioFormats.first ?? formats.first:formats.first
                 guard selected != nil || kind == .cover || (kind == .gif && value.isGif) else{throw OmniPlatform.error("FORMAT_NOT_AVAILABLE","没有符合所选画质的媒体源")}
                 return DownloadTask(url:value.url,title:value.title,author:value.author,thumbnailUrl:value.thumbnailUrl,downloadType:kind,selectedResolution:selected?.resolutionLabel ?? "原始",audioFormat:audioFormat,collectionId:group,collectionTitle:metadata.title,episodeIndex:index+1,episodeTotal:values.count,selectedVideoFormatId:selected?.formatId,mediaId:value.mediaId,expectedDurationMs:value.expectedDurationMs,selectedWidth:selected?.width,selectedHeight:selected?.height,saveCover:saveCover,selectedFPS:selected?.fps,selectedDynamicRange:selected?.dynamicRange,selectedCodec:selected?.vcodec)

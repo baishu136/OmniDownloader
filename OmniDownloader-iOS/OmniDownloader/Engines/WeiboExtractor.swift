@@ -23,6 +23,7 @@ enum WeiboExtractor {
     static func parse(_ item:[String:Any],url:String)throws->[String:Any] {
         let id=OmniPlatform.identifier(url)
         let identities=["id","idstr","id_str","mid","bid","mblogid"].compactMap{item[$0]}.map{String(describing:$0)}
+        guard !identities.isEmpty else{throw OmniPlatform.error("MEDIA_UNCONFIRMED","微博暂未确认目标作品，请验证登录后重试")}
         guard !id.isEmpty,identities.contains(id) else{throw OmniPlatform.error("MEDIA_ID_MISMATCH","微博没有返回目标作品")}
         let title=(item["text_raw"] as? String ?? item["text"] as? String ?? "微博_\(id)").replacingOccurrences(of:#"<[^>]+>"#,with:"",options:.regularExpression)
         let author=(item["user"] as? [String:Any])?["screen_name"] as? String ?? ""
@@ -43,8 +44,8 @@ enum WeiboExtractor {
             return ["mediaId":identity,"formats":formats,"durationMs":NativeMediaParser.number(info["duration"])*1000,"thumbnailUrl":thumb]
         }
         var media:[[String:Any]]=[]
-        if let page=item["page_info"] as? [String:Any],let value=entry(page,identity:id){media.append(value)}
         let mixed=(item["mix_media_info"] as? [String:Any])?["items"] as? [[String:Any]] ?? []
+        if mixed.isEmpty,let page=item["page_info"] as? [String:Any],let value=entry(page,identity:id){media.append(value)}
         for (index,row) in mixed.enumerated() where row["type"] as? String != "pic" {
             if let data=row["data"] as? [String:Any],let value=entry(["media_info":data["media_info"] ?? [:]],identity:id+"-\(index)"){media.append(value)}
         }

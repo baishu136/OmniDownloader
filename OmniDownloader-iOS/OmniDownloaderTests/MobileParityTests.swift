@@ -20,6 +20,10 @@ final class MobileParityTests:XCTestCase {
         XCTAssertEqual(value.availableVideoFormats.first?.height,1080)
         XCTAssertThrowsError(try WeiboExtractor.parse(item,url:"https://m.weibo.cn/status/9999999999"))
         XCTAssertEqual(OmniPlatform.detect("https://weibo.com.evil.invalid/1/2"),"通用媒体")
+        var mixed=item
+        mixed["mix_media_info"]=["items":[["type":"video","data":["media_info":["stream_url":"https://example.com/a.mp4"]]]]]
+        XCTAssertEqual((try WeiboExtractor.parse(mixed,url:url)["media"] as? [[String:Any]])?.count,1)
+        XCTAssertThrowsError(try WeiboExtractor.parse([:],url:url)){XCTAssertTrue($0.localizedDescription.contains("MEDIA_UNCONFIRMED"))}
     }
     func testXRetryIsBoundedAndMismatchNeverRetries()async throws {
         let id="2124444023373074488";var count=0
@@ -56,6 +60,8 @@ final class MobileParityTests:XCTestCase {
         batch.mode = .videoWithAudio;batch.maxHeight=720
         let value=VideoMetadata(url:"https://example.com/a.mp4",title:"fixture",availableVideoFormats:[FormatOption(formatId:"1080",resolutionLabel:"1080p",width:1920,height:1080),FormatOption(formatId:"720",resolutionLabel:"720p",width:1280,height:720)])
         XCTAssertEqual(try batch.makeTasks(.video(value),group:"group")[0].selectedVideoFormatId,"720")
+        let unknown=VideoMetadata(url:value.url,title:"unknown",availableVideoFormats:[FormatOption(formatId:"unknown",resolutionLabel:"unknown",height:1080)])
+        XCTAssertThrowsError(try batch.makeTasks(.video(unknown),group:"group"))
         let covered=DownloadManager.includingCovers([DownloadTask(url:"https://example.com/a.mp4",title:"fixture",saveCover:true)])
         XCTAssertEqual(covered.count,2);XCTAssertEqual(covered[1].downloadType,.cover)
         XCTAssertEqual(covered[0].saveCover,false)
