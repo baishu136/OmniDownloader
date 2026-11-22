@@ -38,17 +38,22 @@ struct BatchEntry:Identifiable,Codable {
     private var operation:Task<Void,Never>?
     private var epoch=UUID()
     private let file:URL
-    private struct Snapshot:Codable {let draft:String;let rows:[BatchEntry]}
+    private struct Snapshot:Codable {
+        let draft:String;let rows:[BatchEntry]
+        var mode:DownloadType?;var audio:AudioFormat?;var height:Int?;var episodes:Bool?;var cover:Bool?
+    }
     init(file:URL?=nil) {
         self.file=file ?? FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask)[0].appendingPathComponent("omni-batch.json")
         if let data=try? Data(contentsOf:self.file),let saved=try? JSONDecoder().decode(Snapshot.self,from:data){
             draft=saved.draft;rows=saved.rows.map{var row=$0;if row.state=="解析中"{row.state="等待"};return row}
+            mode=saved.mode ?? .auto;audioFormat=saved.audio ?? .mp3;maxHeight=saved.height ?? 0
+            allEpisodes=saved.episodes ?? true;saveCover=saved.cover ?? false
         }
     }
     func save() {
         do {
             try FileManager.default.createDirectory(at:file.deletingLastPathComponent(),withIntermediateDirectories:true)
-            let data=try JSONEncoder().encode(Snapshot(draft:draft,rows:rows))
+            let data=try JSONEncoder().encode(Snapshot(draft:draft,rows:rows,mode:mode,audio:audioFormat,height:maxHeight,episodes:allEpisodes,cover:saveCover))
             try data.write(to:file,options:[.atomic,.completeFileProtectionUntilFirstUserAuthentication])
         }catch{notice="批量草稿保存失败"}
     }
@@ -77,7 +82,7 @@ struct BatchEntry:Identifiable,Codable {
                     let result=try await capture(rows[index].url)
                     try Task.checkCancellation();guard epoch==scope else{return}
                     let tasks=try makeTasks(result,group:id)
-                    manager.addTasks(tasks);rows[index].count=tasks.count;rows[index].state="已加入"
+                    manager.addTasks(tasks);rows[index].count=DownloadManager.includingCovers(tasks).count;rows[index].state="已加入"
                 }catch is CancellationError{if epoch==scope{rows[index].state="等待"};return}
                 catch{rows[index].state="失败";rows[index].message=error.localizedDescription}
                 save()

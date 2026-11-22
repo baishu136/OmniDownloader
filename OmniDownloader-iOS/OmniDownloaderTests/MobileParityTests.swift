@@ -32,6 +32,16 @@ final class MobileParityTests:XCTestCase {
         do{_ = try await XPublicResponse.confirmed(id:id){_ in count+=1;throw URLError(.serverCertificateUntrusted)};XCTFail("certificate accepted")}catch{}
         XCTAssertEqual(count,1)
     }
+    func testXIdentityNeverRoundsSnowflakeOrAcceptsQuotedTweet()throws {
+        let json=try JSONSerialization.jsonObject(with:Data(#"{"id_str":null,"id":2124444023373074488}"#.utf8)) as! [String:Any]
+        XCTAssertEqual(XPublicResponse.identity(json),"2124444023373074488")
+        XCTAssertEqual(XPublicResponse.identity(["id":2.1244440233730744e18]),"")
+        XCTAssertEqual(XPublicResponse.identity(["quoted_tweet":["id_str":"2124444023373074488"]]),"")
+        XCTAssertFalse(XPublicResponse.retryable(URLError(.cancelled)))
+        let eof=NSError(domain:NSURLErrorDomain,code:NSURLErrorSecureConnectionFailed,userInfo:["_kCFStreamErrorCodeKey":-9806])
+        XCTAssertTrue(XPublicResponse.retryable(eof))
+        XCTAssertFalse(XPublicResponse.retryable(URLError(.serverCertificateUntrusted)))
+    }
     @MainActor func testBatchImagesAndQualityUseExistingTaskModel()throws {
         let file=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".json")
         defer{try? FileManager.default.removeItem(at:file)}
@@ -46,5 +56,9 @@ final class MobileParityTests:XCTestCase {
         batch.mode = .videoWithAudio;batch.maxHeight=720
         let value=VideoMetadata(url:"https://example.com/a.mp4",title:"fixture",availableVideoFormats:[FormatOption(formatId:"1080",resolutionLabel:"1080p",width:1920,height:1080),FormatOption(formatId:"720",resolutionLabel:"720p",width:1280,height:720)])
         XCTAssertEqual(try batch.makeTasks(.video(value),group:"group")[0].selectedVideoFormatId,"720")
+        let covered=DownloadManager.includingCovers([DownloadTask(url:"https://example.com/a.mp4",title:"fixture",saveCover:true)])
+        XCTAssertEqual(covered.count,2);XCTAssertEqual(covered[1].downloadType,.cover)
+        XCTAssertFalse(covered[0].saveCover)
+        XCTAssertEqual(DownloadManager.includingCovers(covered).count,2)
     }
 }

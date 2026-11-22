@@ -60,7 +60,12 @@ enum NativeMediaPipeline {
         let site=OmniPlatform.detect(task.url)
         var input:URL,audio:URL?,hls=false
         if task.downloadType == .cover{
-            let meta=try MediaSources.shared.video(task)
+            let meta:VideoMetadata
+            do{meta=try MediaSources.shared.video(task)}catch{
+                let refreshed=try await MediaResolver.analyze(task.url)
+                let rows=refreshed.multiMediaList.isEmpty ? [refreshed]:refreshed.multiMediaList
+                guard let target=rows.first(where:{task.mediaId==nil || $0.mediaId==task.mediaId}) else{throw OmniPlatform.error("MEDIA_ID_MISMATCH","原封面已不可定位")};meta=target
+            }
             let image=try await fetch(task.thumbnailUrl.isEmpty ? meta.thumbnailUrl:task.thumbnailUrl,site:site,task:task,work:work,name:"cover.source",progress:{progress($0*90,"正在下载封面…")})
             return try imageFile(image,work:work,name:"output")
         }

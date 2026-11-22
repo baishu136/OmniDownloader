@@ -13,6 +13,7 @@ struct SniffedMediaItem:Identifiable,Equatable{
 @MainActor struct HomeView:View{
     @EnvironmentObject private var downloadManager:DownloadManager
     @ObservedObject private var preferences=CookieStore.shared
+    @ObservedObject private var updates=AppUpdates.shared
     @StateObject private var browser=PlatformBrowser()
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("omni.language") private var language="system"
@@ -44,6 +45,8 @@ struct SniffedMediaItem:Identifiable,Equatable{
                     HStack(spacing:12){OmniBrand();Text("OmniDownloader").font(.system(size:24,weight:.heavy)).minimumScaleFactor(0.7).lineLimit(1);Text("v1.7.61").font(.caption.bold()).foregroundColor(OmniPalette.primary).padding(.horizontal,7).padding(.vertical,4).background(OmniPalette.primaryContainer,in:RoundedRectangle(cornerRadius:8));Spacer(minLength:0)}.padding(.vertical,6)
                     OmniPlatformChips()
                     Button("yt-dlp 支持的平台（参考名录）"){showCatalog=true}.font(.subheadline.weight(.semibold))
+                    Text("iOS 使用原生与网页引擎；部分平台需要在浏览器验证，实际能力以解析结果为准。").font(.caption).foregroundColor(OmniPalette.secondary)
+                    if let url=updates.releaseURL{Link("发现 iOS 更新 \(updates.version)",destination:url).padding(12).omniCard()}
                     VStack(spacing:12){
                         HStack(spacing:10){OmniIcon(name:"link",size:20).foregroundColor(OmniPalette.primary);TextField(L("粘贴视频链接或分享文本…"),text:$input).textInputAutocapitalization(.never).disableAutocorrection(true).keyboardType(.URL).submitLabel(.go).onSubmit{start(input)}.accessibilityIdentifier("omni.video.url");if !input.isEmpty{Button{input=""}label:{OmniIcon(name:"xmark",size:20).foregroundColor(OmniPalette.secondary).frame(width:44,height:44)}.accessibilityLabel(L("清空"))};Button(action:paste){OmniIcon(name:"doc.on.clipboard",size:20).foregroundColor(OmniPalette.secondary).frame(width:44,height:44)}.accessibilityLabel(L("粘贴剪贴板"))}.padding(.horizontal,16).padding(.vertical,8).background(OmniPalette.surfaceVariant.opacity(0.35),in:RoundedRectangle(cornerRadius:22))
                         HStack(spacing:12){OmniAction(title:L("粘贴剪贴板"),icon:"doc.on.clipboard",disabled:analyzing,action:paste);OmniAction(title:L(analyzing ? "取消解析":"立即解析"),icon:analyzing ? "xmark":"bolt.fill",prominent:true,disabled:!analyzing && input.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty){if analyzing{cancel()}else{start(input)}}.accessibilityIdentifier("omni.action.analyze")}

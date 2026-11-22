@@ -3,17 +3,22 @@ import Foundation
 /// Uses the status endpoint and playback fields also used by upstream yt-dlp's Weibo extractor.
 enum WeiboExtractor {
     static func analyze(_ url:String)async throws->VideoMetadata {
+        let scope=PlatformSession.shared.generation("微博")
+        let json=try await fetch(url)
+        guard scope==PlatformSession.shared.generation("微博") else{throw CancellationError()}
+        let result=try NativeMediaParser.parse(json,url:url)
+        if var video=result.0{video.sourceScope=scope;MediaSources.shared.remember(video);return video}
+        if var post=result.1{post.sourceScope=scope;throw MediaRouting.images(post)}
+        throw OmniPlatform.error("BROWSER_ASSIST_REQUIRED","微博未提供可用媒体，请验证登录或重试")
+    }
+    static func fetch(_ url:String)async throws->[String:Any] {
         let id=OmniPlatform.identifier(url)
         guard !id.isEmpty else{throw OmniPlatform.error("BROWSER_ASSIST_REQUIRED","微博短链或视频页需要浏览器验证")}
         var parts=URLComponents(string:"https://weibo.com/ajax/statuses/show")!
         parts.queryItems=[URLQueryItem(name:"id",value:id)]
         let (data,_)=try await OmniNetwork.data(parts.url!,site:"微博")
         guard let item=try JSONSerialization.jsonObject(with:data) as? [String:Any] else{throw OmniPlatform.error("EXTRACTOR_CHANGED","微博未返回有效数据")}
-        let json=try parse(item,url:url)
-        let result=try NativeMediaParser.parse(json,url:url)
-        if let video=result.0{MediaSources.shared.remember(video);return video}
-        if let post=result.1{throw MediaRouting.images(post)}
-        throw OmniPlatform.error("BROWSER_ASSIST_REQUIRED","微博未提供可用媒体，请验证登录或重试")
+        return try parse(item,url:url)
     }
     static func parse(_ item:[String:Any],url:String)throws->[String:Any] {
         let id=OmniPlatform.identifier(url)

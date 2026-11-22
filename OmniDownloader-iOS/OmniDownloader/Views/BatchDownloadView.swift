@@ -51,6 +51,11 @@ import UniformTypeIdentifiers
             }catch{batch.notice=error.localizedDescription}
         }
         .onChange(of:batch.draft){_ in batch.save()}
+        .onChange(of:batch.mode){_ in batch.save()}
+        .onChange(of:batch.audioFormat){_ in batch.save()}
+        .onChange(of:batch.maxHeight){_ in batch.save()}
+        .onChange(of:batch.allEpisodes){_ in batch.save()}
+        .onChange(of:batch.saveCover){_ in batch.save()}
         .onChange(of:phase){if $0 == .background{batch.cancel();browser.close()}}
         .onDisappear{batch.cancel();browser.close()}
     }

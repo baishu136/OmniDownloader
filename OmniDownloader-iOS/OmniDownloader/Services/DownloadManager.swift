@@ -35,9 +35,17 @@ extension Notification.Name { static let omniAnalyzeURL=Notification.Name("omniA
     public func addTask(_ source:DownloadTask){
         guard !tasks.contains(where:{$0.id==source.id}) else{return}
         var task=source;task.status = .pending;task.progress=0;task.errorMessage=nil
-        tasks.insert(task,at:0);saveTasks(force:true);pump()
+        addTasks([task])
     }
-    public func addTasks(_ rows:[DownloadTask]){for var task in rows.reversed() where !tasks.contains(where:{$0.id==task.id}){task.status = .pending;tasks.insert(task,at:0)};saveTasks(force:true);pump()}
+    static func includingCovers(_ rows:[DownloadTask])->[DownloadTask] {
+        rows.flatMap{source->[DownloadTask] in
+            guard source.saveCover,[.videoWithAudio,.videoOnly,.audioOnly,.gif].contains(source.downloadType) else{return [source]}
+            var task=source;task.saveCover=false
+            let cover=DownloadTask(id:source.id+"-cover",url:source.url,title:source.title+"_cover",author:source.author,thumbnailUrl:source.thumbnailUrl,downloadType:.cover,collectionId:source.collectionId,collectionTitle:source.collectionTitle,episodeIndex:source.episodeIndex,episodeTotal:source.episodeTotal,mediaId:source.mediaId)
+            return [task,cover]
+        }
+    }
+    public func addTasks(_ rows:[DownloadTask]){for var task in Self.includingCovers(rows).reversed() where !tasks.contains(where:{$0.id==task.id}){task.status = .pending;tasks.insert(task,at:0)};saveTasks(force:true);pump()}
     public func addBatchTasks(_ rows:[DownloadTask]){addTasks(rows)}
     private func pump(){
         let limit=max(1,min(5,UserDefaults.standard.object(forKey:"omni.concurrent") as? Int ?? 3))
