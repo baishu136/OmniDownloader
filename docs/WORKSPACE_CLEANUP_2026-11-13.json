@@ -1,0 +1,2019 @@
+{
+  "state": "archived-deletion-blocked",
+  "workspace": "F:\\AGENT\\Gemini\\下载器",
+  "freeBytesBefore": 120908079104,
+  "indexHashBefore": "73cfc1e20f8a5a8845926996c79fcf5904f89d8ca358685fe4326c0062a1e5b2",
+  "gitDiffHashBefore": "7b29be4dea181f8bde13f2694e04af6d7d6b3a4741d0e73dc0f9acf8cb6e4cda",
+  "releaseHashesBefore": {
+    "release/1.7.29/OmniDownloader-1.7.29-arm64-v8a.apk": "5f3225608d3211bfc6232a1f31116436deda8b610d28f6fc23ae736bba629526",
+    "release/1.7.29/OmniDownloader-1.7.29-source.zip": "6c4b8d9d19d67dbdbb29812c77c41d62164057e164dcd63ccaf1c8e17cda92b7"
+  },
+  "delete": [
+    {
+      "path": "scratch/android-1722-build.log",
+      "files": 1,
+      "bytes": 1181
+    },
+    {
+      "path": "scratch/android-1722-device-build.log",
+      "files": 1,
+      "bytes": 5764
+    },
+    {
+      "path": "scratch/android-1722-device-tests-final.log",
+      "files": 1,
+      "bytes": 187
+    },
+    {
+      "path": "scratch/android-1722-device-tests.log",
+      "files": 1,
+      "bytes": 2660
+    },
+    {
+      "path": "scratch/android-1722-emulator-error.log",
+      "files": 1,
+      "bytes": 106
+    },
+    {
+      "path": "scratch/android-1722-emulator.log",
+      "files": 1,
+      "bytes": 243
+    },
+    {
+      "path": "scratch/android-1722-emulator2-error.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/android-1722-emulator2.log",
+      "files": 1,
+      "bytes": 11419
+    },
+    {
+      "path": "scratch/android-1722-final-debug-build.log",
+      "files": 1,
+      "bytes": 2153
+    },
+    {
+      "path": "scratch/android-1722-final-service-tests.log",
+      "files": 1,
+      "bytes": 144
+    },
+    {
+      "path": "scratch/android-1722-gif-test.log",
+      "files": 1,
+      "bytes": 87
+    },
+    {
+      "path": "scratch/android-1722-last-debug-build.log",
+      "files": 1,
+      "bytes": 2152
+    },
+    {
+      "path": "scratch/android-1722-last-service-tests.log",
+      "files": 1,
+      "bytes": 144
+    },
+    {
+      "path": "scratch/android-1722-release-final.log",
+      "files": 1,
+      "bytes": 3456
+    },
+    {
+      "path": "scratch/android-1722-release-final2.log",
+      "files": 1,
+      "bytes": 3296
+    },
+    {
+      "path": "scratch/android-1722-release-smoke-final.log",
+      "files": 1,
+      "bytes": 81
+    },
+    {
+      "path": "scratch/android-1722-release-smoke.log",
+      "files": 1,
+      "bytes": 81
+    },
+    {
+      "path": "scratch/android-1722-release.log",
+      "files": 1,
+      "bytes": 13313
+    },
+    {
+      "path": "scratch/android-1722-smoke-build.log",
+      "files": 1,
+      "bytes": 3311
+    },
+    {
+      "path": "scratch/android-1722-test-build.log",
+      "files": 1,
+      "bytes": 4873
+    },
+    {
+      "path": "scratch/android-1722-ui-test.log",
+      "files": 1,
+      "bytes": 2342
+    },
+    {
+      "path": "scratch/android-1722-unit-final.log",
+      "files": 1,
+      "bytes": 1468
+    },
+    {
+      "path": "scratch/android-1722-unit.log",
+      "files": 1,
+      "bytes": 1890
+    },
+    {
+      "path": "scratch/android-1724-baseline-build.log",
+      "files": 1,
+      "bytes": 4375
+    },
+    {
+      "path": "scratch/android-1724-bili-baseline.log",
+      "files": 1,
+      "bytes": 89
+    },
+    {
+      "path": "scratch/android-1724-compile.log",
+      "files": 1,
+      "bytes": 1535
+    },
+    {
+      "path": "scratch/android-1724-device-build.log",
+      "files": 1,
+      "bytes": 2962
+    },
+    {
+      "path": "scratch/android-1724-device.log",
+      "files": 1,
+      "bytes": 140
+    },
+    {
+      "path": "scratch/android-1724-drafts-read.log",
+      "files": 1,
+      "bytes": 79
+    },
+    {
+      "path": "scratch/android-1724-drafts-write.log",
+      "files": 1,
+      "bytes": 79
+    },
+    {
+      "path": "scratch/android-1724-emulator-error.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/android-1724-emulator.log",
+      "files": 1,
+      "bytes": 26042
+    },
+    {
+      "path": "scratch/android-1724-release-screen.png",
+      "files": 1,
+      "bytes": 129288
+    },
+    {
+      "path": "scratch/android-1724-release-smoke.log",
+      "files": 1,
+      "bytes": 81
+    },
+    {
+      "path": "scratch/android-1724-release-window.xml",
+      "files": 1,
+      "bytes": 18066
+    },
+    {
+      "path": "scratch/android-1724-release.log",
+      "files": 1,
+      "bytes": 5028
+    },
+    {
+      "path": "scratch/android-1724-signature.log",
+      "files": 1,
+      "bytes": 311
+    },
+    {
+      "path": "scratch/android-1724-smoke-build.log",
+      "files": 1,
+      "bytes": 3483
+    },
+    {
+      "path": "scratch/android-1724-source-tree.json",
+      "files": 1,
+      "bytes": 199
+    },
+    {
+      "path": "scratch/android-1724-unit.log",
+      "files": 1,
+      "bytes": 1459
+    },
+    {
+      "path": "scratch/android-1725-build.log",
+      "files": 1,
+      "bytes": 1786
+    },
+    {
+      "path": "scratch/android-1725-device-build.log",
+      "files": 1,
+      "bytes": 4445
+    },
+    {
+      "path": "scratch/android-1725-device.log",
+      "files": 1,
+      "bytes": 75
+    },
+    {
+      "path": "scratch/android-1725-emulator-error.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/android-1725-emulator.log",
+      "files": 1,
+      "bytes": 11432
+    },
+    {
+      "path": "scratch/android-1725-release-smoke.log",
+      "files": 1,
+      "bytes": 81
+    },
+    {
+      "path": "scratch/android-1725-release.log",
+      "files": 1,
+      "bytes": 5444
+    },
+    {
+      "path": "scratch/android-1725-signature.log",
+      "files": 1,
+      "bytes": 311
+    },
+    {
+      "path": "scratch/android-1725-unit.log",
+      "files": 1,
+      "bytes": 1470
+    },
+    {
+      "path": "scratch/android-1726-device-build.log",
+      "files": 1,
+      "bytes": 2962
+    },
+    {
+      "path": "scratch/android-1726-device.log",
+      "files": 1,
+      "bytes": 75
+    },
+    {
+      "path": "scratch/android-1726-emulator-error.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/android-1726-emulator.log",
+      "files": 1,
+      "bytes": 11441
+    },
+    {
+      "path": "scratch/android-1726-release-smoke.log",
+      "files": 1,
+      "bytes": 81
+    },
+    {
+      "path": "scratch/android-1726-release.log",
+      "files": 1,
+      "bytes": 5829
+    },
+    {
+      "path": "scratch/android-1726-signature.log",
+      "files": 1,
+      "bytes": 311
+    },
+    {
+      "path": "scratch/android-1727-device-build.log",
+      "files": 1,
+      "bytes": 4431
+    },
+    {
+      "path": "scratch/android-1727-device.log",
+      "files": 1,
+      "bytes": 79
+    },
+    {
+      "path": "scratch/android-1727-emulator-error.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/android-1727-emulator.log",
+      "files": 1,
+      "bytes": 11595
+    },
+    {
+      "path": "scratch/android-1727-release-smoke.log",
+      "files": 1,
+      "bytes": 81
+    },
+    {
+      "path": "scratch/android-1727-release.log",
+      "files": 1,
+      "bytes": 5417
+    },
+    {
+      "path": "scratch/android-1727-signature.log",
+      "files": 1,
+      "bytes": 311
+    },
+    {
+      "path": "scratch/android-1728-build.log",
+      "files": 1,
+      "bytes": 2483
+    },
+    {
+      "path": "scratch/android-1728-device-build.log",
+      "files": 1,
+      "bytes": 3998
+    },
+    {
+      "path": "scratch/android-1728-device.log",
+      "files": 1,
+      "bytes": 80
+    },
+    {
+      "path": "scratch/android-1728-emulator-error.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/android-1728-emulator.log",
+      "files": 1,
+      "bytes": 14436
+    },
+    {
+      "path": "scratch/android-1728-extra-button-files.json",
+      "files": 1,
+      "bytes": 828
+    },
+    {
+      "path": "scratch/android-1728-release-smoke.log",
+      "files": 1,
+      "bytes": 81
+    },
+    {
+      "path": "scratch/android-1728-release.log",
+      "files": 1,
+      "bytes": 5808
+    },
+    {
+      "path": "scratch/android-1728-signature.log",
+      "files": 1,
+      "bytes": 311
+    },
+    {
+      "path": "scratch/android-1729-device-build.log",
+      "files": 1,
+      "bytes": 4063
+    },
+    {
+      "path": "scratch/android-1729-device.log",
+      "files": 1,
+      "bytes": 238
+    },
+    {
+      "path": "scratch/android-1729-emulator-error.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/android-1729-emulator-restart-error.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/android-1729-emulator-restart.log",
+      "files": 1,
+      "bytes": 11112
+    },
+    {
+      "path": "scratch/android-1729-emulator.log",
+      "files": 1,
+      "bytes": 11068
+    },
+    {
+      "path": "scratch/android-1729-final-device-build.log",
+      "files": 1,
+      "bytes": 4073
+    },
+    {
+      "path": "scratch/android-1729-final-test-build.log",
+      "files": 1,
+      "bytes": 2962
+    },
+    {
+      "path": "scratch/android-1729-fixed-device-build.log",
+      "files": 1,
+      "bytes": 4041
+    },
+    {
+      "path": "scratch/android-1729-generic-case-before.log",
+      "files": 1,
+      "bytes": 3033
+    },
+    {
+      "path": "scratch/android-1729-live-manual-all.log",
+      "files": 1,
+      "bytes": 83
+    },
+    {
+      "path": "scratch/android-1729-live-manual-single.log",
+      "files": 1,
+      "bytes": 83
+    },
+    {
+      "path": "scratch/android-1729-live-smart-all.log",
+      "files": 1,
+      "bytes": 85
+    },
+    {
+      "path": "scratch/android-1729-live-smart-single-retry.log",
+      "files": 1,
+      "bytes": 120
+    },
+    {
+      "path": "scratch/android-1729-live-smart-single.log",
+      "files": 1,
+      "bytes": 83
+    },
+    {
+      "path": "scratch/android-1729-lock-before.log",
+      "files": 1,
+      "bytes": 3032
+    },
+    {
+      "path": "scratch/android-1729-lock-test-build.log",
+      "files": 1,
+      "bytes": 2963
+    },
+    {
+      "path": "scratch/android-1729-lock-threads.txt",
+      "files": 1,
+      "bytes": 11509
+    },
+    {
+      "path": "scratch/android-1729-manual-backup.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/android-1729-media-backup.log",
+      "files": 1,
+      "bytes": 398
+    },
+    {
+      "path": "scratch/android-1729-package-proof.json",
+      "files": 1,
+      "bytes": 143
+    },
+    {
+      "path": "scratch/android-1729-postfix-retest-first-pass.log",
+      "files": 1,
+      "bytes": 83
+    },
+    {
+      "path": "scratch/android-1729-postfix-retest-short-deadline.log",
+      "files": 1,
+      "bytes": 118
+    },
+    {
+      "path": "scratch/android-1729-postfix-retest.log",
+      "files": 1,
+      "bytes": 81
+    },
+    {
+      "path": "scratch/android-1729-release-smoke.log",
+      "files": 1,
+      "bytes": 81
+    },
+    {
+      "path": "scratch/android-1729-release.log",
+      "files": 1,
+      "bytes": 5061
+    },
+    {
+      "path": "scratch/android-1729-remaining-backup.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/android-1729-retest-build.log",
+      "files": 1,
+      "bytes": 2963
+    },
+    {
+      "path": "scratch/android-1729-signature.log",
+      "files": 1,
+      "bytes": 311
+    },
+    {
+      "path": "scratch/android-1729-source-baseline.json",
+      "files": 1,
+      "bytes": 150
+    },
+    {
+      "path": "scratch/android-1729-state.md",
+      "files": 1,
+      "bytes": 11999
+    },
+    {
+      "path": "scratch/android-1729-temp-after.log",
+      "files": 1,
+      "bytes": 561
+    },
+    {
+      "path": "scratch/android-1729-temp-before.log",
+      "files": 1,
+      "bytes": 3047
+    },
+    {
+      "path": "scratch/android-1729-temp-test-build.log",
+      "files": 1,
+      "bytes": 2963
+    },
+    {
+      "path": "scratch/android-1729-unit.log",
+      "files": 1,
+      "bytes": 1477
+    },
+    {
+      "path": "scratch/android-batch-build.log",
+      "files": 1,
+      "bytes": 1759
+    },
+    {
+      "path": "scratch/android-batch-device-build.log",
+      "files": 1,
+      "bytes": 3997
+    },
+    {
+      "path": "scratch/android-batch-device-test.log",
+      "files": 1,
+      "bytes": 126
+    },
+    {
+      "path": "scratch/android-batch-emulator-error.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/android-batch-emulator.log",
+      "files": 1,
+      "bytes": 12124
+    },
+    {
+      "path": "scratch/android-batch-release-smoke.log",
+      "files": 1,
+      "bytes": 81
+    },
+    {
+      "path": "scratch/android-batch-release.log",
+      "files": 1,
+      "bytes": 5047
+    },
+    {
+      "path": "scratch/android-batch-signature.log",
+      "files": 1,
+      "bytes": 311
+    },
+    {
+      "path": "scratch/android-batch-source-tree.json",
+      "files": 1,
+      "bytes": 199
+    },
+    {
+      "path": "scratch/android-batch-unit.log",
+      "files": 1,
+      "bytes": 1452
+    },
+    {
+      "path": "scratch/archive_1729_manual_media.py",
+      "files": 1,
+      "bytes": 1852
+    },
+    {
+      "path": "scratch/archive_1729_remaining.py",
+      "files": 1,
+      "bytes": 1762
+    },
+    {
+      "path": "scratch/backup_1729_media.py",
+      "files": 1,
+      "bytes": 1943
+    },
+    {
+      "path": "scratch/batch-1729",
+      "files": 46,
+      "bytes": 6654457673
+    },
+    {
+      "path": "scratch/cleanup-git-before.bin",
+      "files": 1,
+      "bytes": 19283
+    },
+    {
+      "path": "scratch/douyin-20261107",
+      "files": 44,
+      "bytes": 8515004
+    },
+    {
+      "path": "scratch/douyin-auto-20261108",
+      "files": 12,
+      "bytes": 20514
+    },
+    {
+      "path": "scratch/finalize_android_1724.py",
+      "files": 1,
+      "bytes": 4995
+    },
+    {
+      "path": "scratch/finalize_android_1725.py",
+      "files": 1,
+      "bytes": 3650
+    },
+    {
+      "path": "scratch/finalize_android_1726.py",
+      "files": 1,
+      "bytes": 3444
+    },
+    {
+      "path": "scratch/finalize_android_1727.py",
+      "files": 1,
+      "bytes": 3303
+    },
+    {
+      "path": "scratch/finalize_android_1728.py",
+      "files": 1,
+      "bytes": 4626
+    },
+    {
+      "path": "scratch/finalize_android_1729.py",
+      "files": 1,
+      "bytes": 6129
+    },
+    {
+      "path": "scratch/finalize_android_batch.py",
+      "files": 1,
+      "bytes": 4717
+    },
+    {
+      "path": "scratch/github-release-v1.5.10",
+      "files": 2,
+      "bytes": 4603
+    },
+    {
+      "path": "scratch/ios-launch-1721",
+      "files": 11,
+      "bytes": 12740353
+    },
+    {
+      "path": "scratch/jar",
+      "files": 1,
+      "bytes": 3583408
+    },
+    {
+      "path": "scratch/mihon-Button.kt",
+      "files": 1,
+      "bytes": 15186
+    },
+    {
+      "path": "scratch/mihon-HomeScreen.kt",
+      "files": 1,
+      "bytes": 10624
+    },
+    {
+      "path": "scratch/mihon-ic_mihon_splash.xml",
+      "files": 1,
+      "bytes": 276
+    },
+    {
+      "path": "scratch/mihon-MainActivity.kt",
+      "files": 1,
+      "bytes": 29919
+    },
+    {
+      "path": "scratch/mihon-reference-commit.txt",
+      "files": 1,
+      "bytes": 42
+    },
+    {
+      "path": "scratch/mihon-reference-tree.json",
+      "files": 1,
+      "bytes": 682761
+    },
+    {
+      "path": "scratch/mihon-SettingsMainScreen.kt",
+      "files": 1,
+      "bytes": 9944
+    },
+    {
+      "path": "scratch/mihon-themes-v31.xml",
+      "files": 1,
+      "bytes": 3717
+    },
+    {
+      "path": "scratch/mihon-themes.xml",
+      "files": 1,
+      "bytes": 40440
+    },
+    {
+      "path": "scratch/package-media-1.7.20",
+      "files": 5,
+      "bytes": 732976
+    },
+    {
+      "path": "scratch/parity-1719-20261108",
+      "files": 1026,
+      "bytes": 279330899
+    },
+    {
+      "path": "scratch/probe_ytdlp_temp.py",
+      "files": 1,
+      "bytes": 3199
+    },
+    {
+      "path": "scratch/qa-temp-info.json",
+      "files": 1,
+      "bytes": 343
+    },
+    {
+      "path": "scratch/retry_1729_remaining.py",
+      "files": 1,
+      "bytes": 1218
+    },
+    {
+      "path": "scratch/run_batch_1729_live.py",
+      "files": 1,
+      "bytes": 2590
+    },
+    {
+      "path": "scratch/test_2096583812331536384_藓 - https：⧸⧸t.co⧸khdnHwO9Y4.mp4",
+      "files": 1,
+      "bytes": 848437
+    },
+    {
+      "path": "scratch/ui-1.5.9-native-comparison.json",
+      "files": 1,
+      "bytes": 1105
+    },
+    {
+      "path": "scratch/ui-1720",
+      "files": 26,
+      "bytes": 20669339
+    },
+    {
+      "path": "scratch/watch_1729_retest.py",
+      "files": 1,
+      "bytes": 1112
+    },
+    {
+      "path": "scratch/write_1729_results.py",
+      "files": 1,
+      "bytes": 4731
+    },
+    {
+      "path": "scratch/x-multivideo-20261108",
+      "files": 12,
+      "bytes": 58576
+    },
+    {
+      "path": "scratch/yt-1729-duration.err",
+      "files": 1,
+      "bytes": 355
+    },
+    {
+      "path": "scratch/yt-1729-duration.json",
+      "files": 1,
+      "bytes": 140859
+    },
+    {
+      "path": "scratch/ytdl-library-bytecode.txt",
+      "files": 1,
+      "bytes": 62280
+    },
+    {
+      "path": "scratch/ytdl-library.jar",
+      "files": 1,
+      "bytes": 38515
+    },
+    {
+      "path": "scratch/ytdlp_test",
+      "files": 1236,
+      "bytes": 14160934
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/arm64-release-v3.log",
+      "files": 1,
+      "bytes": 3681
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/arm64-ui-smoke-v3.log",
+      "files": 1,
+      "bytes": 816
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/arm64-v2-smoke-failed.apk",
+      "files": 1,
+      "bytes": 55944679
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/arm64-v2-smoke-failure.json",
+      "files": 1,
+      "bytes": 269
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/baseline",
+      "files": 6,
+      "bytes": 247530
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/baseline.json",
+      "files": 1,
+      "bytes": 1075
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/build-drive.json",
+      "files": 1,
+      "bytes": 98
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/cleanup.json",
+      "files": 1,
+      "bytes": 202
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/device-final-results.json",
+      "files": 1,
+      "bytes": 1497
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/device-interface-isolated-v2.log",
+      "files": 1,
+      "bytes": 820
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/device-v1.log",
+      "files": 1,
+      "bytes": 8909
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/device-v3-batch.log",
+      "files": 1,
+      "bytes": 625
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/device-v3-results.json",
+      "files": 1,
+      "bytes": 1670
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/emulator-error.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/emulator-session.json",
+      "files": 1,
+      "bytes": 196
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/emulator.log",
+      "files": 1,
+      "bytes": 12345
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/final-device-AppInteractionTest.log",
+      "files": 1,
+      "bytes": 814
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/final-device-CollectionTaskCardTest.log",
+      "files": 1,
+      "bytes": 826
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/final-device-InterfaceLayoutTest.log",
+      "files": 1,
+      "bytes": 821
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/final-device-RelayCaptureTest.log",
+      "files": 1,
+      "bytes": 1597
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/final-device-RetainedTabHostTest.log",
+      "files": 1,
+      "bytes": 1558
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/final-device-SegmentedTabsTest.log",
+      "files": 1,
+      "bytes": 841
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/first-pass",
+      "files": 1,
+      "bytes": 55944707
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/package-final.log",
+      "files": 1,
+      "bytes": 430
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/package-integrity-final.json",
+      "files": 1,
+      "bytes": 1613
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/previous-LATEST.apk",
+      "files": 1,
+      "bytes": 55956894
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/release-final.log",
+      "files": 1,
+      "bytes": 6252
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/release-smoke-final.log",
+      "files": 1,
+      "bytes": 3294
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/release-v1.log",
+      "files": 1,
+      "bytes": 6670
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/RESULTS.json",
+      "files": 1,
+      "bytes": 4907
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/RESULTS.md",
+      "files": 1,
+      "bytes": 1688
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/Run-DeviceBatch.ps1",
+      "files": 1,
+      "bytes": 2446
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/settings-about-github-final.png",
+      "files": 1,
+      "bytes": 83236
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/settings-about-github-v3.png",
+      "files": 1,
+      "bytes": 83020
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/settings-about-github.png",
+      "files": 1,
+      "bytes": 83107
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/signature-arm64-v3.log",
+      "files": 1,
+      "bytes": 972
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/signature-final.log",
+      "files": 1,
+      "bytes": 972
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/source-freeze-v1.json",
+      "files": 1,
+      "bytes": 3345
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/source-freeze-v2.json",
+      "files": 1,
+      "bytes": 3434
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/source-freeze-v3.json",
+      "files": 1,
+      "bytes": 3407
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/unified-debug-final.log",
+      "files": 1,
+      "bytes": 5543
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/unified-debug-v1.log",
+      "files": 1,
+      "bytes": 945
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/unified-debug-v2.log",
+      "files": 1,
+      "bytes": 20732
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/unified-debug-v3.log",
+      "files": 1,
+      "bytes": 751
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/unified-debug-v4.log",
+      "files": 1,
+      "bytes": 5532
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/unified-x64-v3.log",
+      "files": 1,
+      "bytes": 11642
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/unit-v2",
+      "files": 5,
+      "bytes": 17191
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/v3-device-AppInteractionTest.log",
+      "files": 1,
+      "bytes": 814
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/v3-device-CollectionTaskCardTest.log",
+      "files": 1,
+      "bytes": 825
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/v3-device-InterfaceLayoutTest.log",
+      "files": 1,
+      "bytes": 821
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/v3-device-RelayCaptureTest.log",
+      "files": 1,
+      "bytes": 1598
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/v3-device-RetainedTabHostTest.log",
+      "files": 1,
+      "bytes": 1559
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/v3-device-SegmentedTabsTest.log",
+      "files": 1,
+      "bytes": 841
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/x64-release-smoke-v3-retry.log",
+      "files": 1,
+      "bytes": 816
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/x64-release-smoke-v3.log",
+      "files": 1,
+      "bytes": 2540
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/x64-release-v3.apk",
+      "files": 1,
+      "bytes": 58936433
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/bootcompleted.ini",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/cache.img",
+      "files": 1,
+      "bytes": 69206016
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/cache.img.qcow2",
+      "files": 1,
+      "bytes": 197120
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/data",
+      "files": 0,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/emu-launch-params.txt",
+      "files": 1,
+      "bytes": 316
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/emulator-user.ini",
+      "files": 1,
+      "bytes": 119
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/encryptionkey.img",
+      "files": 1,
+      "bytes": 18874368
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/encryptionkey.img.qcow2",
+      "files": 1,
+      "bytes": 2359296
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/hardware-qemu.ini",
+      "files": 1,
+      "bytes": 4557
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/initrd",
+      "files": 1,
+      "bytes": 2156444
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/modem_simulator",
+      "files": 5,
+      "bytes": 46403
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/multiinstance.lock",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/netsim.ini",
+      "files": 1,
+      "bytes": 38
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/quickbootChoice.ini",
+      "files": 1,
+      "bytes": 19
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/read-snapshot.txt",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/snapshots",
+      "files": 1,
+      "bytes": 2147549184
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/tmpAdbCmds",
+      "files": 7,
+      "bytes": 214
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/userdata-qemu.img",
+      "files": 1,
+      "bytes": 6442450944
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/userdata-qemu.img.qcow2",
+      "files": 1,
+      "bytes": 6415056896
+    },
+    {
+      "path": "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/version_num.cache",
+      "files": 1,
+      "bytes": 10
+    },
+    {
+      "path": "app/build",
+      "files": 9174,
+      "bytes": 1435489446
+    },
+    {
+      "path": "cleaner/build",
+      "files": 1133,
+      "bytes": 287890942
+    },
+    {
+      "path": "release-smoke/build",
+      "files": 151,
+      "bytes": 18340606
+    },
+    {
+      "path": "windows/build",
+      "files": 270,
+      "bytes": 798291040
+    },
+    {
+      "path": ".pytest_cache",
+      "files": 5,
+      "bytes": 8061
+    },
+    {
+      "path": "ytdl_lib",
+      "files": 1,
+      "bytes": 38515
+    },
+    {
+      "path": "jni",
+      "files": 2,
+      "bytes": 35942051
+    },
+    {
+      "path": "classes.jar",
+      "files": 1,
+      "bytes": 2763
+    },
+    {
+      "path": "YoutubeDL.class",
+      "files": 1,
+      "bytes": 20031
+    },
+    {
+      "path": "err.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "out.log",
+      "files": 1,
+      "bytes": 0
+    },
+    {
+      "path": "tools/__pycache__",
+      "files": 6,
+      "bytes": 41691
+    },
+    {
+      "path": "windows/__pycache__",
+      "files": 12,
+      "bytes": 189369
+    },
+    {
+      "path": "windows/core/__pycache__",
+      "files": 9,
+      "bytes": 95807
+    },
+    {
+      "path": "windows/engine/__pycache__",
+      "files": 24,
+      "bytes": 370263
+    },
+    {
+      "path": "windows/tests/__pycache__",
+      "files": 15,
+      "bytes": 236796
+    },
+    {
+      "path": "windows/tools/__pycache__",
+      "files": 1,
+      "bytes": 2665
+    }
+  ],
+  "archiveFiles": [
+    {
+      "source": "OmniCleaner-debug.apk",
+      "destination": "release/legacy-root/OmniCleaner-debug.apk",
+      "bytes": 15530204,
+      "sha256": "1f5ab7b282e8885c5af1a81cc7d5fbe7e5a67c9efef85b11b08b8f33a24e1f65"
+    },
+    {
+      "source": "OmniDownloader-Relay-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-Relay-debug.apk",
+      "bytes": 78433565,
+      "sha256": "44dadc5001465ecea08d8ea3bf22c918555bb5f78cdcdda0ac173ad1f4aaaddc"
+    },
+    {
+      "source": "OmniDownloader-v1.0.0-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.0.0-debug.apk",
+      "bytes": 77705779,
+      "sha256": "9f052bb9c843474f7b647add2080306227bceaa0048eb77eef67039d29096871"
+    },
+    {
+      "source": "OmniDownloader-v1.1.0-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.1.0-debug.apk",
+      "bytes": 77705779,
+      "sha256": "9f052bb9c843474f7b647add2080306227bceaa0048eb77eef67039d29096871"
+    },
+    {
+      "source": "OmniDownloader-v1.1.1-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.1.1-debug.apk",
+      "bytes": 77706567,
+      "sha256": "9cceacc9c221140e964224570e96045a77ef63f4f5327d579612e562c500a2de"
+    },
+    {
+      "source": "OmniDownloader-v1.1.2-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.1.2-debug.apk",
+      "bytes": 77706471,
+      "sha256": "5df81996197e7a4f03f9b4602c8936060d678ef3c9ed48b726f4e993f5801b73"
+    },
+    {
+      "source": "OmniDownloader-v1.1.3-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.1.3-debug.apk",
+      "bytes": 77725851,
+      "sha256": "1cacfe51c92f94c045c469b86dd22f573c9bbed1c3e0d1911c9705a89d132146"
+    },
+    {
+      "source": "OmniDownloader-v1.1.4-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.1.4-debug.apk",
+      "bytes": 77731767,
+      "sha256": "795b2ab3ced596ee13e31f14c538d47185d8b7fd04cfaf7cad18221bff91dafa"
+    },
+    {
+      "source": "OmniDownloader-v1.1.5-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.1.5-debug.apk",
+      "bytes": 77748907,
+      "sha256": "e875e50972d3f385148a7f7334c3efc8753e243723989d87921cc4e030cc818d"
+    },
+    {
+      "source": "OmniDownloader-v1.1.6-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.1.6-debug.apk",
+      "bytes": 77765467,
+      "sha256": "67a00babde4d3793494862b66b6171cf6264f4c25364cc9b8b8d55b0dcfa0db5"
+    },
+    {
+      "source": "OmniDownloader-v1.1.7-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.1.7-debug.apk",
+      "bytes": 77775303,
+      "sha256": "0d16cfb58bd3c38e296d9667842887fdd47eec7026ccb088a021d23767ffc824"
+    },
+    {
+      "source": "OmniDownloader-v1.1.8-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.1.8-debug.apk",
+      "bytes": 77775303,
+      "sha256": "0d16cfb58bd3c38e296d9667842887fdd47eec7026ccb088a021d23767ffc824"
+    },
+    {
+      "source": "OmniDownloader-v1.1.9-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.1.9-debug.apk",
+      "bytes": 77960146,
+      "sha256": "591132ad9f3cc055f126f734790396ce71e4ea89ae276c25618077a92e9d36c3"
+    },
+    {
+      "source": "OmniDownloader-v1.2.0-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.0-debug.apk",
+      "bytes": 77997905,
+      "sha256": "c15e4ffff84ecfd9ea46ac38bb477cb670823a9e8395c05809074757c30c7898"
+    },
+    {
+      "source": "OmniDownloader-v1.2.1-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.1-debug.apk",
+      "bytes": 78091405,
+      "sha256": "ff1d2f9476b3da14ce6b5f98c161e24ffdbab0be1760e65e932598bd83dd4dec"
+    },
+    {
+      "source": "OmniDownloader-v1.2.2-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.2-debug.apk",
+      "bytes": 78190578,
+      "sha256": "1f9d2666dbba70b447e5e2ae037ca3cf7728011131696f08aebb0863d7a51f93"
+    },
+    {
+      "source": "OmniDownloader-v1.2.3-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.3-debug.apk",
+      "bytes": 78216150,
+      "sha256": "8f454fa0078beadf100d6114d4a5e977692d6dab2e188a087b7b8bfcab9c5969"
+    },
+    {
+      "source": "OmniDownloader-v1.2.4-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.4-debug.apk",
+      "bytes": 78043021,
+      "sha256": "a541e2468a681e4037a150dd58a60df2446bdda45ad4dac543a177c3918df8a1"
+    },
+    {
+      "source": "OmniDownloader-v1.2.5-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.5-debug.apk",
+      "bytes": 78042873,
+      "sha256": "4241b4954d06c56e93a1aba19eb5f2c83c4e14e1eedfaca46ae76cc8d0e2e190"
+    },
+    {
+      "source": "OmniDownloader-v1.2.6-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.6-debug.apk",
+      "bytes": 78048548,
+      "sha256": "efd10539cfdd0df66294f911b4c03681c3899273dd1a29ce060a7282be5b2902"
+    },
+    {
+      "source": "OmniDownloader-v1.2.7-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.7-debug.apk",
+      "bytes": 78048292,
+      "sha256": "20b706d6094f49ab18cfadd8bd20f885788985fce1c44cd855ffc74c6aef7374"
+    },
+    {
+      "source": "OmniDownloader-v1.2.7-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.7-Source.zip",
+      "bytes": 667232,
+      "sha256": "d85fe29469f1ea15af66b530535b712eced0199933442e8e96aa266bb7a52c5f"
+    },
+    {
+      "source": "OmniDownloader-v1.2.8-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.8-debug.apk",
+      "bytes": 78147208,
+      "sha256": "ddef6a23b6a45307de31ecc39eadaa0694dcc4d469298c1e5406a78273fd26e1"
+    },
+    {
+      "source": "OmniDownloader-v1.2.8-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.8-Source.zip",
+      "bytes": 668784,
+      "sha256": "94f4b12c97fa8008a0fcea54fbf5c94dfbacc92927713531ac8f03a9ee886385"
+    },
+    {
+      "source": "OmniDownloader-v1.2.9-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.9-debug.apk",
+      "bytes": 78084240,
+      "sha256": "97fc5956cb401493e4135eca97b54367d91115376661d2c4258ecf987e310339"
+    },
+    {
+      "source": "OmniDownloader-v1.2.9-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.2.9-Source.zip",
+      "bytes": 674682,
+      "sha256": "7dcdd90135871059ac1bf2ec23ae45e5e0b5a4c78869b2b3234b925de03264f7"
+    },
+    {
+      "source": "OmniDownloader-v1.3.0-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.0-debug.apk",
+      "bytes": 78084184,
+      "sha256": "4829eb3a996446db81817beb366fe32567a97f81d732bef9117f5ebeeecc44cf"
+    },
+    {
+      "source": "OmniDownloader-v1.3.0-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.0-Source.zip",
+      "bytes": 674324,
+      "sha256": "7f911224bdd42b5f4a961e76f0ff2f5ccf34dd38c074e8b4fcf3dd48287570ab"
+    },
+    {
+      "source": "OmniDownloader-v1.3.1-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.1-debug.apk",
+      "bytes": 78086708,
+      "sha256": "eeacf4819a0b222312ee6fd8ae4a6eebcdb2e89cee36c3bc98c215aab45b3269"
+    },
+    {
+      "source": "OmniDownloader-v1.3.1-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.1-Source.zip",
+      "bytes": 672422,
+      "sha256": "788748791f4856fd963f5622b9ae05a39777f2bfe92ba8f44caea329298f75b5"
+    },
+    {
+      "source": "OmniDownloader-v1.3.2-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.2-debug.apk",
+      "bytes": 78093844,
+      "sha256": "b1ebb2656ac892e913037db9b02c081006f82d3c226e08342f8dd71b31261fcf"
+    },
+    {
+      "source": "OmniDownloader-v1.3.2-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.2-Source.zip",
+      "bytes": 674166,
+      "sha256": "fe36356cfd0b7e34da8c6ff8bfb059f8c1947db7a45a98a909409dce5561e5e0"
+    },
+    {
+      "source": "OmniDownloader-v1.3.3-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.3-debug.apk",
+      "bytes": 78094740,
+      "sha256": "13cb0ee629c3cf82b2df3fb84a17db47cc277b980fee91bf82c17106598593de"
+    },
+    {
+      "source": "OmniDownloader-v1.3.3-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.3-Source.zip",
+      "bytes": 674289,
+      "sha256": "55dfd340f579549d0958019e660e22905731d07bd490acd154ffbd4353380bce"
+    },
+    {
+      "source": "OmniDownloader-v1.3.4-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.4-debug.apk",
+      "bytes": 78094124,
+      "sha256": "07bc893837f545b9da78b00d5f24313bcf5bdbac98833c7358b3b81f4ea0b17f"
+    },
+    {
+      "source": "OmniDownloader-v1.3.4-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.4-Source.zip",
+      "bytes": 674141,
+      "sha256": "3f331742376329d0628afc9658af698b6560ea45723adf54ba1d43822fcb97a4"
+    },
+    {
+      "source": "OmniDownloader-v1.3.5-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.5-debug.apk",
+      "bytes": 78094180,
+      "sha256": "ecca81b8d6fccfad6211f2aa16cc442fe6e266ee5c5932ca91f277c39f3a05e3"
+    },
+    {
+      "source": "OmniDownloader-v1.3.5-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.5-Source.zip",
+      "bytes": 674210,
+      "sha256": "442ad391f1b015bc887a47c8e7e33c7f55053d16aaa017ee0ece3b152c76f780"
+    },
+    {
+      "source": "OmniDownloader-v1.3.6-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.6-debug.apk",
+      "bytes": 78098768,
+      "sha256": "2158af5ff10c425e2cd8fe28251204e7f5723182de759184708a47b1d9086d86"
+    },
+    {
+      "source": "OmniDownloader-v1.3.6-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.6-Source.zip",
+      "bytes": 675802,
+      "sha256": "2632cb364731f3d38c7fd99fe6a23690e266d99679910b7c831e847a1679bdf0"
+    },
+    {
+      "source": "OmniDownloader-v1.3.7-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.7-debug.apk",
+      "bytes": 78098892,
+      "sha256": "b6cadf458d5c27c5c4c0aefdd93a536e84e499044dbc70b7d9583bc1ee24bed7"
+    },
+    {
+      "source": "OmniDownloader-v1.3.7-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.7-Source.zip",
+      "bytes": 675818,
+      "sha256": "1254a13af0cf579d45cdaa17de1398c8d254c5ff9a3a1b35c6772d49c925bf70"
+    },
+    {
+      "source": "OmniDownloader-v1.3.8-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.3.8-debug.apk",
+      "bytes": 78099272,
+      "sha256": "55696f1aca5c208daa0e48285fee032700683a45093ffc6b703704e014c8c621"
+    },
+    {
+      "source": "OmniDownloader-v1.4.6-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.4.6-debug.apk",
+      "bytes": 78175024,
+      "sha256": "6aab97ec4631e24e0d64f186e03461b1d4f6b24a9a080405c92ddbe6a7c34584"
+    },
+    {
+      "source": "OmniDownloader-v1.4.6-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.4.6-Source.zip",
+      "bytes": 694102,
+      "sha256": "5c18e5e11d3e71daaa1ca2dab249ead0f3ee374ac90a29ec08bec3cfc92fa65f"
+    },
+    {
+      "source": "OmniDownloader-v1.4.7-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.4.7-debug.apk",
+      "bytes": 78175028,
+      "sha256": "8eecfb28e19c772945e128cc69dfa45d52f368d575e3672ae74802ec7d8cffe3"
+    },
+    {
+      "source": "OmniDownloader-v1.4.7-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.4.7-Source.zip",
+      "bytes": 40708866,
+      "sha256": "87b3eba0a16997d41414c86de68f13ce352cad6c9b0dbed6561b95916cde7120"
+    },
+    {
+      "source": "OmniDownloader-v1.4.8-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.4.8-debug.apk",
+      "bytes": 78716276,
+      "sha256": "54f04efc60d1211de89b216f4c424aa4e3879bb8c4c1d9e019b3ea81a1f2b645"
+    },
+    {
+      "source": "OmniDownloader-v1.4.8-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.4.8-Source.zip",
+      "bytes": 1234419,
+      "sha256": "25aad80930827478687fd8b0e249c007f723a364578f16a088c712f7653c004c"
+    },
+    {
+      "source": "OmniDownloader-v1.4.9-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.4.9-debug.apk",
+      "bytes": 78354736,
+      "sha256": "9117a2ac4b2a947f93d01af551e7bb1dcb1d0dafe4363a9f411c87f61c9f6c8d"
+    },
+    {
+      "source": "OmniDownloader-v1.5.0-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.0-debug.apk",
+      "bytes": 78358844,
+      "sha256": "fdf77e59386cf7138d5488e20ca7bf39f021692d9e177eb56a371bd244e1a5ea"
+    },
+    {
+      "source": "OmniDownloader-v1.5.1-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.1-debug.apk",
+      "bytes": 78364500,
+      "sha256": "a63759317c5d9608c01266faf79c902061184c6039ca5b4563f68b3fa723046b"
+    },
+    {
+      "source": "OmniDownloader-v1.5.10-mapping.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.10-mapping.zip",
+      "bytes": 3234324,
+      "sha256": "ca6e6696c91b975b4ca7de9ab36d73d1568b05e2613868c43c3d458e9ee2f6f2"
+    },
+    {
+      "source": "OmniDownloader-v1.5.10-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.10-release.apk",
+      "bytes": 55944655,
+      "sha256": "736140d712bfd06a9bf8f0a92d13ab5a67a7f6dcfffdc035050459bb63cbfd27"
+    },
+    {
+      "source": "OmniDownloader-v1.5.10-Source.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.10-Source.zip",
+      "bytes": 2605577,
+      "sha256": "3a9375539389a000d97026ff557730c793cd1c18bb1e04ffc01020590a844c9c"
+    },
+    {
+      "source": "OmniDownloader-v1.5.11-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.11-debug.apk",
+      "bytes": 73334692,
+      "sha256": "1d09339b086cbe8ec3aef63ded32b264a17fb0bb9f3a38f9eb3fd5ad9681e747"
+    },
+    {
+      "source": "OmniDownloader-v1.5.11-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.11-release.apk",
+      "bytes": 55956151,
+      "sha256": "f7bd3bab2435ec5541ee4380997d9102a33a1cb35d7687b6785588519be09403"
+    },
+    {
+      "source": "OmniDownloader-v1.5.12-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.12-debug.apk",
+      "bytes": 73230206,
+      "sha256": "47f5ec116a6be029f849fd9c6b536335bb4bc68fd6c3efeda83f80ff1269f6ff"
+    },
+    {
+      "source": "OmniDownloader-v1.5.12-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.12-release.apk",
+      "bytes": 55970430,
+      "sha256": "a7bfa7a2f7d9b7ba9bb29903243b357b3fbf35f94292313fbf9ad2d3b572a3d1"
+    },
+    {
+      "source": "OmniDownloader-v1.5.13-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.13-debug.apk",
+      "bytes": 73246442,
+      "sha256": "480d9bae15e691269776669a33760160d949438a446fe7e10e78056302a9b1cd"
+    },
+    {
+      "source": "OmniDownloader-v1.5.13-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.13-release.apk",
+      "bytes": 55978162,
+      "sha256": "55570df724538d4462ee2e20f8884f2ef08406b58b4c72d178a0115f25292805"
+    },
+    {
+      "source": "OmniDownloader-v1.5.14-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.14-debug.apk",
+      "bytes": 73252550,
+      "sha256": "0e497a3b3a6e65a55a6d4ae390d2478ba6f59231fe1b7d072b2d1009b9987492"
+    },
+    {
+      "source": "OmniDownloader-v1.5.14-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.14-release.apk",
+      "bytes": 55981898,
+      "sha256": "b28432648db33eb61d07c244e94dd9860fd033fda4b018e71a23a05838404c58"
+    },
+    {
+      "source": "OmniDownloader-v1.5.15-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.15-debug.apk",
+      "bytes": 73271166,
+      "sha256": "93d66d59772ba4d16b34d0f8cbe53a351f408a09b71c3c87e90831b2f4061758"
+    },
+    {
+      "source": "OmniDownloader-v1.5.15-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.15-release.apk",
+      "bytes": 55989170,
+      "sha256": "31a51f967c3e93283ece8392da489779f0c84b76948e27ec182e2bd5cb29194b"
+    },
+    {
+      "source": "OmniDownloader-v1.5.16-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.16-debug.apk",
+      "bytes": 73281902,
+      "sha256": "ddd6f8db21981154ad2ad4937a6bf89a500766da01b00fda101a1bbd8926f6f4"
+    },
+    {
+      "source": "OmniDownloader-v1.5.16-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.16-release.apk",
+      "bytes": 55993090,
+      "sha256": "01d7deeeb2659cef2019979218ab0b1e8c131a99bac7d0a913d66499ae518061"
+    },
+    {
+      "source": "OmniDownloader-v1.5.2-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.2-debug.apk",
+      "bytes": 78376488,
+      "sha256": "883565ae23205c32e3a25ba937796c51921c1eaf31643bb399c5e0fa866f35cd"
+    },
+    {
+      "source": "OmniDownloader-v1.5.3-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.3-debug.apk",
+      "bytes": 78378852,
+      "sha256": "f0b78c32157ec50fe5c9afdf80f8593b69eb878880b4d7c94ab9db74709b3fc7"
+    },
+    {
+      "source": "OmniDownloader-v1.5.3-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.3-release.apk",
+      "bytes": 71766253,
+      "sha256": "103bca674d0b1d4a705221e6710e2c4ceb411552c29c7932663d529044dcd082"
+    },
+    {
+      "source": "OmniDownloader-v1.5.4-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.4-debug.apk",
+      "bytes": 78465427,
+      "sha256": "aff00ab08320329a5d2f0ef030d7c85b603e771656ae141a7ed5b814a0ea0623"
+    },
+    {
+      "source": "OmniDownloader-v1.5.4-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.4-release.apk",
+      "bytes": 71789433,
+      "sha256": "2dc0539ef6f4ee8b1d3c19271d830da53a2874f650a84bcb71dba134713e54de"
+    },
+    {
+      "source": "OmniDownloader-v1.5.5-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.5-debug.apk",
+      "bytes": 78419647,
+      "sha256": "6c4c28a5753fee9b2050f6a15ec7d1c73eba96858f1b97b354f20a070598b2a8"
+    },
+    {
+      "source": "OmniDownloader-v1.5.5-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.5-release.apk",
+      "bytes": 71790705,
+      "sha256": "17b898c7029ab2e88bb5095abcce1c22ade7c0c49aaaafdc9bac873872dfb258"
+    },
+    {
+      "source": "OmniDownloader-v1.5.6-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.6-debug.apk",
+      "bytes": 78421463,
+      "sha256": "1aa8733190c085d8f288a1a2046589380039080510f73bb487c38c37613b1936"
+    },
+    {
+      "source": "OmniDownloader-v1.5.6-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.6-release.apk",
+      "bytes": 71791701,
+      "sha256": "dd22278d3e1946cccc60cb82642302a5d5639cb980e9803c863519eab4231869"
+    },
+    {
+      "source": "OmniDownloader-v1.5.7-debug.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.7-debug.apk",
+      "bytes": 78448269,
+      "sha256": "c39b4e4d1b8dacf08e2cd956fc4383311aa9d76dbf67a1a516e0c3c1a97921c7"
+    },
+    {
+      "source": "OmniDownloader-v1.5.7-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.7-release.apk",
+      "bytes": 71799009,
+      "sha256": "cc45a8317ed3256fa33e216d35d2cf68c6584061e4a0bac7f88623334413d52e"
+    },
+    {
+      "source": "OmniDownloader-v1.5.8-mapping.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.8-mapping.zip",
+      "bytes": 3214558,
+      "sha256": "0e95027167332f620c20dbac508bf5e006cf241cadc6c36dd567a6c93106e635"
+    },
+    {
+      "source": "OmniDownloader-v1.5.8-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.8-release.apk",
+      "bytes": 55925254,
+      "sha256": "33b7455043fc43d4f788b6fb0ed15f16f84e13d8acdf6c9ab5c49fcac437f079"
+    },
+    {
+      "source": "OmniDownloader-v1.5.9-mapping.zip",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.9-mapping.zip",
+      "bytes": 3892358,
+      "sha256": "309601fb3c36a88106404a6d7c4ce720238625c81c1efb0f78b547fdb87ea21d"
+    },
+    {
+      "source": "OmniDownloader-v1.5.9-release.apk",
+      "destination": "release/legacy-root/OmniDownloader-v1.5.9-release.apk",
+      "bytes": 55956894,
+      "sha256": "3abfed821ad4ef5c7513bf05c819cd9aabc9257d0c25410de986c55ce555070c"
+    },
+    {
+      "source": "OmniDownloader_LATEST.apk",
+      "destination": "release/legacy-root/OmniDownloader_LATEST.apk",
+      "bytes": 55944655,
+      "sha256": "736140d712bfd06a9bf8f0a92d13ab5a67a7f6dcfffdc035050459bb63cbfd27"
+    },
+    {
+      "source": "OmniDownloader_Source_LATEST.zip",
+      "destination": "release/legacy-root/OmniDownloader_Source_LATEST.zip",
+      "bytes": 2605577,
+      "sha256": "3a9375539389a000d97026ff557730c793cd1c18bb1e04ffc01020590a844c9c"
+    },
+    {
+      "source": "OmniDownloader_v1.2.4.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.2.4.apk",
+      "bytes": 78043021,
+      "sha256": "a541e2468a681e4037a150dd58a60df2446bdda45ad4dac543a177c3918df8a1"
+    },
+    {
+      "source": "OmniDownloader_v1.2.5.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.2.5.apk",
+      "bytes": 78042873,
+      "sha256": "4241b4954d06c56e93a1aba19eb5f2c83c4e14e1eedfaca46ae76cc8d0e2e190"
+    },
+    {
+      "source": "OmniDownloader_v1.2.6.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.2.6.apk",
+      "bytes": 78048548,
+      "sha256": "efd10539cfdd0df66294f911b4c03681c3899273dd1a29ce060a7282be5b2902"
+    },
+    {
+      "source": "OmniDownloader_v1.2.7.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.2.7.apk",
+      "bytes": 78048292,
+      "sha256": "20b706d6094f49ab18cfadd8bd20f885788985fce1c44cd855ffc74c6aef7374"
+    },
+    {
+      "source": "OmniDownloader_v1.2.8.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.2.8.apk",
+      "bytes": 78147208,
+      "sha256": "ddef6a23b6a45307de31ecc39eadaa0694dcc4d469298c1e5406a78273fd26e1"
+    },
+    {
+      "source": "OmniDownloader_v1.2.9.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.2.9.apk",
+      "bytes": 78084240,
+      "sha256": "97fc5956cb401493e4135eca97b54367d91115376661d2c4258ecf987e310339"
+    },
+    {
+      "source": "OmniDownloader_v1.3.0.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.3.0.apk",
+      "bytes": 78084184,
+      "sha256": "4829eb3a996446db81817beb366fe32567a97f81d732bef9117f5ebeeecc44cf"
+    },
+    {
+      "source": "OmniDownloader_v1.3.1.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.3.1.apk",
+      "bytes": 78086708,
+      "sha256": "eeacf4819a0b222312ee6fd8ae4a6eebcdb2e89cee36c3bc98c215aab45b3269"
+    },
+    {
+      "source": "OmniDownloader_v1.3.2.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.3.2.apk",
+      "bytes": 78093844,
+      "sha256": "b1ebb2656ac892e913037db9b02c081006f82d3c226e08342f8dd71b31261fcf"
+    },
+    {
+      "source": "OmniDownloader_v1.3.3.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.3.3.apk",
+      "bytes": 78094740,
+      "sha256": "13cb0ee629c3cf82b2df3fb84a17db47cc277b980fee91bf82c17106598593de"
+    },
+    {
+      "source": "OmniDownloader_v1.3.4.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.3.4.apk",
+      "bytes": 78094124,
+      "sha256": "07bc893837f545b9da78b00d5f24313bcf5bdbac98833c7358b3b81f4ea0b17f"
+    },
+    {
+      "source": "OmniDownloader_v1.3.5.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.3.5.apk",
+      "bytes": 78094180,
+      "sha256": "ecca81b8d6fccfad6211f2aa16cc442fe6e266ee5c5932ca91f277c39f3a05e3"
+    },
+    {
+      "source": "OmniDownloader_v1.3.6.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.3.6.apk",
+      "bytes": 78098768,
+      "sha256": "2158af5ff10c425e2cd8fe28251204e7f5723182de759184708a47b1d9086d86"
+    },
+    {
+      "source": "OmniDownloader_v1.3.7.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.3.7.apk",
+      "bytes": 78098892,
+      "sha256": "b6cadf458d5c27c5c4c0aefdd93a536e84e499044dbc70b7d9583bc1ee24bed7"
+    },
+    {
+      "source": "OmniDownloader_v1.3.8.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.3.8.apk",
+      "bytes": 78099272,
+      "sha256": "55696f1aca5c208daa0e48285fee032700683a45093ffc6b703704e014c8c621"
+    },
+    {
+      "source": "OmniDownloader_v1.4.6.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.4.6.apk",
+      "bytes": 78175024,
+      "sha256": "6aab97ec4631e24e0d64f186e03461b1d4f6b24a9a080405c92ddbe6a7c34584"
+    },
+    {
+      "source": "OmniDownloader_v1.4.7.apk",
+      "destination": "release/legacy-root/OmniDownloader_v1.4.7.apk",
+      "bytes": 78175028,
+      "sha256": "8eecfb28e19c772945e128cc69dfa45d52f368d575e3672ae74802ec7d8cffe3"
+    }
+  ],
+  "preserve": [
+    "source and existing changes",
+    "release",
+    "windows/dist (running Web)",
+    "windows/release",
+    "windows/bin",
+    ".local",
+    ".venv",
+    ".gradle",
+    ".git",
+    "scratch/relay-fixes-20261101/avd/Omni_Relay_QA.avd/config.ini"
+  ],
+  "completedMoves": [
+    "OmniCleaner-debug.apk",
+    "OmniDownloader-Relay-debug.apk",
+    "OmniDownloader-v1.0.0-debug.apk",
+    "OmniDownloader-v1.1.0-debug.apk",
+    "OmniDownloader-v1.1.1-debug.apk",
+    "OmniDownloader-v1.1.2-debug.apk",
+    "OmniDownloader-v1.1.3-debug.apk",
+    "OmniDownloader-v1.1.4-debug.apk",
+    "OmniDownloader-v1.1.5-debug.apk",
+    "OmniDownloader-v1.1.6-debug.apk",
+    "OmniDownloader-v1.1.7-debug.apk",
+    "OmniDownloader-v1.1.8-debug.apk",
+    "OmniDownloader-v1.1.9-debug.apk",
+    "OmniDownloader-v1.2.0-debug.apk",
+    "OmniDownloader-v1.2.1-debug.apk",
+    "OmniDownloader-v1.2.2-debug.apk",
+    "OmniDownloader-v1.2.3-debug.apk",
+    "OmniDownloader-v1.2.4-debug.apk",
+    "OmniDownloader-v1.2.5-debug.apk",
+    "OmniDownloader-v1.2.6-debug.apk",
+    "OmniDownloader-v1.2.7-debug.apk",
+    "OmniDownloader-v1.2.7-Source.zip",
+    "OmniDownloader-v1.2.8-debug.apk",
+    "OmniDownloader-v1.2.8-Source.zip",
+    "OmniDownloader-v1.2.9-debug.apk",
+    "OmniDownloader-v1.2.9-Source.zip",
+    "OmniDownloader-v1.3.0-debug.apk",
+    "OmniDownloader-v1.3.0-Source.zip",
+    "OmniDownloader-v1.3.1-debug.apk",
+    "OmniDownloader-v1.3.1-Source.zip",
+    "OmniDownloader-v1.3.2-debug.apk",
+    "OmniDownloader-v1.3.2-Source.zip",
+    "OmniDownloader-v1.3.3-debug.apk",
+    "OmniDownloader-v1.3.3-Source.zip",
+    "OmniDownloader-v1.3.4-debug.apk",
+    "OmniDownloader-v1.3.4-Source.zip",
+    "OmniDownloader-v1.3.5-debug.apk",
+    "OmniDownloader-v1.3.5-Source.zip",
+    "OmniDownloader-v1.3.6-debug.apk",
+    "OmniDownloader-v1.3.6-Source.zip",
+    "OmniDownloader-v1.3.7-debug.apk",
+    "OmniDownloader-v1.3.7-Source.zip",
+    "OmniDownloader-v1.3.8-debug.apk",
+    "OmniDownloader-v1.4.6-debug.apk",
+    "OmniDownloader-v1.4.6-Source.zip",
+    "OmniDownloader-v1.4.7-debug.apk",
+    "OmniDownloader-v1.4.7-Source.zip",
+    "OmniDownloader-v1.4.8-debug.apk",
+    "OmniDownloader-v1.4.8-Source.zip",
+    "OmniDownloader-v1.4.9-debug.apk",
+    "OmniDownloader-v1.5.0-debug.apk",
+    "OmniDownloader-v1.5.1-debug.apk",
+    "OmniDownloader-v1.5.10-mapping.zip",
+    "OmniDownloader-v1.5.10-release.apk",
+    "OmniDownloader-v1.5.10-Source.zip",
+    "OmniDownloader-v1.5.11-debug.apk",
+    "OmniDownloader-v1.5.11-release.apk",
+    "OmniDownloader-v1.5.12-debug.apk",
+    "OmniDownloader-v1.5.12-release.apk",
+    "OmniDownloader-v1.5.13-debug.apk",
+    "OmniDownloader-v1.5.13-release.apk",
+    "OmniDownloader-v1.5.14-debug.apk",
+    "OmniDownloader-v1.5.14-release.apk",
+    "OmniDownloader-v1.5.15-debug.apk",
+    "OmniDownloader-v1.5.15-release.apk",
+    "OmniDownloader-v1.5.16-debug.apk",
+    "OmniDownloader-v1.5.16-release.apk",
+    "OmniDownloader-v1.5.2-debug.apk",
+    "OmniDownloader-v1.5.3-debug.apk",
+    "OmniDownloader-v1.5.3-release.apk",
+    "OmniDownloader-v1.5.4-debug.apk",
+    "OmniDownloader-v1.5.4-release.apk",
+    "OmniDownloader-v1.5.5-debug.apk",
+    "OmniDownloader-v1.5.5-release.apk",
+    "OmniDownloader-v1.5.6-debug.apk",
+    "OmniDownloader-v1.5.6-release.apk",
+    "OmniDownloader-v1.5.7-debug.apk",
+    "OmniDownloader-v1.5.7-release.apk",
+    "OmniDownloader-v1.5.8-mapping.zip",
+    "OmniDownloader-v1.5.8-release.apk",
+    "OmniDownloader-v1.5.9-mapping.zip",
+    "OmniDownloader-v1.5.9-release.apk",
+    "OmniDownloader_LATEST.apk",
+    "OmniDownloader_Source_LATEST.zip",
+    "OmniDownloader_v1.2.4.apk",
+    "OmniDownloader_v1.2.5.apk",
+    "OmniDownloader_v1.2.6.apk",
+    "OmniDownloader_v1.2.7.apk",
+    "OmniDownloader_v1.2.8.apk",
+    "OmniDownloader_v1.2.9.apk",
+    "OmniDownloader_v1.3.0.apk",
+    "OmniDownloader_v1.3.1.apk",
+    "OmniDownloader_v1.3.2.apk",
+    "OmniDownloader_v1.3.3.apk",
+    "OmniDownloader_v1.3.4.apk",
+    "OmniDownloader_v1.3.5.apk",
+    "OmniDownloader_v1.3.6.apk",
+    "OmniDownloader_v1.3.7.apk",
+    "OmniDownloader_v1.3.8.apk",
+    "OmniDownloader_v1.4.6.apk",
+    "OmniDownloader_v1.4.7.apk"
+  ],
+  "completedDeletes": [],
+  "deletionBlockReason": "Automatic approval review rejected recursive cleanup: blocked by policy",
+  "verification": {
+    "indexUnchanged": true,
+    "existingTrackedChangesPreserved": true,
+    "latestReleaseHashesUnchanged": true,
+    "archivesHashesMatch": true,
+    "webHttpStatus": 200,
+    "retainedAvdConfig": true,
+    "remainingTemporaryPaths": 253
+  },
+  "archivedBytes": 6125079610,
+  "deletedBytes": 0,
+  "freeBytesAfter": 120907419648,
+  "sourceEdits": [
+    "clean_device.bat: two adb install paths updated to release/legacy-root; other bytes preserved"
+  ],
+  "completedAt": "2026-11-13T08:42:20.778255+00:00"
+}

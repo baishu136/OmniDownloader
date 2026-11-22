@@ -22,6 +22,23 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /** Real bundled FFmpeg -> MediaStore -> Android and app GIF decoders. */
 class GifAcceptanceTest {
+    @Test fun retryOutputIsConvertedBeforeExport(): Unit = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        DownloadEngine.ensureInitialized(context).getOrThrow()
+        for (extension in listOf("mp4", "gif")) {
+            val input = File.createTempFile("retry-gif-", ".$extension", context.cacheDir)
+            var output: File? = null
+            try {
+                input.writeBytes(InstrumentationRegistry.getInstrumentation().context.assets.open("quality-1080.mp4").use { it.readBytes() })
+                output = DownloadEngine.prepareGifOutput(context, input)
+                assertEquals("gif", output.extension)
+                assertNotNull(GifInspector.inspect(output))
+                assertNull(MediaVerifier.verifyGif(output))
+                assertFalse(input.exists())
+            } finally { input.delete(); output?.delete() }
+        }
+    }
+
     private val instrument get() = InstrumentationRegistry.getInstrumentation()
 
     private fun roundTrip(asset: String, suffix: String, preserveBytes: Boolean): Unit = runBlocking {

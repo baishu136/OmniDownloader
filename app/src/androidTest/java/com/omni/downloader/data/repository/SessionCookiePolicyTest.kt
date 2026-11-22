@@ -11,6 +11,17 @@ import java.util.UUID
 
 /** Isolated encrypted fixture profiles. No real user profile/cookies are read or replaced. */
 class SessionCookiePolicyTest {
+    @Test fun galleryCookieSnapshotKeepsHostPathSecureAndDisableRules():Unit=runBlocking {
+        GoogleAccountsTest.Fixture().use{fixture->
+            val file=File(fixture.root,"cookie-scope.txt").apply{writeText("# Netscape HTTP Cookie File\n.pixiv.net\tTRUE\t/\tTRUE\t4102444800\troot\tfixture\nwww.pixiv.net\tFALSE\t/artworks/\tTRUE\t4102444800\tpage\tfixture\n")}
+            fixture.sessions.importNetscapeFile(SessionPlatforms.PIXIV,android.net.Uri.fromFile(file)).getOrThrow()
+            val provider=fixture.sessions.imageCookieProvider(SessionPlatforms.PIXIV)
+            for(url in listOf("https://www.pixiv.net/artworks/42","https://accounts.pixiv.net/","https://i.pximg.net/a.jpg","http://www.pixiv.net/artworks/42","https://pixiv.net.evil.test/"))
+                assertEquals(url,fixture.sessions.cookieHeader(SessionPlatforms.PIXIV,url),provider(url))
+            fixture.sessions.setCookieEnabled(SessionPlatforms.PIXIV,false)
+            assertNull(fixture.sessions.imageCookieProvider(SessionPlatforms.PIXIV)("https://www.pixiv.net/artworks/42"))
+        }
+    }
     @Test fun disablingEachPlatformPreservesCredentialsAndInvalidatesRequestGeneration() = runBlocking {
         val target = InstrumentationRegistry.getInstrumentation().targetContext
         val prefix = "cookie-policy-qa-${UUID.randomUUID()}"

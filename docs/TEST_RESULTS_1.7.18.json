@@ -1,0 +1,102 @@
+{
+  "version": "1.7.18",
+  "versionCode": 77,
+  "date": "2026-11-08",
+  "jvm": {
+    "passed": 170,
+    "failed": 0
+  },
+  "androidAutomatic": {
+    "passed": 8,
+    "failed": 0,
+    "realWebView": true,
+    "syntheticTarget": true,
+    "late720To1080": true,
+    "sparseDimensionsVerified": true,
+    "exportedBytesEqualSource": true,
+    "detailRequests": 1,
+    "manualBrowserActions": 0,
+    "coverage": [
+      "ordinary JS page",
+      "visible CAPTCHA rejects placeholder",
+      "Cookie disabled",
+      "timeout and cancellation cleanup",
+      "account change invalidation",
+      "profile Cookie isolation and logout",
+      "foreground exit cleanup"
+    ]
+  },
+  "androidRegression": {
+    "passed": 19,
+    "skipped": 1,
+    "failed": 0,
+    "runnerTotal": 20,
+    "cases": {
+      "XMultiMetadataTest": 3,
+      "XHlsFormatsTest": 2,
+      "GifAcceptanceTest": 5,
+      "DesktopLoginBrowserTest": 3,
+      "SessionCookiePolicyTest": 1,
+      "SocialQualityBrowserTest": {
+        "passed": 3,
+        "skippedOptInLive": 1
+      },
+      "DouyinVideoBrowserTest": 2
+    }
+  },
+  "liveDouyin": {
+    "success": true,
+    "manualBrowserActions": 0,
+    "mediaId": "7699370307513319141",
+    "width": 720,
+    "height": 1280,
+    "dimensionsVerified": true,
+    "formats": 1,
+    "evidence": [
+      "DOUYIN_PAGE_TIMEOUT"
+    ],
+    "warning": "自动画质补全超时，已保留当前可用源；可稍后重试。",
+    "metadataDurationMs": 12446,
+    "sourceDurationMs": 15464,
+    "actualWidth": 720,
+    "actualHeight": 1280,
+    "durationMs": 15463,
+    "hasAudio": true,
+    "bytes": 5713780,
+    "status": "TARGET_EXTRACTED",
+    "elapsedMs": 33078
+  },
+  "environment": {
+    "androidApi": 35,
+    "webView": "124.0.6367.219",
+    "emulatorAbi": "x86_64",
+    "network": "developer HTTP proxy",
+    "accountCookiesImportedForLive": false,
+    "arm64Phone": "NOT_AVAILABLE"
+  },
+  "limitations": [
+    "Live target higher-quality acquisition encountered site CAPTCHA or page timeout; only 720x1280 verified",
+    "No measured platform-wide success rate",
+    "No physical ARM64 phone",
+    "No real HDR/high-FPS end-to-end acceptance; policy covered by JVM tests",
+    "Visible human verification continuation requires actual user verification and has no live success claim"
+  ],
+  "build": {
+    "assembleRelease": "PASS",
+    "lintRelease": "PASS",
+    "lintErrors": 0,
+    "lintWarnings": 50,
+    "optimizedReleaseUiSmoke": "PASS: cold install, history, navigation, settings children, native resources; ARM64 execution skipped on x86 emulator"
+  },
+  "artifact": {
+    "bytes": 59563543,
+    "sha256": "01e3e9421ec40ca8ee5057cbac41aaa388d036b5a445764fcd820f15cc5d621f",
+    "signerSha256": "0bdc5678e09d4508829ff43f7c63f7ee6ab8af64134f0079cc186d8aedd41f4e",
+    "signatureMatches1717": true,
+    "nativePayloadUnchanged": true,
+    "pythonPayloadUnchanged": true,
+    "testMediaExcluded": true,
+    "abi": "arm64-v8a",
+    "zipCrc": "PASS"
+  }
+}

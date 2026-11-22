@@ -35,10 +35,11 @@ fun RelayBrowserDialog(
     onCapturedDownload: (directUrl: String, title: String) -> Unit
 ) {
     val context = LocalContext.current
+    val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
     val dismiss by rememberUpdatedState(onDismiss)
     val captured by rememberUpdatedState(onCapturedDownload)
-    val session = remember(site.id, initialVideoUrl) {
-        RelayCaptureSession("${site.name} 视频", { url, title -> captured(url, title); dismiss() })
+    val session = remember(site.id, initialVideoUrl, strings) {
+        RelayCaptureSession(strings.relayFallbackTitle.format(site.name), { url, title -> captured(url, title); dismiss() }, strings = strings)
     }
     var view by remember(session) { mutableStateOf<WebView?>(null) }
     var cleanup by remember(session) { mutableStateOf<(() -> Unit)?>(null) }
@@ -60,17 +61,17 @@ fun RelayBrowserDialog(
             Surface(shadowElevation = 3.dp) {
                 Column {
                     Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { back() }) { Icon(if (canGoBack) Icons.AutoMirrored.Outlined.ArrowBack else Icons.Outlined.Close, "返回") }
+                        IconButton(onClick = { back() }) { Icon(if (canGoBack) Icons.AutoMirrored.Outlined.ArrowBack else Icons.Outlined.Close, strings.relayBack) }
                         Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
                             Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleSmall)
                             Text(Uri.parse(currentUrl).host.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        if (initialVideoUrl.isNotBlank()) IconButton(onClick = { view?.let { RelayAutomation.fill(it) } }) { Icon(Icons.Outlined.Bolt, "填入链接") }
-                        IconButton(onClick = { view?.reload() }) { Icon(Icons.Outlined.Refresh, "刷新") }
+                        if (initialVideoUrl.isNotBlank()) IconButton(onClick = { view?.let { RelayAutomation.fill(it) } }) { Icon(Icons.Outlined.Bolt, strings.relayFillLink) }
+                        IconButton(onClick = { view?.reload() }) { Icon(Icons.Outlined.Refresh, strings.relayRefresh) }
                         IconButton(onClick = {
                             try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(currentUrl))) }
-                            catch (_: android.content.ActivityNotFoundException) { Toast.makeText(context, "无法打开外部浏览器", Toast.LENGTH_SHORT).show() }
-                        }) { Icon(Icons.Outlined.OpenInBrowser, "在外部浏览器打开") }
+                            catch (_: android.content.ActivityNotFoundException) { Toast.makeText(context, strings.relayExternalFailed, Toast.LENGTH_SHORT).show() }
+                        }) { Icon(Icons.Outlined.OpenInBrowser, strings.relayOpenExternal) }
                     }
                     if (progress in 1..99) LinearProgressIndicator(progress = { progress / 100f }, modifier = Modifier.fillMaxWidth().height(2.dp))
                 }

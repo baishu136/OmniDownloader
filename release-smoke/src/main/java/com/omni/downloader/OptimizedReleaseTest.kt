@@ -67,24 +67,60 @@ class OptimizedReleaseTest {
             navigate("Home")
         }
 
+        val guardDirectory=File(context.filesDir,"network_guard").apply{mkdirs()}
+        fun warning(platform:String)=File(guardDirectory,"$platform.json").apply{
+            writeText(JSONObject().put("policyVersion",2).put("until",0).put("reason","AUTH_REQUIRED")
+                .put("warningId","release-warning-$platform").put("warningPending",true).toString())
+        }
+        val warningState=warning("x")
+        assertTrue("Request warning missing after R8",device.wait(Until.hasObject(By.text("Understood")),8000))
+        device.findObject(By.text("Understood")).click()
+        assertTrue(device.wait(Until.gone(By.text("Understood")),8000))
+        assertFalse(JSONObject(warningState.readText()).getBoolean("warningPending"))
+        assertEquals(0L,JSONObject(warningState.readText()).getLong("until"))
+        warning("pixiv")
+        assertTrue(device.wait(Until.hasObject(By.text("Manage accounts")),8000))
+        device.findObject(By.text("Manage accounts")).click()
+        assertTrue("Warning did not open account management",device.wait(Until.hasObject(By.descContains("Back")),8000))
+        device.pressBack();device.waitForIdle()
         navigate("Settings")
         for (title in listOf("GIF", "Downloads & storage", "Network proxy", "Relay sites", "Accounts", "Download engine", "About")) {
             assertTrue("Missing category: " + title, device.wait(Until.hasObject(By.text(title)), 5000))
             device.findObject(By.text(title)).click()
             assertTrue("Missing child-page back action: " + title, device.wait(Until.hasObject(By.descContains("Back")), 5000))
             Thread.sleep(250) // Let the sequential fade-through place the child page.
+            if(title=="Accounts") {
+                val add=By.text("Add account")
+                repeat(6){if(!device.hasObject(add)){device.swipe(device.displayWidth/2,device.displayHeight*3/4,device.displayWidth/2,device.displayHeight/3,20);device.waitForIdle()}}
+                assertTrue("Independent Google profiles missing after R8",device.wait(Until.hasObject(add),5000))
+                device.findObject(add).click()
+                val input=By.clazz("android.widget.EditText")
+                assertTrue(device.wait(Until.hasObject(input),5000))
+                val fixtureLabel="R8 local fixture " + SystemClock.elapsedRealtime()
+                device.findObject(input).text=fixtureLabel
+                device.findObjects(add).maxByOrNull{it.visibleBounds.centerY()}!!.click()
+                assertTrue("Encrypted Google profile persistence failed after R8",device.wait(Until.hasObject(By.text(fixtureLabel)),5000))
+                val current=By.text("Sign out current")
+                repeat(4){if(!device.hasObject(current)){device.swipe(device.displayWidth/2,device.displayHeight*3/4,device.displayWidth/2,device.displayHeight/3,20);device.waitForIdle()}}
+                assertTrue(device.wait(Until.hasObject(current),5000));device.findObject(current).click()
+                val confirm=By.text("Sign out selected (1)")
+                assertTrue(device.wait(Until.hasObject(confirm),5000))
+                device.findObject(confirm).click()
+                assertTrue("Google local logout failed after R8",device.wait(Until.hasObject(By.text("Selected profiles signed out and local credentials cleared")),10000))
+            }
             device.pressBack()
             assertTrue("Child did not return to settings root", device.wait(Until.gone(By.descContains("Back")), 5000))
             Thread.sleep(250)
         }
         navigate("Home")
 
-        val batchEntry = By.text("批量")
-        assertTrue("Batch download entry missing after R8", device.wait(Until.hasObject(batchEntry), 5000))
-        device.findObject(batchEntry).click()
-        assertTrue("Batch download sheet missing after R8", device.wait(Until.hasObject(By.text("解析并加入下载队列")), 5000))
-        assertTrue(device.hasObject(By.text("下载合集 / 多视频的全部分集")))
-        assertTrue(device.hasObject(By.text("逐条添加")))
+        navigate("Batch")
+        assertTrue("Batch page missing after R8",device.wait(Until.hasObject(By.text("Batch download")),5000))
+        assertTrue(device.hasObject(By.text("Add one by one")))
+        val startBatch=By.text("Parse and add to queue")
+        repeat(6){if(!device.hasObject(startBatch)){device.swipe(device.displayWidth/2,device.displayHeight*3/4,device.displayWidth/2,device.displayHeight/3,20);device.waitForIdle()}}
+        assertTrue("Batch queue action missing after R8",device.hasObject(startBatch))
+        assertTrue(device.hasObject(By.text("Download every episode of collections / multi-video posts")))
         navigate("Home")
         assertFalse("Obsolete image floating entry remains", device.hasObject(By.desc("图文下载")))
 

@@ -13,16 +13,16 @@ object UrlSniffer {
     private val contentRedirects = ContentRedirectCache()
 
     private val URL_REGEX = Pattern.compile(
-        """https?://[a-zA-Z0-9_\-.]+(?::[0-9]+)?(?:/[^\s]*)?""",
+        """https?://[a-zA-Z0-9_\-.]+(?::[0-9]+)?(?:[/?#][^\s]*)?""",
         Pattern.CASE_INSENSITIVE
     )
 
-    private val httpClient = OkHttpClient.Builder().proxySelector(NetworkProxy)
+    private val httpClient = XNetwork.configure(OkHttpClient.Builder().proxySelector(NetworkProxy)
         .followRedirects(true)
         .followSslRedirects(true)
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(10, TimeUnit.SECONDS)
-        .build()
+        ).build()
 
     // 跳转由 LinkNormalizer 逐跳处理，才能识别登录/验证/404 终点
     private val noRedirectClient = httpClient.newBuilder()
@@ -65,6 +65,17 @@ object UrlSniffer {
         }
 
         val result = resolveContent(rawUrl)
+        if (LinkNormalizer.isWeiboShortLink(normalized.contentUrl)) {
+            val target = (result as? LinkNormalizer.RedirectResult.Content)?.url
+            val link = target?.let(LinkNormalizer::normalize)
+            if (link?.platform == LinkNormalizer.PLATFORM_WEIBO && link.contentId != null) return@withContext link.contentUrl
+            val code = when (result) {
+                is LinkNormalizer.RedirectResult.LoginRequired -> "AUTH_REQUIRED"
+                is LinkNormalizer.RedirectResult.ChallengeRequired -> "CHALLENGE_REQUIRED"
+                else -> "MEDIA_UNCONFIRMED"
+            }
+            throw IllegalStateException("[$code] 未能从微博短链确认视频，请尝试微博正文或视频页链接")
+        }
         if (normalized.platform == LinkNormalizer.PLATFORM_DOUYIN)
             return@withContext DouyinResolution.redirectTarget(result)
         when (result) {
@@ -90,7 +101,7 @@ object UrlSniffer {
         }
         val userAgent = if (normalized.platform == LinkNormalizer.PLATFORM_XHS ||
             normalized.platform == LinkNormalizer.PLATFORM_BILIBILI ||
-            normalized.platform == LinkNormalizer.PLATFORM_PINTEREST
+            normalized.platform == LinkNormalizer.PLATFORM_PINTEREST || LinkNormalizer.isWeiboShortLink(normalized.contentUrl)
         ) {
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         } else {

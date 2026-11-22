@@ -14,6 +14,28 @@ import java.io.File
 
 class SettingsOptionMenuTest {
     @get:Rule val compose = createEmptyComposeRule()
+    @Test fun themeCommitsBeforeTheMenuExitCompletes() {
+        val settings = SettingsRepository.getInstance(InstrumentationRegistry.getInstrumentation().targetContext)
+        val oldTheme = settings.themeMode.value; val oldLanguage = settings.appLanguage.value
+        settings.setHasPromptedBilibiliLogin(true); settings.setThemeMode("light"); settings.setAppLanguage("zh-CN")
+        val scenario = ActivityScenario.launch(MainActivity::class.java)
+        try {
+            compose.onNodeWithContentDescription("设置", useUnmergedTree = true).performClick()
+            compose.onNodeWithText("浅色").performClick()
+            compose.waitForIdle()
+            compose.mainClock.autoAdvance = false
+            compose.onNodeWithText("深色").performClick()
+            compose.runOnIdle { assertEquals("dark", settings.themeMode.value) }
+            compose.mainClock.advanceTimeByFrame()
+            compose.onNodeWithTag("omni_option_menu").assertExists()
+            compose.onNodeWithText("浅色").assertIsNotEnabled()
+            compose.mainClock.advanceTimeBy(400)
+            compose.onNodeWithTag("omni_option_menu").assertDoesNotExist()
+        } finally {
+            compose.mainClock.autoAdvance = true
+            scenario.close(); settings.setThemeMode(oldTheme); settings.setAppLanguage(oldLanguage)
+        }
+    }
     @Test fun actualSettingsThemeAndLanguageOptionsPersistAfterDismissal() {
         val instrument = InstrumentationRegistry.getInstrumentation(); val context = instrument.targetContext
         val settings = SettingsRepository.getInstance(context)

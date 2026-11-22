@@ -15,7 +15,7 @@ class PixivJsonClientTest {
         Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(status).message("fixture")
             .body(body.toResponseBody("application/json".toMediaType())).build()
 
-    @Test fun onlyKnownRestricted404MeansLoginAndAccessErrorsNeverRetryAnonymously() {
+    @Test fun onlyKnownRestricted404MeansLoginAndAccessErrorsNeverRetryAnonymously(): Unit = kotlinx.coroutines.runBlocking {
         val cases = listOf(Triple(404, true, MediaErrorCode.AUTH_REQUIRED), Triple(404, false, MediaErrorCode.CONTENT_UNAVAILABLE),
             Triple(410, true, MediaErrorCode.CONTENT_UNAVAILABLE), Triple(401, false, MediaErrorCode.AUTH_REQUIRED),
             Triple(403, true, MediaErrorCode.AUTH_REQUIRED), Triple(302, false, MediaErrorCode.AUTH_REQUIRED),
@@ -30,7 +30,7 @@ class PixivJsonClientTest {
         }
     }
 
-    @Test fun networkRetryIsBoundedAndPreservesRestrictedContextAndCookie() {
+    @Test fun networkRetryIsBoundedAndPreservesRestrictedContextAndCookie(): Unit = kotlinx.coroutines.runBlocking {
         val cookies = mutableListOf<String?>()
         val http = OkHttpClient.Builder().addInterceptor { chain ->
             cookies += chain.request().header("Cookie")

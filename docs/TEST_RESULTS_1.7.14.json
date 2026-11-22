@@ -1,0 +1,106 @@
+{
+  "version": "1.7.14",
+  "versionCode": 73,
+  "scope": "OmniDownloader Android; Douyin shared resolver and its pinned SOCKS dependency",
+  "automation": {
+    "id": "myune-github",
+    "status": "PAUSED",
+    "verified": true
+  },
+  "jvm": {
+    "passed": 135,
+    "failed": 0
+  },
+  "python": {
+    "passed": 20,
+    "failed": 0,
+    "preExistingPydanticDeprecationWarnings": 3
+  },
+  "androidUi": {
+    "passed": 15,
+    "failed": 0,
+    "themeTestsRepeatedAfterFinalNetworkChange": 3,
+    "device": "API 35 x86_64 read-only Omni QA emulator",
+    "screenshotsInspected": 6
+  },
+  "liveAndroid": {
+    "passed": 2,
+    "failed": 0,
+    "douyin": {
+      "success": true,
+      "mode": "live-app-analysis",
+      "mediaId": "7567352444847574309",
+      "imageCount": 21,
+      "python": "3.12.11",
+      "socks": "1.7.1"
+    },
+    "proxy": {
+      "completed": true,
+      "results": [
+        {
+          "name": "国内站点",
+          "reachable": true,
+          "message": "连接成功",
+          "elapsedMs": 629
+        },
+        {
+          "name": "国际站点",
+          "reachable": true,
+          "message": "连接成功",
+          "elapsedMs": 1328
+        }
+      ]
+    },
+    "userAccountsUsed": false,
+    "mediaFilesDownloaded": false,
+    "transport": "temporary loopback HTTP proxy bridge; removed after test"
+  },
+  "validated": [
+    "Theme colors interpolate through intermediate values; rapid reversal retains the remembered page state.",
+    "Collapsed platform toggle remains on row two; intermediate animation height is between endpoints; wide layout exposes all names.",
+    "Invalid proxy input does not replace the saved route; connectivity uses unsaved input, does not send cookies and cancels pending sockets.",
+    "Native SOCKS handshake sends the destination hostname to the proxy; no local destination DNS or direct fallback.",
+    "Provided Douyin share returns target ID 7567352444847574309 with 21 image resources through production ViewModel/shared runtime.",
+    "Only synthetic adaptive format rows inherit the highest known alternative dimensions/size; real unknown streams retain unknown metadata."
+  ],
+  "artifact": {
+    "version": "1.7.14",
+    "versionCode": 73,
+    "path": "release/1.7.14/OmniDownloader-1.7.14-arm64-v8a.apk",
+    "bytes": 59521539,
+    "sha256": "49fac25bf7c000bbc9cff2c6466fc96b6a1249f595799ac8aa4ff3a14c8bdee2",
+    "abi": [
+      "arm64-v8a"
+    ],
+    "archiveCrc": "passed",
+    "v2SignatureAndPriorSignerMatch": true,
+    "frozenBuildInputs": 203,
+    "inputsUnchanged": true,
+    "r8AndLintVital": "passed",
+    "pythonAssetMatchesSource": true
+  },
+  "pythonArchiveChanges": {
+    "added": [
+      "licenses/PySocks/LICENSE",
+      "socks.py"
+    ],
+    "removed": [],
+    "changed": [
+      "omni_media.py"
+    ]
+  },
+  "myuneIsolation": {
+    "writtenToMyuneThisTask": false,
+    "sourceWorkingTreeClean": true,
+    "head": "72661d92bac25b9f789127c4153a8869930ac7de"
+  },
+  "knownLimits": [
+    "No physical phone verification in this round.",
+    "No full image download or full-platform acceptance run; live check validates parsing and connectivity.",
+    "Proxy authentication and HTTPS proxy endpoints are explicitly unsupported; HTTP CONNECT and SOCKS5 supported.",
+    "Platform authentication/challenges still require legitimate browser interaction.",
+    "Windows/iOS applications were not built in this Android task; shared Python resolver and dependency manifests were necessarily updated."
+  ],
+  "validationNote": "First aapt verification failed on its Unicode absolute pathname; verified successfully using the same APK through a relative pathname. No package/source change was required.",
+  "publiclyPublished": false
+}

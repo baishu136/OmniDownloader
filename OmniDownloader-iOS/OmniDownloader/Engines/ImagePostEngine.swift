@@ -42,6 +42,9 @@ enum ImagePostEngine {
                 return PostImageResource(id:id+"-p\(index)",url:source,width:NativeMediaParser.number(row["width"]),height:NativeMediaParser.number(row["height"]))
             }
             post=ImagePost(url:url,platform:site,contentId:id,title:(dynamic["desc"] as? [String:Any])?["text"] as? String ?? (opus["summary"] as? [String:Any])?["text"] as? String ?? "B站动态 \(id)",author:(modules["module_author"] as? [String:Any])?["name"] as? String ?? "",resources:resources)
+        }else if site=="微博"{
+            let result=try await WeiboExtractor.fetch(url)
+            guard let images=try NativeMediaParser.parse(result,url:url).1 else{throw OmniPlatform.error("NO_MEDIA","该微博没有可导出的图片")};post=images
         }else if site=="X (Twitter)"{
             let result=try await xPost(url)
             guard let images=try NativeMediaParser.parse(result,url:url).1 else{throw OmniPlatform.error("NO_MEDIA","该帖子没有可导出的原图")};post=images
@@ -53,8 +56,7 @@ enum ImagePostEngine {
         let id=OmniPlatform.identifier(url)
         guard id.range(of:#"^\d{8,24}$"#,options:.regularExpression) != nil else{throw OmniPlatform.error("MEDIA_ID_MISMATCH","需要目标 X 帖子")}
         let token=JSContext()?.evaluateScript("((Number('\(id)')/1e15)*Math.PI).toString(36).replace(/(0+|\\.)/g,'')").toString() ?? ""
-        let item=try await json("https://cdn.syndication.twimg.com/tweet-result?id=\(id)&lang=en&token=\(token)",site:"X (Twitter)")
-        guard item["id_str"] as? String==id else{throw OmniPlatform.error("MEDIA_ID_MISMATCH","X 未返回目标帖子")}
+        let item=try await XPublicResponse.confirmed(id:id){_ in try await json("https://cdn.syndication.twimg.com/tweet-result?id=\(id)&lang=en&token=\(token)",site:"X (Twitter)")}
         let details=item["mediaDetails"] as? [[String:Any]] ?? []
         var media:[[String:Any]]=[],images:[[String:Any]]=[]
         for entry in details{

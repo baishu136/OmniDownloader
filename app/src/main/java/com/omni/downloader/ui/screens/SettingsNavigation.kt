@@ -1,6 +1,7 @@
 package com.omni.downloader.ui.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.outlined.Gif
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -41,7 +43,7 @@ internal enum class SettingsPage {
     }
 
     fun summary(s: AppStrings): String = when (this) {
-        GIF -> "管理 GIF · 本地视频转 GIF"
+        GIF -> s.settingsGifSummary
         APPEARANCE -> s.settingsAppearanceSummary
         DOWNLOADS -> s.settingsDownloadsSummary
         NETWORK -> s.settingsNetworkSummary
@@ -69,6 +71,8 @@ internal enum class SettingsPage {
 internal fun SettingsToolbar(page: SettingsPage, actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {}, onBack: () -> Unit) {
     val strings = LocalAppStrings.current
     TopAppBar(
+        // The global palette already animates. A second container tween would trail every frame.
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
         title = { Text(page.title(strings), maxLines = 1, overflow = TextOverflow.Ellipsis) },
         navigationIcon = {
             if (page != SettingsPage.ROOT) IconButton(onClick = onBack) {
@@ -77,7 +81,10 @@ internal fun SettingsToolbar(page: SettingsPage, actions: @Composable androidx.c
         },
         actions = actions,
         windowInsets = WindowInsets(0, 0, 0, 0),
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            scrolledContainerColor = Color.Transparent
+        )
     )
 }
 

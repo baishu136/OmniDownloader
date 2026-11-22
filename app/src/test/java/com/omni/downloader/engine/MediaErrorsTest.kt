@@ -61,6 +61,13 @@ class MediaErrorsTest {
     }
 
     @Test
+    fun missingBrowserNetworkComponentIsAnEngineRestriction() {
+        assertEquals(MediaErrorCode.ENGINE_UNAVAILABLE, MediaErrors.classify(
+            "The extractor is attempting impersonation, but none of these impersonate targets are available: firefox."
+        ))
+    }
+
+    @Test
     fun describeIncludesStableCodeAndRedactsSecrets() {
         val message = MediaErrors.describe(
             MediaErrorCode.NETWORK_ERROR,

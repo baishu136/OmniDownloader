@@ -1,0 +1,71 @@
+{
+  "version": "1.6.0",
+  "androidVersionCode": 58,
+  "androidJvmTestsPassed": 66,
+  "androidInstrumentationTestsPassed": 3,
+  "androidInstrumentationEnvironment": "API35 x86_64 emulator",
+  "windowsPytestPassed": 22,
+  "packagedSmoke": [
+    {
+      "kind": "desktop",
+      "runtime": {
+        "python": "3.12.11",
+        "ytDlp": "2026.10.26",
+        "ejs": "0.8.0",
+        "ffmpegAvailable": true,
+        "denoAvailable": true
+      },
+      "tasks": [
+        {
+          "id": "2868f4d1",
+          "status": "COMPLETED",
+          "downloadType": "AUDIO_ONLY"
+        },
+        {
+          "id": "eb704140",
+          "status": "COMPLETED",
+          "downloadType": "VIDEO_ONLY"
+        },
+        {
+          "id": "376b261b",
+          "status": "COMPLETED",
+          "downloadType": "VIDEO_WITH_AUDIO"
+        }
+      ]
+    },
+    {
+      "kind": "web",
+      "runtime": {
+        "python": "3.12.11",
+        "ytDlp": "2026.10.26",
+        "ejs": "0.8.0",
+        "ffmpegAvailable": true,
+        "denoAvailable": true
+      },
+      "tasks": [
+        {
+          "id": "51fc622d",
+          "status": "COMPLETED",
+          "downloadType": "AUDIO_ONLY"
+        },
+        {
+          "id": "544b52b1",
+          "status": "COMPLETED",
+          "downloadType": "VIDEO_ONLY"
+        },
+        {
+          "id": "f9662a03",
+          "status": "COMPLETED",
+          "downloadType": "VIDEO_WITH_AUDIO"
+        }
+      ]
+    }
+  ],
+  "androidReleaseAbis": [
+    "arm64-v8a"
+  ],
+  "realPlatformAccountsVerified": false,
+  "androidPhysicalDeviceVerified": false,
+  "cleanWindowsVerified": false,
+  "published": false
+}

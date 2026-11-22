@@ -35,13 +35,17 @@ object LinkNormalizer {
     const val PLATFORM_PINTEREST = "Pinterest"
     const val PLATFORM_PIXIV = "Pixiv"
     const val PLATFORM_HEYBOX = "小黑盒"
+    const val PLATFORM_WEIBO = "微博"
     const val PLATFORM_GENERIC = "网络视频"
 
     private const val MAX_REDIRECT_HOPS = 5
 
-    private val URL_REGEX = Regex("""https?://[a-zA-Z0-9_\-.]+(?::[0-9]+)?(?:/[^\s]*)?""")
+    private val URL_REGEX = Regex("""https?://[a-zA-Z0-9_\-.]+(?::[0-9]+)?(?:[/?#][^\s]*)?""", RegexOption.IGNORE_CASE)
     private val BV_REGEX = Regex("""[Bb][Vv][0-9A-Za-z]{8,}""")
     private val AV_REGEX = Regex("""(?i)(?<![A-Za-z0-9])av(\d+)""")
+    private val WEIBO_POST_PATH = Regex("""/(?:status|detail|\d+)/([A-Za-z0-9]+)/?""")
+    private val WEIBO_VIDEO_PATH = Regex("""/tv/show/(\d+:(?:[\da-fA-F]{32}|\d{16,}))/?""")
+    private val WEIBO_VIDEO_ID = Regex("""\d+:(?:[\da-fA-F]{32}|\d{16,})""")
 
     data class NormalizedLink(
         val originalInput: String,
@@ -61,7 +65,8 @@ object LinkNormalizer {
     /** 从分享文本中提取第一个 URL；纯 BV/av 输入按 B 站处理。 */
     fun normalize(input: String): NormalizedLink {
         val original = input.trim()
-        val rawUrl = URL_REGEX.find(original)?.value ?: original.substringBefore(' ')
+        val rawUrl = URL_REGEX.find(original)?.value?.trimEnd('。', '，', '！', '；', ')', '）', ']')
+            ?: original.substringBefore(' ')
 
         val bv = BV_REGEX.find(rawUrl)?.value
         if (bv != null && hostOf(rawUrl) == null) {
@@ -119,6 +124,7 @@ object LinkNormalizer {
             hostMatches(host, "facebook.com") || host == "fb.watch" || host == "fb.me" -> PLATFORM_FACEBOOK
             hostMatches(host, "pinterest.com") || host == "pin.it" -> PLATFORM_PINTEREST
             hostMatches(host, "pixiv.net") -> PLATFORM_PIXIV
+            hostMatches(host, "weibo.com") || hostMatches(host, "weibo.cn") -> PLATFORM_WEIBO
             hostMatches(host, "xiaoheihe.cn") || hostMatches(host, "heybox.cn") -> PLATFORM_HEYBOX
             else -> PLATFORM_GENERIC
         }
@@ -132,10 +138,12 @@ object LinkNormalizer {
             hostMatches(host, "v.kuaishou.com") -> true
             hostMatches(host, "xhslink.com") || hostMatches(host, "xhslink.cn") -> true
             hostMatches(host, "vm.tiktok.com") || hostMatches(host, "vt.tiktok.com") -> true
-            host == "pin.it" || host == "fb.watch" || host == "fb.me" || host == "t.co" -> true
+            host == "pin.it" || host == "fb.watch" || host == "fb.me" || host == "t.co" || host == "t.cn" -> true
             else -> false
         }
     }
+
+    fun isWeiboShortLink(url: String): Boolean = hostOf(url) == "t.cn"
 
     /** 合集/播放列表判断：决定是否允许 yt-dlp 展开 entries。 */
     fun isCollectionUrl(url: String, platform: String = platformOf(url)): Boolean {
@@ -190,6 +198,7 @@ object LinkNormalizer {
             PLATFORM_INSTAGRAM -> Regex("/(?:p|reel|tv)/([^/]+)").find(path)?.groupValues?.get(1)
             PLATFORM_PINTEREST -> Regex("/pin/(?:[^/]+--)?(\\d+)").find(path)?.groupValues?.get(1)
             PLATFORM_PIXIV -> Regex("/artworks/(\\d+)").find(path)?.groupValues?.get(1)
+            PLATFORM_WEIBO -> weiboContentId(uri)
             PLATFORM_HEYBOX -> Regex("/(?:a|app/bbs/link)/([0-9a-zA-Z]+)").find(path)?.groupValues?.get(1)
                 ?: query["link_id"]
             else -> null
@@ -208,6 +217,7 @@ object LinkNormalizer {
         maxHops: Int = MAX_REDIRECT_HOPS
     ): RedirectResult = withContext(Dispatchers.IO) {
         var current = startUrl
+        val restrictToWeibo = isWeiboShortLink(startUrl)
         var hops = 0
 
         classifyPage(current)?.let { return@withContext it }
@@ -245,6 +255,9 @@ object LinkNormalizer {
             when (result) {
                 is HopResult.Redirect -> {
                     current = result.url
+                    if (restrictToWeibo && !isWeiboShortLink(current) && platformOf(current) != PLATFORM_WEIBO) {
+                        return@withContext RedirectResult.Unavailable(startUrl, null)
+                    }
                     hops++
                     classifyPage(current)?.let { return@withContext it }
                 }
@@ -344,6 +357,15 @@ object LinkNormalizer {
             platform == PLATFORM_TIKTOK && host != "www.tiktok.com" && host.endsWith(".tiktok.com") ->
                 rebuild(uri, "www.tiktok.com", path, query)
 
+            platform == PLATFORM_WEIBO -> {
+                val id = weiboContentId(uri)
+                when {
+                    id == null -> url
+                    WEIBO_VIDEO_ID.matches(id) -> "https://weibo.com/tv/show/$id"
+                    else -> "https://m.weibo.cn/detail/$id"
+                }
+            }
+
             // 小黑盒 App 分享 API 转成可访问的网页分享页
             platform == PLATFORM_HEYBOX && host == "api.xiaoheihe.cn" &&
                 path.contains("/web/share") -> {
@@ -370,7 +392,7 @@ object LinkNormalizer {
             PLATFORM_DOUYIN -> setOf("modal_id", "mix_id", "item_ids", "aweme_id", "video_id", "collection_id", "region")
             PLATFORM_KUAISHOU -> setOf("photoid", "fid", "sharetoken")
             PLATFORM_X, PLATFORM_TIKTOK, PLATFORM_INSTAGRAM,
-            PLATFORM_FACEBOOK, PLATFORM_PINTEREST, PLATFORM_PIXIV -> emptySet()
+            PLATFORM_FACEBOOK, PLATFORM_PINTEREST, PLATFORM_PIXIV, PLATFORM_WEIBO -> emptySet()
             else -> null
         }
 
@@ -382,6 +404,15 @@ object LinkNormalizer {
         }
         val newQuery = kept.joinToString("&").takeIf { it.isNotBlank() }
         return rebuild(uri, uri.host, uri.rawPath.orEmpty(), newQuery)
+    }
+
+    private fun weiboContentId(uri: URI): String? {
+        if (uri.rawUserInfo != null || uri.port !in setOf(-1, 443, 80)) return null
+        return WEIBO_POST_PATH.matchEntire(uri.path.orEmpty())?.groupValues?.get(1)
+            ?: WEIBO_VIDEO_PATH.matchEntire(uri.path.orEmpty())?.groupValues?.get(1)
+            ?: if (uri.host.equals("video.weibo.com", true) && uri.path.trimEnd('/') == "/show") {
+                parseQuery(uri.rawQuery)["fid"]?.replace("%3A", ":", ignoreCase = true)?.takeIf(WEIBO_VIDEO_ID::matches)
+            } else null
     }
 
     private fun rebuild(uri: URI, host: String?, path: String, query: String?): String {

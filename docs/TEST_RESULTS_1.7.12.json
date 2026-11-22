@@ -1,0 +1,67 @@
+{
+  "scope": "Android native X public HLS companion-audio preservation",
+  "version": "1.7.12",
+  "jvm": {
+    "passed": 120,
+    "failed": 0
+  },
+  "nativeRegressions": {
+    "passed": 2,
+    "failed": 0
+  },
+  "device": "API35 x86_64 read-only emulator",
+  "baseline": {
+    "success": false,
+    "route": "live-native-public-snapshot",
+    "mediaId": "2118242027599269888",
+    "selectedFormatId": "hls-771",
+    "selectedWidth": 720,
+    "selectedHeight": 1280,
+    "audioFormats": 0,
+    "errorCode": "QUALITY_UNAVAILABLE",
+    "error": "[QUALITY_UNAVAILABLE] 所选清晰度当前不可用 (ERROR: [TwitterPublicNative] 2118242027599269888: Requested format is not available. Use --list-formats for a list of available formats)"
+  },
+  "liveAcceptance": {
+    "success": true,
+    "route": "live-native-public-snapshot",
+    "mediaId": "2118242027599269888",
+    "selectedFormatId": "hls-771",
+    "selectedWidth": 720,
+    "selectedHeight": 1280,
+    "audioFormats": 3,
+    "actualWidth": 720,
+    "actualHeight": 1280,
+    "durationMs": 9497,
+    "hasAudio": true,
+    "bytes": 922756
+  },
+  "liveNativeTestsPassed": 1,
+  "realFirstPartyAndCdnUsed": true,
+  "metadataReplayUsed": false,
+  "realUserCredentialsUsed": false,
+  "sameSelectedFormatBeforeAndAfter": true,
+  "testFilesAndTemporaryProxyCleaned": true,
+  "earlierTestIssues": [
+    "Initial assertion compared root-post ID with video-qualified ID; corrected test comparison and reproduced the reported failure.",
+    "First post-fix live attempt did not enumerate HLS under transient network conditions; next live attempt completed without further production changes."
+  ],
+  "artifact": {
+    "version": "1.7.12",
+    "versionCode": 71,
+    "path": "release/1.7.12/OmniDownloader-1.7.12-arm64-v8a.apk",
+    "bytes": 59501247,
+    "sha256": "783dd1579ed84bb9261c4e08d0dab9a95663b2b5f4d7d2122b3eca973a01c5ab",
+    "abi": [
+      "arm64-v8a"
+    ],
+    "archiveCrc": "passed",
+    "pythonAssetUnchangedFrom1_7_11": true,
+    "v2SignatureAndPriorSignerMatch": true,
+    "frozenBuildInputs": 183,
+    "inputsUnchanged": true,
+    "r8AndLintVital": "passed"
+  },
+  "physicalDeviceTested": false,
+  "windowsIosSharedPythonModifiedThisTask": false,
+  "publiclyPublished": false
+}

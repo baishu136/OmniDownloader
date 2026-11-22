@@ -53,29 +53,29 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
         try {
             val value = (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
                 .primaryClip?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty()
-            require(value.isNotBlank()) { "剪贴板为空" }
-            require(value.length <= 100_000) { "文本过长，请分批添加" }
+            require(value.isNotBlank()) { strings.clipboardEmpty }
+            require(value.length <= 100_000) { strings.batchTextTooLong }
             setText(value)
             add(value)
-        } catch (failure: Exception) { inputError = failure.message ?: "无法读取剪贴板" }
+        } catch (failure: Exception) { inputError = failure.message ?: strings.clipboardReadFailed }
     }
-    if (confirmClear) AlertDialog(onDismissRequest = { confirmClear = false }, title = { Text("清空已填链接？") },
-        text = { Text("对应解析结果会清除，已入队的下载任务会继续。") },
-        confirmButton = { TextButton(onClick = { controller.clearInput(); confirmClear = false }) { Text("清空输入") } },
-        dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("取消") } })
-    if (confirmHistory) AlertDialog(onDismissRequest = { confirmHistory = false }, title = { Text("清空批次处理记录？") },
-        text = { Text("已填链接和下载任务会保留，正在下载的任务不受影响。") },
-        confirmButton = { TextButton(enabled = !running, modifier = Modifier.testTag("batch_confirm_clear_history"), onClick = { controller.clearHistory(); confirmHistory = false }) { Text("清空记录") } },
-        dismissButton = { TextButton(onClick = { confirmHistory = false }) { Text("取消") } })
+    if (confirmClear) AlertDialog(onDismissRequest = { confirmClear = false }, title = { Text(strings.batchClearLinksTitle) },
+        text = { Text(strings.batchClearLinksMessage) },
+        confirmButton = { TextButton(onClick = { controller.clearInput(); confirmClear = false }) { Text(strings.batchClearInput) } },
+        dismissButton = { TextButton(onClick = { confirmClear = false }) { Text(strings.cancel) } })
+    if (confirmHistory) AlertDialog(onDismissRequest = { confirmHistory = false }, title = { Text(strings.batchClearHistoryTitle) },
+        text = { Text(strings.batchClearHistoryMessage) },
+        confirmButton = { TextButton(enabled = !running, modifier = Modifier.testTag("batch_confirm_clear_history"), onClick = { controller.clearHistory(); confirmHistory = false }) { Text(strings.batchClearHistory) } },
+        dismissButton = { TextButton(onClick = { confirmHistory = false }) { Text(strings.cancel) } })
     LazyColumn(Modifier.fillMaxSize().testTag("batch_screen"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            Text("批量下载", style = MaterialTheme.typography.headlineMedium)
+            Text(strings.batchTitle, style = MaterialTheme.typography.headlineMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = !draft.batchManual, onClick = { drafts.update { it.copy(batchManual = false) } }, label = { Text("智能识别") }, enabled = ready, modifier = Modifier.testTag("batch_smart_mode"))
-                FilterChip(selected = draft.batchManual, onClick = { drafts.update { it.copy(batchManual = true) } }, label = { Text("逐条添加") }, enabled = ready, modifier = Modifier.testTag("batch_manual_mode"))
+                FilterChip(selected = !draft.batchManual, onClick = { drafts.update { it.copy(batchManual = false) } }, label = { Text(strings.batchSmartMode) }, enabled = ready, modifier = Modifier.testTag("batch_smart_mode"))
+                FilterChip(selected = draft.batchManual, onClick = { drafts.update { it.copy(batchManual = true) } }, label = { Text(strings.batchManualMode) }, enabled = ready, modifier = Modifier.testTag("batch_manual_mode"))
             }
             OutlinedTextField(value = text, onValueChange = ::setText, enabled = ready,
-                label = { Text(if (draft.batchManual) "填入一条链接或单条分享文本" else "粘贴多条链接或完整分享文本") },
+                label = { Text(if (draft.batchManual) strings.batchInputManual else strings.batchInputSmart) },
                 trailingIcon = {
                     if (text.isNotEmpty()) IconButton(onClick = { setText(""); inputError = null }, enabled = ready,
                         modifier = Modifier.testTag("batch_clear_icon")) {
@@ -86,38 +86,40 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
                 },
                 modifier = Modifier.fillMaxWidth().testTag("batch_input"), minLines = if (draft.batchManual) 1 else 3, maxLines = if (draft.batchManual) 2 else 5)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = ::pasteAndAdd, enabled = ready, modifier = Modifier.testTag("batch_paste")) { Text("粘贴剪贴板") }
-                FilledTonalButton(shape = MaterialTheme.shapes.medium, onClick = { add() }, enabled = ready && text.isNotBlank(), modifier = Modifier.testTag("batch_add")) { Text(if (draft.batchManual) "添加链接" else "识别并添加") }
+                TextButton(onClick = ::pasteAndAdd, enabled = ready, modifier = Modifier.testTag("batch_paste")) { Text(strings.pasteClipboard) }
+                FilledTonalButton(shape = MaterialTheme.shapes.medium, onClick = { add() }, enabled = ready && text.isNotBlank(), modifier = Modifier.testTag("batch_add")) { Text(if (draft.batchManual) strings.batchAddLink else strings.batchRecognizeAdd) }
             }
             inputError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                BatchChoice(draft.batchOptions.type.label, ready && !running) { close ->
+                BatchChoice(downloadTypeLabel(draft.batchOptions.type), ready && !running) { close ->
                     listOf(DownloadType.VIDEO_WITH_AUDIO, DownloadType.VIDEO_ONLY, DownloadType.AUDIO_ONLY, DownloadType.GIF).forEach { value ->
-                        OmniOptionMenuItem(label = value.label, selected = value == draft.batchOptions.type, onClick = { drafts.update { it.copy(batchOptions = it.batchOptions.copy(type = value)) }; close() })
+                        OmniOptionMenuItem(label = downloadTypeLabel(value), selected = value == draft.batchOptions.type, onClick = { drafts.update { it.copy(batchOptions = it.batchOptions.copy(type = value)) }; close() })
                     }
                 }
                 if (draft.batchOptions.type == DownloadType.AUDIO_ONLY) BatchChoice(draft.batchOptions.audio.ext.uppercase(), ready && !running) { close ->
                     AudioFormat.entries.forEach { value -> OmniOptionMenuItem(label = value.ext.uppercase(), selected = value == draft.batchOptions.audio, onClick = { drafts.update { it.copy(batchOptions = it.batchOptions.copy(audio = value)) }; close() }) }
                 }
             }
-            Row { Checkbox(modifier = Modifier.testTag("batch_all_episodes"), checked = draft.batchOptions.allEpisodes, onCheckedChange = { value -> drafts.update { it.copy(batchOptions = it.batchOptions.copy(allEpisodes = value)) } }, enabled = ready && !running); Text("下载合集 / 多视频的全部分集", Modifier.padding(top = 12.dp)) }
+            Row { Checkbox(modifier = Modifier.testTag("batch_all_episodes"), checked = draft.batchOptions.allEpisodes, onCheckedChange = { value -> drafts.update { it.copy(batchOptions = it.batchOptions.copy(allEpisodes = value)) } }, enabled = ready && !running); Text(strings.batchAllEpisodes, Modifier.padding(top = 12.dp)) }
         }
         item {
-            Button(shape = MaterialTheme.shapes.medium, onClick = { add()?.let { controller.start(it.joinToString("\n"), drafts.draft.value.batchOptions, preservePending = true) } }, enabled = ready && !running && (text.isNotBlank() || draft.batchLinks.isNotEmpty()), modifier = Modifier.fillMaxWidth().testTag("batch_start")) { Text("解析并加入下载队列") }
-            if (running) { LinearProgressIndicator(Modifier.fillMaxWidth()); TextButton(onClick = controller::cancel) { Text("停止添加（已入队任务继续下载）") } }
+            Button(shape = MaterialTheme.shapes.medium, onClick = { add()?.let { controller.start(it.joinToString("\n"), drafts.draft.value.batchOptions, preservePending = true) } }, enabled = ready && !running && (text.isNotBlank() || draft.batchLinks.isNotEmpty()), modifier = Modifier.fillMaxWidth().testTag("batch_start")) { Text(strings.batchStart) }
+            if (running) { LinearProgressIndicator(Modifier.fillMaxWidth()); TextButton(onClick = controller::cancel) { Text(strings.batchStopAdding) } }
             if (!running && plan.items.any { !it.inputRetired && it.status != BatchStatus.QUEUED }) {
-                TextButton(onClick = controller::retry) { Text("继续 / 重试未入队条目") }
+                TextButton(onClick = controller::retry) { Text(strings.batchRetryPending) }
             }
             (error ?: draftError)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            Text("已入队 ${plan.items.count { it.status == BatchStatus.QUEUED }} / ${plan.items.size} 条链接 · ${plan.items.sumOf { it.taskIds.size }} 个任务")
-            TextButton(onClick = onTasks) { Text("查看下载任务") }
+            Text(strings.batchProgressSummary.format(
+                plan.items.count { it.status == BatchStatus.QUEUED }, plan.items.size,
+                plan.items.sumOf { it.taskIds.size }))
+            TextButton(onClick = onTasks) { Text(strings.batchViewTasks) }
         }
         item {
             Row {
-                Text("已填链接 ${draft.batchLinks.size} / 100", Modifier.weight(1f).padding(top = 12.dp), style = MaterialTheme.typography.titleSmall)
-                TextButton(onClick = { confirmClear = true }, enabled = ready && (draft.batchLinks.isNotEmpty() || text.isNotBlank())) { Text("清空输入") }
+                Text(strings.batchFilledCount.format(draft.batchLinks.size), Modifier.weight(1f).padding(top = 12.dp), style = MaterialTheme.typography.titleSmall)
+                TextButton(onClick = { confirmClear = true }, enabled = ready && (draft.batchLinks.isNotEmpty() || text.isNotBlank())) { Text(strings.batchClearInput) }
             }
         }
         items(draft.batchLinks, key = { "draft:$it" }) { url ->
@@ -125,26 +127,40 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
                 Column(Modifier.weight(1f)) {
                     Text(url, maxLines = 3)
                     val preparation = preparations[url]
-                    val note = if (url in draft.batchTasks && preparation == null) "已加入下载队列" else preparation?.note
+                    val note = if (url in draft.batchTasks && preparation == null) strings.batchAddedToQueue else preparation?.note
                     note?.let { Text(it, style = MaterialTheme.typography.bodySmall,
                         color = if (preparation?.status == BatchPreparationStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
-                TextButton(onClick = { controller.removeLink(url) }) { Text("移除") }
+                TextButton(onClick = { controller.removeLink(url) }) { Text(strings.batchRemove) }
             } }
         }
         if (plan.items.isNotEmpty()) item {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Text("批次处理记录", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-                TextButton(enabled = !running, onClick = { confirmHistory = true }, modifier = Modifier.testTag("batch_clear_history")) { Text("清空记录") }
+                Text(strings.batchHistoryTitle, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                TextButton(enabled = !running, onClick = { confirmHistory = true }, modifier = Modifier.testTag("batch_clear_history")) { Text(strings.batchClearHistory) }
             }
         }
         items(plan.items, key = { it.id }) { item ->
             OutlinedCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
                 Text(item.url, maxLines = 2)
-                Text(item.note.ifBlank { "等待处理" }, color = if (item.status == BatchStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
-                if (!running && item.status == BatchStatus.FAILED) TextButton(onClick = { onSingle(); viewModel.updateInputUrl(item.url); viewModel.startAnalyze() }) { Text("单独解析 / 验证") }
+                Text(item.note.ifBlank { strings.batchWaiting }, color = if (item.status == BatchStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                if (!running && item.status == BatchStatus.FAILED) TextButton(onClick = { onSingle(); viewModel.updateInputUrl(item.url); viewModel.startAnalyze() }) { Text(strings.batchSingleAnalyze) }
             } }
         }
+    }
+}
+
+/** 下载类型的本地化名称：数据层的 label 仅作为中文兜底，界面统一走 AppStrings。 */
+@Composable private fun downloadTypeLabel(type: DownloadType): String {
+    val s = LocalAppStrings.current
+    return when (type) {
+        DownloadType.VIDEO_WITH_AUDIO -> s.typeVideo
+        DownloadType.VIDEO_ONLY -> s.tabMute
+        DownloadType.AUDIO_ONLY -> s.typeAudio
+        DownloadType.GIF -> s.badgeGif
+        DownloadType.COVER -> s.typeCover
+        DownloadType.IMAGE -> s.imageOriginal
+        DownloadType.IMAGE_ZIP -> s.imageZip
     }
 }
 

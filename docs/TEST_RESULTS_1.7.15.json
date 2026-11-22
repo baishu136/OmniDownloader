@@ -1,0 +1,1462 @@
+{
+  "version": "1.7.15",
+  "versionCode": 74,
+  "physicalDevice": {
+    "model": "V2352A",
+    "androidApi": 35,
+    "accountsPreserved": true,
+    "savedProxyChanged": false,
+    "downloadQueueChanged": false
+  },
+  "jvm": {
+    "passed": 137,
+    "failed": 0
+  },
+  "python": {
+    "passed": 36,
+    "failed": 0,
+    "existingDeprecationWarnings": 3
+  },
+  "platformChecks": {
+    "appSamples": 24,
+    "platforms": 12,
+    "successfulAppParses": 20,
+    "imagePlatforms": 7,
+    "rows": [
+      {
+        "caseId": "bilibili_single.primary",
+        "platform": "哔哩哔哩",
+        "expectedKind": "VIDEO",
+        "success": true,
+        "hasSession": false,
+        "network": "phone-direct",
+        "mediaId": "BV13Kxj6eEct:43121640016",
+        "children": 0,
+        "kind": "VIDEO",
+        "videoFormats": 12,
+        "formatSizes": [
+          [
+            882,
+            1920
+          ],
+          [
+            882,
+            1920
+          ],
+          [
+            882,
+            1920
+          ],
+          [
+            588,
+            1280
+          ],
+          [
+            588,
+            1280
+          ],
+          [
+            588,
+            1280
+          ],
+          [
+            392,
+            854
+          ],
+          [
+            392,
+            854
+          ],
+          [
+            392,
+            854
+          ],
+          [
+            294,
+            640
+          ],
+          [
+            294,
+            640
+          ],
+          [
+            294,
+            640
+          ]
+        ],
+        "maxSize": [
+          882,
+          1920
+        ],
+        "dimensionCheck": "UPSTREAM_METADATA_ONLY",
+        "elapsedMs": 1395
+      },
+      {
+        "caseId": "bilibili_collection.primary",
+        "platform": "哔哩哔哩",
+        "expectedKind": "COLLECTION",
+        "success": true,
+        "hasSession": false,
+        "network": "phone-direct",
+        "mediaId": "BV15fLbz8EXK:29571351146",
+        "children": 159,
+        "kind": "VIDEO",
+        "videoFormats": 12,
+        "formatSizes": [
+          [
+            1920,
+            1080
+          ],
+          [
+            1920,
+            1080
+          ],
+          [
+            1920,
+            1080
+          ],
+          [
+            1280,
+            720
+          ],
+          [
+            1280,
+            720
+          ],
+          [
+            1280,
+            720
+          ],
+          [
+            852,
+            480
+          ],
+          [
+            852,
+            480
+          ],
+          [
+            852,
+            480
+          ],
+          [
+            640,
+            360
+          ],
+          [
+            640,
+            360
+          ],
+          [
+            640,
+            360
+          ]
+        ],
+        "maxSize": [
+          1920,
+          1080
+        ],
+        "dimensionCheck": "UPSTREAM_METADATA_ONLY",
+        "elapsedMs": 1691
+      },
+      {
+        "caseId": "douyin_video.primary",
+        "platform": "抖音",
+        "expectedKind": "VIDEO",
+        "success": false,
+        "hasSession": true,
+        "network": "phone-direct",
+        "errorCode": "BROWSER_ASSIST_REQUIRED",
+        "error": "[BROWSER_ASSIST_REQUIRED] 抖音分享页仅返回作品ID，未提供目标详情；请在内置浏览器完成验证并打开目标作品后提取",
+        "elapsedMs": 3844
+      },
+      {
+        "caseId": "douyin_video.backup",
+        "platform": "抖音",
+        "expectedKind": "VIDEO",
+        "success": true,
+        "hasSession": true,
+        "network": "phone-direct",
+        "mediaId": "7677481047214394664",
+        "children": 0,
+        "kind": "VIDEO",
+        "videoFormats": 1,
+        "formatSizes": [
+          [
+            3840,
+            2160
+          ]
+        ],
+        "maxSize": [
+          3840,
+          2160
+        ],
+        "actualSampleSize": [
+          1280,
+          720
+        ],
+        "dimensionCheck": "MISMATCH",
+        "elapsedMs": 5077
+      },
+      {
+        "caseId": "kuaishou_video.primary",
+        "platform": "快手",
+        "expectedKind": "VIDEO",
+        "success": true,
+        "hasSession": true,
+        "network": "phone-direct",
+        "mediaId": "3x7drpm369pyk2i",
+        "children": 0,
+        "kind": "VIDEO",
+        "videoFormats": 4,
+        "formatSizes": [
+          [
+            960,
+            720
+          ],
+          [
+            960,
+            720
+          ],
+          [
+            960,
+            720
+          ],
+          [
+            960,
+            720
+          ]
+        ],
+        "maxSize": [
+          960,
+          720
+        ],
+        "actualSampleSize": [
+          960,
+          720
+        ],
+        "dimensionCheck": "MATCH",
+        "elapsedMs": 1831
+      },
+      {
+        "caseId": "xhs_video.primary",
+        "platform": "小红书",
+        "expectedKind": "VIDEO",
+        "success": true,
+        "hasSession": true,
+        "network": "phone-direct",
+        "mediaId": "6ab8bf110000000013019e4e",
+        "children": 0,
+        "kind": "VIDEO",
+        "videoFormats": 4,
+        "formatSizes": [
+          [
+            1280,
+            720
+          ],
+          [
+            1280,
+            720
+          ],
+          [
+            1280,
+            720
+          ],
+          [
+            1280,
+            720
+          ]
+        ],
+        "maxSize": [
+          1280,
+          720
+        ],
+        "actualSampleSize": [
+          1280,
+          720
+        ],
+        "dimensionCheck": "MATCH",
+        "elapsedMs": 2364
+      },
+      {
+        "caseId": "youtube_video.primary",
+        "platform": "YouTube",
+        "expectedKind": "VIDEO",
+        "success": false,
+        "errorCode": "TIMEOUT_170S"
+      },
+      {
+        "caseId": "youtube_video.backup",
+        "platform": "YouTube",
+        "expectedKind": "VIDEO",
+        "success": true,
+        "hasSession": true,
+        "network": "explicit-test-proxy",
+        "mediaId": "KLuTLF3x9sA",
+        "children": 0,
+        "kind": "VIDEO",
+        "videoFormats": 33,
+        "formatSizes": [
+          [
+            3840,
+            2160
+          ],
+          [
+            3840,
+            2160
+          ],
+          [
+            2560,
+            1440
+          ],
+          [
+            2560,
+            1440
+          ],
+          [
+            1920,
+            1080
+          ],
+          [
+            1920,
+            1080
+          ],
+          [
+            1920,
+            1080
+          ],
+          [
+            1920,
+            1080
+          ],
+          [
+            1280,
+            720
+          ],
+          [
+            1280,
+            720
+          ],
+          [
+            1280,
+            720
+          ],
+          [
+            1280,
+            720
+          ],
+          [
+            854,
+            480
+          ],
+          [
+            854,
+            480
+          ],
+          [
+            854,
+            480
+          ],
+          [
+            854,
+            480
+          ],
+          [
+            640,
+            360
+          ],
+          [
+            640,
+            360
+          ],
+          [
+            640,
+            360
+          ],
+          [
+            640,
+            360
+          ],
+          [
+            640,
+            360
+          ],
+          [
+            426,
+            240
+          ],
+          [
+            426,
+            240
+          ],
+          [
+            426,
+            240
+          ],
+          [
+            426,
+            240
+          ],
+          [
+            320,
+            180
+          ],
+          [
+            256,
+            144
+          ],
+          [
+            256,
+            144
+          ],
+          [
+            256,
+            144
+          ],
+          [
+            256,
+            144
+          ],
+          [
+            160,
+            90
+          ],
+          [
+            80,
+            45
+          ],
+          [
+            48,
+            27
+          ]
+        ],
+        "maxSize": [
+          3840,
+          2160
+        ],
+        "dimensionCheck": "RESOURCE_NOT_VERIFIED",
+        "elapsedMs": 23086
+      },
+      {
+        "caseId": "tiktok_video.primary",
+        "platform": "TikTok",
+        "expectedKind": "VIDEO",
+        "success": true,
+        "hasSession": false,
+        "network": "explicit-test-proxy",
+        "mediaId": "7686525106071375137",
+        "children": 0,
+        "kind": "VIDEO",
+        "videoFormats": 10,
+        "formatSizes": [
+          [
+            1920,
+            1080
+          ],
+          [
+            1920,
+            1080
+          ],
+          [
+            1280,
+            720
+          ],
+          [
+            1280,
+            720
+          ],
+          [
+            1024,
+            576
+          ],
+          [
+            1024,
+            576
+          ],
+          [
+            1024,
+            576
+          ],
+          [
+            1024,
+            576
+          ],
+          [
+            1024,
+            576
+          ],
+          [
+            1024,
+            576
+          ]
+        ],
+        "maxSize": [
+          1920,
+          1080
+        ],
+        "dimensionCheck": "RESOURCE_NOT_VERIFIED",
+        "elapsedMs": 37861
+      },
+      {
+        "caseId": "x_video.primary",
+        "platform": "X (Twitter)",
+        "expectedKind": "VIDEO",
+        "success": true,
+        "hasSession": true,
+        "network": "explicit-test-proxy",
+        "mediaId": "2118242027599269888",
+        "children": 0,
+        "kind": "VIDEO",
+        "videoFormats": 6,
+        "formatSizes": [
+          [
+            720,
+            1280
+          ],
+          [
+            720,
+            1280
+          ],
+          [
+            480,
+            852
+          ],
+          [
+            480,
+            852
+          ],
+          [
+            320,
+            568
+          ],
+          [
+            320,
+            568
+          ]
+        ],
+        "maxSize": [
+          720,
+          1280
+        ],
+        "dimensionCheck": "RESOURCE_NOT_VERIFIED",
+        "elapsedMs": 9215
+      },
+      {
+        "caseId": "x_gif.primary",
+        "platform": "X (Twitter)",
+        "expectedKind": "ANIMATED_VIDEO",
+        "success": true,
+        "hasSession": true,
+        "network": "explicit-test-proxy",
+        "mediaId": "2115433467320365056",
+        "children": 0,
+        "kind": "VIDEO",
+        "videoFormats": 1,
+        "formatSizes": [
+          [
+            0,
+            0
+          ]
+        ],
+        "maxSize": [
+          0,
+          0
+        ],
+        "dimensionCheck": "RESOURCE_NOT_VERIFIED",
+        "elapsedMs": 13905
+      },
+      {
+        "caseId": "instagram_video.primary",
+        "platform": "Instagram",
+        "expectedKind": "VIDEO",
+        "success": true,
+        "hasSession": false,
+        "network": "explicit-test-proxy",
+        "mediaId": "De6bAhVSY7J",
+        "children": 0,
+        "kind": "VIDEO",
+        "videoFormats": 8,
+        "formatSizes": [
+          [
+            1080,
+            1920
+          ],
+          [
+            720,
+            1280
+          ],
+          [
+            720,
+            1280
+          ],
+          [
+            720,
+            1280
+          ],
+          [
+            720,
+            1280
+          ],
+          [
+            720,
+            1280
+          ],
+          [
+            720,
+            1280
+          ],
+          [
+            720,
+            1280
+          ]
+        ],
+        "maxSize": [
+          1080,
+          1920
+        ],
+        "dimensionCheck": "RESOURCE_NOT_VERIFIED",
+        "elapsedMs": 18384
+      },
+      {
+        "caseId": "facebook_video.primary",
+        "platform": "Facebook",
+        "expectedKind": "VIDEO",
+        "success": true,
+        "hasSession": false,
+        "network": "explicit-test-proxy",
+        "mediaId": "1588355073030909",
+        "children": 0,
+        "kind": "VIDEO",
+        "videoFormats": 7,
+        "formatSizes": [
+          [
+            1080,
+            1920
+          ],
+          [
+            720,
+            1280
+          ],
+          [
+            720,
+            1280
+          ],
+          [
+            720,
+            1280
+          ],
+          [
+            720,
+            1280
+          ],
+          [
+            720,
+            1280
+          ],
+          [
+            360,
+            640
+          ]
+        ],
+        "maxSize": [
+          1080,
+          1920
+        ],
+        "dimensionCheck": "RESOURCE_NOT_VERIFIED",
+        "elapsedMs": 11917
+      },
+      {
+        "caseId": "pinterest_video.primary",
+        "platform": "Pinterest",
+        "expectedKind": "VIDEO",
+        "success": true,
+        "hasSession": false,
+        "network": "explicit-test-proxy",
+        "mediaId": "682295412345910430",
+        "children": 0,
+        "kind": "VIDEO",
+        "videoFormats": 4,
+        "formatSizes": [
+          [
+            720,
+            1280
+          ],
+          [
+            540,
+            960
+          ],
+          [
+            360,
+            640
+          ],
+          [
+            234,
+            416
+          ]
+        ],
+        "maxSize": [
+          720,
+          1280
+        ],
+        "dimensionCheck": "RESOURCE_NOT_VERIFIED",
+        "elapsedMs": 23412
+      },
+      {
+        "caseId": "heybox_video.primary",
+        "platform": "小黑盒",
+        "expectedKind": "VIDEO",
+        "success": false,
+        "hasSession": true,
+        "network": "phone-direct",
+        "errorCode": "BROWSER_ASSIST_REQUIRED",
+        "error": "[BROWSER_ASSIST_REQUIRED] 请在内置浏览器打开并播放目标内容后捕获媒体 (该分享页未返回公开视频源，请在内置浏览器打开目标帖子并播放以捕获媒体地址)",
+        "elapsedMs": 508
+      },
+      {
+        "caseId": "heybox_video.backup",
+        "platform": "小黑盒",
+        "expectedKind": "VIDEO",
+        "success": false,
+        "hasSession": true,
+        "network": "phone-direct",
+        "errorCode": "BROWSER_ASSIST_REQUIRED",
+        "error": "[BROWSER_ASSIST_REQUIRED] 请在内置浏览器打开并播放目标内容后捕获媒体 (该分享页未返回公开视频源，请在内置浏览器打开目标帖子并播放以捕获媒体地址)",
+        "elapsedMs": 474
+      },
+      {
+        "caseId": "pixiv_ugoira.primary",
+        "platform": "Pixiv",
+        "expectedKind": "UGOIRA",
+        "success": true,
+        "hasSession": true,
+        "network": "explicit-test-proxy",
+        "mediaId": "151591764",
+        "children": 0,
+        "kind": "VIDEO",
+        "videoFormats": 3,
+        "formatSizes": [
+          [
+            320,
+            240
+          ],
+          [
+            320,
+            240
+          ],
+          [
+            320,
+            240
+          ]
+        ],
+        "maxSize": [
+          320,
+          240
+        ],
+        "dimensionCheck": "UPSTREAM_METADATA_ONLY",
+        "elapsedMs": 3360
+      },
+      {
+        "caseId": "douyin_images.primary",
+        "platform": "抖音",
+        "expectedKind": "IMAGE_POST",
+        "success": true,
+        "hasSession": true,
+        "network": "phone-direct",
+        "mediaId": "7567352444847574309",
+        "imageCount": 21,
+        "imageSizes": [
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ]
+        ],
+        "resourceHttp": 200,
+        "actualSampleSize": [
+          1920,
+          1440
+        ],
+        "dimensionCheck": "MATCH",
+        "elapsedMs": 2828
+      },
+      {
+        "caseId": "pixiv_images.primary",
+        "platform": "Pixiv",
+        "expectedKind": "IMAGE_POST",
+        "success": true,
+        "hasSession": true,
+        "network": "explicit-test-proxy",
+        "mediaId": "151610560",
+        "imageCount": 2,
+        "imageSizes": [
+          [
+            600,
+            847
+          ],
+          [
+            600,
+            847
+          ]
+        ],
+        "resourceError": "connection closed",
+        "elapsedMs": 15366
+      },
+      {
+        "caseId": "xhs_images.primary",
+        "platform": "小红书",
+        "expectedKind": "IMAGE_POST",
+        "success": true,
+        "hasSession": true,
+        "network": "phone-direct",
+        "mediaId": "6ad72d210000000031002f47",
+        "imageCount": 7,
+        "imageSizes": [
+          [
+            1320,
+            2868
+          ],
+          [
+            2752,
+            2064
+          ],
+          [
+            2752,
+            2064
+          ],
+          [
+            1320,
+            2868
+          ],
+          [
+            1320,
+            2868
+          ],
+          [
+            1320,
+            2868
+          ],
+          [
+            1320,
+            2868
+          ]
+        ],
+        "resourceHttp": 200,
+        "actualSampleSize": [
+          1080,
+          2347
+        ],
+        "dimensionCheck": "MISMATCH",
+        "elapsedMs": 2503
+      },
+      {
+        "caseId": "x_images.primary",
+        "platform": "X (Twitter)",
+        "expectedKind": "IMAGE_POST",
+        "success": true,
+        "hasSession": true,
+        "network": "explicit-test-proxy",
+        "mediaId": "2117140226422313153",
+        "imageCount": 1,
+        "imageSizes": [
+          [
+            405,
+            382
+          ]
+        ],
+        "resourceError": "connection closed",
+        "elapsedMs": 9863
+      },
+      {
+        "caseId": "pinterest_images.primary",
+        "platform": "Pinterest",
+        "expectedKind": "IMAGE_POST",
+        "success": true,
+        "hasSession": false,
+        "network": "explicit-test-proxy",
+        "mediaId": "871235490435640369",
+        "imageCount": 1,
+        "imageSizes": [
+          [
+            640,
+            640
+          ]
+        ],
+        "resourceError": "connection closed",
+        "elapsedMs": 18534
+      },
+      {
+        "caseId": "reported_ks_images.primary",
+        "platform": "快手",
+        "expectedKind": "IMAGE_POST",
+        "success": true,
+        "hasSession": true,
+        "network": "phone-direct",
+        "mediaId": "3xv5358vvb8eq9k",
+        "imageCount": 10,
+        "imageSizes": [
+          [
+            1080,
+            1372
+          ],
+          [
+            1080,
+            1440
+          ],
+          [
+            1080,
+            1440
+          ],
+          [
+            1080,
+            1440
+          ],
+          [
+            1080,
+            1440
+          ],
+          [
+            1080,
+            1440
+          ],
+          [
+            1080,
+            1440
+          ],
+          [
+            1080,
+            1620
+          ],
+          [
+            1080,
+            1620
+          ],
+          [
+            1080,
+            1434
+          ]
+        ],
+        "resourceHttp": 200,
+        "actualSampleSize": [
+          1080,
+          1372
+        ],
+        "dimensionCheck": "MATCH",
+        "elapsedMs": 2799
+      },
+      {
+        "caseId": "reported_bili_dynamic.primary",
+        "platform": "哔哩哔哩",
+        "expectedKind": "IMAGE_POST",
+        "success": true,
+        "hasSession": false,
+        "network": "phone-direct",
+        "mediaId": "1159422075074510854",
+        "imageCount": 4,
+        "imageSizes": [
+          [
+            476,
+            381
+          ],
+          [
+            375,
+            385
+          ],
+          [
+            375,
+            385
+          ],
+          [
+            375,
+            385
+          ]
+        ],
+        "resourceHttp": 200,
+        "actualSampleSize": [
+          476,
+          381
+        ],
+        "dimensionCheck": "MATCH",
+        "elapsedMs": 2515
+      }
+    ]
+  },
+  "supplementaryDeviceRuntimeChecks": {
+    "scope": "Anonymous bundled runtime; not equivalent to authenticated UI",
+    "rows": [
+      {
+        "caseId": "douyin_images",
+        "route": "phone-bundled-runtime-anonymous",
+        "success": true,
+        "mediaId": "7567352444847574309",
+        "imageCount": 21,
+        "imageSizes": [
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ],
+          [
+            1920,
+            1440
+          ]
+        ],
+        "resourceHttp": 206,
+        "actualSampleSize": [
+          1920,
+          1440
+        ],
+        "dimensionCheck": "MATCH",
+        "elapsedMs": 2874
+      },
+      {
+        "caseId": "pixiv_images",
+        "route": "phone-bundled-runtime-anonymous",
+        "success": true,
+        "mediaId": "151610560",
+        "imageCount": 2,
+        "imageSizes": [
+          [
+            600,
+            847
+          ],
+          [
+            600,
+            847
+          ]
+        ],
+        "resourceHttp": 206,
+        "actualSampleSize": [
+          600,
+          847
+        ],
+        "dimensionCheck": "MATCH",
+        "elapsedMs": 3762
+      },
+      {
+        "caseId": "xhs_images",
+        "route": "phone-bundled-runtime-anonymous",
+        "success": true,
+        "mediaId": "6ad72d210000000031002f47",
+        "imageCount": 7,
+        "imageSizes": [
+          [
+            1080,
+            2347
+          ],
+          [
+            1080,
+            810
+          ],
+          [
+            1080,
+            810
+          ],
+          [
+            1080,
+            2347
+          ],
+          [
+            1080,
+            2347
+          ],
+          [
+            1080,
+            2347
+          ],
+          [
+            1080,
+            2347
+          ]
+        ],
+        "resourceHttp": 206,
+        "actualSampleSize": [
+          1080,
+          2347
+        ],
+        "dimensionCheck": "MATCH",
+        "elapsedMs": 2698
+      },
+      {
+        "caseId": "x_images",
+        "route": "phone-bundled-runtime-anonymous",
+        "success": true,
+        "mediaId": "2117140226422313153",
+        "imageCount": 1,
+        "imageSizes": [
+          [
+            405,
+            382
+          ]
+        ],
+        "resourceHttp": 206,
+        "actualSampleSize": [
+          405,
+          382
+        ],
+        "dimensionCheck": "MATCH",
+        "elapsedMs": 8959
+      },
+      {
+        "caseId": "pinterest_images",
+        "route": "phone-bundled-runtime-anonymous",
+        "success": true,
+        "mediaId": "871235490435640369",
+        "imageCount": 1,
+        "imageSizes": [
+          [
+            640,
+            640
+          ]
+        ],
+        "resourceHttp": 206,
+        "actualSampleSize": [
+          640,
+          640
+        ],
+        "dimensionCheck": "MATCH",
+        "elapsedMs": 17985
+      },
+      {
+        "caseId": "reported_ks_images",
+        "route": "phone-bundled-runtime-anonymous",
+        "success": true,
+        "mediaId": "3xv5358vvb8eq9k",
+        "imageCount": 10,
+        "imageSizes": [
+          [
+            1080,
+            1372
+          ],
+          [
+            1080,
+            1440
+          ],
+          [
+            1080,
+            1440
+          ],
+          [
+            1080,
+            1440
+          ],
+          [
+            1080,
+            1440
+          ],
+          [
+            1080,
+            1440
+          ],
+          [
+            1080,
+            1440
+          ],
+          [
+            1080,
+            1620
+          ],
+          [
+            1080,
+            1620
+          ],
+          [
+            1080,
+            1434
+          ]
+        ],
+        "resourceHttp": 206,
+        "actualSampleSize": [
+          1080,
+          1372
+        ],
+        "dimensionCheck": "MATCH",
+        "elapsedMs": 5325
+      },
+      {
+        "caseId": "reported_bili_dynamic",
+        "route": "phone-bundled-runtime-anonymous",
+        "success": true,
+        "mediaId": "1159422075074510854",
+        "imageCount": 4,
+        "imageSizes": [
+          [
+            476,
+            381
+          ],
+          [
+            375,
+            385
+          ],
+          [
+            375,
+            385
+          ],
+          [
+            375,
+            385
+          ]
+        ],
+        "resourceHttp": 206,
+        "actualSampleSize": [
+          476,
+          381
+        ],
+        "dimensionCheck": "MATCH",
+        "elapsedMs": 1536
+      },
+      {
+        "caseId": "douyin_video_measured",
+        "route": "phone-bundled-runtime-anonymous",
+        "success": true,
+        "mediaId": "7677481047214394664",
+        "formatSizes": [
+          [
+            0,
+            0
+          ]
+        ],
+        "resourceHttp": 206,
+        "elapsedMs": 3766
+      }
+    ]
+  },
+  "finalActualUiChecks": {
+    "directProxy": {
+      "emptyProxy": true,
+      "appProcessUnchanged": true,
+      "savedProxyEdited": false,
+      "results": [
+        "国内站点：连接成功 · 490 ms",
+        "国际站点：TLS 握手或证书验证失败 · 5031 ms"
+      ],
+      "device": "V2352A Android 15"
+    },
+    "xhs": {
+      "imageCount": 7,
+      "firstImageSize": [
+        1080,
+        2347
+      ],
+      "secondImageSize": [
+        1080,
+        810
+      ],
+      "screenshot": "xhs-current-app.png"
+    },
+    "douyin": {
+      "mediaId": "7677481047214394664",
+      "displayedSize": [
+        1280,
+        720
+      ],
+      "beforeIncorrectSize": [
+        3840,
+        2160
+      ],
+      "screenshot": "douyin-current-app.png"
+    },
+    "directProxyDebugBeforeRelease": {
+      "emptyProxy": true,
+      "appProcessUnchanged": true,
+      "savedProxyEdited": false,
+      "results": [
+        "国内站点：连接成功 · 438 ms",
+        "国际站点：连接成功 · 983 ms"
+      ],
+      "device": "V2352A Android 15"
+    },
+    "releaseAppRan": true
+  },
+  "httpsProxy": {
+    "implemented": true,
+    "localTlsAndCertificateRejectionVerified": true,
+    "publicHttpsProxyEndpointTested": false,
+    "userLinkIsSubscriptionEndpoint": true,
+    "accountPasswordAuthenticationSupported": false
+  },
+  "artifact": {
+    "version": "1.7.15",
+    "versionCode": 74,
+    "path": "release/1.7.15/OmniDownloader-1.7.15-arm64-v8a.apk",
+    "bytes": 59525707,
+    "sha256": "efb80f2eb95dbcdc53738eb5da1348e8769c3103ab09f0575a4fecf2100c95c6",
+    "abi": [
+      "arm64-v8a"
+    ],
+    "archiveCrc": "passed",
+    "v2SignatureAndPriorSignerMatch": true,
+    "frozenBuildInputs": 207,
+    "inputsUnchanged": true,
+    "r8AndLintVital": "passed",
+    "pythonAssetMatchesSource": true
+  },
+  "pythonArchiveChangedModules": [
+    "omni_media.py"
+  ],
+  "myuneSourceClean": true,
+  "publiclyPublished": false,
+  "testHarnessLimits": [
+    "New test APK install rejected by OEM package installer. Did not disable verification or reinstall the OS.",
+    "Isolated Compose instrumentation stalled on this phone and was stopped; actual application UI was used for final blank-input and size checks.",
+    "Initial YouTube sample timed out; alternate sample returned metadata. Not a proof of permanent site failure.",
+    "Native overseas resource probes closed before verification; image resources were subsequently checked through the actual bundled Requests runtime.",
+    "Not every video resource header or full media file was verified. See platform matrix.",
+    "Final release direct international probe reported TLS/certificate failure; surfaced as a result without crashing. Earlier debug direct probe succeeded; no claim of universal connectivity."
+  ],
+  "releaseInstalledOnDevice": true,
+  "installedArtifactSha256": "efb80f2eb95dbcdc53738eb5da1348e8769c3103ab09f0575a4fecf2100c95c6"
+}

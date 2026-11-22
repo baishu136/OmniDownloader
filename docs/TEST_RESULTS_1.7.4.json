@@ -1,0 +1,51 @@
+{
+  "version": "1.7.4",
+  "versionCode": 63,
+  "date": "2026-11-03",
+  "scope": "Android XHS image share compatibility; shared Python source also used by Windows",
+  "reportedNote": {
+    "contentId": "6ae92bb20000000018038a89",
+    "type": "normal",
+    "images": 3,
+    "videoObject": false,
+    "livePhotos": false,
+    "videoEntryResult": "NO_MEDIA_EXPECTED"
+  },
+  "tests": {
+    "pythonUnitTests": 35,
+    "androidLiveImagePipelineTests": 1,
+    "device": "Android 15 API35 x86_64 emulator",
+    "anonymous": true,
+    "liveImages": {
+      "success": true,
+      "contentId": "6ae92bb20000000018038a89",
+      "imageCount": 3,
+      "dimensions": [
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          414,
+          552
+        ]
+      ],
+      "archiveBytes": 482731,
+      "singleImageBytes": 173284,
+      "mediaStoreExport": true
+    },
+    "privateFixture": "testdata/xhs-reported-2026-11-03.private.json"
+  },
+  "physicalDevice": "NOT_CONNECTED",
+  "windowsExecutable": "NOT_REBUILT",
+  "ios": "UNCHANGED",
+  "apkSHA256": "5c3466b170e2bb446ba633ceee26c04ac172bcbcc952ce42dfc3c28d2a7bca68",
+  "ABI": "arm64-v8a",
+  "releaseBuild": "PASS",
+  "zipIntegrity": "PASS",
+  "bundledPythonSource": "MATCH"
+}

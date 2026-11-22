@@ -26,8 +26,24 @@ scratch/
 /windows/release/
 /windows/bin/*.exe
 !app/src/androidTest/assets/ugoira-source.zip
+!app/src/main/assets/engine/python-extras.zip
 __pycache__/
 .pytest_cache/
 
 /testdata/*.private.json
 /.local/
+
+# 发布产物与本地运行时数据（不提交 release）
+/release/
+/agent-edition/
+*.ipa
+windows/tasks.pre-v3.bin
+windows/winui3/**/bin/
+windows/winui3/**/obj/
+/windows/winui3/publish/
+.vs/
+*.user
+*.suo
+/OmniDownloader-iOS/build/
+/OmniDownloader-iOS/DerivedData/
+TestResults/

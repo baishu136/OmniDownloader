@@ -10,9 +10,9 @@ import java.util.concurrent.TimeUnit
 
 /** Independent official public endpoint using Android TLS, never an account Cookie header. */
 internal object XPublicExtractor {
-    private val client = OkHttpClient.Builder().proxySelector(NetworkProxy)
+    private val client = XNetwork.configure(OkHttpClient.Builder().proxySelector(NetworkProxy)
         .connectTimeout(12, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS)
-        .callTimeout(35, TimeUnit.SECONDS).build()
+        .callTimeout(35, TimeUnit.SECONDS)).build()
 
     fun extract(context: Context, url: String, proxyUrl: String = ""): JSONObject {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(35)
@@ -33,6 +33,7 @@ internal object XPublicExtractor {
         val request = Request.Builder().url("https://cdn.syndication.twimg.com/tweet-result?id=$identifier&token=$token")
             .header("User-Agent", "Googlebot").build()
         val data = confirmedStatus(identifier) { attempt ->
+            if (attempt > 0) Thread.sleep(400)
             val remaining = deadline - System.nanoTime()
             check(remaining > 0) { "[NETWORK_ERROR] 公开接口解析已超时" }
             val call = client.newCall(if (attempt == 0) request else request.newBuilder().header("Cache-Control", "no-cache").build())

@@ -1,0 +1,51 @@
+{
+  "scope": "Android download options, account entry cleanup, supported-platform expansion and relay expansion persistence",
+  "version": "1.7.13",
+  "jvm": {
+    "passed": 126,
+    "failed": 0
+  },
+  "androidUiRegressions": {
+    "passed": 6,
+    "failed": 0,
+    "additionalAudioCallbackCheckPassed": 1,
+    "device": "API35 x86_64 read-only Omni QA emulator",
+    "realAccountsUsed": false,
+    "screenshotsInspected": 8
+  },
+  "validated": [
+    "Muxed audio enables extraction without an audio-only list; silent/generated sources do not fabricate audio.",
+    "Video rows contain dimensions, container and known size; unavailable size or dimensions explicitly remain unconfirmed.",
+    "Ugoira export selection is not replaced by source-quality ranking.",
+    "Platform chips expand to all 12 named supported platforms, including Pixiv and Heybox, and restore state.",
+    "Duplicate YouTube card removed; generic import retained; Bilibili excluded only from generic chooser and dedicated login retained.",
+    "Relay expand/collapse persists through settings reload and MainActivity recreation; unrelated path setting unchanged."
+  ],
+  "artifact": {
+    "version": "1.7.13",
+    "versionCode": 72,
+    "path": "release/1.7.13/OmniDownloader-1.7.13-arm64-v8a.apk",
+    "bytes": 59500747,
+    "sha256": "d20d5c080a027377f8b979aef8a11a058330393f0a2ea76944d94ab7702a8d4e",
+    "abi": [
+      "arm64-v8a"
+    ],
+    "archiveCrc": "passed",
+    "pythonAssetUnchangedFrom1_7_12": true,
+    "v2SignatureAndPriorSignerMatch": true,
+    "frozenBuildInputs": 188,
+    "inputsUnchanged": true,
+    "r8AndLintVital": "passed"
+  },
+  "earlierTestIssue": "Initial UI test searched for FLAC instead of the existing full localized format label; corrected fixture query. Initial screenshots captured before first draw; retained and recaptured after UI idle.",
+  "myuneIsolation": {
+    "project": "Myune",
+    "unchangedInputs": 739,
+    "sourceWorkingTreeClean": true,
+    "writtenToMyuneThisTask": false
+  },
+  "physicalDeviceTested": false,
+  "liveMediaDownloadRetested": false,
+  "windowsIosSharedPythonModifiedThisTask": false,
+  "publiclyPublished": false
+}

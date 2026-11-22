@@ -10,6 +10,7 @@ struct OmniDownloaderApp: App {
     @AppStorage("com.omni.downloader.appearance") private var appearance = "system"
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var launched=false
+    @State private var launchProgress:CGFloat=0
 
     private var preferredColorScheme: ColorScheme? {
         switch appearance {
@@ -24,12 +25,17 @@ struct OmniDownloaderApp: App {
             MainTabView()
                 .preferredColorScheme(preferredColorScheme)
                 .environmentObject(downloadManager)
-                .overlay{
-                    if !launched{
-                        ZStack{OmniPalette.background.ignoresSafeArea();OmniBrand(size:76)}.accessibilityHidden(true).transition(.opacity)
-                    }
+                .modifier(LaunchContent(progress:launchProgress))
+                .overlay { if !launched { LaunchOverlay(progress:launchProgress) } }
+                .task {
+                    do {
+                        try await Task.sleep(nanoseconds:250_000_000)
+                        withAnimation(reduceMotion ? nil:.linear(duration:0.24)){launchProgress=1}
+                        if !reduceMotion { try await Task.sleep(nanoseconds:240_000_000) }
+                        launched=true
+                        await AppUpdates.shared.check()
+                    } catch { launchProgress=1;launched=true }
                 }
-                .task{try? await Task.sleep(nanoseconds:150_000_000);withAnimation(reduceMotion ? nil:.easeOut(duration:0.18)){launched=true}}
                 .onChange(of: scenePhase) { value in if value == .active { downloadManager.resumeForegroundProcessing() } }
                 .onAppear {
                     OmniPalette.configureNativeAppearance()

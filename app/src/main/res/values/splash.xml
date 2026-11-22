@@ -3,8 +3,23 @@
     <style name="Theme.OmniDownloader.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/omni_splash_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_omni_splash</item>
+        <item name="omniLaunchIconColor">@color/omni_splash_icon</item>
         <item name="postSplashScreenTheme">@style/Theme.OmniDownloader</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+    <style name="Theme.OmniDownloader.Starting.Light" parent="Theme.OmniDownloader.Starting">
+        <item name="windowSplashScreenBackground">@color/omni_window_background</item>
+        <item name="omniLaunchIconColor">#FF4554C8</item>
+        <item name="postSplashScreenTheme">@style/Theme.OmniDownloader.Light</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+    <style name="Theme.OmniDownloader.Starting.Dark" parent="Theme.OmniDownloader.Starting">
+        <item name="windowSplashScreenBackground">@color/omni_window_background_dark</item>
+        <item name="omniLaunchIconColor">#FFB8C3FF</item>
+        <item name="postSplashScreenTheme">@style/Theme.OmniDownloader.Dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 </resources>

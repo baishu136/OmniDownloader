@@ -1,0 +1,47 @@
+{
+  "scope": "Android Pixiv login and session request repair",
+  "version": "1.7.10",
+  "diagnosis": {
+    "artworkId": "151704267",
+    "reportedAccessibleInUserBrowser": true,
+    "metadataHttpStatus": 200,
+    "returnedIdMatches": true,
+    "illustType": 2,
+    "restrictedArtwork": true,
+    "anonymousUgoiraStatus": 404,
+    "oldLoginStatus": 404,
+    "newLoginStatus": 200,
+    "authenticatedResourceTested": false,
+    "mediaContentDownloaded": false
+  },
+  "jvm": {
+    "passed": 110,
+    "failed": 0
+  },
+  "instrumentation": {
+    "passed": 6,
+    "failed": 0,
+    "device": "API35 x86_64 read-only emulator",
+    "realUserCredentialsUsed": false
+  },
+  "artifact": {
+    "app": "OmniDownloader",
+    "version": "1.7.10",
+    "versionCode": 69,
+    "artifact": "release/1.7.10/OmniDownloader-1.7.10-arm64-v8a.apk",
+    "bytes": 59493375,
+    "sha256": "d9fe003f18f978c45c667df42d83aa3fbe012f87ea5530ee57af0cc2274f94bf",
+    "abi": [
+      "arm64-v8a"
+    ],
+    "archiveCrc": "passed",
+    "pythonAssetIntegrity": "passed",
+    "v2SignatureAndPriorSignerMatch": true,
+    "frozenBuildInputs": 173,
+    "inputsUnchanged": true
+  },
+  "initialJVMJsonStubFailures": "Two Android JSON-dependent cases moved to native instrumentation and passed; initial log retained.",
+  "physicalDeviceTested": false,
+  "authenticatedTargetMediaTested": false,
+  "publiclyPublished": false
+}

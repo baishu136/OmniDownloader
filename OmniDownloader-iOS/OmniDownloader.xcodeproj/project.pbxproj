@@ -358,6 +358,15 @@
 				"FAC5AB6A8B80277896409CEE",
 				"2E195CA93637E350AC33D0E7",
 				"A24407D8DFE56394A72BEDA7",
+				"4744452431210946EB7A7E48",
+				"9B12CF08FF9D0777B6988063",
+				"45CB174A28AE1A3ABB023C17",
+				"0DCEA56E7C8F6A64BBD81C13",
+				"E2317A86E03E7AB5D83A4123",
+				"8A8A5D00EDF3152578EDDFC8",
+				"F1CB0190074840C35E8BDE8B",
+				"43C297CEDF87328EAFBA9D0C",
+				"75D3F648CCFA94D32550372E",
 			);
 			"sourceTree" = "<group>";
 		};
@@ -466,6 +475,7 @@
 				"566BE13753E051CBFE69052D",
 				"7F9C79AD1BD5E2EE26D43594",
 				"C5A606EA51CBDE2B913AC04B",
+				"AA7077684D5A93DB9D598A61",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -511,6 +521,13 @@
 				"31E1AD71534FF3E05CFA6FB5",
 				"B4FFCAA572CE1535BDB4B9FC",
 				"A3A7B70F32CF2238F31E0D69",
+				"6EF2C1E61BE75A2CF3935C54",
+				"318B866C0CCC8261E167590C",
+				"FE7C2C351748FC3E0CB7871E",
+				"00015661D18CAF88CCF5A86A",
+				"A05B2DCE168478872CFD4AAA",
+				"55015AE65DA20F395B2B755A",
+				"352A100AF294AE17E457CC09",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -574,7 +591,7 @@
 				"CODE_SIGN_STYLE" = "Automatic";
 				"CODE_SIGNING_ALLOWED" = "NO";
 				"CODE_SIGNING_REQUIRED" = "NO";
-				"CURRENT_PROJECT_VERSION" = "80";
+				"CURRENT_PROJECT_VERSION" = "118";
 				"GENERATE_INFOPLIST_FILE" = "NO";
 				"INFOPLIST_FILE" = "OmniDownloader/App/Info.plist";
 				"IPHONEOS_DEPLOYMENT_TARGET" = "15.0";
@@ -583,7 +600,7 @@
 					"@executable_path/Frameworks",
 					"/usr/lib/swift",
 				);
-				"MARKETING_VERSION" = "1.7.21";
+				"MARKETING_VERSION" = "1.7.61";
 				"PRODUCT_BUNDLE_IDENTIFIER" = "com.omnidownloader.ios";
 				"PRODUCT_NAME" = "$(TARGET_NAME)";
 				"SWIFT_EMIT_LOC_STRINGS" = "YES";
@@ -601,7 +618,7 @@
 				"CODE_SIGN_STYLE" = "Automatic";
 				"CODE_SIGNING_ALLOWED" = "NO";
 				"CODE_SIGNING_REQUIRED" = "NO";
-				"CURRENT_PROJECT_VERSION" = "80";
+				"CURRENT_PROJECT_VERSION" = "118";
 				"GENERATE_INFOPLIST_FILE" = "NO";
 				"INFOPLIST_FILE" = "OmniDownloader/App/Info.plist";
 				"IPHONEOS_DEPLOYMENT_TARGET" = "15.0";
@@ -610,7 +627,7 @@
 					"@executable_path/Frameworks",
 					"/usr/lib/swift",
 				);
-				"MARKETING_VERSION" = "1.7.21";
+				"MARKETING_VERSION" = "1.7.61";
 				"PRODUCT_BUNDLE_IDENTIFIER" = "com.omnidownloader.ios";
 				"PRODUCT_NAME" = "$(TARGET_NAME)";
 				"SWIFT_EMIT_LOC_STRINGS" = "YES";
@@ -837,6 +854,7 @@
 			"buildActionMask" = "2147483647";
 			"files" = (
 				"214000BEE83A9CB33D52EE6A",
+				"847A0484E4434F0B4CCF74C0",
 				"7A25AD0E68B3789842C26E7A",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
@@ -1350,6 +1368,96 @@
 		"C5A606EA51CBDE2B913AC04B" = {
 			"isa" = "PBXBuildFile";
 			"fileRef" = "A24407D8DFE56394A72BEDA7";
+		};
+		"4744452431210946EB7A7E48" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Engines/WeiboExtractor.swift";
+			"sourceTree" = "<group>";
+		};
+		"6EF2C1E61BE75A2CF3935C54" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "4744452431210946EB7A7E48";
+		};
+		"9B12CF08FF9D0777B6988063" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Engines/XPublicResponse.swift";
+			"sourceTree" = "<group>";
+		};
+		"318B866C0CCC8261E167590C" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "9B12CF08FF9D0777B6988063";
+		};
+		"45CB174A28AE1A3ABB023C17" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Services/AppUpdates.swift";
+			"sourceTree" = "<group>";
+		};
+		"FE7C2C351748FC3E0CB7871E" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "45CB174A28AE1A3ABB023C17";
+		};
+		"0DCEA56E7C8F6A64BBD81C13" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Services/BatchDownloads.swift";
+			"sourceTree" = "<group>";
+		};
+		"00015661D18CAF88CCF5A86A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "0DCEA56E7C8F6A64BBD81C13";
+		};
+		"E2317A86E03E7AB5D83A4123" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/BatchDownloadView.swift";
+			"sourceTree" = "<group>";
+		};
+		"A05B2DCE168478872CFD4AAA" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "E2317A86E03E7AB5D83A4123";
+		};
+		"8A8A5D00EDF3152578EDDFC8" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/LaunchTransition.swift";
+			"sourceTree" = "<group>";
+		};
+		"55015AE65DA20F395B2B755A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "8A8A5D00EDF3152578EDDFC8";
+		};
+		"F1CB0190074840C35E8BDE8B" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloader/Views/PlatformCatalogView.swift";
+			"sourceTree" = "<group>";
+		};
+		"352A100AF294AE17E457CC09" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "F1CB0190074840C35E8BDE8B";
+		};
+		"43C297CEDF87328EAFBA9D0C" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text";
+			"path" = "OmniDownloader/Resources/ytdlp-extractors.txt";
+			"sourceTree" = "<group>";
+		};
+		"AA7077684D5A93DB9D598A61" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "43C297CEDF87328EAFBA9D0C";
+		};
+		"75D3F648CCFA94D32550372E" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "OmniDownloaderTests/MobileParityTests.swift";
+			"sourceTree" = "<group>";
+		};
+		"847A0484E4434F0B4CCF74C0" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "75D3F648CCFA94D32550372E";
 		};
 	};
 	"rootObject" = "777777778888999900000001";

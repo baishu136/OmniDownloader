@@ -74,6 +74,7 @@ object MediaErrors {
                 "instance not initialized", "module not found",
                 "no module named", "cannot locate symbol", "dlopen failed", "exec format error",
                 "python not found", "python: not found", "ffmpeg not", "ejs is not installed",
+                "none of these impersonate targets are available",
                 "engine not ready", "引擎未就绪"
             ) -> MediaErrorCode.ENGINE_UNAVAILABLE
 

@@ -6,6 +6,20 @@ import org.junit.Test
 
 class XPublicResponseTest {
     private val id = "2119233448888217846"
+    @Test fun transientTlsEofRetriesOnlyOnceAndKeepsTargetIdentity() {
+        var calls = 0
+        val value = XPublicExtractor.confirmedStatus(id) {
+            calls++
+            if (calls == 1) throw javax.net.ssl.SSLException("unexpected EOF")
+            JSONObject().put("id_str", id)
+        }
+        assertEquals(id, value.getString("id_str")); assertEquals(2, calls)
+        calls = 0
+        val failure = runCatching { XPublicExtractor.confirmedStatus(id) {
+            calls++; throw java.security.cert.CertificateException("certificate invalid")
+        } }.exceptionOrNull()
+        assertTrue(failure is java.security.cert.CertificateException); assertEquals(1, calls)
+    }
     @Test fun emptyResponseThenConfirmedTargetRecoversOnSecondRequest() {
         val attempts = mutableListOf<Int>()
         val value = XPublicExtractor.confirmedStatus(id) { attempt ->

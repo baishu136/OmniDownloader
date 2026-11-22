@@ -18,6 +18,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
+import com.omni.downloader.startup.LaunchSession
 
 class OmniApp : Application(), ImageLoaderFactory {
 
@@ -27,6 +29,9 @@ class OmniApp : Application(), ImageLoaderFactory {
     }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val warmupStarted = AtomicBoolean(false)
+    internal val launchSession = LaunchSession()
+    internal val hasStartedWarmup: Boolean get() = warmupStarted.get()
 
     // 专用的图像解码轻量调度器：限制最大并发为 3，彻底消除列表快速滚动时海量解码协程打满 CPU 导致的系统发热降频
     private val imageDecoderDispatcher by lazy {
@@ -40,6 +45,10 @@ class OmniApp : Application(), ImageLoaderFactory {
     override fun newImageLoader(): ImageLoader {
         return imageLoaderInstance ?: synchronized(this) {
             imageLoaderInstance ?: ImageLoader.Builder(this)
+                .okHttpClient { com.omni.downloader.engine.XNetwork.configure(com.omni.downloader.engine.PixivNetwork.configure(okhttp3.OkHttpClient.Builder()
+                    .proxySelector(com.omni.downloader.engine.NetworkProxy)
+                    .dispatcher(okhttp3.Dispatcher().apply{maxRequests=8;maxRequestsPerHost=4})
+                    .connectTimeout(12,java.util.concurrent.TimeUnit.SECONDS).readTimeout(25,java.util.concurrent.TimeUnit.SECONDS))).build() }
                 .components {
                     if (Build.VERSION.SDK_INT >= 28) {
                         add(ImageDecoderDecoder.Factory())
@@ -56,7 +65,7 @@ class OmniApp : Application(), ImageLoaderFactory {
                 .diskCache {
                     DiskCache.Builder()
                         .directory(cacheDir.resolve("image_cache"))
-                        .maxSizeBytes(50L * 1024 * 1024)
+                        .maxSizeBytes(128L * 1024 * 1024)
                         .build()
                 }
                 .decoderDispatcher(imageDecoderDispatcher)
@@ -78,19 +87,25 @@ class OmniApp : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        com.omni.downloader.engine.PixivNetwork.initialize(java.io.File(filesDir,"network_guard"))
+        com.omni.downloader.engine.XNetwork.initialize(java.io.File(filesDir,"network_guard"))
+        com.omni.downloader.engine.RequestProtectionNotices.initialize(java.io.File(filesDir,"network_guard"))
         try {
             appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "1.5.2"
         } catch (_: Exception) {}
-
-        // 清理上次异常退出留下的临时 Cookie 文件
+        // Keep session maintenance early on IO: it also prepares account storage
+        // that the first ViewModel needs. Defer only the large media runtimes.
         appScope.launch {
             runCatching {
                 com.omni.downloader.data.repository.SessionRepository.getInstance(this@OmniApp)
                     .cleanupStaleTempFiles()
             }
         }
+    }
 
-        // 后台异步预热初始化核心下载引擎，避免阻塞启动并提前解压
+    /** Optional native loading begins after the first UI frame. */
+    internal fun warmDownloadEngine() {
+        if (!warmupStarted.compareAndSet(false, true)) return
         appScope.launch {
             try {
                 Log.d("OmniApp", "正在预热核心下载引擎...")

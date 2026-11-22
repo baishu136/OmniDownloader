@@ -1,0 +1,25 @@
+{
+  "version": "1.7.1",
+  "versionCode": 60,
+  "date": "2026-11-03",
+  "scope": "Android only",
+  "minimumAPI": 26,
+  "ABI": "arm64-v8a",
+  "apkSHA256": "068e4ee9af1a5142926f2bcab8557835cccab28c4926f032c1194bce19c310df",
+  "tests": {
+    "jvm": 74,
+    "androidInstrumentation": 5,
+    "emulatorAPI": 35,
+    "webView": "124.0.6367.219",
+    "fixtures": [
+      "desktop request UA and Client Hints",
+      "1280px viewport and mobile restoration",
+      "user gesture popup identity and window.opener",
+      "asynchronous CookieManager restore barrier",
+      "existing relay capture regression"
+    ]
+  },
+  "accountAuthentication": "NOT_VERIFIED_NO_REAL_ACCOUNT_LOGIN",
+  "physicalDevice": "NOT_CONNECTED",
+  "windowsIOS": "UNCHANGED"
+}

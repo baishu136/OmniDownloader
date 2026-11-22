@@ -1,0 +1,40 @@
+{
+  "scope": "Android photo-page UI",
+  "version": "1.7.8",
+  "instrumentation": {
+    "passed": 6,
+    "failed": 0,
+    "device": "API35 x86_64 read-only emulator"
+  },
+  "realPageSmoke": {
+    "realImagePostShown": true,
+    "expectedImages": 4,
+    "correctCounter": true,
+    "pathTextShown": true,
+    "oldLabelsAbsent": true,
+    "elapsedSeconds": 59.0,
+    "headerMovesWithPhotoScroll": true
+  },
+  "jvm": {
+    "reusedPassed": 107,
+    "sourceVersion": "1.7.7",
+    "unchangedCoreAndTestHashesVerified": true
+  },
+  "artifact": {
+    "app": "OmniDownloader",
+    "version": "1.7.8",
+    "versionCode": 67,
+    "artifact": "release/1.7.8/OmniDownloader-1.7.8-arm64-v8a.apk",
+    "bytes": 59506007,
+    "sha256": "ad46982271f6d624263bca0dda2464687c95fbc1b67a876798760f446c09c5bf",
+    "abi": [
+      "arm64-v8a"
+    ],
+    "archiveCrc": "passed",
+    "pythonAssetIntegrity": "passed",
+    "frozenBuildInputs": 169,
+    "inputsUnchanged": true
+  },
+  "physicalDeviceTested": false,
+  "publiclyPublished": false
+}

@@ -1,0 +1,100 @@
+/* Base: reset, typography, icons, scrollbars, animations */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 14px/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color var(--t-normal) var(--ease-standard), color var(--t-normal) var(--ease-standard);
+}
+
+h1, h2, h3, h4, p, ol, ul { margin: 0; }
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; touch-action: manipulation; }
+button:disabled { cursor: not-allowed; }
+img { display: block; max-width: 100%; }
+
+::selection { background: var(--primary-soft-strong); }
+
+:where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Material 24px SVG 图标通用样式 */
+.m-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  display: inline-block;
+  vertical-align: middle;
+  fill: currentColor;
+}
+.m-icon--sm { width: 16px; height: 16px; }
+.m-icon--md { width: 20px; height: 20px; }
+.m-icon--lg { width: 24px; height: 24px; }
+.m-icon--xl { width: 32px; height: 32px; }
+
+/* 细滚动条 */
+* { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); background-clip: padding-box; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* 工具类 */
+[hidden] { display: none !important; }
+.muted { color: var(--text-2); }
+.muted-2 { color: var(--text-muted); }
+.caption { font-size: 12px; line-height: 16px; color: var(--text-2); }
+.small { font-size: 12px; line-height: 16px; }
+.mono { font-family: var(--font-mono); }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spacer { flex: 1; }
+.row { display: flex; align-items: center; gap: var(--sp-sm); }
+.row-wrap { display: flex; align-items: center; gap: var(--sp-sm); flex-wrap: wrap; }
+.stack { display: flex; flex-direction: column; gap: var(--sp-md); }
+
+/* 切页动效 (OmniMotion.fadeThroughIn/Out) */
+@keyframes omni-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes omni-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes omni-sheet-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes omni-dialog-pop {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes omni-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

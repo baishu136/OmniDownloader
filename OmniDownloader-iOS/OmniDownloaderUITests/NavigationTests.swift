@@ -34,7 +34,7 @@ final class NavigationTests:XCTestCase {
         XCTAssertTrue(app.staticTexts["Cookie 与登录管理"].waitForExistence(timeout:5))
         let settings=XCTAttachment(screenshot:app.screenshot());settings.name="iOS-accounts";settings.lifetime = .keepAlways;add(settings)
         app.buttons["omni.nav.1"].tap()
-        XCTAssertTrue(app.textFields["omni.images.url"].waitForExistence(timeout:5))
+        XCTAssertTrue(app.textViews["omni.batch.input"].waitForExistence(timeout:5))
         app.buttons["omni.nav.2"].tap()
         XCTAssertTrue(app.staticTexts["下载任务"].waitForExistence(timeout:5))
     }

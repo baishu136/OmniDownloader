@@ -12,6 +12,8 @@ import android.webkit.WebResourceError
 import android.webkit.WebSettings
 import com.omni.downloader.engine.RelayCapturePolicy
 import com.omni.downloader.engine.UrlSniffer
+import com.omni.downloader.ui.localization.AppStrings
+import com.omni.downloader.ui.localization.ZhHansStrings
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -20,7 +22,8 @@ internal class RelayCaptureSession(
     private val fallbackTitle: String,
     private val onSuccess: (String, String) -> Unit,
     private val onProgress: (String) -> Unit = {},
-    private val onError: (String) -> Unit = {}
+    private val onError: (String) -> Unit = {},
+    val strings: AppStrings = ZhHansStrings
 ) {
     private val main = Handler(Looper.getMainLooper())
     private val active = AtomicBoolean(true)
@@ -107,7 +110,7 @@ internal object RelayAutomation {
         }
         view.webViewClient = object : WebViewClient() {
             override fun onPageStarted(web: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
-                identity.onPageStarted(); url?.let(onLocation); session.onStatus("正在连接中转站…")
+                identity.onPageStarted(); url?.let(onLocation); session.onStatus(session.strings.relayConnecting)
             }
             override fun onPageCommitVisible(web: WebView?, url: String?) { if (web != null) install(web, videoUrl, autoSubmit) }
             override fun onPageFinished(web: WebView?, url: String?) {
@@ -124,7 +127,7 @@ internal object RelayAutomation {
                 return session.capture(url.toString(), explicit = request.hasGesture())
             }
             override fun onReceivedError(web: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
-                if (autoSubmit && request?.isForMainFrame == true) session.fail("中转站页面加载失败，可使用窗口排查")
+                if (autoSubmit && request?.isForMainFrame == true) session.fail(session.strings.relayPageFailed)
             }
         }
         return { identity.close(); popupIdentities.values.forEach { it.close() }; popupIdentities.clear(); popups.toList().forEach { it.stopLoading(); it.destroy() }; popups.clear() }

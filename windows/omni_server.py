@@ -19,6 +19,7 @@ import html
 import re
 import urllib.parse
 import asyncio
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import List, Literal, Optional, Dict, Any
 
@@ -43,7 +44,15 @@ from engine.domestic_extractor import DomesticDirectExtractor
 from engine.tiktok_extractor import TikTokDirectExtractor
 from engine.ytdlp_engine import YtDlpEngine
 
-app = FastAPI(title="OmniDownloader API", description="全能多媒体下载器 Windows 后端接口", version="1.7.20")
+@asynccontextmanager
+async def lifespan(application):
+    try: yield
+    finally:
+        from core.browser_login import browser_login
+        await asyncio.to_thread(browser_login.shutdown)
+
+
+app = FastAPI(title="OmniDownloader API", description="全能多媒体下载器 Windows 后端接口", version="1.7.60", lifespan=lifespan)
 
 # 允许跨域以便调试
 app.add_middleware(
@@ -376,6 +385,98 @@ async def create_download_tasks(req: BatchCreateTaskRequest):
     return {"status": "success", "count": len(created_tasks), "tasks": created_tasks}
 
 
+@app.post('/api/media/analyze')
+async def analyze_media(req: AnalyzeRequest):
+    from engine.platforms import platform
+    from engine.media_errors import code
+    from urllib.parse import urlsplit
+    raw = UrlSniffer.extract_url(req.url) or req.url
+    site = platform(raw)
+    image_sites = {'抖音', '快手', '小红书', 'Pixiv', '哔哩哔哩', 'X (Twitter)', 'Pinterest'}
+    image_first = site == 'Pixiv' or '/note/' in urlsplit(raw).path or '/opus/' in urlsplit(raw).path
+    parsers = [('images', analyze_image_post), ('video', analyze_url)] if image_first else [('video', analyze_url), ('images', analyze_image_post)]
+    for index, (kind, parser) in enumerate(parsers):
+        try:
+            data = await parser(req)
+            return {'kind': kind, 'data': data}
+        except Exception as error:
+            if index or site not in image_sites or code(getattr(error, 'detail', str(error))) not in ('NO_MEDIA', 'MEDIA_UNCONFIRMED', 'EXTRACTOR_CHANGED'):
+                raise
+
+
+async def enqueue_batch_row(row, options):
+    collection = 'batch-' + row['id']
+    existing = [task.id for task in task_manager.tasks.values() if task.collection_id == collection]
+    if existing:
+        return existing
+    parsed = await analyze_media(AnalyzeRequest(url=row['url']))
+    if parsed['kind'] == 'images':
+        data = parsed['data']
+        ids = [resource['id'] for resource in data['resources']]
+        if not ids:
+            raise HTTPException(400, '未取得图片')
+        image_type = 'IMAGE' if options['type'] == 'IMAGE' else 'IMAGE_ZIP'
+        groups = [[identifier] for identifier in ids] if image_type == 'IMAGE' else [ids]
+        payload = [CreateTaskItem(url=data['url'], title=data['title'], downloadType=image_type,
+            imagePlatform=data['platform'], selectedImageIds=group, collectionId=collection,
+            episodeIndex=index + 1, episodeTotal=len(groups)) for index, group in enumerate(groups)]
+    else:
+        if options['type'] in ('IMAGE', 'IMAGE_ZIP'):
+            raise HTTPException(400, '这是视频作品，请选择视频导出类型')
+        meta = parsed['data']
+        children = meta.multi_media_list if options['allEpisodes'] and meta.multi_media_list else [meta]
+        if len(children) > 100:
+            raise HTTPException(400, '单条链接最多下载 100 个分集，请分批处理')
+        payload = [CreateTaskItem(url=child.url, title=child.title, author=child.author, thumbnailUrl=child.thumbnail_url,
+            downloadType=options['type'], audioFormat=options['audio'], mediaId=child.media_id,
+            collectionId=collection, collectionTitle=meta.title, episodeIndex=index + 1, episodeTotal=len(children))
+            for index, child in enumerate(children)]
+    job = next((job for job in batch_manager.jobs.values() if any(item['id'] == row['id'] for item in job['items'])), None)
+    if job and sum(len(item['taskIds']) for item in job['items']) + len(payload) > 500:
+        raise HTTPException(400, '每批最多 500 个下载任务，请分批处理')
+    result = await create_download_tasks(BatchCreateTaskRequest(tasks=payload))
+    return [task['id'] for task in result['tasks']]
+
+
+from core.batch_manager import BatchManager
+batch_manager = BatchManager()
+
+
+class BatchInputRequest(BaseModel):
+    text: str = Field(max_length=100000)
+    type: DownloadType = DownloadType.VIDEO_WITH_AUDIO
+    audio: AudioFormat = AudioFormat.MP3
+    allEpisodes: bool = False
+
+
+@app.post('/api/batches')
+async def create_batch(req: BatchInputRequest, request: Request):
+    require_local_session_action(request)
+    try:
+        return batch_manager.create(req.text, {'type': req.type.value, 'audio': req.audio.value, 'allEpisodes': req.allEpisodes}, enqueue_batch_row)
+    except ValueError as error:
+        raise HTTPException(400, str(error))
+
+
+@app.get('/api/batches')
+async def list_batches():
+    return list(batch_manager.jobs.values())
+
+
+@app.post('/api/batches/{identifier}/{action}')
+async def control_batch(identifier: str, action: str, request: Request):
+    require_local_session_action(request)
+    if identifier not in batch_manager.jobs:
+        raise HTTPException(404, '批次不存在')
+    if action == 'cancel':
+        batch_manager.cancel(identifier)
+    elif action == 'retry':
+        batch_manager.run(identifier, enqueue_batch_row)
+    else:
+        raise HTTPException(400, '未知批次操作')
+    return batch_manager.jobs[identifier]
+
+
 @app.post('/api/tasks/{task_id}/retry')
 async def retry_download_task(task_id: str):
     if not await task_manager.retry_task(task_id): raise HTTPException(409, '任务不存在或尚未结束')
@@ -420,6 +521,115 @@ async def open_file(task_id: str):
     return {"status": "success"}
 
 
+MEDIA_MIME_OVERRIDES = {
+    ".mp4": "video/mp4",
+    ".m4v": "video/mp4",
+    ".webm": "video/webm",
+    ".mkv": "video/x-matroska",
+    ".mov": "video/quicktime",
+    ".avi": "video/x-msvideo",
+    ".flv": "video/x-flv",
+    ".mp3": "audio/mpeg",
+    ".m4a": "audio/mp4",
+    ".flac": "audio/flac",
+    ".opus": "audio/ogg",
+    ".ogg": "audio/ogg",
+    ".wav": "audio/wav",
+    ".aac": "audio/aac",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".avif": "image/avif",
+    ".bmp": "image/bmp",
+}
+ZIP_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".bmp"}
+
+
+def _guess_media_type(filename: str) -> str:
+    import mimetypes
+    suffix = Path(filename).suffix.lower()
+    if suffix in MEDIA_MIME_OVERRIDES:
+        return MEDIA_MIME_OVERRIDES[suffix]
+    return mimetypes.guess_type(filename)[0] or "application/octet-stream"
+
+
+@app.get("/api/tasks/{task_id}/view")
+async def view_task_file(task_id: str):
+    task = task_manager.get_task(task_id)
+    if not task or task.status != TaskStatus.COMPLETED or not task.local_file_path:
+        raise HTTPException(404, "文件尚未完成")
+    path = Path(task.local_file_path)
+    if not path.is_file():
+        raise HTTPException(404, "文件已被移动或删除")
+    return FileResponse(path, media_type=_guess_media_type(path.name),
+                        content_disposition_type="inline", filename=path.name)
+
+
+@app.get("/api/tasks/{task_id}/zip-entries")
+async def list_task_zip_images(task_id: str):
+    """列出已完成图集归档 ZIP 内的图片条目，供 Web 与桌面端直接浏览"""
+    import zipfile
+    task = task_manager.get_task(task_id)
+    if not task or task.status != TaskStatus.COMPLETED or not task.local_file_path:
+        raise HTTPException(404, "文件尚未完成")
+    path = Path(task.local_file_path)
+    if not path.is_file() or path.suffix.lower() != ".zip":
+        raise HTTPException(400, "该任务不是图集 ZIP 文件")
+
+    def _scan():
+        entries = []
+        with zipfile.ZipFile(path, "r") as zf:
+            for info in zf.infolist():
+                if info.is_dir():
+                    continue
+                suffix = Path(info.filename).suffix.lower()
+                if suffix in ZIP_IMAGE_EXTENSIONS:
+                    entries.append(info.filename)
+        entries.sort(key=lambda s: [int(p) if p.isdigit() else p.lower() for p in re.split(r"(\d+)", s)])
+        return entries
+
+    try:
+        entries = await asyncio.to_thread(_scan)
+        return {"taskId": task_id, "entries": entries}
+    except zipfile.BadZipFile:
+        raise HTTPException(400, "ZIP 压缩包已损坏")
+
+
+@app.get("/api/tasks/{task_id}/zip-entry")
+async def read_task_zip_image(task_id: str, entry: str):
+    """安全读取已完成图集 ZIP 中的单张原图"""
+    import zipfile
+    task = task_manager.get_task(task_id)
+    if not task or task.status != TaskStatus.COMPLETED or not task.local_file_path:
+        raise HTTPException(404, "文件尚未完成")
+    path = Path(task.local_file_path)
+    if not path.is_file() or path.suffix.lower() != ".zip":
+        raise HTTPException(400, "该任务不是图集 ZIP 文件")
+    if not entry or ".." in Path(entry).parts or Path(entry).suffix.lower() not in ZIP_IMAGE_EXTENSIONS:
+        raise HTTPException(400, "无效的图片条目")
+
+    def _read():
+        with zipfile.ZipFile(path, "r") as zf:
+            info = zf.getinfo(entry)
+            if info.is_dir() or info.file_size > 40 * 1024 * 1024:
+                raise ValueError("条目过大或无效")
+            return zf.read(info)
+
+    try:
+        data = await asyncio.to_thread(_read)
+        return Response(
+            content=data,
+            media_type=_guess_media_type(entry),
+            headers={"Cache-Control": "private, max-age=300", "X-Content-Type-Options": "nosniff"}
+        )
+    except KeyError:
+        raise HTTPException(404, "压缩包中未找到该图片")
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
 @app.get("/api/tasks/{task_id}/download")
 async def download_task_file(task_id: str):
     """供浏览器直接下载文件流（支持 PC 浏览器与局域网手机/平板原生保存）"""
@@ -452,6 +662,7 @@ async def open_download_folder():
 async def get_settings():
     """获取当前系统配置"""
     res = config.to_dict()
+    res["version"] = app.version
     try:
         from setup_shortcuts import is_autostart_enabled
         res["autoStart"] = is_autostart_enabled()
@@ -475,6 +686,9 @@ async def update_settings(req: UpdateSettingsRequest, request: Request):
             parts = req.bilibili_cookie if "=" in req.bilibili_cookie else "SESSDATA=" + req.bilibili_cookie
             rows = [f".bilibili.com\tTRUE\t/\tTRUE\t0\t{k.strip()}\t{v.strip()}" for token in parts.split(";") if "=" in token for k, v in [token.split("=", 1)]]
             sessions.import_text("哔哩哔哩", "# Netscape HTTP Cookie File\n" + "\n".join(rows))
+        else:
+            from core.browser_login import browser_login
+            await asyncio.to_thread(browser_login.clear, '哔哩哔哩')
         config.bilibili_cookie = ""
     if req.max_concurrent_tasks is not None:
         config.max_concurrent_tasks = req.max_concurrent_tasks
@@ -614,6 +828,8 @@ class SessionCookiePolicyRequest(BaseModel):
 def require_local_session_action(request: Request):
     if not request.client or request.client.host not in ("127.0.0.1", "::1", "testclient"):
         raise HTTPException(403, "会话管理仅允许本机操作")
+    if request.url.hostname not in ('127.0.0.1', 'localhost', '::1', 'testserver'):
+        raise HTTPException(403, '会话管理仅接受本机服务地址')
     origin = request.headers.get("origin")
     if origin and origin.rstrip("/") != str(request.base_url).rstrip("/"):
         raise HTTPException(403, "不接受跨站凭据管理请求")
@@ -636,9 +852,34 @@ async def import_session(req: SessionImportRequest, request: Request):
 @app.delete("/api/sessions/{platform}")
 async def clear_session(platform: str, request: Request):
     require_local_session_action(request)
-    from core.session_store import sessions
-    sessions.clear(platform)
-    return sessions.status(platform)
+    from core.browser_login import browser_login
+    try: return await asyncio.to_thread(browser_login.clear, platform)
+    except ValueError as exc: raise HTTPException(400, str(exc)) from None
+    except (RuntimeError, OSError): raise HTTPException(409, '会话清理未完成，请关闭登录窗口并检查应用数据目录后重试') from None
+
+
+@app.get('/api/sessions/{platform}/login')
+async def browser_login_status(platform: str, request: Request):
+    require_local_session_action(request)
+    from core.browser_login import browser_login
+    try: return browser_login.status(platform)
+    except ValueError as exc: raise HTTPException(400, str(exc)) from None
+
+
+@app.post('/api/sessions/{platform}/login')
+async def open_browser_login(platform: str, request: Request):
+    require_local_session_action(request)
+    from core.browser_login import browser_login
+    try: return await asyncio.to_thread(browser_login.open, platform, config.proxy_url)
+    except ValueError as exc: raise HTTPException(400, str(exc)) from None
+
+
+@app.post('/api/sessions/{platform}/capture')
+async def save_browser_login(platform: str, request: Request):
+    require_local_session_action(request)
+    from core.browser_login import browser_login
+    try: return await asyncio.to_thread(browser_login.save, platform)
+    except (ValueError, RuntimeError) as exc: raise HTTPException(400, str(exc)) from None
 
 
 @app.patch("/api/sessions/{platform}")
@@ -652,6 +893,21 @@ async def toggle_session_cookie(platform: str, req: SessionCookiePolicyRequest, 
     for key, (_, post) in list(_image_previews.items()):
         if post.get('platform') == platform: _image_previews.pop(key, None)
     return result
+
+
+@app.get("/api/platforms")
+async def get_platform_catalog():
+    from engine.service_features import extractor_catalog, VERSION
+    return {"version": VERSION, "extractors": await asyncio.to_thread(extractor_catalog)}
+
+
+@app.get("/api/updates")
+async def get_application_update():
+    from engine.service_features import check_update
+    try:
+        return await asyncio.to_thread(check_update)
+    except Exception:
+        raise HTTPException(status_code=503, detail="暂时无法检查应用更新")
 
 
 @app.get("/api/engine/diagnostics")

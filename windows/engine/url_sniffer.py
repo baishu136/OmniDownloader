@@ -11,7 +11,7 @@ from typing import Optional, Tuple
 import requests
 
 URL_REGEX = re.compile(
-    r"https?://[a-zA-Z0-9_\-.]+(?::[0-9]+)?(?:/[^\s]*)?",
+    r"https?://[a-zA-Z0-9_\-.]+(?::[0-9]+)?(?:[/?#][^\s]*)?",
     re.IGNORECASE
 )
 
@@ -52,7 +52,7 @@ class UrlSniffer:
         clean = normalize(raw_url.strip())
         from urllib.parse import urlsplit
         host = (urlsplit(clean).hostname or '').lower()
-        short = host in ('b23.tv', 'v.douyin.com', 'v.kuaishou.com', 'xhslink.com', 'xhslink.cn', 't.co', 'vm.tiktok.com', 'vt.tiktok.com', 'pin.it', 'fb.watch', 'fb.me')
+        short = host in ('b23.tv', 'v.douyin.com', 'v.kuaishou.com', 'xhslink.com', 'xhslink.cn', 't.co', 'vm.tiktok.com', 'vt.tiktok.com', 'pin.it', 'fb.watch', 'fb.me', 't.cn')
         if not short: return clean
         def resolve():
             session = http(platform(clean))

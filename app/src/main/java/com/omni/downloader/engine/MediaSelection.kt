@@ -30,6 +30,24 @@ internal object MediaSelection {
             if (isHttpUrl(mediaUrl)) return mediaUrl
             return null
         }
+        if (site == LinkNormalizer.PLATFORM_WEIBO) {
+            // yt-dlp uses the same post page for every video in a mixed post.
+            // Re-resolve that post and match the original object ID on download.
+            return requestedUrl.takeIf {
+                LinkNormalizer.contentId(it, site) != null &&
+                    id.isNotBlank() && id != "null" && formatUrls.any(::isHttpUrl)
+            }
+        }
+        if (site == LinkNormalizer.PLATFORM_GENERIC) {
+            // Some playlists expose media URLs rather than individual pages.
+            // In that case the task keeps the playlist URL and selects by ID.
+            if (id.isBlank() || id == "null") return null
+            return listOf(webpageUrl, originalUrl).firstOrNull {
+                YtDlpPlatforms.isHttpUrl(it) && it != mediaUrl && it !in formatUrls
+            } ?: requestedUrl.takeIf {
+                YtDlpPlatforms.isHttpUrl(it) && formatUrls.any(YtDlpPlatforms::isHttpUrl)
+            }
+        }
         if (page != null) return page
         if (site == "YouTube" && Regex("[A-Za-z0-9_-]{6,64}").matches(id)) return "https://www.youtube.com/watch?v=$id"
         return mediaUrl.takeIf { runCatching { URI(it).let { u -> u.scheme in setOf("https", "http") && u.host != null } }.getOrDefault(false) }

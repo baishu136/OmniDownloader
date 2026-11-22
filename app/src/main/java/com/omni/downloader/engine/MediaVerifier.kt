@@ -5,6 +5,8 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.content.Context
 import java.io.File
+import java.io.RandomAccessFile
+import kotlin.math.abs
 
 /**
  * 成品校验：用系统媒体元数据读取真实宽高与时长。
@@ -111,11 +113,33 @@ object MediaVerifier {
         val result = (if (context != null) probeWithFallback(context, file) else probe(file)) ?: return "[POSTPROCESS_FAILED] 无法验证成品媒体信息"
         if (task.selectedWidth > 0 && task.selectedHeight > 0 && !task.qualitySelection.allowLowerQuality) {
             val expectedArea = task.selectedWidth.toLong() * task.selectedHeight
-            if (result.width.toLong() * result.height < expectedArea * 0.98) return "[QUALITY_UNAVAILABLE] 成品尺寸低于所选源"
+            if (result.width.toLong() * result.height < expectedArea * 0.98 &&
+                !matchesDisplaySize(file, result, task.selectedWidth, task.selectedHeight)
+            ) return "[QUALITY_UNAVAILABLE] 成品尺寸低于所选源"
         }
         if (task.requireAudio && task.downloadType == com.omni.downloader.data.model.DownloadType.VIDEO_WITH_AUDIO && !result.hasAudio) return "[POSTPROCESS_FAILED] 成品缺少预期音轨"
         if (task.expectedDurationMs > 0 && task.downloadType != com.omni.downloader.data.model.DownloadType.GIF && kotlin.math.abs(result.durationMs - task.expectedDurationMs) > maxOf(2000L, task.expectedDurationMs / 100)) return "[POSTPROCESS_FAILED] 成品时长与目标不符"
         return null
+    }
+
+    private fun matchesDisplaySize(file: File, coded: Probe, expectedWidth: Int, expectedHeight: Int): Boolean {
+        if (file.extension.lowercase() !in setOf("mp4", "m4v", "mov")) return false
+        // Check for pixel aspect ratio correction while keeping one coded axis intact.
+        // A smaller video scaled up on both axes must still fail the quality check.
+        if (coded.width != expectedWidth && coded.height != expectedHeight) return false
+        val (displayWidth, displayHeight) = runCatching {
+            RandomAccessFile(file, "r").use { input ->
+                val length = input.length()
+                Mp4Dimensions.readSparse { offset, count ->
+                    if (offset < 0 || offset > length - count) null else {
+                        input.seek(offset)
+                        ByteArray(count).also(input::readFully)
+                    }
+                }
+            }
+        }.getOrNull() ?: return false
+        fun matches(width: Int, height: Int) = abs(width - expectedWidth) <= 1 && abs(height - expectedHeight) <= 1
+        return matches(displayWidth, displayHeight) || matches(displayHeight, displayWidth)
     }
 
     @Suppress("DEPRECATION")

@@ -27,12 +27,15 @@ internal class LoginBrowserController(
     private val onNotice: (String) -> Unit,
     private val onLocation: (String) -> Unit = {},
     private val documentStartScript: String? = null,
-    private val browserProfile: DouyinBrowserProfile? = null
+    private val browserProfile: DouyinBrowserProfile? = null,
+    private val googleProfile: com.omni.downloader.data.repository.GoogleBrowserProfile? = null,
+    private val strings: com.omni.downloader.ui.localization.AppStrings = com.omni.downloader.ui.localization.ZhHansStrings
 ) {
     val container = FrameLayout(context)
     private val identities = linkedMapOf<WebView, WebViewDesktopMode>()
     private val captureScripts = linkedMapOf<WebView, androidx.webkit.ScriptHandler>()
     private var disposed = false
+    private var unregisterGoogle:()->Unit={}
     private val work = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var proxyLease: WebViewProxyLease? = null
     var desktop = desktop
@@ -42,20 +45,23 @@ internal class LoginBrowserController(
     val current: WebView get() = active
 
     init {
+        if(googleProfile!=null) unregisterGoogle=googleProfile.register{close()}
         container.addView(root)
         val load = { if (!disposed) root.loadUrl(startUrl) }
         if (browserProfile != null) work.launch {
             try {
-                proxyLease = WebViewProxyLease.acquire(com.omni.downloader.engine.NetworkProxy.configuredUrl)
+                proxyLease = WebViewProxyLease.acquire(com.omni.downloader.engine.NetworkProxy.configuredUrl, strings)
                 if (!disposed) browserProfile.restore(load)
             } catch (error: CancellationException) { throw error }
             catch (error: Exception) { if (!disposed) onNotice(com.omni.downloader.engine.LogSanitizer.sanitize(error.message.orEmpty())) }
         }
+        else if(googleProfile!=null) load()
         else SessionRepository.getInstance(context).restoreBrowserCookies(platform, load)
     }
 
     private fun newWebView(): WebView = WebView(container.context).apply {
         browserProfile?.bind(this)
+        googleProfile?.bind(this)
         layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         settings.apply {
             javaScriptEnabled = true; domStorageEnabled = true; databaseEnabled = true
@@ -73,12 +79,12 @@ internal class LoginBrowserController(
             }
         }
         val current = this
-        (browserProfile?.cookies ?: CookieManager.getInstance()).apply { setAcceptCookie(true); setAcceptThirdPartyCookies(current, true) }
+        (googleProfile?.cookies ?: browserProfile?.cookies ?: CookieManager.getInstance()).apply { setAcceptCookie(true); setAcceptThirdPartyCookies(current, true) }
         webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url?.toString() ?: return false
                 if (BrowserIdentity.permitsNavigation(url)) return false
-                onNotice("请在网页内选择扫码或手机号登录，应用唤起链接不会离开当前登录页")
+                onNotice(strings.loginNotice)
                 return true
             }
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
@@ -126,15 +132,20 @@ internal class LoginBrowserController(
         reloadStart()
     }
     fun reloadStart() {
+        navigate(startUrl)
+    }
+    fun navigate(url:String) {
         if (disposed) return
+        if(!BrowserIdentity.permitsNavigation(url))return
         identities.keys.filter { it != root }.toList().forEach(::closeWindow)
         root.stopLoading()
         identities[root]?.apply(desktop)
-        root.loadUrl(startUrl)
+        root.loadUrl(url)
     }
     fun close() {
         if (disposed) return
         disposed = true
+        unregisterGoogle();unregisterGoogle={}
         work.cancel()
         proxyLease?.let { lease -> CoroutineScope(Dispatchers.Main.immediate).launch { lease.release() } }
         proxyLease = null

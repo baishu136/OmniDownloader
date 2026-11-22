@@ -75,13 +75,33 @@ class SessionRepository private constructor(context: Context) {
         NetscapeCookies.header(rows).takeIf { it.isNotBlank() }
     }
 
+    /** Decrypt once for a gallery's immutable request scope, then match each URL.
+     * Callers recreate the provider after credential/policy changes. */
+    internal fun imageCookieProvider(platform:String):(String)->String? = imageCookieSnapshot(platform).second
+    internal fun imageCookieSnapshot(platform:String):Pair<String,(String)->String?> {
+        val (identity,rows)=synchronized(lock){
+            val enabled=isCookieEnabled(platform);val stored=if(enabled)readStored(platform) else null
+            val identity="${stored?.generation ?: 0}:${prefs.getLong("cookie_revision_${platform.hashCode()}",0)}:$enabled"
+            identity to stored?.let{NetscapeCookies.parse(it.netscape,SessionPlatforms.domainsFor(platform))}.orEmpty()
+        }
+        val provider:(String)->String? = {url->
+            val uri=runCatching{java.net.URI(url)}.getOrNull();val host=uri?.host?.lowercase()
+            if(host==null)null else NetscapeCookies.header(rows.filter{row->
+                (host==row.domain || row.includeSubdomains && host.endsWith(".${row.domain}")) &&
+                    (!row.secure || uri.scheme=="https") && uri.path.orEmpty().ifBlank{"/"}.startsWith(row.path) &&
+                    (row.expiresAt==0L || row.expiresAt>System.currentTimeMillis()/1000)
+            }).takeIf{it.isNotBlank()}
+        }
+        return identity to provider
+    }
+
     /** Must be called on the WebView UI thread before loading a platform page. */
     fun restoreBrowserCookies(platform: String, onRestored: () -> Unit = {}) =
         restoreBrowserCookies(platform, android.webkit.CookieManager.getInstance(), onRestored)
 
     fun restoreBrowserCookies(platform: String, manager: android.webkit.CookieManager, onRestored: () -> Unit = {}) {
         if (!isCookieEnabled(platform)) { onRestored(); return }
-        val rows = synchronized(lock) { readStored(platform)?.let { NetscapeCookies.parse(it.netscape, SessionPlatforms.domainsFor(platform)) } }.orEmpty()
+        val rows = synchronized(lock) { readStored(platform)?.takeIf{it.status!=SessionStatus.NEEDS_AUTH}?.let { NetscapeCookies.parse(it.netscape, SessionPlatforms.domainsFor(platform)) } }.orEmpty()
         BrowserCookieRestorer.restore(rows, manager, onRestored)
     }
 
@@ -136,8 +156,16 @@ class SessionRepository private constructor(context: Context) {
      * 这里按平台主域生成一年期会话项，并在 UI 中说明其局限。
      */
     suspend fun importCookieHeader(platform: String, header: String): Result<SessionInfo> =
+        importLinkedCookieHeader(platform,header,null)
+
+    /** The owner token and callback are committed under the credential lock. */
+    internal suspend fun importLinkedCookieHeader(platform:String,header:String,onStored:((String)->Unit)?):Result<SessionInfo> =
         withContext(Dispatchers.IO) {
             runCatching {
+                synchronized(lock) {
+                val keys=listOf(keyFor(platform),"owner_${platform.hashCode()}","cookie_revision_${platform.hashCode()}")
+                val previous=keys.associateWith{prefs.all[it]}
+                try {
                 val pairs = CookieHeaderParser.parse(header)
                 require(pairs.isNotEmpty()) { "未获取到有效 Cookie" }
                 val domain = SessionPlatforms.domainsFor(platform).firstOrNull()
@@ -163,17 +191,26 @@ class SessionRepository private constructor(context: Context) {
                     status = SessionStatus.IMPORTED,
                     generation = (readStored(platform)?.generation ?: 0) + 1
                 )
-                writeStored(stored)
+                writeStored(stored,persist=onStored!=null)
+                onStored?.invoke(credentialOwnerId(platform)!!)
                 reload()
                 _profiles.value.getValue(platform)
+                } catch(error:Throwable) {
+                    prefs.edit().also{edit->previous.forEach{(key,value)->when(value){is String->edit.putString(key,value);is Long->edit.putLong(key,value);else->edit.remove(key)}}}.commit()
+                    reload();throw error
+                }
+                }
             }
         }
 
-    fun clear(platform: String) {
+    fun clear(platform: String) = clearSession(platform, persist = false)
+
+    private fun clearSession(platform:String,persist:Boolean) {
         if (platform == "哔哩哔哩") SettingsRepository.getInstance(appContext).clearBilibiliCookie()
         synchronized(lock) {
-            prefs.edit().remove(keyFor(platform)).remove("validation_${platform.hashCode()}")
-                .putLong("cookie_revision_${platform.hashCode()}", prefs.getLong("cookie_revision_${platform.hashCode()}", 0) + 1).apply()
+            val edit=prefs.edit().remove(keyFor(platform)).remove("validation_${platform.hashCode()}").remove("owner_${platform.hashCode()}")
+                .putLong("cookie_revision_${platform.hashCode()}", prefs.getLong("cookie_revision_${platform.hashCode()}", 0) + 1)
+            if(persist)check(edit.commit()){ "下载凭据清理失败，请重试" } else edit.apply()
         }
         reload()
     }
@@ -182,9 +219,16 @@ class SessionRepository private constructor(context: Context) {
         synchronized(lock) {
             val stored = readStored(platform) ?: return
             if (stored.status == status) return
-            writeStored(stored.copy(status = status))
+            writeStored(stored.copy(status = status),renewOwner=false)
         }
         reload()
+    }
+
+    internal fun credentialOwnerId(platform:String):String?=synchronized(lock) {
+        if(readStored(platform)==null)null else prefs.getString("owner_${platform.hashCode()}",null)
+    }
+    internal fun clearOwnedSession(platform:String,owner:String):Boolean=synchronized(lock) {
+        if(credentialOwnerId(platform)!=owner) false else {clearSession(platform,persist=true);true}
     }
 
     /** 为 yt-dlp 生成临时 Netscape 文件；调用方必须在任务结束后删除。 */
@@ -260,7 +304,7 @@ class SessionRepository private constructor(context: Context) {
         }.getOrNull()
     }
 
-    private fun writeStored(stored: StoredSession) {
+    private fun writeStored(stored: StoredSession,renewOwner:Boolean=true,persist:Boolean=false) = synchronized(lock) {
         val json = JSONObject().apply {
             put("netscape", stored.netscape)
             put("header", stored.header)
@@ -269,7 +313,10 @@ class SessionRepository private constructor(context: Context) {
             put("generation", stored.generation)
         }
         val encrypted = SessionCrypto.encrypt(json.toString())
-        prefs.edit().putString(keyFor(stored.platform), encrypted).apply()
+        val editor=prefs.edit().putString(keyFor(stored.platform), encrypted)
+        if(renewOwner) editor.putString("owner_${stored.platform.hashCode()}",java.util.UUID.randomUUID().toString())
+            .putLong("cookie_revision_${stored.platform.hashCode()}",prefs.getLong("cookie_revision_${stored.platform.hashCode()}",0)+1)
+        if(persist) check(editor.commit()) {"会话凭据写入失败"} else editor.apply()
     }
 
     private fun keyFor(platform: String): String = "session_${platform.hashCode()}"

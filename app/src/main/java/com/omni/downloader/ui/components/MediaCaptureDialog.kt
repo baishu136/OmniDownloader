@@ -67,6 +67,7 @@ fun MediaCaptureDialog(
     onCaptured: (String) -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val strings = LocalAppStrings.current
     val sessions = remember(context) { com.omni.downloader.data.repository.SessionRepository.getInstance(context) }
     val profiles by sessions.profiles.collectAsState()
     val platform = remember(startUrl) { com.omni.downloader.engine.LinkNormalizer.platformOf(startUrl) }
@@ -74,16 +75,15 @@ fun MediaCaptureDialog(
         Dialog(onDismissRequest = onDismissRequest) {
             Surface(shape = RoundedCornerShape(16.dp)) {
                 Column(Modifier.padding(20.dp)) {
-                    Text("$platform 的 Cookie 已禁用", style = MaterialTheme.typography.titleMedium)
-                    Text("浏览器辅助会使用网页登录状态。可开启该平台 Cookie 后继续，或关闭窗口保持匿名解析。", Modifier.padding(vertical = 12.dp))
-                    Button(shape = MaterialTheme.shapes.medium, onClick = { sessions.setCookieEnabled(platform, true) }) { Text("开启 Cookie 并继续") }
-                    TextButton(onClick = onDismissRequest) { Text("关闭") }
+                    Text(strings.cookieDisabledTitle.format(platform), style = MaterialTheme.typography.titleMedium)
+                    Text(strings.cookieDisabledBody, Modifier.padding(vertical = 12.dp))
+                    Button(shape = MaterialTheme.shapes.medium, onClick = { sessions.setCookieEnabled(platform, true) }) { Text(strings.enableCookieContinue) }
+                    TextButton(onClick = onDismissRequest) { Text(strings.close) }
                 }
             }
         }
         return
     }
-    val strings = LocalAppStrings.current
     var desktop by remember { mutableStateOf(BrowserIdentity.prefersDesktopUrl(startUrl)) }
     var identity by remember { mutableStateOf<WebViewDesktopMode?>(null) }
     var browser by remember { mutableStateOf<WebView?>(null) }
@@ -154,10 +154,10 @@ fun MediaCaptureDialog(
                         browser?.stopLoading()
                         identity?.apply(desktop)
                         browser?.loadUrl(startUrl)
-                    }) { Text(if (desktop) "桌面网站（切换手机版）" else "手机版（切换桌面网站）") }
+                    }) { Text(if (desktop) strings.desktopSwitchLabel else strings.mobileSwitchLabel) }
                 }
                 candidate?.let { source ->
-                    Button(shape = MaterialTheme.shapes.medium, onClick = { onCaptured(source) }, modifier = Modifier.fillMaxWidth()) { Text("下载当前已捕获媒体（请确认来自目标内容）") }
+                    Button(shape = MaterialTheme.shapes.medium, onClick = { onCaptured(source) }, modifier = Modifier.fillMaxWidth()) { Text(strings.downloadCaptured) }
                 }
                 AndroidView(
                     modifier = Modifier.weight(1f),

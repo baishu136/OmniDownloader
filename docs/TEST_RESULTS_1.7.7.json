@@ -1,0 +1,86 @@
+{
+  "scope": "Android only",
+  "version": "1.7.7",
+  "jvm": {
+    "passed": 107,
+    "failed": 0
+  },
+  "composeInstrumentation": {
+    "passed": 3,
+    "failed": 0,
+    "device": "API35 x86_64 read-only emulator"
+  },
+  "realLinkColdStart": [
+    {
+      "case": "reported_bili_dynamic",
+      "origin": "video",
+      "expected": "images",
+      "outcome": "parsed_images",
+      "elapsedSeconds": 3.0,
+      "imageCount": "4 张图片 · 已选 4 张",
+      "errorCodes": []
+    },
+    {
+      "case": "reported_ks_images",
+      "origin": "video",
+      "expected": "images",
+      "outcome": "parsed_images",
+      "elapsedSeconds": 7.2,
+      "imageCount": "10 张图片 · 已选 10 张",
+      "errorCodes": []
+    },
+    {
+      "case": "reported_ks_video",
+      "origin": "images",
+      "expected": "video",
+      "outcome": "extractor_error",
+      "elapsedSeconds": 2.9,
+      "imageCount": "",
+      "errorCodes": [
+        "MEDIA_ID_MISMATCH"
+      ]
+    },
+    {
+      "case": "xhs_video",
+      "origin": "images",
+      "expected": "video",
+      "outcome": "parsed_video",
+      "elapsedSeconds": 7.4,
+      "imageCount": "",
+      "errorCodes": []
+    },
+    {
+      "case": "xhs_images",
+      "origin": "video",
+      "expected": "images",
+      "outcome": "parsed_images",
+      "elapsedSeconds": 7.5,
+      "imageCount": "7 张图片 · 已选 7 张",
+      "errorCodes": []
+    }
+  ],
+  "saf": {
+    "safPickerOpened": true,
+    "folderGrantSucceeded": true,
+    "persistsAfterRestart": true,
+    "resetToDefault": true
+  },
+  "artifact": {
+    "app": "OmniDownloader",
+    "version": "1.7.7",
+    "versionCode": 66,
+    "artifact": "release/1.7.7/OmniDownloader-1.7.7-arm64-v8a.apk",
+    "bytes": 59503643,
+    "sha256": "9daba399f8dfcddca98a696f3a536d7dde5762cbea7a7847f87c716782e55ef5",
+    "abi": [
+      "arm64-v8a"
+    ],
+    "archiveCrc": "passed",
+    "pythonAssetIntegrity": "passed",
+    "frozenBuildInputs": 168,
+    "inputsUnchanged": true
+  },
+  "physicalDeviceTested": false,
+  "warmShareScript": "invalid stale-page observations, not an acceptance result",
+  "releasePubliclyPublished": false
+}

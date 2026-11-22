@@ -1,0 +1,2164 @@
+{
+  "recordedAt": "2026-11-03T11:37:27.224161+00:00",
+  "productVersion": "1.7.4",
+  "metrics": {
+    "platforms": 12,
+    "fixtureGroups": 20,
+    "links": 39,
+    "androidMediaReturned": 28,
+    "androidSaveSamplePass": 15,
+    "androidSaveSampleFail": 1,
+    "windowsMediaReturned": 27,
+    "windowsExpectedKindPass": 25,
+    "xFreshParseRepeats": 12,
+    "xFreshParseRepeatPass": 12,
+    "jvmTests": 86,
+    "pythonTests": 35
+  },
+  "environment": {
+    "android": "Android 15 API35 x86_64 emulator, Debug app + instrumentation",
+    "physicalDevice": "NOT_CONNECTED",
+    "auth": "isolated anonymous sessions; no user credentials imported",
+    "network": "domestic Android direct; overseas Android temporary host HTTP proxy bridge; Windows uses host system proxy",
+    "ytDlp": "2026.10.26",
+    "windows": "current source API/parser comparison only, no EXE/browser GUI/save acceptance",
+    "ios": "NOT_EXECUTED"
+  },
+  "android": [
+    {
+      "caseId": "bilibili_single.primary",
+      "platform": "哔哩哔哩",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "BV13Kxj6eEct:43121640016",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 82000,
+      "selectedSize": [
+        294,
+        640
+      ],
+      "savedSize": [
+        294,
+        640
+      ],
+      "savedDurationMs": 81177,
+      "hasAudio": true,
+      "savedBytes": 3175749,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 12975,
+      "error": "",
+      "recordedAt": "2026-11-03T11:19:25.470236+00:00",
+      "testNetworkRoute": "direct"
+    },
+    {
+      "caseId": "bilibili_single.backup",
+      "platform": "哔哩哔哩",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "BV1QE421G7nQ:1534005577",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 154000,
+      "selectedSize": [
+        640,
+        360
+      ],
+      "elapsedMs": 1692,
+      "error": "",
+      "recordedAt": "2026-11-03T11:19:28.556330+00:00",
+      "testNetworkRoute": "direct"
+    },
+    {
+      "caseId": "bilibili_collection.primary",
+      "platform": "哔哩哔哩",
+      "expectedKind": "COLLECTION",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "SKIPPED_DURATION_BUDGET",
+      "mediaId": "BV15fLbz8EXK:29571351146",
+      "videoFormats": 7,
+      "children": 158,
+      "isGif": false,
+      "durationMs": 1738000,
+      "downloadedCollectionChildren": 1,
+      "selectedSize": [
+        640,
+        360
+      ],
+      "elapsedMs": 1977,
+      "error": "",
+      "recordedAt": "2026-11-03T11:19:31.969684+00:00",
+      "testNetworkRoute": "direct"
+    },
+    {
+      "caseId": "bilibili_collection.backup",
+      "platform": "哔哩哔哩",
+      "expectedKind": "COLLECTION",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "BV1vW42197AR:1648295018",
+      "videoFormats": 7,
+      "children": 165,
+      "isGif": false,
+      "durationMs": 146000,
+      "downloadedCollectionChildren": 1,
+      "selectedSize": [
+        640,
+        360
+      ],
+      "savedSize": [
+        640,
+        360
+      ],
+      "savedDurationMs": 202269,
+      "hasAudio": true,
+      "savedBytes": 4189668,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 11923,
+      "error": "",
+      "recordedAt": "2026-11-03T11:19:45.205526+00:00",
+      "testNetworkRoute": "direct"
+    },
+    {
+      "caseId": "douyin_video.primary",
+      "platform": "抖音",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "",
+      "videoFormats": 7,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 0,
+      "selectedSize": [
+        1024,
+        576
+      ],
+      "savedSize": [
+        1024,
+        576
+      ],
+      "savedDurationMs": 1249512,
+      "hasAudio": true,
+      "savedBytes": 61231643,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 127517,
+      "error": "",
+      "recordedAt": "2026-11-03T11:21:53.956455+00:00",
+      "testNetworkRoute": "direct"
+    },
+    {
+      "caseId": "douyin_video.backup",
+      "platform": "抖音",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "",
+      "videoFormats": 3,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 0,
+      "selectedSize": [
+        1024,
+        576
+      ],
+      "elapsedMs": 4337,
+      "error": "",
+      "recordedAt": "2026-11-03T11:21:59.606507+00:00",
+      "testNetworkRoute": "direct"
+    },
+    {
+      "caseId": "kuaishou_video.primary",
+      "platform": "快手",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "MEDIA_UNCONFIRMED",
+      "error": "原生解析失败: 未能从快手页面提取到有效视频直链，将尝试通用引擎；通用引擎失败: [MEDIA_UNCONFIRMED] 本次未取得媒体，请重试或验证会话 ([MEDIA_UNCONFIRMED] 本次未取得可验证的视频流，请重试或验证会话)",
+      "elapsedMs": 5203,
+      "recordedAt": "2026-11-03T11:22:06.172556+00:00",
+      "testNetworkRoute": "direct"
+    },
+    {
+      "caseId": "kuaishou_video.backup",
+      "platform": "快手",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "NO_MEDIA",
+      "error": "原生解析失败: 未能从快手页面提取到有效视频直链，将尝试通用引擎；通用引擎失败: [NO_MEDIA] 该内容不是受支持的视频/音频 (WARNING: [generic] Falling back on generic information extractor\nERROR: Unsupported URL: <url>",
+      "elapsedMs": 9702,
+      "recordedAt": "2026-11-03T11:22:17.112340+00:00",
+      "testNetworkRoute": "direct"
+    },
+    {
+      "caseId": "xhs_video.primary",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "SKIPPED_DURATION_BUDGET",
+      "mediaId": "6ab8bf110000000013019e4e",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 1886761,
+      "selectedSize": [
+        1280,
+        720
+      ],
+      "elapsedMs": 1691,
+      "error": "",
+      "recordedAt": "2026-11-03T11:22:19.999351+00:00",
+      "testNetworkRoute": "direct"
+    },
+    {
+      "caseId": "xhs_video.backup",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "6937d509000000001d039d86",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 132202,
+      "selectedSize": [
+        1280,
+        720
+      ],
+      "savedSize": [
+        1280,
+        720
+      ],
+      "savedDurationMs": 132201,
+      "hasAudio": true,
+      "savedBytes": 20376837,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 49308,
+      "error": "",
+      "recordedAt": "2026-11-03T11:23:10.579653+00:00",
+      "testNetworkRoute": "direct"
+    },
+    {
+      "caseId": "youtube_video.primary",
+      "platform": "YouTube",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "CHALLENGE_REQUIRED",
+      "error": "[CHALLENGE_REQUIRED] 平台要求完成验证码或人机验证 (WARNING: [youtube] No title found in player responses; falling back to title from initial data. Other metadata may also be missing\nERROR: [youtube] iVLr-PKuSd0: Sign in to confirm you’re not a bot. This helps protect our community. Use --cookies-from-browser or --cookies for the authentication. See  <url>  for how to manually pass cookies. Also see  <url>  for tips on effectively exporting YouTube cookies)",
+      "elapsedMs": 4397,
+      "recordedAt": "2026-11-03T11:28:38.862510+00:00"
+    },
+    {
+      "caseId": "youtube_video.backup",
+      "platform": "YouTube",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "CHALLENGE_REQUIRED",
+      "error": "[CHALLENGE_REQUIRED] 平台要求完成验证码或人机验证 (WARNING: [youtube] No title found in player responses; falling back to title from initial data. Other metadata may also be missing\nERROR: [youtube] KLuTLF3x9sA: Sign in to confirm you’re not a bot. This helps protect our community. Use --cookies-from-browser or --cookies for the authentication. See  <url>  for how to manually pass cookies. Also see  <url>  for tips on effectively exporting YouTube cookies)",
+      "elapsedMs": 4672,
+      "recordedAt": "2026-11-03T11:28:44.942325+00:00"
+    },
+    {
+      "caseId": "tiktok_video.primary",
+      "platform": "TikTok",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "",
+      "videoFormats": 1,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 0,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "savedSize": [
+        1024,
+        576
+      ],
+      "savedDurationMs": 7267,
+      "hasAudio": true,
+      "savedBytes": 1706494,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 9359,
+      "error": "",
+      "recordedAt": "2026-11-03T11:28:55.597241+00:00"
+    },
+    {
+      "caseId": "tiktok_video.backup",
+      "platform": "TikTok",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "",
+      "videoFormats": 1,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 0,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "elapsedMs": 4284,
+      "error": "",
+      "recordedAt": "2026-11-03T11:29:01.136272+00:00"
+    },
+    {
+      "caseId": "x_video.primary",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "2113129314804011008",
+      "videoFormats": 5,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 5000,
+      "selectedSize": [
+        320,
+        320
+      ],
+      "savedSize": [
+        320,
+        320
+      ],
+      "savedDurationMs": 5231,
+      "hasAudio": true,
+      "savedBytes": 111202,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 6907,
+      "error": "",
+      "recordedAt": "2026-11-03T11:29:09.239518+00:00"
+    },
+    {
+      "caseId": "x_video.backup",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2117206199259348992",
+      "videoFormats": 8,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 10000,
+      "selectedSize": [
+        320,
+        624
+      ],
+      "elapsedMs": 4959,
+      "error": "",
+      "recordedAt": "2026-11-03T11:29:15.443209+00:00"
+    },
+    {
+      "caseId": "x_gif.primary",
+      "platform": "X (Twitter)",
+      "expectedKind": "ANIMATED_VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "2115433467320365056",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": true,
+      "durationMs": 0,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "savedGif": true,
+      "savedBytes": 5570345,
+      "downloadType": "GIF",
+      "mediaStoreExport": true,
+      "elapsedMs": 6823,
+      "error": "",
+      "recordedAt": "2026-11-03T11:29:23.537148+00:00"
+    },
+    {
+      "caseId": "x_gif.backup",
+      "platform": "X (Twitter)",
+      "expectedKind": "ANIMATED_VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2116708247943958528",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": true,
+      "durationMs": 0,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "elapsedMs": 3605,
+      "error": "",
+      "recordedAt": "2026-11-03T11:29:28.519295+00:00"
+    },
+    {
+      "caseId": "instagram_video.primary",
+      "platform": "Instagram",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "AUTH_REQUIRED",
+      "error": "[AUTH_REQUIRED] 需要登录后才能继续，请导入对应平台的会话 (ERROR: [Instagram] De6bAhVSY7J: Instagram sent an empty media response. Check if this post is accessible in your browser without being logged-in. If it is not, then use --cookies-from-browser or --cookies for the authentication. See  <url>  for how to manually pass cookies. Otherwise, if the post is accessible in browser without being logged-in, please report this issue on  <url> , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U)",
+      "elapsedMs": 3661,
+      "recordedAt": "2026-11-03T11:29:33.454360+00:00"
+    },
+    {
+      "caseId": "instagram_video.backup",
+      "platform": "Instagram",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "AUTH_REQUIRED",
+      "error": "[AUTH_REQUIRED] 需要登录后才能继续，请导入对应平台的会话 (ERROR: [Instagram] Cs_9Et6AJLb: Instagram sent an empty media response. Check if this post is accessible in your browser without being logged-in. If it is not, then use --cookies-from-browser or --cookies for the authentication. See  <url>  for how to manually pass cookies. Otherwise, if the post is accessible in browser without being logged-in, please report this issue on  <url> , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U)",
+      "elapsedMs": 4097,
+      "recordedAt": "2026-11-03T11:29:38.849363+00:00"
+    },
+    {
+      "caseId": "facebook_video.primary",
+      "platform": "Facebook",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "FAIL",
+      "mediaId": "1588355073030909",
+      "videoFormats": 7,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 27000,
+      "selectedSize": [
+        360,
+        640
+      ],
+      "failureStage": "DOWNLOAD",
+      "errorCode": "QUALITY_UNAVAILABLE",
+      "error": "[QUALITY_UNAVAILABLE] 所选清晰度当前不可用 (ERROR: [facebook] 1588355073030909: Requested format is not available. Use --list-formats for a list of available formats)",
+      "elapsedMs": 7931,
+      "recordedAt": "2026-11-03T11:29:48.068163+00:00"
+    },
+    {
+      "caseId": "facebook_video.backup",
+      "platform": "Facebook",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "1036953159233038",
+      "videoFormats": 8,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 16000,
+      "selectedSize": [
+        720,
+        1280
+      ],
+      "savedSize": [
+        720,
+        1280
+      ],
+      "savedDurationMs": 16640,
+      "hasAudio": true,
+      "savedBytes": 1161438,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 20673,
+      "error": "",
+      "recordedAt": "2026-11-03T11:30:10.055162+00:00"
+    },
+    {
+      "caseId": "pinterest_video.primary",
+      "platform": "Pinterest",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "682295412345910430",
+      "videoFormats": 4,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 6000,
+      "selectedSize": [
+        234,
+        416
+      ],
+      "savedSize": [
+        234,
+        416
+      ],
+      "savedDurationMs": 6548,
+      "hasAudio": true,
+      "savedBytes": 297342,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 15106,
+      "error": "",
+      "recordedAt": "2026-11-03T11:30:26.445063+00:00"
+    },
+    {
+      "caseId": "pinterest_video.backup",
+      "platform": "Pinterest",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "682295412345855366",
+      "videoFormats": 4,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 11000,
+      "selectedSize": [
+        240,
+        360
+      ],
+      "elapsedMs": 8458,
+      "error": "",
+      "recordedAt": "2026-11-03T11:30:36.156108+00:00"
+    },
+    {
+      "caseId": "heybox_video.primary",
+      "platform": "小黑盒",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "NO_MEDIA",
+      "error": "[NO_MEDIA] 该内容不是受支持的视频/音频 (BROWSER_ASSIST_REQUIRED 受限支持：该分享页未返回公开视频源，可在内置浏览器中打开并播放以捕获媒体地址)",
+      "elapsedMs": 926,
+      "recordedAt": "2026-11-03T11:30:38.376256+00:00"
+    },
+    {
+      "caseId": "heybox_video.backup",
+      "platform": "小黑盒",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "NO_MEDIA",
+      "error": "[NO_MEDIA] 该内容不是受支持的视频/音频 (BROWSER_ASSIST_REQUIRED 受限支持：该分享页未返回公开视频源，可在内置浏览器中打开并播放以捕获媒体地址)",
+      "elapsedMs": 2794,
+      "recordedAt": "2026-11-03T11:30:42.574738+00:00"
+    },
+    {
+      "caseId": "pixiv_ugoira.primary",
+      "platform": "Pixiv",
+      "expectedKind": "UGOIRA",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "151591764",
+      "videoFormats": 3,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 6430,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "savedSize": [
+        320,
+        240
+      ],
+      "savedDurationMs": 6431,
+      "hasAudio": false,
+      "savedBytes": 2744213,
+      "downloadType": "VIDEO_ONLY",
+      "mediaStoreExport": true,
+      "elapsedMs": 24200,
+      "error": "",
+      "recordedAt": "2026-11-03T11:31:08.198072+00:00"
+    },
+    {
+      "caseId": "pixiv_ugoira.backup",
+      "platform": "Pixiv",
+      "expectedKind": "UGOIRA",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "CONTENT_UNAVAILABLE",
+      "error": "[CONTENT_UNAVAILABLE] 内容不可用、已删除或无权访问 (HTTP 404)",
+      "elapsedMs": 2086,
+      "recordedAt": "2026-11-03T11:31:11.643193+00:00"
+    },
+    {
+      "caseId": "douyin_images.primary",
+      "platform": "抖音",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "CHALLENGE_REQUIRED",
+      "error": "[CHALLENGE_REQUIRED] 抖音返回浏览器验证页，请先在平台页面完成验证并更新会话",
+      "elapsedMs": 1925,
+      "recordedAt": "2026-11-03T11:31:14.835228+00:00"
+    },
+    {
+      "caseId": "douyin_images.backup",
+      "platform": "抖音",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "CHALLENGE_REQUIRED",
+      "error": "[CHALLENGE_REQUIRED] 抖音返回浏览器验证页，请先在平台页面完成验证并更新会话",
+      "elapsedMs": 1388,
+      "recordedAt": "2026-11-03T11:31:17.501201+00:00"
+    },
+    {
+      "caseId": "pixiv_images.primary",
+      "platform": "Pixiv",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "151610560",
+      "imageCount": 2,
+      "singleImageBytes": 75870,
+      "singleImageSize": [
+        600,
+        847
+      ],
+      "archiveBytes": 207826,
+      "savedImageSizes": [
+        [
+          600,
+          847
+        ],
+        [
+          600,
+          847
+        ]
+      ],
+      "mediaStoreExport": true,
+      "elapsedMs": 5912,
+      "error": "",
+      "recordedAt": "2026-11-03T11:31:24.696471+00:00"
+    },
+    {
+      "caseId": "pixiv_images.backup",
+      "platform": "Pixiv",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "151610449",
+      "imageCount": 7,
+      "elapsedMs": 1706,
+      "error": "",
+      "recordedAt": "2026-11-03T11:31:27.671656+00:00"
+    },
+    {
+      "caseId": "xhs_images.primary",
+      "platform": "小红书",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "6ad72d210000000031002f47",
+      "imageCount": 7,
+      "singleImageBytes": 438974,
+      "singleImageSize": [
+        1080,
+        2347
+      ],
+      "archiveBytes": 1941711,
+      "savedImageSizes": [
+        [
+          1080,
+          2347
+        ],
+        [
+          1080,
+          810
+        ],
+        [
+          1080,
+          810
+        ],
+        [
+          1080,
+          2347
+        ],
+        [
+          1080,
+          2347
+        ],
+        [
+          1080,
+          2347
+        ],
+        [
+          1080,
+          2347
+        ]
+      ],
+      "mediaStoreExport": true,
+      "elapsedMs": 12546,
+      "error": "",
+      "recordedAt": "2026-11-03T11:31:41.605306+00:00"
+    },
+    {
+      "caseId": "xhs_images.backup",
+      "platform": "小红书",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "6acf7a2d000000001a028114",
+      "imageCount": 5,
+      "elapsedMs": 2515,
+      "error": "",
+      "recordedAt": "2026-11-03T11:31:45.901375+00:00"
+    },
+    {
+      "caseId": "x_images.primary",
+      "platform": "X (Twitter)",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "2117140226422313153",
+      "imageCount": 1,
+      "singleImageBytes": 25868,
+      "singleImageSize": [
+        405,
+        382
+      ],
+      "archiveBytes": 26462,
+      "savedImageSizes": [
+        [
+          405,
+          382
+        ]
+      ],
+      "mediaStoreExport": true,
+      "elapsedMs": 9384,
+      "error": "",
+      "recordedAt": "2026-11-03T11:31:56.524453+00:00"
+    },
+    {
+      "caseId": "x_images.backup",
+      "platform": "X (Twitter)",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "939179793798504448",
+      "imageCount": 2,
+      "elapsedMs": 3129,
+      "error": "",
+      "recordedAt": "2026-11-03T11:32:00.990306+00:00"
+    },
+    {
+      "caseId": "pinterest_images.primary",
+      "platform": "Pinterest",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "871235490435640369",
+      "imageCount": 1,
+      "singleImageBytes": 55044,
+      "singleImageSize": [
+        640,
+        640
+      ],
+      "archiveBytes": 55620,
+      "savedImageSizes": [
+        [
+          640,
+          640
+        ]
+      ],
+      "mediaStoreExport": true,
+      "elapsedMs": 16653,
+      "error": "",
+      "recordedAt": "2026-11-03T11:32:18.887672+00:00"
+    },
+    {
+      "caseId": "pinterest_images.backup",
+      "platform": "Pinterest",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "1031042908442716711",
+      "imageCount": 1,
+      "elapsedMs": 5820,
+      "error": "",
+      "recordedAt": "2026-11-03T11:32:25.924407+00:00"
+    },
+    {
+      "caseId": "xhs_video_reported_20261103.primary",
+      "platform": "小红书",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "6ae92bb20000000018038a89",
+      "imageCount": 3,
+      "singleImageBytes": 173284,
+      "singleImageSize": [
+        1080,
+        1440
+      ],
+      "archiveBytes": 482731,
+      "savedImageSizes": [
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          414,
+          552
+        ]
+      ],
+      "mediaStoreExport": true,
+      "elapsedMs": 6926,
+      "error": "",
+      "recordedAt": "2026-11-03T11:32:34.135810+00:00"
+    }
+  ],
+  "windowsParserComparison": [
+    {
+      "caseId": "bilibili_single.primary",
+      "platform": "哔哩哔哩",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:10.430698+00:00",
+      "mediaId": "BV13Kxj6eEct:43121640016",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 1500
+    },
+    {
+      "caseId": "bilibili_single.backup",
+      "platform": "哔哩哔哩",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:10.430698+00:00",
+      "mediaId": "BV1QE421G7nQ:1534005577",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 1671
+    },
+    {
+      "caseId": "bilibili_collection.primary",
+      "platform": "哔哩哔哩",
+      "expectedKind": "COLLECTION",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:12.903127+00:00",
+      "mediaId": "BV15fLbz8EXK:29571351146",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "collectionExpanded": false,
+      "errorCode": "COLLECTION_NOT_EXPANDED",
+      "elapsedMs": 1827
+    },
+    {
+      "caseId": "bilibili_collection.backup",
+      "platform": "哔哩哔哩",
+      "expectedKind": "COLLECTION",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:13.056335+00:00",
+      "mediaId": "BV1vW42197AR:1648295018",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "collectionExpanded": false,
+      "errorCode": "COLLECTION_NOT_EXPANDED",
+      "elapsedMs": 1953
+    },
+    {
+      "caseId": "douyin_video.primary",
+      "platform": "抖音",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-03T11:19:15.652457+00:00",
+      "errorCode": "CHALLENGE_REQUIRED",
+      "error": "[CHALLENGE_REQUIRED] 抖音返回浏览器验证页，请完成平台验证并更新会话",
+      "elapsedMs": 1422
+    },
+    {
+      "caseId": "douyin_video.backup",
+      "platform": "抖音",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-03T11:19:15.941357+00:00",
+      "errorCode": "CHALLENGE_REQUIRED",
+      "error": "[CHALLENGE_REQUIRED] 抖音返回浏览器验证页，请完成平台验证并更新会话",
+      "elapsedMs": 1437
+    },
+    {
+      "caseId": "kuaishou_video.primary",
+      "platform": "快手",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-03T11:19:18.003519+00:00",
+      "errorCode": "EXTRACTOR_CHANGED",
+      "error": "解析媒体资源失败: ERROR: Unsupported URL: <url>",
+      "elapsedMs": 6233
+    },
+    {
+      "caseId": "kuaishou_video.backup",
+      "platform": "快手",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-03T11:19:18.287651+00:00",
+      "errorCode": "EXTRACTOR_CHANGED",
+      "error": "解析媒体资源失败: ERROR: Unsupported URL: <url>",
+      "elapsedMs": 5952
+    },
+    {
+      "caseId": "xhs_video.primary",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:25.311189+00:00",
+      "mediaId": "6ab8bf110000000013019e4e",
+      "videoFormats": 1,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 1453
+    },
+    {
+      "caseId": "xhs_video.backup",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:25.314189+00:00",
+      "mediaId": "6937d509000000001d039d86",
+      "videoFormats": 1,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 1546
+    },
+    {
+      "caseId": "youtube_video.primary",
+      "platform": "YouTube",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-03T11:19:27.686093+00:00",
+      "errorCode": "CHALLENGE_REQUIRED",
+      "error": "解析媒体资源失败: ERROR: [youtube] iVLr-PKuSd0: Sign in to confirm you’re not a bot. This helps protect our community. Use --cookies-from-browser or --cookies for the authentication. See  <url>  for how to manually pass cookies. Also see  <url>  for tips on effectively exporting YouTube cookies",
+      "elapsedMs": 3016
+    },
+    {
+      "caseId": "youtube_video.backup",
+      "platform": "YouTube",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-03T11:19:27.770537+00:00",
+      "errorCode": "CHALLENGE_REQUIRED",
+      "error": "解析媒体资源失败: ERROR: [youtube] KLuTLF3x9sA: Sign in to confirm you’re not a bot. This helps protect our community. Use --cookies-from-browser or --cookies for the authentication. See  <url>  for how to manually pass cookies. Also see  <url>  for tips on effectively exporting YouTube cookies",
+      "elapsedMs": 3796
+    },
+    {
+      "caseId": "tiktok_video.primary",
+      "platform": "TikTok",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:31.663766+00:00",
+      "mediaId": "",
+      "videoFormats": 1,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 2875
+    },
+    {
+      "caseId": "tiktok_video.backup",
+      "platform": "TikTok",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-03T11:19:32.516077+00:00",
+      "errorCode": "EXTRACTOR_CHANGED",
+      "error": "解析媒体资源失败: ERROR: [TikTok] 7653792634778995989: Unexpected response from webpage request; please report this issue on  <url> , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U",
+      "elapsedMs": 2514
+    },
+    {
+      "caseId": "x_video.primary",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:35.464450+00:00",
+      "mediaId": "2113129314804011008",
+      "videoFormats": 5,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 4047
+    },
+    {
+      "caseId": "x_video.backup",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:35.951536+00:00",
+      "mediaId": "2117206199259348992",
+      "videoFormats": 8,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 3812
+    },
+    {
+      "caseId": "x_gif.primary",
+      "platform": "X (Twitter)",
+      "expectedKind": "ANIMATED_VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:40.483475+00:00",
+      "mediaId": "2115433467320365056",
+      "videoFormats": 1,
+      "children": 0,
+      "isGif": true,
+      "elapsedMs": 2250
+    },
+    {
+      "caseId": "x_gif.backup",
+      "platform": "X (Twitter)",
+      "expectedKind": "ANIMATED_VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:40.740556+00:00",
+      "mediaId": "2116708247943958528",
+      "videoFormats": 1,
+      "children": 0,
+      "isGif": true,
+      "elapsedMs": 2219
+    },
+    {
+      "caseId": "instagram_video.primary",
+      "platform": "Instagram",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:43.737684+00:00",
+      "mediaId": "De6bAhVSY7J",
+      "videoFormats": 8,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 2594
+    },
+    {
+      "caseId": "instagram_video.backup",
+      "platform": "Instagram",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:43.978827+00:00",
+      "mediaId": "Cs_9Et6AJLb",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 2422
+    },
+    {
+      "caseId": "facebook_video.primary",
+      "platform": "Facebook",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:47.286447+00:00",
+      "mediaId": "1588355073030909",
+      "videoFormats": 7,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 2593
+    },
+    {
+      "caseId": "facebook_video.backup",
+      "platform": "Facebook",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:47.371417+00:00",
+      "mediaId": "1036953159233038",
+      "videoFormats": 8,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 4016
+    },
+    {
+      "caseId": "pinterest_video.primary",
+      "platform": "Pinterest",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:50.821533+00:00",
+      "mediaId": "682295412345910430",
+      "videoFormats": 4,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 15125
+    },
+    {
+      "caseId": "pinterest_video.backup",
+      "platform": "Pinterest",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:19:52.300943+00:00",
+      "mediaId": "682295412345855366",
+      "videoFormats": 4,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 14686
+    },
+    {
+      "caseId": "heybox_video.primary",
+      "platform": "小黑盒",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-03T11:20:06.875699+00:00",
+      "errorCode": "BROWSER_ASSIST_REQUIRED",
+      "error": "[BROWSER_ASSIST_REQUIRED] 分享页没有公开媒体，请在内置浏览器打开并播放目标内容",
+      "elapsedMs": 7343
+    },
+    {
+      "caseId": "heybox_video.backup",
+      "platform": "小黑盒",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-03T11:20:07.871845+00:00",
+      "errorCode": "BROWSER_ASSIST_REQUIRED",
+      "error": "[BROWSER_ASSIST_REQUIRED] 分享页没有公开媒体，请在内置浏览器打开并播放目标内容",
+      "elapsedMs": 6468
+    },
+    {
+      "caseId": "pixiv_ugoira.backup",
+      "platform": "Pixiv",
+      "expectedKind": "UGOIRA",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-03T11:20:15.230100+00:00",
+      "errorCode": "CONTENT_UNAVAILABLE",
+      "error": "404 Client Error: Not Found for url: <url>",
+      "elapsedMs": 2078
+    },
+    {
+      "caseId": "pixiv_ugoira.primary",
+      "platform": "Pixiv",
+      "expectedKind": "UGOIRA",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:20:15.145622+00:00",
+      "mediaId": "151591764",
+      "videoFormats": 3,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 2171
+    },
+    {
+      "caseId": "douyin_images.backup",
+      "platform": "抖音",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-03T11:20:18.208524+00:00",
+      "errorCode": "CHALLENGE_REQUIRED",
+      "error": "[CHALLENGE_REQUIRED] 抖音返回浏览器验证页，请先在平台页面完成验证并更新会话",
+      "elapsedMs": 5687
+    },
+    {
+      "caseId": "douyin_images.primary",
+      "platform": "抖音",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-03T11:20:18.208524+00:00",
+      "errorCode": "CHALLENGE_REQUIRED",
+      "error": "[CHALLENGE_REQUIRED] 抖音返回浏览器验证页，请先在平台页面完成验证并更新会话",
+      "elapsedMs": 6218
+    },
+    {
+      "caseId": "pixiv_images.primary",
+      "platform": "Pixiv",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:20:24.843133+00:00",
+      "mediaId": "151610560",
+      "imageCount": 2,
+      "elapsedMs": 3139
+    },
+    {
+      "caseId": "pixiv_images.backup",
+      "platform": "Pixiv",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:20:25.394639+00:00",
+      "mediaId": "151610449",
+      "imageCount": 7,
+      "elapsedMs": 3108
+    },
+    {
+      "caseId": "xhs_images.primary",
+      "platform": "小红书",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:20:29.011360+00:00",
+      "mediaId": "6ad72d210000000031002f47",
+      "imageCount": 7,
+      "elapsedMs": 2437
+    },
+    {
+      "caseId": "xhs_images.backup",
+      "platform": "小红书",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:20:29.546407+00:00",
+      "mediaId": "6acf7a2d000000001a028114",
+      "imageCount": 5,
+      "elapsedMs": 3296
+    },
+    {
+      "caseId": "x_images.primary",
+      "platform": "X (Twitter)",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:20:32.336305+00:00",
+      "mediaId": "2117140226422313153",
+      "imageCount": 1,
+      "elapsedMs": 3733
+    },
+    {
+      "caseId": "x_images.backup",
+      "platform": "X (Twitter)",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:20:33.882321+00:00",
+      "mediaId": "939179793798504448",
+      "imageCount": 2,
+      "elapsedMs": 4328
+    },
+    {
+      "caseId": "pinterest_images.primary",
+      "platform": "Pinterest",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:20:37.095193+00:00",
+      "mediaId": "871235490435640369",
+      "imageCount": 1,
+      "elapsedMs": 11139
+    },
+    {
+      "caseId": "xhs_video_reported_20261103.primary",
+      "platform": "小红书",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:20:49.272298+00:00",
+      "mediaId": "6ae92bb20000000018038a89",
+      "imageCount": 3,
+      "elapsedMs": 1889
+    },
+    {
+      "caseId": "pinterest_images.backup",
+      "platform": "Pinterest",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-03T11:20:39.228505+00:00",
+      "mediaId": "1031042908442716711",
+      "imageCount": 1,
+      "elapsedMs": 13203
+    }
+  ],
+  "xRepeatedParses": [
+    {
+      "caseId": "x_video.primary.repeat1",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2113129314804011008",
+      "videoFormats": 5,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 5000,
+      "selectedSize": [
+        320,
+        320
+      ],
+      "elapsedMs": 4927,
+      "round": 1
+    },
+    {
+      "caseId": "x_video.backup.repeat1",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2117206199259348992",
+      "videoFormats": 8,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 10000,
+      "selectedSize": [
+        320,
+        624
+      ],
+      "elapsedMs": 3704,
+      "round": 1
+    },
+    {
+      "caseId": "x_gif.primary.repeat1",
+      "platform": "X (Twitter)",
+      "expectedKind": "ANIMATED_VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2115433467320365056",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": true,
+      "durationMs": 0,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "elapsedMs": 3038,
+      "round": 1
+    },
+    {
+      "caseId": "x_gif.backup.repeat1",
+      "platform": "X (Twitter)",
+      "expectedKind": "ANIMATED_VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2116708247943958528",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": true,
+      "durationMs": 0,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "elapsedMs": 3170,
+      "round": 1
+    },
+    {
+      "caseId": "x_video.primary.repeat2",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2113129314804011008",
+      "videoFormats": 5,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 5000,
+      "selectedSize": [
+        320,
+        320
+      ],
+      "elapsedMs": 3497,
+      "round": 2
+    },
+    {
+      "caseId": "x_video.backup.repeat2",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2117206199259348992",
+      "videoFormats": 8,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 10000,
+      "selectedSize": [
+        320,
+        624
+      ],
+      "elapsedMs": 3825,
+      "round": 2
+    },
+    {
+      "caseId": "x_gif.primary.repeat2",
+      "platform": "X (Twitter)",
+      "expectedKind": "ANIMATED_VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2115433467320365056",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": true,
+      "durationMs": 0,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "elapsedMs": 3259,
+      "round": 2
+    },
+    {
+      "caseId": "x_gif.backup.repeat2",
+      "platform": "X (Twitter)",
+      "expectedKind": "ANIMATED_VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2116708247943958528",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": true,
+      "durationMs": 0,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "elapsedMs": 3375,
+      "round": 2
+    },
+    {
+      "caseId": "x_video.primary.repeat3",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2113129314804011008",
+      "videoFormats": 5,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 5000,
+      "selectedSize": [
+        320,
+        320
+      ],
+      "elapsedMs": 4675,
+      "round": 3
+    },
+    {
+      "caseId": "x_video.backup.repeat3",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2117206199259348992",
+      "videoFormats": 8,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 10000,
+      "selectedSize": [
+        320,
+        624
+      ],
+      "elapsedMs": 4540,
+      "round": 3
+    },
+    {
+      "caseId": "x_gif.primary.repeat3",
+      "platform": "X (Twitter)",
+      "expectedKind": "ANIMATED_VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2115433467320365056",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": true,
+      "durationMs": 0,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "elapsedMs": 4219,
+      "round": 3
+    },
+    {
+      "caseId": "x_gif.backup.repeat3",
+      "platform": "X (Twitter)",
+      "expectedKind": "ANIMATED_VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "2116708247943958528",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": true,
+      "durationMs": 0,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "elapsedMs": 3144,
+      "round": 3
+    }
+  ],
+  "requestProbes": [
+    {
+      "probe": "facebook_formats",
+      "results": [
+        {
+          "request": 1,
+          "success": true,
+          "mediaId": "1588355073030909",
+          "formats": [
+            {
+              "id": "1796981221347318a",
+              "width": 0,
+              "height": 0,
+              "vcodec": "none",
+              "acodec": "mp4a.40.5"
+            },
+            {
+              "id": "sd",
+              "width": 0,
+              "height": 0,
+              "vcodec": "",
+              "acodec": ""
+            },
+            {
+              "id": "hd",
+              "width": 0,
+              "height": 0,
+              "vcodec": "",
+              "acodec": ""
+            },
+            {
+              "id": "1796985431346897v",
+              "width": 360,
+              "height": 640,
+              "vcodec": "av01.0.01M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796985428013564v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796985421346898v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796985418013565v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796985434680230v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796985424680231v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796985438013563v",
+              "width": 1080,
+              "height": 1920,
+              "vcodec": "av01.0.08M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            }
+          ]
+        },
+        {
+          "request": 2,
+          "success": true,
+          "mediaId": "1588355073030909",
+          "formats": [
+            {
+              "id": "1796981221347318a",
+              "width": 0,
+              "height": 0,
+              "vcodec": "none",
+              "acodec": "mp4a.40.5"
+            },
+            {
+              "id": "sd",
+              "width": 0,
+              "height": 0,
+              "vcodec": "",
+              "acodec": ""
+            },
+            {
+              "id": "hd",
+              "width": 0,
+              "height": 0,
+              "vcodec": "",
+              "acodec": ""
+            },
+            {
+              "id": "1796988254679948v",
+              "width": 360,
+              "height": 640,
+              "vcodec": "av01.0.01M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796988241346616v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796988251346615v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796988244679949v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796988258013281v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796988238013283v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796988248013282v",
+              "width": 1080,
+              "height": 1920,
+              "vcodec": "av01.0.08M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            }
+          ]
+        },
+        {
+          "request": 3,
+          "success": true,
+          "mediaId": "1588355073030909",
+          "formats": [
+            {
+              "id": "1796981221347318a",
+              "width": 0,
+              "height": 0,
+              "vcodec": "none",
+              "acodec": "mp4a.40.5"
+            },
+            {
+              "id": "sd",
+              "width": 0,
+              "height": 0,
+              "vcodec": "",
+              "acodec": ""
+            },
+            {
+              "id": "hd",
+              "width": 0,
+              "height": 0,
+              "vcodec": "",
+              "acodec": ""
+            },
+            {
+              "id": "1796988254679948v",
+              "width": 360,
+              "height": 640,
+              "vcodec": "av01.0.01M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796988241346616v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796988251346615v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796988244679949v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796988258013281v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796988238013283v",
+              "width": 720,
+              "height": 1280,
+              "vcodec": "av01.0.05M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            },
+            {
+              "id": "1796988248013282v",
+              "width": 1080,
+              "height": 1920,
+              "vcodec": "av01.0.08M.08.0.111.01.01.01.0",
+              "acodec": "none"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "probe": "instagram_headers",
+      "results": [
+        {
+          "variant": "app_headers",
+          "success": false,
+          "errorCode": "AUTH_REQUIRED"
+        },
+        {
+          "variant": "upstream_headers",
+          "success": true,
+          "id": "De6bAhVSY7J",
+          "formats": 12
+        }
+      ],
+      "controlledDifference": "Only the app-added Instagram User-Agent header; all other metadata options identical"
+    }
+  ],
+  "initialDirectDiagnostics": [
+    {
+      "caseId": "bilibili_single.primary",
+      "platform": "哔哩哔哩",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "BV13Kxj6eEct:43121640016",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 82000,
+      "selectedSize": [
+        294,
+        640
+      ],
+      "savedSize": [
+        294,
+        640
+      ],
+      "savedDurationMs": 81177,
+      "hasAudio": true,
+      "savedBytes": 3175749,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 12975,
+      "error": "",
+      "recordedAt": "2026-11-03T11:19:25.470236+00:00"
+    },
+    {
+      "caseId": "bilibili_single.backup",
+      "platform": "哔哩哔哩",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "BV1QE421G7nQ:1534005577",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 154000,
+      "selectedSize": [
+        640,
+        360
+      ],
+      "elapsedMs": 1692,
+      "error": "",
+      "recordedAt": "2026-11-03T11:19:28.556330+00:00"
+    },
+    {
+      "caseId": "bilibili_collection.primary",
+      "platform": "哔哩哔哩",
+      "expectedKind": "COLLECTION",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "SKIPPED_DURATION_BUDGET",
+      "mediaId": "BV15fLbz8EXK:29571351146",
+      "videoFormats": 7,
+      "children": 158,
+      "isGif": false,
+      "durationMs": 1738000,
+      "downloadedCollectionChildren": 1,
+      "selectedSize": [
+        640,
+        360
+      ],
+      "elapsedMs": 1977,
+      "error": "",
+      "recordedAt": "2026-11-03T11:19:31.969684+00:00"
+    },
+    {
+      "caseId": "bilibili_collection.backup",
+      "platform": "哔哩哔哩",
+      "expectedKind": "COLLECTION",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "BV1vW42197AR:1648295018",
+      "videoFormats": 7,
+      "children": 165,
+      "isGif": false,
+      "durationMs": 146000,
+      "downloadedCollectionChildren": 1,
+      "selectedSize": [
+        640,
+        360
+      ],
+      "savedSize": [
+        640,
+        360
+      ],
+      "savedDurationMs": 202269,
+      "hasAudio": true,
+      "savedBytes": 4189668,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 11923,
+      "error": "",
+      "recordedAt": "2026-11-03T11:19:45.205526+00:00"
+    },
+    {
+      "caseId": "douyin_video.primary",
+      "platform": "抖音",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "",
+      "videoFormats": 7,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 0,
+      "selectedSize": [
+        1024,
+        576
+      ],
+      "savedSize": [
+        1024,
+        576
+      ],
+      "savedDurationMs": 1249512,
+      "hasAudio": true,
+      "savedBytes": 61231643,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 127517,
+      "error": "",
+      "recordedAt": "2026-11-03T11:21:53.956455+00:00"
+    },
+    {
+      "caseId": "douyin_video.backup",
+      "platform": "抖音",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "",
+      "videoFormats": 3,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 0,
+      "selectedSize": [
+        1024,
+        576
+      ],
+      "elapsedMs": 4337,
+      "error": "",
+      "recordedAt": "2026-11-03T11:21:59.606507+00:00"
+    },
+    {
+      "caseId": "kuaishou_video.primary",
+      "platform": "快手",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "MEDIA_UNCONFIRMED",
+      "error": "原生解析失败: 未能从快手页面提取到有效视频直链，将尝试通用引擎；通用引擎失败: [MEDIA_UNCONFIRMED] 本次未取得媒体，请重试或验证会话 ([MEDIA_UNCONFIRMED] 本次未取得可验证的视频流，请重试或验证会话)",
+      "elapsedMs": 5203,
+      "recordedAt": "2026-11-03T11:22:06.172556+00:00"
+    },
+    {
+      "caseId": "kuaishou_video.backup",
+      "platform": "快手",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "NO_MEDIA",
+      "error": "原生解析失败: 未能从快手页面提取到有效视频直链，将尝试通用引擎；通用引擎失败: [NO_MEDIA] 该内容不是受支持的视频/音频 (WARNING: [generic] Falling back on generic information extractor\nERROR: Unsupported URL: <url>",
+      "elapsedMs": 9702,
+      "recordedAt": "2026-11-03T11:22:17.112340+00:00"
+    },
+    {
+      "caseId": "xhs_video.primary",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "SKIPPED_DURATION_BUDGET",
+      "mediaId": "6ab8bf110000000013019e4e",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 1886761,
+      "selectedSize": [
+        1280,
+        720
+      ],
+      "elapsedMs": 1691,
+      "error": "",
+      "recordedAt": "2026-11-03T11:22:19.999351+00:00"
+    },
+    {
+      "caseId": "xhs_video.backup",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.4",
+      "hasSession": false,
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "6937d509000000001d039d86",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 132202,
+      "selectedSize": [
+        1280,
+        720
+      ],
+      "savedSize": [
+        1280,
+        720
+      ],
+      "savedDurationMs": 132201,
+      "hasAudio": true,
+      "savedBytes": 20376837,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 49308,
+      "error": "",
+      "recordedAt": "2026-11-03T11:23:10.579653+00:00"
+    },
+    {
+      "caseId": "youtube_video.primary",
+      "platform": "YouTube",
+      "expectedKind": "VIDEO",
+      "parseSuccess": false,
+      "errorCode": "TIMEOUT_210S",
+      "downloadStatus": "NOT_VERIFIED",
+      "recordedAt": "2026-11-03T11:26:40.692594+00:00"
+    }
+  ],
+  "businessCodeChanges": "NONE_THIS_TURN",
+  "newProductBuild": "NONE_THIS_TURN"
+}

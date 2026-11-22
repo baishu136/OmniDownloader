@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.omni.downloader.data.model.*
 import com.omni.downloader.data.repository.TaskRepository
 import com.omni.downloader.service.DownloadService
+import com.omni.downloader.ui.localization.LocalAppStrings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -30,6 +31,7 @@ import java.util.UUID
 @Composable
 internal fun GifSettingsPage() {
     val context = LocalContext.current
+    val strings = LocalAppStrings.current
     val repository = remember { TaskRepository.getInstance(context) }
     val scope = rememberCoroutineScope()
     val tasks by remember(repository) { repository.tasks.map { rows -> rows.filter {
@@ -49,10 +51,10 @@ internal fun GifSettingsPage() {
                 context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 repository.awaitLoaded()
                 val task = DownloadTask(id = UUID.randomUUID().toString(), url = uri.toString(),
-                    title = "本地视频转 GIF", downloadType = DownloadType.GIF)
+                    title = strings.gifConvertLocal, downloadType = DownloadType.GIF)
                 repository.addTask(task)
                 DownloadService.startDownload(context, task.id)
-            }.onFailure { Toast.makeText(context, it.message ?: "无法读取所选视频", Toast.LENGTH_LONG).show() }
+            }.onFailure { Toast.makeText(context, it.message ?: strings.gifCannotReadVideo, Toast.LENGTH_LONG).show() }
         }
     }
     fun open(task: DownloadTask, share: Boolean) {
@@ -62,43 +64,57 @@ internal fun GifSettingsPage() {
             val intent = if (share) Intent(Intent.ACTION_SEND).setType("image/gif").putExtra(Intent.EXTRA_STREAM, uri)
                 else Intent(Intent.ACTION_VIEW).setDataAndType(uri, "image/gif")
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            context.startActivity(if (share) Intent.createChooser(intent, "分享 GIF") else intent)
-        }.onFailure { Toast.makeText(context, "文件不可用或没有可打开 GIF 的应用", Toast.LENGTH_LONG).show() }
+            context.startActivity(if (share) Intent.createChooser(intent, strings.gifShareChooser) else intent)
+        }.onFailure { Toast.makeText(context, strings.gifNoApp, Toast.LENGTH_LONG).show() }
     }
     LazyColumn(Modifier.fillMaxSize().testTag("settings_gif"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-        Button(shape = MaterialTheme.shapes.medium, onClick = { picker.launch(arrayOf("video/*")) }, modifier = Modifier.fillMaxWidth()) { Text("选择本地视频转 GIF") }
-        Text("转换任务在后台执行，可在任务页查看进度、取消或重试。")
-        if (entries.isEmpty()) Text("暂无 GIF")
+        Button(shape = MaterialTheme.shapes.medium, onClick = { picker.launch(arrayOf("video/*")) }, modifier = Modifier.fillMaxWidth()) { Text(strings.gifChooseVideo) }
+        Text(strings.gifBackgroundHint)
+        if (entries.isEmpty()) Text(strings.gifEmpty)
         }
         items(entries, key = { it.id }) { task ->
             OutlinedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp)) {
                     Text(task.title)
-                    Text(task.status.label)
+                    Text(taskStatusLabel(task.status))
                     Row {
                         if (task.status == TaskStatus.COMPLETED) {
-                            TextButton(onClick = { open(task, false) }) { Text("打开") }
-                            TextButton(onClick = { open(task, true) }) { Text("分享") }
-                            TextButton(onClick = { deleting = task }) { Text("删除") }
+                            TextButton(onClick = { open(task, false) }) { Text(strings.open) }
+                            TextButton(onClick = { open(task, true) }) { Text(strings.share) }
+                            TextButton(onClick = { deleting = task }) { Text(strings.delete) }
                         } else if (task.status == TaskStatus.FAILED || task.status == TaskStatus.CANCELLED) {
-                            TextButton(onClick = { repository.updateTaskProgress(task.id, 0f, "", "", TaskStatus.PENDING); DownloadService.startDownload(context, task.id) }) { Text("重试") }
+                            TextButton(onClick = { repository.updateTaskProgress(task.id, 0f, "", "", TaskStatus.PENDING); DownloadService.startDownload(context, task.id) }) { Text(strings.retry) }
                         } else {
-                            TextButton(onClick = { DownloadService.cancelDownload(context, task.id) }) { Text("取消") }
+                            TextButton(onClick = { DownloadService.cancelDownload(context, task.id) }) { Text(strings.cancel) }
                         }
                     }
                 }
             }
         }
     }
-    deleting?.let { task -> AlertDialog(onDismissRequest = { deleting = null }, title = { Text("删除 GIF？") },
-        text = { Text("将删除此 GIF 文件及任务记录，本地原视频保留。") }, confirmButton = {
+    deleting?.let { task -> AlertDialog(onDismissRequest = { deleting = null }, title = { Text(strings.gifDeleteTitle) },
+        text = { Text(strings.gifDeleteMessage) }, confirmButton = {
             TextButton(onClick = { scope.launch {
                 runCatching { withContext(Dispatchers.IO) {
                     if (task.localFilePath.startsWith("content://")) context.contentResolver.delete(Uri.parse(task.localFilePath), null, null)
-                    else { val file = File(task.localFilePath); check(!file.exists() || file.delete()) { "无法删除文件" } }
+                    else { val file = File(task.localFilePath); check(!file.exists() || file.delete()) { strings.gifCannotDeleteFile } }
                     repository.removeTask(task.id)
-                } }.onSuccess { deleting = null }.onFailure { Toast.makeText(context, "删除失败，请检查文件权限", Toast.LENGTH_LONG).show() }
-            } }) { Text("删除") }
-        }, dismissButton = { TextButton(onClick = { deleting = null }) { Text("取消") } }) }
+                } }.onSuccess { deleting = null }.onFailure { Toast.makeText(context, strings.gifDeleteFailed, Toast.LENGTH_LONG).show() }
+            } }) { Text(strings.delete) }
+        }, dismissButton = { TextButton(onClick = { deleting = null }) { Text(strings.cancel) } }) }
+}
+
+@Composable
+private fun taskStatusLabel(status: TaskStatus): String {
+    val s = LocalAppStrings.current
+    return when (status) {
+        TaskStatus.PENDING -> s.statusPending
+        TaskStatus.DOWNLOADING -> s.statusDownloading
+        TaskStatus.PROCESSING -> s.statusProcessing
+        TaskStatus.COMPLETED -> s.statusCompleted
+        TaskStatus.FAILED -> s.statusFailed
+        TaskStatus.WAITING_FOR_AUTH -> s.statusWaitingAuth
+        TaskStatus.CANCELLED -> s.statusCancelled
+    }
 }

@@ -1,0 +1,43 @@
+<Application
+    x:Class="OmniDownloader.WinUI.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:helpers="using:OmniDownloader.WinUI.Helpers">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- 通用值转换器 -->
+            <helpers:BoolToVisibilityConverter x:Key="BoolToVis" />
+            <helpers:StringToVisibilityConverter x:Key="StrToVis" />
+            <helpers:IntToVisibilityConverter x:Key="IntToVis" />
+
+            <!-- Windows 11 原生卡片容器样式（跟随系统圆角、描边与表面色） -->
+            <Style x:Key="OmniCardBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Padding" Value="16" />
+            </Style>
+
+            <!-- 小标签胶囊样式 -->
+            <Style x:Key="OmniTagBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+                <Setter Property="CornerRadius" Value="4" />
+                <Setter Property="Padding" Value="8,3" />
+            </Style>
+
+            <!-- 页面区域主标题样式 -->
+            <Style x:Key="PageSectionTitleStyle" TargetType="TextBlock" BasedOn="{StaticResource SubtitleTextBlockStyle}">
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="GroupHeaderTextStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyStrongTextBlockStyle}">
+                <Setter Property="Margin" Value="2,8,0,2" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

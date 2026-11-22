@@ -1,0 +1,73 @@
+<ContentDialog
+    x:Class="OmniDownloader.WinUI.Controls.PlatformCatalogDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:OmniDownloader.WinUI.Controls"
+    Title="支持平台目录"
+    CloseButtonText="关闭"
+    DefaultButton="Close">
+
+    <ContentDialog.Resources>
+        <x:Double x:Key="ContentDialogMaxWidth">660</x:Double>
+    </ContentDialog.Resources>
+
+    <StackPanel Spacing="12" MinWidth="260" HorizontalAlignment="Stretch">
+        <TextBox
+            x:Name="SearchBox"
+            PlaceholderText="筛选主流平台或搜索 yt-dlp 解析器（如 哔哩哔哩, youtube, twitch）..."
+            TextChanged="SearchBox_TextChanged" />
+
+        <StackPanel x:Name="FeaturedSection" Spacing="8">
+            <TextBlock
+                x:Name="FeaturedHeaderText"
+                Text="主流直连与深度适配平台 (22)"
+                Style="{StaticResource BodyStrongTextBlockStyle}" />
+            <TextBlock
+                x:Name="FeaturedHintText"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="WrapWholeWords" />
+
+            <ScrollViewer MaxHeight="138" VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="FeaturedPlatformsControl">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <controls:WrapPanel HorizontalSpacing="6" VerticalSpacing="6" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="controls:FeaturedPlatformChip">
+                            <Border
+                                CornerRadius="12"
+                                Padding="10,4"
+                                BorderThickness="1"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Ellipse Width="7" Height="7" Fill="{x:Bind DotBrush}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{x:Bind Name}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </StackPanel>
+
+        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+        <StackPanel Spacing="6">
+            <TextBlock Text="yt-dlp 完整解析器引擎" Style="{StaticResource BodyStrongTextBlockStyle}" />
+            <TextBlock
+                x:Name="SummaryText"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="WrapWholeWords" />
+
+            <Grid Height="210">
+                <ProgressRing x:Name="LoadingRing" IsActive="True" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <ListView x:Name="ExtractorsListView" SelectionMode="None" />
+            </Grid>
+        </StackPanel>
+    </StackPanel>
+</ContentDialog>

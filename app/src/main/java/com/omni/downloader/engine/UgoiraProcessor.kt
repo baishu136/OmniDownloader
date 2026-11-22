@@ -32,10 +32,10 @@ object UgoiraProcessor {
 
     data class Frame(val file: String, val delayMs: Int)
 
-    private val httpClient = OkHttpClient.Builder().proxySelector(NetworkProxy)
+    private val httpClient = PixivNetwork.configure(OkHttpClient.Builder().proxySelector(NetworkProxy)
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(120, TimeUnit.SECONDS)
-        .build()
+        ).build()
 
     fun totalDurationMs(frames: List<Frame>): Long =
         frames.sumOf { it.delayMs.coerceAtLeast(0).toLong() }
@@ -135,8 +135,9 @@ object UgoiraProcessor {
             onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
             Result.success(finalFile.absolutePath)
         } catch (e: Exception) {
+            if(e is kotlinx.coroutines.CancellationException) throw e
             Log.e(TAG, "Ugoira 处理失败", e)
-            Result.failure(Exception(MediaErrors.describe(MediaErrorCode.POSTPROCESS_FAILED, e.message), e))
+            Result.failure(Exception(MediaErrors.describe(MediaErrors.codeOf(e).takeUnless { it==MediaErrorCode.UNKNOWN } ?: MediaErrorCode.POSTPROCESS_FAILED, e.message), e))
         }
     }
 
@@ -152,7 +153,7 @@ object UgoiraProcessor {
         }
     }
 
-    private fun downloadZip(
+    private suspend fun downloadZip(
         url: String,
         headers: Map<String, String>,
         target: File,
@@ -160,7 +161,7 @@ object UgoiraProcessor {
     ) {
         val builder = Request.Builder().url(url)
         headers.forEach { (key, value) -> builder.header(key, value) }
-        httpClient.newCall(builder.build()).execute().use { response ->
+        BiliHttp.read(httpClient,builder.build()) { response ->
             if (!response.isSuccessful) {
                 throw Exception("帧包下载失败: HTTP ${response.code}")
             }
@@ -308,7 +309,10 @@ object UgoiraProcessor {
         val base = listOf(
             ffmpeg.absolutePath, "-y",
             "-f", "concat", "-safe", "0", "-i", concat.absolutePath,
-            "-vsync", "vfr", "-t", String.format(Locale.US, "%.3f", (totalDurationMs(frames) + 1) / 1000.0), "-loop", "0"
+            // Exclude concat's terminal duplicate. GIF otherwise repeats its previous
+            // delay after that duplicate, extending the animation on every loop.
+            "-vsync", "vfr", "-t", String.format(Locale.US, "%.3f", totalDurationMs(frames) / 1000.0), "-loop", "0",
+            "-final_delay", ((frames.last().delayMs + 5) / 10).coerceAtLeast(1).toString()
         )
         val palette = base + listOf(
             "-vf", "split[s0][s1];[s0]palettegen=max_colors=256[p];[s1][p]paletteuse=dither=bayer",

@@ -1,0 +1,168 @@
+/* OmniDownloader — Material 3 设计令牌（1:1 对齐 Android Color.kt / Theme.kt / DesignTokens.kt） */
+:root {
+  /* 浅色模式 (LightColorScheme) */
+  --primary: #3B5BDB;
+  --primary-hover: #314EC9;
+  --on-primary: #FFFFFF;
+  --primary-container: #DCE3FF;
+  --on-primary-container: #0A1A5C;
+
+  --secondary: #5A5F72;
+  --on-secondary: #FFFFFF;
+  --secondary-container: #E3E4F2;
+  --on-secondary-container: #171A25;
+
+  --tertiary: #725572;
+  --on-tertiary: #FFFFFF;
+  --tertiary-container: #FFD7F6;
+  --on-tertiary-container: #2A132B;
+
+  --bg: #F7F7FB;
+  --surface: #FFFFFF;
+  --surface-tonal: #F7F7FB;
+  --surface-variant: #E7E7F0;
+  --surface-variant-30: rgba(231, 231, 240, 0.32);
+  --surface-variant-45: rgba(231, 231, 240, 0.48);
+  --surface-variant-55: rgba(231, 231, 240, 0.60);
+  --surface-hover: #EFEFF6;
+
+  --text: #1A1B21;
+  --text-2: #46464F;
+  --text-muted: #767680;
+  --outline: #767680;
+  --outline-variant: #C8C8D2;
+  --border: rgba(200, 200, 210, 0.55);
+  --border-subtle: rgba(200, 200, 210, 0.40);
+  --border-strong: rgba(118, 118, 128, 0.45);
+
+  --primary-soft: rgba(59, 91, 219, 0.12);
+  --primary-soft-strong: rgba(59, 91, 219, 0.18);
+
+  /* 语义状态色 (OmniStatusColors) */
+  --success: #10B981;
+  --success-soft: rgba(16, 185, 129, 0.13);
+  --warning: #F59E0B;
+  --warning-soft: rgba(245, 158, 11, 0.13);
+  --error: #BA1A1A;
+  --status-error: #EF4444;
+  --error-soft: rgba(239, 68, 68, 0.10);
+  --error-container: #FFDAD6;
+  --on-error-container: #410002;
+  --info: #3B5BDB;
+  --info-soft: rgba(59, 91, 219, 0.12);
+
+  /* 菜单与浮层阴影（Android OmniCard 无阴影，仅 Menu/Sheet 使用轻阴影） */
+  --menu-surface: #FFFFFF;
+  --shadow-menu: 0 12px 32px rgba(26, 27, 33, 0.14);
+  --shadow-sheet: 0 -8px 28px rgba(26, 27, 33, 0.10);
+  --overlay: rgba(17, 19, 24, 0.45);
+
+  /* 圆角令牌 (OmniRadius / OmniShapes) */
+  --r-xs: 6px;
+  --r-small: 10px;
+  --r-medium: 14px;
+  --r-card: 18px;
+  --r-sheet: 24px;
+  --r-chip: 999px;
+
+  /* 4px 栅格间距 (OmniSpacing) */
+  --sp-xxs: 2px;
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 12px;
+  --sp-lg: 16px;
+  --sp-xl: 20px;
+  --sp-xxl: 24px;
+  --sp-xxxl: 32px;
+
+  /* 排版 (Type.kt) */
+  --font: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  --font-mono: "Cascadia Code", Consolas, "Courier New", monospace;
+
+  /* 动画 (OmniMotion) */
+  --t-fast: 160ms;
+  --t-normal: 220ms;
+  --t-medium: 300ms;
+  --t-fade-out: 70ms;
+  --t-fade-in: 130ms;
+  --ease-emphasized: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1.0);
+
+  /* 布局尺寸 */
+  --rail-w: 88px;
+  --bottom-bar-h: 72px;
+  --content-max: 760px;
+}
+
+/* 暗色模式 (DarkColorScheme) */
+html[data-theme="dark"] {
+  --primary: #B3C5FF;
+  --primary-hover: #C5D3FF;
+  --on-primary: #0A2A6B;
+  --primary-container: #2C4A9E;
+  --on-primary-container: #DCE3FF;
+
+  --secondary: #C2C5DD;
+  --on-secondary: #2B2F3F;
+  --secondary-container: #414559;
+  --on-secondary-container: #DEE0F4;
+
+  --tertiary: #E1BAD9;
+  --on-tertiary: #41263F;
+  --tertiary-container: #5A3D57;
+  --on-tertiary-container: #FFD7F6;
+
+  --bg: #111318;
+  --surface: #171920;
+  --surface-tonal: #111318;
+  --surface-variant: #2A2C33;
+  --surface-variant-30: rgba(42, 44, 51, 0.42);
+  --surface-variant-45: rgba(42, 44, 51, 0.55);
+  --surface-variant-55: rgba(42, 44, 51, 0.68);
+  --surface-hover: #242730;
+
+  --text: #E3E2E8;
+  --text-2: #C6C6D0;
+  --text-muted: #90909A;
+  --outline: #90909A;
+  --outline-variant: #46464F;
+  --border: rgba(70, 70, 79, 0.55);
+  --border-subtle: rgba(70, 70, 79, 0.40);
+  --border-strong: rgba(144, 144, 154, 0.42);
+
+  --primary-soft: rgba(179, 197, 255, 0.14);
+  --primary-soft-strong: rgba(179, 197, 255, 0.22);
+
+  --success: #4ADE80;
+  --success-soft: rgba(74, 222, 128, 0.14);
+  --warning: #FBBF24;
+  --warning-soft: rgba(251, 191, 36, 0.14);
+  --error: #FFB4AB;
+  --status-error: #FF8A80;
+  --error-soft: rgba(255, 138, 128, 0.12);
+  --error-container: #93000A;
+  --on-error-container: #FFDAD6;
+  --info: #B3C5FF;
+  --info-soft: rgba(179, 197, 255, 0.14);
+
+  --menu-surface: #2A2C33;
+  --shadow-menu: 0 14px 36px rgba(0, 0, 0, 0.60);
+  --shadow-sheet: 0 -10px 32px rgba(0, 0, 0, 0.55);
+  --overlay: rgba(0, 0, 0, 0.60);
+}
+
+/* 纯黑 AMOLED 模式 (AmoledColorScheme) */
+html[data-theme="dark"][data-amoled="true"] {
+  --bg: #000000;
+  --surface: #050507;
+  --surface-tonal: #000000;
+  --surface-variant: #16171C;
+  --surface-variant-30: rgba(22, 23, 28, 0.55);
+  --surface-variant-45: rgba(22, 23, 28, 0.70);
+  --surface-variant-55: rgba(22, 23, 28, 0.85);
+  --surface-hover: #14151A;
+  --outline-variant: #2C2E36;
+  --border: rgba(44, 46, 54, 0.85);
+  --border-subtle: rgba(44, 46, 54, 0.55);
+  --menu-surface: #16171C;
+}

@@ -4,6 +4,21 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class XPublicPolicyTest {
+    @Test fun tlsEofCanRecoverOnceAndRepeatedFailureStops() {
+        var calls = 0
+        assertEquals("ok", XPublicPolicy.confirmed({ if (++calls == 1) throw javax.net.ssl.SSLException("UNEXPECTED_EOF_WHILE_READING") else "ok" }) {})
+        assertEquals(2, calls)
+        calls = 0
+        assertTrue(runCatching { XPublicPolicy.confirmed<String>({ calls++; throw java.io.EOFException() }) {} }.isFailure)
+        assertEquals(2, calls)
+    }
+    @Test fun certificateFailuresAndCancellationRemainHardStops() {
+        for (error in listOf(javax.net.ssl.SSLHandshakeException("certificate verify failed"), java.util.concurrent.CancellationException())) {
+            var calls = 0
+            assertTrue(runCatching { XPublicPolicy.confirmed<String>({ calls++; throw error }) {} }.isFailure)
+            assertEquals(1, calls)
+        }
+    }
     private val id = "2119233448888217846"
     @Test fun emptyResponseIsUnconfirmedRatherThanProofOfAnotherPost() {
         val error = runCatching { XPublicPolicy.verifyRoot(id, null, null) }.exceptionOrNull()!!

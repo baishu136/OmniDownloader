@@ -108,8 +108,8 @@ fun FormatSelectorSheet(
                             .clip(RoundedCornerShape(8.dp))
                     ) {
                         AsyncImage(
-                            model = currentMedia.thumbnailUrl,
-                            contentDescription = "封面",
+                            model = com.omni.downloader.engine.ImagePreviewPolicy.thumbnail(currentMedia.thumbnailUrl),
+                            contentDescription = strings.coverContentDesc,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
@@ -170,7 +170,7 @@ fun FormatSelectorSheet(
                                 shape = RoundedCornerShape(4.dp)
                             ) {
                                 Text(
-                                    text = "GIF 动图",
+                                    text = strings.gifBadge,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -201,7 +201,7 @@ fun FormatSelectorSheet(
             }
 
             if (currentMedia.siteName == "哔哩哔哩") {
-                Text("当前账号：${currentMedia.accountName.ifBlank { "未验证" }} · 访问：${currentMedia.accessState}", style = MaterialTheme.typography.bodySmall)
+                Text(strings.currentAccountAccess.format(currentMedia.accountName.ifBlank { strings.unverified }, currentMedia.accessState), style = MaterialTheme.typography.bodySmall)
             }
 
             // 多视频 / 合集切换与选择模式
@@ -493,7 +493,7 @@ fun FormatSelectorSheet(
             }
             if (currentMedia.siteName == "抖音" && onRequestBrowserQuality != null) {
                 OutlinedButton(shape = MaterialTheme.shapes.medium, onClick = onRequestBrowserQuality, modifier = Modifier.fillMaxWidth()) {
-                    Text("浏览器读取更多画质")
+                    Text(strings.browserMoreQuality)
                 }
                 Spacer(Modifier.height(8.dp))
             }
@@ -800,13 +800,25 @@ private fun FormatRowItem(
         RadioButton(selected = isSelected, onClick = onClick)
         Spacer(modifier = Modifier.width(6.dp))
         Text(
-            text = formatDisplaySummary(format, alternatives),
+            text = formatDisplaySummary(format, alternatives, com.omni.downloader.ui.localization.LocalAppStrings.current),
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             maxLines = 3,
             overflow = TextOverflow.Ellipsis
         )
+    }
+}
+
+/** 音频格式的本地化名称；数据层的 label 只作中文兜底。 */
+@Composable
+private fun audioFormatLabel(audio: AudioFormat): String {
+    val s = com.omni.downloader.ui.localization.LocalAppStrings.current
+    return when (audio) {
+        AudioFormat.MP3 -> s.audioLabelMp3
+        AudioFormat.M4A -> s.audioLabelM4a
+        AudioFormat.FLAC -> s.audioLabelFlac
+        AudioFormat.OPUS -> s.audioLabelOpus
     }
 }
 
@@ -832,7 +844,7 @@ private fun AudioFormatRowItem(
         RadioButton(selected = isSelected, onClick = onClick)
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = audio.label,
+            text = audioFormatLabel(audio),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium
         )

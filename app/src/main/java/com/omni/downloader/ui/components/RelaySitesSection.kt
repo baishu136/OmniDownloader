@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.omni.downloader.data.model.RelaySite
 import com.omni.downloader.data.repository.SettingsRepository
+import com.omni.downloader.ui.localization.LocalAppStrings
 
 /**
  * 中转站全局操作与状态持有者：
@@ -40,11 +41,11 @@ class RelaySitesState(initialExpanded: Boolean = false, private val onExpandedCh
         onExpandedChange(isExpanded)
     }
 
-    fun startResolve(site: RelaySite, url: String) {
+    fun startResolve(site: RelaySite, url: String, connectingText: String = "") {
         resolvingSiteId = site.id
         resolvingSite = site
         resolvingVideoUrl = url
-        resolvingStatus = "正在连接中转站..."
+        resolvingStatus = connectingText
     }
 
     fun updateResolvingStatus(status: String) {
@@ -106,6 +107,7 @@ fun LazyListScope.relaySitesItems(
         key = { "relay_site_${it.id}" },
         contentType = { "relay_card" }
     ) { site ->
+        val strings = LocalAppStrings.current
         val currentInputUrl by rememberUpdatedState(globalInputUrl)
         val isCurrentResolving = relayState.resolvingSiteId == site.id
         val currentStatus = if (isCurrentResolving) relayState.resolvingStatus else ""
@@ -118,9 +120,9 @@ fun LazyListScope.relaySitesItems(
             onStartResolve = { targetSite ->
                 val finalUrl = currentInputUrl.trim()
                 if (finalUrl.isBlank()) {
-                    Toast.makeText(context, "请先在上方输入框粘贴欲解析的视频链接", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, strings.relayPasteFirst, Toast.LENGTH_SHORT).show()
                 } else {
-                    relayState.startResolve(targetSite, finalUrl)
+                    relayState.startResolve(targetSite, finalUrl, strings.relayConnecting)
                 }
             },
             onCancelResolve = {
@@ -147,7 +149,7 @@ fun LazyListScope.relaySitesItems(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = if (relayState.isExpanded) "收起部分中转网站" else "展开全部 ${relaySites.size} 个中转网站",
+                    text = if (relayState.isExpanded) LocalAppStrings.current.relayCollapseAll else LocalAppStrings.current.relayExpandAll.format(relaySites.size),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -165,6 +167,7 @@ fun RelaySitesOverlays(
     onStartDirectDownload: (directUrl: String, title: String) -> Unit
 ) {
     val context = LocalContext.current
+    val strings = LocalAppStrings.current
     val resolvingSite = relayState.resolvingSite
     val resolvingVideoUrl = relayState.resolvingVideoUrl
 
@@ -176,10 +179,10 @@ fun RelaySitesOverlays(
             onSuccess = { directUrl: String, title: String ->
                 val siteName = resolvingSite.name
                 relayState.cancelResolve()
-                Toast.makeText(context, "中转解析成功，已自动加入本地下载队列！", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, strings.relaySuccess, Toast.LENGTH_SHORT).show()
                 onStartDirectDownload(
                     directUrl,
-                    title.ifBlank { "中转下载_${siteName}" }
+                    title.ifBlank { strings.relayFallbackTitle.format(siteName) }
                 )
             },
             onError = { errorMsg: String ->
@@ -224,6 +227,7 @@ fun RelaySitesSection(
     }
 
     val context = LocalContext.current
+    val strings = LocalAppStrings.current
     val relayState = rememberRelaySitesState()
     val visibleSites = if (relayState.isExpanded || relaySites.size <= 3) {
         relaySites
@@ -247,9 +251,9 @@ fun RelaySitesSection(
                     onStartResolve = { targetSite ->
                         val finalUrl = globalInputUrl.trim()
                         if (finalUrl.isBlank()) {
-                            Toast.makeText(context, "请先在上方输入框粘贴欲解析的视频链接", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, strings.relayPasteFirst, Toast.LENGTH_SHORT).show()
                         } else {
-                            relayState.startResolve(targetSite, finalUrl)
+                            relayState.startResolve(targetSite, finalUrl, strings.relayConnecting)
                         }
                     },
                     onCancelResolve = {
@@ -276,7 +280,7 @@ fun RelaySitesSection(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = if (relayState.isExpanded) "收起部分中转网站" else "展开全部 ${relaySites.size} 个中转网站",
+                    text = if (relayState.isExpanded) LocalAppStrings.current.relayCollapseAll else LocalAppStrings.current.relayExpandAll.format(relaySites.size),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )

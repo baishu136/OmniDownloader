@@ -77,7 +77,7 @@ class MediaAnalysisRouter<V, I>(
             val uri = runCatching { URI(link.contentUrl) }.getOrNull() ?: return null
             val path = uri.path.orEmpty().lowercase()
             return when (link.platform) {
-                LinkNormalizer.PLATFORM_YOUTUBE -> MediaPage.VIDEO
+                LinkNormalizer.PLATFORM_YOUTUBE, LinkNormalizer.PLATFORM_WEIBO -> MediaPage.VIDEO
                 LinkNormalizer.PLATFORM_TIKTOK -> if (path.contains("/video/")) MediaPage.VIDEO else null
                 LinkNormalizer.PLATFORM_DOUYIN -> when {
                     path.contains("/note/") -> MediaPage.IMAGES
@@ -91,8 +91,9 @@ class MediaAnalysisRouter<V, I>(
                 }
                 // Ugoira is confirmed by the image extractor and then handed to
                 // the existing video/GIF workflow through the bounded fallback.
-                LinkNormalizer.PLATFORM_PIXIV -> if (path.contains("/artworks/")) MediaPage.IMAGES else null
+                LinkNormalizer.PLATFORM_PIXIV -> if (path.contains("/artworks/") || PixivArtistInput.userId(link.contentUrl)!=null) MediaPage.IMAGES else null
                 LinkNormalizer.PLATFORM_X -> when {
+                    XProfileInput.handle(link.contentUrl) != null -> MediaPage.IMAGES
                     Regex("/status/\\d+/photo/\\d+").containsMatchIn(path) -> MediaPage.IMAGES
                     Regex("/status/\\d+/video/\\d+").containsMatchIn(path) -> MediaPage.VIDEO
                     else -> null

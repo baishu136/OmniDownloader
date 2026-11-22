@@ -46,13 +46,16 @@ object YtDlpOptionsFactory {
         if (!allowPlaylist) {
             addOption("--no-playlist")
         }
+        if (site == LinkNormalizer.PLATFORM_GENERIC) {
+            addOption("--playlist-end", YtDlpPlatforms.COLLECTION_LIMIT.toString())
+        }
         addDiagnosticsOptions()
         addNetworkOptions(proxyUrl)
         addCookieFile(cookieFile)
         addSiteHeaders(this, site)
         if (site == LinkNormalizer.PLATFORM_X) {
             addOption("--socket-timeout", "12")
-            addOption("--retries", "1")
+            addOption("--retries", "0")
             addOption("--extractor-retries", "0")
         }
     }
@@ -79,7 +82,8 @@ object YtDlpOptionsFactory {
         addOutputOptions()
 
         // 安全通道只降低并发/分片压力，不改变选流与导出类型
-        addOption("--concurrent-fragments", if (safeTransport) "1" else "1")
+        addOption("--concurrent-fragments", if (safeTransport) "1" else TransferPolicy.FRAGMENTS.toString())
+        addOption("--abort-on-unavailable-fragments")
         if (!safeTransport) {
             addOption("--retries", "10")
             addOption("--fragment-retries", "10")
@@ -90,6 +94,10 @@ object YtDlpOptionsFactory {
 
         addSiteHeaders(this, site)
         addOption("-S", "res,fps")
+        if(site==LinkNormalizer.PLATFORM_X) {
+            addOption("--external-downloader","native")
+            addOption("--retries","1");addOption("--fragment-retries","1");addOption("--extractor-retries","0")
+        }
         applyFormatPlan(this, plan)
     }
 

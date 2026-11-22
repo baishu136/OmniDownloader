@@ -1,0 +1,87 @@
+{
+  "version": "1.7.17",
+  "versionCode": 76,
+  "date": "2026-11-08",
+  "jvm": {
+    "passed": 162,
+    "failed": 0,
+    "note": "Existing HTTPS proxy fixture initially raced with Socket closed; final full rerun passed"
+  },
+  "androidRegression": {
+    "passed": 10,
+    "failed": 0,
+    "cases": {
+      "XMultiMetadataTest": 3,
+      "XHlsFormatsTest": 2,
+      "GifAcceptanceTest": 5
+    }
+  },
+  "liveXMulti": {
+    "success": true,
+    "downloadRequested": true,
+    "media": [
+      {
+        "mediaId": "2119045986353926144",
+        "width": 360,
+        "height": 512,
+        "formatId": "http-950",
+        "snapshotMatched": true,
+        "actualWidth": 360,
+        "actualHeight": 512,
+        "durationMs": 130473,
+        "hasAudio": true,
+        "bytes": 4676687,
+        "sha256": "f6e17c16ed7991c06617f8cfa5d3b7face93d9a62e2e1c8a52753d380e4d07b3"
+      },
+      {
+        "mediaId": "2119045986412531712",
+        "width": 720,
+        "height": 1280,
+        "formatId": "hls-1925",
+        "snapshotMatched": true,
+        "actualWidth": 720,
+        "actualHeight": 1280,
+        "durationMs": 19904,
+        "hasAudio": true,
+        "bytes": 4728575,
+        "sha256": "47b3510c83199250f88af7358a12be600f5d285c593fb5a920b45e98bbaf6b4d"
+      },
+      {
+        "mediaId": "2119045986395791360",
+        "width": 180,
+        "height": 278,
+        "formatId": "http-632",
+        "snapshotMatched": true,
+        "actualWidth": 180,
+        "actualHeight": 278,
+        "durationMs": 31231,
+        "hasAudio": true,
+        "bytes": 648785,
+        "sha256": "134895f8474bfe630f4b18f8bf3bacb2733c1f57896c3b782202ef91be9d30b2"
+      }
+    ]
+  },
+  "environment": {
+    "androidApi": 35,
+    "emulatorAbi": "x86_64",
+    "network": "developer HTTP proxy",
+    "accountCookiesUsed": false,
+    "arm64Phone": "NOT_AVAILABLE"
+  },
+  "build": {
+    "assembleRelease": "PASS",
+    "lintRelease": "PASS",
+    "lintErrors": 0,
+    "lintWarnings": 46,
+    "optimizedReleaseUiSmoke": "PASS: cold install, persisted history, navigation and settings children; ARM64 native execution skipped on x86 emulator"
+  },
+  "artifact": {
+    "bytes": 59541583,
+    "sha256": "910bc7a52fee60417e8ceba811f3b9087b3719880f9a89817d72d78bb3e08fc8",
+    "signerSha256": "0bdc5678e09d4508829ff43f7c63f7ee6ab8af64134f0079cc186d8aedd41f4e",
+    "signatureMatches1716": true,
+    "nativePayloadUnchanged": true,
+    "abi": "arm64-v8a",
+    "zipCrc": "PASS"
+  }
+}

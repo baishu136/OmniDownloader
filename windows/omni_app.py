@@ -90,7 +90,8 @@ def main():
     )
 
     try:
-        webview.start()
+        from core.session_store import sessions
+        webview.start(private_mode=False, storage_path=str(sessions.directory.parent / 'desktop-webview'))
     finally:
         print("[OmniApp] 窗口关闭，正在停止后台服务...")
         server_thread.stop()

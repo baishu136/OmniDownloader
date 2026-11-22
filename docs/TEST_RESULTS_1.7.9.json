@@ -1,0 +1,41 @@
+{
+  "scope": "Android photo-page sticky actions and selection hit areas",
+  "version": "1.7.9",
+  "instrumentation": {
+    "passed": 8,
+    "failed": 0,
+    "device": "API35 x86_64 read-only emulator"
+  },
+  "realPageSmoke": {
+    "realPostImages": 10,
+    "informationTapTogglesOnly": true,
+    "imageTapPreviewsOnly": true,
+    "toolbarPinnedAfterScroll": true,
+    "clearAndSelectAllWhilePinned": true,
+    "actualMediaDownloaded": false
+  },
+  "jvm": {
+    "reusedPassed": 107,
+    "sourceVersion": "1.7.7",
+    "unchangedCoreAndTestHashesVerified": true
+  },
+  "artifact": {
+    "app": "OmniDownloader",
+    "version": "1.7.9",
+    "versionCode": 68,
+    "artifact": "release/1.7.9/OmniDownloader-1.7.9-arm64-v8a.apk",
+    "bytes": 59492943,
+    "sha256": "f0df43d18c818e2f2c4a21348a1fed21c7fca6e39446b99ffd212c7a638bf535",
+    "abi": [
+      "arm64-v8a"
+    ],
+    "archiveCrc": "passed",
+    "pythonAssetIntegrity": "passed",
+    "v2SignatureAndPriorSignerMatch": true,
+    "frozenBuildInputs": 169,
+    "inputsUnchanged": true
+  },
+  "smokeInspectionCorrection": "Use ancestor button enabled state; child TextView remains enabled. Resumed original real-app session successfully.",
+  "physicalDeviceTested": false,
+  "publiclyPublished": false
+}

@@ -25,6 +25,7 @@ fun RelaySiteCompatDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
@@ -45,7 +46,7 @@ fun RelaySiteCompatDialog(
         },
         title = {
             Text(
-                text = "第三方网页使用须知与兼容性提示",
+                text = strings.relayCompatTitle,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -59,18 +60,18 @@ fun RelaySiteCompatDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 TipItem(
-                    title = "1. 服务性质声明",
-                    description = "备用中转功能仅提供第三方网页的加载容器与通用直链嗅探辅助，本应用未内置亦未与任何第三方中转解析站点达成合作，不保证任何第三方网站的长期可用性。"
+                    title = strings.relayCompatS1Title,
+                    description = strings.relayCompatS1Desc
                 )
 
                 TipItem(
-                    title = "2. 兼容性与网页行为",
-                    description = "各站点的页面交互、反爬机制及解析链路存在较大差异。使用过程中若遇人机验证、广告跳转、临时失效或防盗链拦截均属于网页端行为，建议优先使用主界面的原生直连解析。"
+                    title = strings.relayCompatS2Title,
+                    description = strings.relayCompatS2Desc
                 )
 
                 TipItem(
-                    title = "3. 安全与隐私保护",
-                    description = "请确保您添加并访问的网址合法合规。在加载第三方网页时，请勿输入个人账号、密码或敏感隐私信息，防范钓鱼与安全风险。"
+                    title = strings.relayCompatS3Title,
+                    description = strings.relayCompatS3Desc
                 )
             }
         },
@@ -79,7 +80,7 @@ fun RelaySiteCompatDialog(
                 onClick = onConfirm,
 
             ) {
-                Text("我已知晓并继续")
+                Text(strings.relayCompatAccept)
             }
         },
         dismissButton = {
@@ -87,7 +88,7 @@ fun RelaySiteCompatDialog(
                 onClick = onDismiss,
 
             ) {
-                Text("取消")
+                Text(strings.cancel)
             }
         }
     )

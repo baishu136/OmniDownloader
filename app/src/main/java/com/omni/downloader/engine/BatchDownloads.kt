@@ -199,7 +199,16 @@ class BatchDownloads(context: Context, private val scope: CoroutineScope,
             video = { link: String -> DownloadEngine.fetchVideoMetadata(context, link, proxy, pid,
                 refreshSources = true, resolutionDeadlineNanos = deadline).getOrThrow() },
             images = { link: String ->
-                val raw = SharedPython.run(context, "images", MediaAnalysisRouter.imageInput(original, link), UrlSniffer.identifySite(link), proxy, taskId = pid).toString()
+                val imageUrl = MediaAnalysisRouter.imageInput(original, link)
+                val raw = if(PixivArtistInput.userId(imageUrl)!=null) {
+                    val artist=PixivArtistExtractor.fetch(context,imageUrl,proxy)
+                    check(artist.artistComplete){"[MEDIA_UNCONFIRMED] 画师尚未解析完，请在首页继续解析后保存"}
+                    XProfileImages.manifest(artist).toString()
+                } else if (XProfileInput.handle(imageUrl) != null) {
+                    val profile = XProfileImages.fetch(context, imageUrl, proxy, pid)
+                    check(profile.profileComplete) { "[MEDIA_UNCONFIRMED] 主页尚未解析完，请在首页继续解析后分批保存" }
+                    XProfileImages.manifest(profile).toString()
+                } else SharedPython.run(context, "images", imageUrl, UrlSniffer.identifySite(link), proxy, taskId = pid).toString()
                 Resolved.Images(json.decodeFromString<ImagePost>(raw), raw)
             })
         return when (val result = router.analyze(url, MediaPage.VIDEO)) {
@@ -220,9 +229,11 @@ class BatchDownloads(context: Context, private val scope: CoroutineScope,
         val tasks = when (val result = prepared.value) {
             is Resolved.Video -> BatchTaskFactory.videos(row, result.metadata, options)
             is Resolved.Images -> result.post.let { post ->
-                listOf(DownloadTask("batch-${row.id}-images", post.url, post.title, post.author,
-                    post.resources.first().url, DownloadType.IMAGE_ZIP, schemaVersion = 4,
-                    mediaId = post.contentId, imagePlatform = post.platform, selectedImageIds = post.resources.map { it.id }))
+                if(post.route=="pixiv_artist") return@let PixivArtistInput.tasks(post,post.resources.map { it.id }.toSet(),true,prefix="batch-${row.id}")
+                val posts = if (post.route == "x_profile") XProfileInput.posts(post) else listOf(post)
+                posts.map { source -> DownloadTask("batch-${row.id}-images${if (post.route == "x_profile") "-${source.contentId}" else ""}", source.url, source.title, source.author,
+                    source.resources.first().url, DownloadType.IMAGE_ZIP, schemaVersion = 4,
+                    mediaId = source.contentId, imagePlatform = source.platform, selectedImageIds = source.resources.map { it.id }) }
             }
         }
         currentCoroutineContext().ensureActive()
@@ -233,7 +244,12 @@ class BatchDownloads(context: Context, private val scope: CoroutineScope,
                 preparation.withCurrent(prepared) {
                     if (!currentInput(item)) throw BatchLinkRemoved()
                     require((reservedTaskIds + ids).size <= 500) { "每批最多 500 个下载任务，请分批添加" }
-                    if (prepared.value is Resolved.Images) ImagePostSnapshots.put(context, org.json.JSONObject(prepared.value.manifest))
+                    if (prepared.value is Resolved.Images) {
+                        val post = prepared.value.post
+                        if(post.route=="pixiv_artist") PixivArtistInput.posts(post,post.resources.map { it.id }.toSet()).forEach { ImagePostSnapshots.put(context,XProfileImages.manifest(it)) }
+                        else if (post.route == "x_profile") XProfileInput.posts(post).forEach { ImagePostSnapshots.put(context, XProfileImages.manifest(it)) }
+                        else ImagePostSnapshots.put(context, org.json.JSONObject(prepared.value.manifest))
+                    }
                     reservedTaskIds.addAll(ids)
                     repository.addTasks(tasks.filter { repository.getTask(it.id) == null })
                     drafts?.update { it.copy(batchTasks = it.batchTasks + (item.url to BatchLinkTasks(row.id, ids))) }

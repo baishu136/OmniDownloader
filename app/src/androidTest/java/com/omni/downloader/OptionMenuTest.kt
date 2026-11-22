@@ -6,6 +6,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -13,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.omni.downloader.ui.components.*
 import com.omni.downloader.ui.theme.OmniDownloaderTheme
+import com.omni.downloader.ui.theme.DarkSurfaceVariant
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -22,7 +25,36 @@ class OptionMenuTest {
     @get:Rule val compose = createComposeRule()
     private val expanded = mutableStateOf(false)
     private var calls = 0
-    private fun render(dark: Boolean = false, count: Int = 4) {
+    @Test fun openMenuBackgroundInterpolatesWithoutALuminanceThresholdJump() {
+        val dark = mutableStateOf(false)
+        compose.mainClock.autoAdvance = false
+        compose.setContent {
+            OmniDownloaderTheme(darkTheme = dark.value) {
+                Box(Modifier.fillMaxSize()) {
+                    OmniOptionMenu(expanded = true, onDismissRequest = {}) {
+                        OmniOptionMenuItem("主题预览", onClick = {})
+                    }
+                }
+            }
+        }
+        compose.mainClock.advanceTimeBy(400)
+        fun panelColor(): Color {
+            val pixels = compose.onNodeWithTag("omni_option_menu").captureToImage().toPixelMap()
+            return pixels[pixels.width - 5, pixels.height / 2]
+        }
+        val light = panelColor()
+        compose.runOnIdle { dark.value = true }
+        compose.mainClock.advanceTimeBy(96)
+        val midway = panelColor()
+        assertTrue("menu must already be fading from white", midway.red < light.red - .015f)
+        assertTrue("menu must not jump to its dark endpoint", midway.red > DarkSurfaceVariant.red + .015f)
+        compose.mainClock.advanceTimeBy(400)
+        val end = panelColor()
+        assertEquals(DarkSurfaceVariant.red, end.red, .012f)
+        assertEquals(DarkSurfaceVariant.green, end.green, .012f)
+        assertEquals(DarkSurfaceVariant.blue, end.blue, .012f)
+    }
+    private fun render(dark: Boolean = false, count: Int = 4, deferActionUntilClosed: Boolean = true) {
         compose.mainClock.autoAdvance = false
         compose.setContent {
             OmniDownloaderTheme(darkTheme = dark) {
@@ -31,7 +63,8 @@ class OptionMenuTest {
                         OutlinedButton(onClick = { expanded.value = true }) { Text("打开菜单") }
                         OmniOptionMenu(expanded.value, onDismissRequest = { expanded.value = false }) {
                             repeat(count) { index ->
-                                OmniOptionMenuItem(label = "选项 $index", selected = index == 0, enabled = index != 2, onClick = { calls++ })
+                                OmniOptionMenuItem(label = "选项 $index", selected = index == 0, enabled = index != 2,
+                                    deferActionUntilClosed = deferActionUntilClosed, onClick = { calls++ })
                             }
                         }
                     }
@@ -51,6 +84,17 @@ class OptionMenuTest {
         val bitmap = instrument.uiAutomation.takeScreenshot()
         File(instrument.targetContext.getExternalFilesDir(null), name).outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
         bitmap.recycle()
+    }
+    @Test fun immediateChoiceRunsOnceAlongsideExitAndClosingDisablesRows() {
+        render(deferActionUntilClosed = false); open()
+        compose.onNodeWithText("选项 1").performClick()
+        compose.runOnIdle { assertEquals(1, calls); assertFalse(expanded.value) }
+        compose.mainClock.advanceTimeByFrame(); compose.waitForIdle()
+        compose.onNodeWithTag("omni_option_menu").assertExists()
+        compose.onNodeWithText("选项 1").assertIsNotEnabled()
+        compose.mainClock.advanceTimeBy(300); compose.waitForIdle()
+        compose.onNodeWithTag("omni_option_menu").assertDoesNotExist()
+        compose.runOnIdle { assertEquals(1, calls) }
     }
     @Test fun selectionWaitsForExitAndClosingDisablesRows() {
         render(); open()

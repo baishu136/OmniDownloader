@@ -39,6 +39,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import kotlin.math.min
+import com.omni.downloader.ui.theme.LocalMenuContainerColor
 
 /** Cherry Mobile's Android ActionMenu geometry, implemented with Compose rather than an RN runtime. */
 internal object OptionMenuPlacement {
@@ -54,7 +55,7 @@ internal object OptionMenuPlacement {
     }
 }
 
-private class MenuInteraction(val open: Boolean, val choose: (() -> Unit) -> Unit)
+private class MenuInteraction(val open: Boolean, val choose: (() -> Unit, Boolean) -> Unit)
 private val LocalMenuInteraction = staticCompositionLocalOf<MenuInteraction> { error("Menu option requires OmniOptionMenu") }
 
 /** Opaque anchored panel: expand from 32dp, slide/fade the content, retain it until the exit finishes. */
@@ -67,22 +68,31 @@ fun OmniOptionMenu(expanded: Boolean, onDismissRequest: () -> Unit, content: @Co
     var afterClose by remember { mutableStateOf<(() -> Unit)?>(null) }
     val dismiss by rememberUpdatedState(onDismissRequest)
     val currentExpanded by rememberUpdatedState(expanded)
-    fun close(action: (() -> Unit)? = null) {
+    fun close(action: (() -> Unit)? = null, deferActionUntilClosed: Boolean = true) {
         if (currentExpanded && !closing) {
-            closing = true; afterClose = action; dismiss()
+            closing = true
+            afterClose = if (deferActionUntilClosed) action else null
+            dismiss()
+            if (!deferActionUntilClosed) {
+                action?.invoke()
+            }
         }
     }
     LaunchedEffect(expanded) {
         if (expanded) {
-            closing = false; afterClose = null; visible = true
+            closing = false
+            afterClose = null
+            visible = true
             progress.animateTo(1f, tween(350, easing = CubicBezierEasing(.34f, 1.25f, .64f, 1f)))
         } else {
             progress.animateTo(0f, tween(250, easing = CubicBezierEasing(.22f, 1f, .36f, 1f)))
             visible = false
-            val action = afterClose; afterClose = null
+            val action = afterClose
+            afterClose = null
             action?.invoke()
         }
     }
+    val menuPaneTitle = com.omni.downloader.ui.localization.LocalAppStrings.current.menuPaneTitle
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val imeBottom = WindowInsets.ime.getBottom(density)
@@ -106,15 +116,15 @@ fun OmniOptionMenu(expanded: Boolean, onDismissRequest: () -> Unit, content: @Co
             }
         }
         val dark = MaterialTheme.colorScheme.surface.luminance() < .5f
-        val background = if (dark) MaterialTheme.colorScheme.surfaceVariant else Color.White
+        val background = LocalMenuContainerColor.current
         val maxHeight = minOf(480.dp, (configuration.screenHeightDp.dp - 32.dp - with(density) { imeBottom.toDp() }).coerceAtLeast(32.dp))
         Popup(popupPositionProvider = placement, onDismissRequest = { close() },
             properties = PopupProperties(focusable = true, dismissOnBackPress = true, dismissOnClickOutside = true)) {
-            CompositionLocalProvider(LocalMenuInteraction provides MenuInteraction(expanded && !closing) { close(it) }) {
+            CompositionLocalProvider(LocalMenuInteraction provides MenuInteraction(expanded && !closing) { action, defer -> close(action, defer) }) {
                 Box(Modifier.widthIn(max = (configuration.screenWidthDp.dp - 32.dp).coerceAtLeast(32.dp))
                     .width(208.dp).heightIn(max = maxHeight)
                     .testTag("omni_option_menu")
-                    .semantics { paneTitle = "选项菜单"; if (!expanded || closing) invisibleToUser() }
+                    .semantics { paneTitle = menuPaneTitle; if (!expanded || closing) invisibleToUser() }
                     .graphicsLayer {
                         val p = progress.value
                         alpha = (p * 4f).coerceIn(0f, 1f)
@@ -153,12 +163,12 @@ private class MenuRevealShape(private val progress: Float, private val above: Bo
 /** One wrapping, 56dp touch target; choice checkmarks occupy the trailing edge. */
 @Composable
 fun OmniOptionMenuItem(label: String, onClick: () -> Unit, selected: Boolean? = null,
-    enabled: Boolean = true, leadingIcon: (@Composable () -> Unit)? = null) {
+    enabled: Boolean = true, deferActionUntilClosed: Boolean = true, leadingIcon: (@Composable () -> Unit)? = null) {
     val menu = LocalMenuInteraction.current
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val active = enabled && menu.open
-    val click = { menu.choose(onClick) }
+    val click = { menu.choose(onClick, deferActionUntilClosed) }
     val action = if (selected == null) Modifier.clickable(interactionSource = interaction, indication = null,
         enabled = active, role = Role.Button, onClick = click)
     else Modifier.selectable(selected = selected, interactionSource = interaction, indication = null,

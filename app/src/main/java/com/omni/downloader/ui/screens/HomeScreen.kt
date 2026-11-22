@@ -5,8 +5,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -16,6 +16,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -30,6 +31,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -41,8 +43,8 @@ import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.icons.outlined.Link
-import androidx.compose.material.icons.outlined.MoreHoriz
-import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import com.omni.downloader.ui.design.TabProgressIndicator
@@ -51,6 +53,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -64,12 +67,16 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -81,6 +88,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.outlined.PhotoLibrary
@@ -89,6 +97,7 @@ import com.omni.downloader.ui.components.FormatSelectorSheet
 import com.omni.downloader.ui.components.MediaCaptureDialog
 import com.omni.downloader.ui.components.RelaySitesOverlays
 import com.omni.downloader.ui.components.TaskCard
+import com.omni.downloader.ui.components.YtDlpPlatformCatalogButton
 import com.omni.downloader.ui.components.relaySitesItems
 import com.omni.downloader.ui.components.rememberRelaySitesState
 import com.omni.downloader.ui.design.OmniCard
@@ -96,7 +105,6 @@ import com.omni.downloader.ui.design.OmniMotion
 import com.omni.downloader.ui.design.OmniSectionHeader
 import com.omni.downloader.ui.localization.LocalAppStrings
 import com.omni.downloader.ui.theme.BilibiliPink
-import com.omni.downloader.ui.theme.DouyinBlack
 import com.omni.downloader.ui.theme.ErrorRed
 import com.omni.downloader.ui.theme.FacebookBlue
 import com.omni.downloader.ui.theme.InstagramPink
@@ -162,7 +170,7 @@ fun HomeScreen(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().testTag("home_list"),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = if (imageResults.post != null) 80.dp else 28.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item(key = "home_hero", contentType = "hero") {
@@ -186,6 +194,14 @@ fun HomeScreen(
             }
 
             homeImageItems(imageResults, imageColumns)
+            if (imageResults.error.contains("[AUTH_REQUIRED]") && com.omni.downloader.engine.XProfileInput.handle(inputUrl) != null) {
+                item("x_profile_session") {
+                    TextButton(onClick = {
+                        viewModel.requestedSessionPlatform.value = com.omni.downloader.engine.LinkNormalizer.PLATFORM_X
+                        onNavigateToSettings()
+                    }, modifier = Modifier.testTag("x_profile_session")) { Text(strings.manageXCookie) }
+                }
+            }
 
             relaySitesItems(
                 relaySites = relaySites,
@@ -202,6 +218,9 @@ fun HomeScreen(
                 )
             }
         }
+
+        ImageBackToTop(listState, isActive && imageResults.post?.resources?.isNotEmpty() == true,
+            actionsIndex = 4 + if (imageResults.error.isNotBlank()) 1 else 0)
 
         // 中转站后台静默解析与浏览器排查浮层（脱离列表测量体系，避免重组污染列表）
         RelaySitesOverlays(
@@ -274,7 +293,7 @@ fun HomeScreen(
                         }
                     ) {
                         Text(if (errorDialogDetail.orEmpty().let { "AUTH_REQUIRED" in it || "CHALLENGE_REQUIRED" in it })
-                            if (com.omni.downloader.engine.UrlSniffer.identifySite(inputUrl) == "YouTube") "导入 YouTube Cookie" else "账户与会话"
+                            if (com.omni.downloader.engine.UrlSniffer.identifySite(inputUrl) == "YouTube") strings.importYoutubeCookie else strings.accountsAndSessions
                         else strings.setProxy)
                     }
                 }
@@ -357,6 +376,26 @@ fun HomeScreen(
                 android.widget.Toast.makeText(context, strings.bilibiliLoginSuccess, android.widget.Toast.LENGTH_LONG).show()
             }
         )
+    }
+}
+
+/** Read scrolling state here so each scroll pixel does not recompose the home page. */
+@Composable private fun BoxScope.ImageBackToTop(list: LazyListState, enabled: Boolean, actionsIndex: Int) {
+    val visible by remember(list,enabled,actionsIndex) { derivedStateOf { enabled && list.firstVisibleItemIndex > actionsIndex } }
+    val scope = rememberCoroutineScope()
+    var returning by remember { mutableStateOf(false) }
+    AnimatedVisibility(visible,modifier=Modifier.align(Alignment.BottomEnd).padding(16.dp),enter=fadeIn(),exit=fadeOut()) {
+        SmallFloatingActionButton(onClick = {
+            if (!returning) scope.launch {
+                returning = true
+                try {
+                    if (list.firstVisibleItemIndex > 30) list.scrollToItem(8)
+                    list.animateScrollToItem(0)
+                } finally { returning = false }
+            }
+        },modifier=Modifier.size(48.dp).testTag("home_back_to_top")) {
+            Icon(Icons.Outlined.KeyboardArrowUp,contentDescription=LocalAppStrings.current.scrollToTop)
+        }
     }
 }
 
@@ -581,6 +620,10 @@ private fun HomeInputPanel(
     }
 }
 
+private val PlatformChipHorizontalPadding = 10.dp
+private val PlatformChipVerticalPadding = 5.dp
+private val PlatformChipDotSize = 6.dp
+
 /**
  * 支持平台：以低饱和圆点 + 标签铺开，避免使用彩色整块背景造成视觉噪音。
  */
@@ -588,17 +631,29 @@ private fun HomeInputPanel(
 @Composable
 internal fun HomePlatformChips() {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    val supportedPlatforms = remember {
+    val accent = MaterialTheme.colorScheme.primary
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val supportedPlatforms = remember(accent, muted) {
         listOf(
             "哔哩哔哩" to BilibiliPink,
-            "抖音" to DouyinBlack,
+            "抖音" to muted,
             "快手" to KuaishouOrange,
             "小红书" to XiaohongshuRed,
+            "微博" to Color(0xFFE34B53),
             "YouTube" to YouTubeRed,
+            "西瓜视频" to accent,
             "TikTok" to TikTokCyan,
             "X (Twitter)" to TwitterBlue,
             "Instagram" to InstagramPink,
             "Facebook" to FacebookBlue,
+            "Reddit" to accent,
+            "Twitch" to accent,
+            "优酷" to accent,
+            "爱奇艺" to accent,
+            "AcFun" to accent,
+            "虎牙" to accent,
+            "TED" to accent,
+            "Internet Archive" to accent,
             "Pinterest" to PinterestRed,
             "Pixiv" to Color(0xFF0096FA),
             "小黑盒" to Color(0xFF64748B)
@@ -606,54 +661,123 @@ internal fun HomePlatformChips() {
     }
     val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
+    val appStrings = LocalAppStrings.current
     val style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium)
-    BoxWithConstraints(Modifier.fillMaxWidth().testTag("home_platforms").animateContentSize(tween(260))) {
+    val displayedPlatforms = remember(supportedPlatforms, appStrings) {
+        supportedPlatforms.map { (key, color) -> platformDisplayName(key, appStrings) to color }
+    }
+    val chipSpacing = 7.dp
+    val toggleWidth = 48.dp
+    val rotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(OmniMotion.NORMAL, easing = OmniMotion.Emphasized),
+        label = "platformsChevron"
+    )
+    BoxWithConstraints(Modifier.fillMaxWidth().testTag("home_platforms")) {
         val width = with(density) { maxWidth.roundToPx() }
-        val widths = remember(measurer, density, style, supportedPlatforms) {
-            supportedPlatforms.map { (name, _) -> measurer.measure(name, style).size.width + with(density) { 32.dp.roundToPx() } }
+        val labelSizes = remember(measurer, density, style, displayedPlatforms) {
+            displayedPlatforms.map { (name, _) -> measurer.measure(name, style, maxLines = 1).size }
         }
-        val count = collapsedPlatformCount(width, widths, with(density) { 7.dp.roundToPx() }, with(density) { 32.dp.roundToPx() })
-        FlowRow(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-            horizontalArrangement = Arrangement.spacedBy(7.dp),
-            verticalArrangement = Arrangement.spacedBy(7.dp)
-        ) {
-            supportedPlatforms.forEachIndexed { index, (name, color) ->
-                AnimatedVisibility(visible = expanded || index < count,
-                    enter = fadeIn(tween(180)), exit = fadeOut(tween(120))) {
-                    PlatformChip(name, if (name == "抖音") MaterialTheme.colorScheme.onSurfaceVariant else color)
+        val chipHeight = with(density) {
+            val contentHeight = maxOf(PlatformChipDotSize.roundToPx(), labelSizes.maxOf { it.height })
+            (contentHeight + 2 * PlatformChipVerticalPadding.roundToPx()).toDp()
+        }
+        val count = remember(width, labelSizes, density) {
+            with(density) {
+                val chipInsets = 2 * (PlatformChipHorizontalPadding.roundToPx() + PlatformChipDotSize.roundToPx())
+                collapsedPlatformCount(width, labelSizes.map { it.width + chipInsets }, chipSpacing.roundToPx(), toggleWidth.roundToPx())
+            }
+        }
+        Column(Modifier.fillMaxWidth()) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(chipSpacing),
+                verticalArrangement = Arrangement.spacedBy(chipSpacing)
+            ) {
+                displayedPlatforms.take(count).forEach { (name, color) ->
+                    PlatformChip(name, color, chipHeight)
+                }
+                IconButton(
+                    onClick = { expanded = !expanded },
+                    // Compose expands the touch target beyond this compact visual row.
+                    modifier = Modifier.size(width = toggleWidth, height = chipHeight).testTag("home_platforms_toggle")
+                ) {
+                    Icon(
+                        Icons.Outlined.ExpandMore,
+                        contentDescription = if (expanded) appStrings.collapsePlatforms else appStrings.expandPlatforms,
+                        modifier = Modifier.graphicsLayer { rotationZ = rotation },
+                        tint = muted
+                    )
                 }
             }
-            if (count < supportedPlatforms.size) IconButton(
-                onClick = { expanded = !expanded },
-                modifier = Modifier.size(32.dp).testTag("home_platforms_toggle")
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(
+                    expandFrom = Alignment.Top,
+                    animationSpec = tween(OmniMotion.MEDIUM, easing = OmniMotion.Emphasized)
+                ) + fadeIn(tween(OmniMotion.NORMAL)),
+                exit = shrinkVertically(
+                    shrinkTowards = Alignment.Top,
+                    animationSpec = tween(OmniMotion.NORMAL, easing = OmniMotion.Emphasized)
+                ) + fadeOut(tween(OmniMotion.FAST))
             ) {
-                Icon(if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.MoreHoriz,
-                    contentDescription = if (expanded) "收起支持的平台" else "展开支持的平台",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column {
+                    if (count < displayedPlatforms.size) {
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth().padding(top = chipSpacing),
+                            horizontalArrangement = Arrangement.spacedBy(chipSpacing),
+                            verticalArrangement = Arrangement.spacedBy(chipSpacing)
+                        ) {
+                            displayedPlatforms.drop(count).forEach { (name, color) -> PlatformChip(name, color, chipHeight) }
+                        }
+                    }
+                    YtDlpPlatformCatalogButton(enabled = expanded)
+                }
             }
         }
     }
 }
 
+/** 平台显示名：内部仍用中文标识做颜色/身份判断，界面文字统一走 AppStrings。 */
+private fun platformDisplayName(key: String, s: com.omni.downloader.ui.localization.AppStrings): String = when (key) {
+    "哔哩哔哩" -> s.platformLabelBilibili
+    "抖音" -> s.platformLabelDouyin
+    "快手" -> s.platformLabelKuaishou
+    "小红书" -> s.platformLabelXiaohongshu
+    "微博" -> s.platformLabelWeibo
+    "小黑盒" -> s.platformLabelHeybox
+    "Pixiv" -> s.platformLabelPixiv
+    "YouTube" -> s.platformLabelYoutube
+    "X (Twitter)" -> s.platformLabelX
+    "西瓜视频" -> s.platformLabelXigua
+    "优酷" -> s.platformLabelYouku
+    "爱奇艺" -> s.platformLabelIqiyi
+    "虎牙" -> s.platformLabelHuya
+    else -> key
+}
+
 @Composable
-private fun PlatformChip(name: String, color: Color) {
+private fun PlatformChip(name: String, color: Color, chipHeight: Dp) {
     Row(
         modifier = Modifier
+            .height(chipHeight)
+            .testTag("home_platform_chip")
             .clip(RoundedCornerShape(999.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f))
-            .padding(horizontal = 10.dp, vertical = 5.dp),
+            .padding(horizontal = PlatformChipHorizontalPadding, vertical = PlatformChipVerticalPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(6.dp)
+                .size(PlatformChipDotSize)
                 .clip(CircleShape)
                 .background(color)
         )
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width(PlatformChipDotSize))
         Text(
             text = name,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant

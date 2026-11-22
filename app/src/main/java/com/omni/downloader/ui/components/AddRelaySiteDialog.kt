@@ -109,7 +109,7 @@ fun AddRelaySiteDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
-                    text = "输入网址后将自动检索网站名称，也可手动修改：",
+                    text = strings.relayAddHint,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -121,7 +121,7 @@ fun AddRelaySiteDialog(
                         urlInput = it
                         fetchFailed = false
                     },
-                    label = { Text("网站完整网址") },
+                    label = { Text(strings.relayUrlLabel) },
                     placeholder = { Text("https://...") },
                     leadingIcon = {
                         Icon(imageVector = Icons.Outlined.Link, contentDescription = null)
@@ -143,7 +143,7 @@ fun AddRelaySiteDialog(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Outlined.Refresh,
-                                            contentDescription = "重新检索名称",
+                                            contentDescription = strings.relayRefetchName,
                                             tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -159,7 +159,7 @@ fun AddRelaySiteDialog(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Outlined.Clear,
-                                            contentDescription = "清除网址",
+                                            contentDescription = strings.relayClearUrl,
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(16.dp)
                                         )
@@ -179,7 +179,7 @@ fun AddRelaySiteDialog(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Outlined.ContentPaste,
-                                            contentDescription = "粘贴剪贴板",
+                                            contentDescription = strings.pasteClipboard,
                                             tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -200,8 +200,8 @@ fun AddRelaySiteDialog(
                         nameInput = it
                         userModifiedNameManually = it.isNotBlank()
                     },
-                    label = { Text("网站名称") },
-                    placeholder = { Text("例如：备用解析工具") },
+                    label = { Text(strings.relayNameLabel) },
+                    placeholder = { Text(strings.relayNamePlaceholder) },
                     leadingIcon = {
                         Icon(imageVector = Icons.Outlined.Language, contentDescription = null)
                     },
@@ -216,7 +216,7 @@ fun AddRelaySiteDialog(
                             ) {
                                 Icon(
                                     imageVector = Icons.Outlined.Clear,
-                                    contentDescription = "清空名称",
+                                    contentDescription = strings.relayClearName,
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -253,7 +253,7 @@ fun AddRelaySiteDialog(
                     var cleanUrl = urlInput.trim()
 
                     if (cleanName.isBlank() || cleanUrl.isBlank()) {
-                        Toast.makeText(context, "请完整填写网站名称与网址", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, strings.relayFillRequired, Toast.LENGTH_SHORT).show()
                         return@Button
                     }
 
@@ -274,12 +274,12 @@ fun AddRelaySiteDialog(
                 },
 
             ) {
-                Text("确认添加")
+                Text(strings.confirmAdd)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(strings.cancel)
             }
         }
     )

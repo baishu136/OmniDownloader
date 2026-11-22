@@ -1,8 +1,5 @@
 package com.omni.downloader.ui.components
 
-import android.content.Context
-import android.content.Intent
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -44,7 +41,6 @@ import com.omni.downloader.ui.theme.ErrorRed
 import com.omni.downloader.ui.theme.SuccessGreen
 import com.omni.downloader.ui.theme.WarningOrange
 import kotlinx.coroutines.flow.StateFlow
-import java.io.File
 
 /** Collection card with bounded lazy episode details and isolated live progress. */
 @Composable
@@ -106,7 +102,7 @@ fun CollectionTaskCard(
                         if (coverUrl.isBlank()) null
                         else {
                             ImageRequest.Builder(context)
-                                .data(coverUrl)
+                                .data(com.omni.downloader.engine.ImagePreviewPolicy.thumbnail(coverUrl))
                                 .size(184, 116)
                                 .bitmapConfig(android.graphics.Bitmap.Config.RGB_565)
                                 .crossfade(false)
@@ -124,7 +120,7 @@ fun CollectionTaskCard(
                     if (coverRequest != null) {
                         AsyncImage(
                             model = coverRequest,
-                            contentDescription = "合集封面",
+                            contentDescription = LocalAppStrings.current.coverContentDesc,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
@@ -192,7 +188,7 @@ fun CollectionTaskCard(
                             isAllCompleted -> strings.statusCompleted
                             isDownloading -> "${strings.statusDownloading} (${(completedCount + 1).coerceAtMost(totalCount)}/$totalCount)"
                             isPending -> strings.statusPending
-                            hasFailed -> if (failedCount > 0) "失败 $failedCount 集" else strings.statusCancelled
+                            hasFailed -> if (failedCount > 0) strings.failedEpisodes.format(failedCount) else strings.statusCancelled
                             else -> strings.statusPending
                         }
 
@@ -281,17 +277,18 @@ fun CollectionTaskCard(
 
                             Spacer(modifier = Modifier.width(6.dp))
 
+                            val episodeStrings = LocalAppStrings.current
                             when (subTask.status) {
                                 TaskStatus.COMPLETED -> {
                                     IconButton(
                                         onClick = {
-                                            openMediaFile(context, subTask.localFilePath, subTask.downloadType)
+                                            openMediaFile(context, subTask.localFilePath, subTask.downloadType, episodeStrings)
                                         },
                                         modifier = Modifier.size(28.dp)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Outlined.PlayCircleOutline,
-                                            contentDescription = "播放",
+                                            contentDescription = episodeStrings.play,
                                             tint = SuccessGreen,
                                             modifier = Modifier.size(20.dp)
                                         )
@@ -312,7 +309,7 @@ fun CollectionTaskCard(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Outlined.Refresh,
-                                            contentDescription = "重试",
+                                            contentDescription = LocalAppStrings.current.retry,
                                             tint = ErrorRed,
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -364,7 +361,7 @@ fun CollectionTaskCard(
                             icon = Icons.Outlined.PlayArrow,
                             text = strings.collectionPlayFirst,
                             isPrimary = true,
-                            onClick = { openMediaFile(context, firstCompleted.localFilePath, firstCompleted.downloadType) }
+                            onClick = { openMediaFile(context, firstCompleted.localFilePath, firstCompleted.downloadType, strings) }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
@@ -423,7 +420,7 @@ fun CollectionTaskCard(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "同时删除已下载的本地视频文件",
+                            text = strings.deleteLocalFiles,
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -604,14 +601,14 @@ private fun CollectionProgressSection(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "${currentProgress.toInt()}% · ${currentSpeed.ifBlank { "准备中" }}",
+                            text = "${currentProgress.toInt()}% · ${currentSpeed.ifBlank { LocalAppStrings.current.preparing }}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Medium
                         )
                         if (currentEta.isNotBlank()) {
                             Text(
-                                text = "剩余 $currentEta",
+                                text = LocalAppStrings.current.remainingTime.format(currentEta),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -633,38 +630,6 @@ private fun CollectionActionBtn(
     com.omni.downloader.ui.design.OmniPillButton(
         text = text, icon = icon, primary = isPrimary, onClick = onClick
     )
-}
-
-private fun openMediaFile(context: Context, filePath: String, downloadType: DownloadType) {
-    try {
-        val file = File(filePath)
-        if (!filePath.startsWith("content://") && !file.exists()) {
-            Toast.makeText(context, "文件不存在或已被移动", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val uri = androidx.core.content.FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-
-        val mimeType = when (downloadType) {
-            DownloadType.AUDIO_ONLY -> "audio/*"
-            DownloadType.COVER -> "image/*"
-            DownloadType.GIF -> "image/gif"
-            else -> "video/*"
-        }
-
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, mimeType)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(intent)
-    } catch (e: Exception) {
-        Toast.makeText(context, "未找到可打开此文件的播放器或相册", Toast.LENGTH_SHORT).show()
-    }
 }
 
 @Composable

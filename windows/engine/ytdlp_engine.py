@@ -116,6 +116,7 @@ class YtDlpEngine:
     def _extract_sync(cls, raw_url, site_name=''):
         opts = cls._build_ydl_opts(config.proxy_url)
         opts['noplaylist'] = False
+        if site_name == '网络视频': opts['playlistend'] = 100
         with sessions.cookie_file(site_name) as cookie:
             if cookie: opts['cookiefile'] = cookie
             with yt_dlp.YoutubeDL(opts) as ydl:
@@ -123,13 +124,15 @@ class YtDlpEngine:
                 entries = [e for e in (info.get('entries') or []) if e]
                 if not entries: return cls._metadata(info, raw_url, site_name)
                 children = []
-                for entry in entries[:200]:
-                    if site_name == 'X (Twitter)':
+                for entry in entries[:100] if site_name == '网络视频' else entries[:200]:
+                    if site_name in ('X (Twitter)', '微博', '网络视频'):
                         parts = urlsplit(raw_url)
                         query = parse_qs(parts.query); query['omni_media'] = [str(entry['id'])]
                         child = urlunsplit(parts._replace(query=urlencode(query, doseq=True)))
                     else: child = entry.get('webpage_url') or entry.get('original_url') or entry.get('url')
                     if not child: continue
+                    from engine.service_features import has_video
+                    if site_name in ('网络视频', '微博') and not any(has_video(f) for f in entry.get('formats', [])): continue
                     with cls._lock: cls._cache[cls._key(child, site_name)] = (time.monotonic(), copy.deepcopy(entry))
                     children.append(cls._metadata(entry, child, site_name))
                 if not children: raise RuntimeError('[NO_MEDIA] 合集没有可定位的媒体')
@@ -137,14 +140,15 @@ class YtDlpEngine:
 
     @classmethod
     def _metadata(cls, info, url, site):
+        from engine.service_features import has_video
         video, audio = [], []
         for f in sorted(info.get('formats') or [], key=score, reverse=True):
             if f.get('has_drm'): continue
             w, h = int(f.get('width') or 0), int(f.get('height') or 0)
             if f.get('vcodec') == 'none':
                 audio.append(FormatOption(formatId=str(f['format_id']), resolutionLabel='音频', isAudioOnly=True, ext=f.get('ext') or 'm4a'))
-            elif w or h or (site == 'X (Twitter)' and 'video.twimg.com/tweet_video/' in f.get('url', '')):
-                video.append(FormatOption(formatId=str(f['format_id']), resolutionLabel=label(w, h) if w or h else '源动图（尺寸未知）',
+            elif (site in ('网络视频', '微博') and has_video(f)) or w or h or (site == 'X (Twitter)' and 'video.twimg.com/tweet_video/' in f.get('url', '')):
+                video.append(FormatOption(formatId=str(f['format_id']), resolutionLabel=label(w, h) if w or h else '源视频（尺寸待确认）',
                     width=w, height=h, fps=int(f.get('fps') or 0), ext=f.get('ext') or '',
                     vcodec=f.get('vcodec') or '', acodec=f.get('acodec') or '',
                     isVideoOnly=f.get('acodec') == 'none', approximateSize=format_bytes(f.get('filesize') or f.get('filesize_approx')),
@@ -153,7 +157,7 @@ class YtDlpEngine:
         return VideoMetadata(url=url, title=info.get('title') or '媒体', author=info.get('uploader') or '',
             isGif=site == 'X (Twitter)' and any('video.twimg.com/tweet_video/' in f.get('url', '') for f in info.get('formats') or []) and not any('ext_tw_video' in f.get('url', '') or 'amplify_video' in f.get('url', '') for f in info.get('formats') or []),
             durationText=format_duration(info.get('duration')), thumbnailUrl=info.get('thumbnail') or '',
-            siteName=site, availableVideoFormats=video, availableAudioFormats=audio,
+            siteName=(info.get('extractor') or site) if site == '网络视频' else site, availableVideoFormats=video, availableAudioFormats=audio,
             mediaId=str(info.get('id', '')), expectedDurationMs=int((info.get('duration') or 0) * 1000))
 
     @staticmethod

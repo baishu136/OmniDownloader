@@ -13,9 +13,11 @@ import androidx.core.app.NotificationCompat
 import com.omni.downloader.R
 import com.omni.downloader.data.model.DownloadTask
 import com.omni.downloader.data.model.TaskStatus
+import com.omni.downloader.data.repository.SettingsRepository
 import com.omni.downloader.data.repository.TaskRepository
 import com.omni.downloader.engine.DownloadEngine
 import com.omni.downloader.ui.MainActivity
+import com.omni.downloader.ui.localization.resolveAppStrings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -28,6 +30,9 @@ class DownloadService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var notificationManager: NotificationManager
     private lateinit var repository: TaskRepository
+
+    /** 通知文案跟随应用内语言设置。 */
+    private val uiStrings get() = resolveAppStrings(SettingsRepository.getInstance(this).appLanguage.value)
 
     private val taskQueue = ConcurrentLinkedQueue<DownloadTask>()
     @Volatile
@@ -95,7 +100,7 @@ class DownloadService : Service() {
                 val taskId = intent.getStringExtra(EXTRA_TASK_ID) ?: return START_NOT_STICKY
                 val task = repository.getTask(taskId)
                 if (task != null && task.status in setOf(TaskStatus.PENDING, TaskStatus.DOWNLOADING, TaskStatus.PROCESSING)) {
-                    startForeground(NOTIFICATION_ID, buildProgressNotification(task, 0f, "任务已加入队列"))
+                    startForeground(NOTIFICATION_ID, buildProgressNotification(task, 0f, uiStrings.notifQueued))
                     if (currentRunningTaskId == taskId || taskQueue.any { it.id == taskId }) return START_NOT_STICKY
                     taskQueue.offer(task)
                     processNextTask()
@@ -138,7 +143,7 @@ class DownloadService : Service() {
         isProcessing = true
         currentRunningTaskId = next.id
         val generation = ++taskGeneration
-        startForeground(NOTIFICATION_ID, buildProgressNotification(next, 0f, "准备下载..."))
+        startForeground(NOTIFICATION_ID, buildProgressNotification(next, 0f, uiStrings.notifPreparing))
 
         // Register the worker before dispatching it. Network reads must never run inline
         // while the caller owns the service monitor.
@@ -174,9 +179,9 @@ class DownloadService : Service() {
                         (isStatusChanged || now - lastNotificationTime >= 800)) {
                         lastNotificationTime = now
                         val statusText = if (status == TaskStatus.PROCESSING) {
-                            eta.ifBlank { "正在合并音视频..." }
+                            eta.ifBlank { uiStrings.mergingTracks }
                         } else {
-                            "$speed ${if (eta.isNotEmpty()) "· 剩余 $eta" else ""}"
+                            "$speed ${if (eta.isNotEmpty()) uiStrings.notifRemaining.format(eta) else ""}"
                         }
                         notificationManager.notify(NOTIFICATION_ID, buildProgressNotification(next, progress, statusText, status))
                     }
@@ -195,14 +200,14 @@ class DownloadService : Service() {
                             ) { _, _ -> }
                             showCompletedNotification(next)
                     }.onFailure { err ->
-                        repository.markFailed(next.id, err.message ?: "下载过程中遇到错误")
+                        repository.markFailed(next.id, err.message ?: uiStrings.notifDownloadError)
                     }
                 }
 
             }
           } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
           catch (error: Exception) {
-              synchronized(this@DownloadService) { if (currentRunningTaskId == next.id) repository.markFailed(next.id, error.message ?: "任务执行异常") }
+              synchronized(this@DownloadService) { if (currentRunningTaskId == next.id) repository.markFailed(next.id, error.message ?: uiStrings.notifTaskError) }
           }
         }
         runningJob = worker
@@ -222,8 +227,8 @@ class DownloadService : Service() {
 
     private fun showAnalysisNotification() {
         startForeground(NOTIFICATION_ID, NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification).setContentTitle("正在解析媒体")
-            .setContentText("可返回应用查看解析结果").setOngoing(true).setProgress(0, 0, true)
+            .setSmallIcon(R.drawable.ic_notification).setContentTitle(uiStrings.notifAnalyzingTitle)
+            .setContentText(uiStrings.notifAnalyzingText).setOngoing(true).setProgress(0, 0, true)
             .setContentIntent(getLaunchPendingIntent()).build())
     }
 
@@ -240,10 +245,10 @@ class DownloadService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "下载任务",
+                uiStrings.notifChannelName,
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "展示当前视频/音频的实时下载与合并进度"
+                description = uiStrings.notifChannelDesc
                 setShowBadge(false)
             }
             notificationManager.createNotificationChannel(channel)
@@ -258,7 +263,7 @@ class DownloadService : Service() {
     ) =
         NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("${if (status == TaskStatus.PROCESSING) "正在处理" else "正在下载"}: ${task.title}")
+            .setContentTitle("${if (status == TaskStatus.PROCESSING) uiStrings.notifProcessing else uiStrings.notifDownloading}: ${task.title}")
             .setContentText(subText)
             .setProgress(100, progress.toInt(), progress <= 0f)
             .setOngoing(true)
@@ -268,7 +273,7 @@ class DownloadService : Service() {
     private fun showCompletedNotification(task: DownloadTask) {
         val completedNotification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("下载完成")
+            .setContentTitle(uiStrings.notifCompletedTitle)
             .setContentText(task.title)
             .setAutoCancel(true)
             .setContentIntent(getLaunchPendingIntent())

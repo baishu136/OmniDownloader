@@ -94,7 +94,11 @@ def run_pyinstaller():
         "--hidden-import", "fastapi",
         "--hidden-import", "fastapi.staticfiles",
         "--hidden-import", "yt_dlp",
+        "--collect-all", "yt_dlp",
         "--collect-all", "yt_dlp_ejs",
+        "--collect-all", "websockets",
+        "--copy-metadata", "yt-dlp",
+        "--copy-metadata", "yt-dlp-ejs",
         "--hidden-import", "pystray",
         "--hidden-import", "PIL",
     ])

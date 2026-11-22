@@ -26,14 +26,15 @@ fun SilentRelayEngine(
     val success by rememberUpdatedState(onSuccess)
     val error by rememberUpdatedState(onError)
     val progress by rememberUpdatedState(onProgress)
-    val session = remember(site.id, videoUrl) {
-        RelayCaptureSession("${site.name} 视频", { url, title -> success(url, title) }, { progress(it) }, { error(it) })
+    val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
+    val session = remember(site.id, videoUrl, strings) {
+        RelayCaptureSession(strings.relayFallbackTitle.format(site.name), { url, title -> success(url, title) }, { progress(it) }, { error(it) }, strings)
     }
     var view by remember(session) { mutableStateOf<WebView?>(null) }
     var cleanup by remember(session) { mutableStateOf<(() -> Unit)?>(null) }
     LaunchedEffect(session) {
         delay(25000)
-        if (!session.isCompleted) session.fail("中转站响应超时，可点击「窗口排查」完成验证或手动解析")
+        if (!session.isCompleted) session.fail(strings.relayTimeout)
     }
     DisposableEffect(session) {
         onDispose {

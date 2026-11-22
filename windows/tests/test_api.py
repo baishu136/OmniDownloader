@@ -11,6 +11,7 @@ def test_runtime_and_session_api_are_available_without_secrets():
         assert client.get('/api/sessions').status_code == 200
         settings = client.get('/api/settings').json()
         assert settings['bilibiliCookie'] == ''
+        assert settings['version'] == app.version
 
 
 def test_session_mutation_refuses_cross_origin_and_bad_files():
@@ -40,3 +41,40 @@ def test_cancelled_task_cannot_become_failed_from_late_engine_error(monkeypatch)
     finally:
         task_manager.tasks.pop(task.id, None)
         task_manager.cancel_events.pop(task.id, None)
+
+
+def test_task_zip_viewer_endpoints_serve_images_and_block_traversal(tmp_path):
+    import zipfile
+    from core.models import DownloadTask, DownloadType, TaskStatus
+    from core.task_manager import task_manager
+
+    zip_path = tmp_path / 'gallery.zip'
+    with zipfile.ZipFile(zip_path, 'w') as zf:
+        zf.writestr('10.jpg', b'jpeg-10')
+        zf.writestr('2.png', b'png-2')
+        zf.writestr('notes.txt', b'ignored')
+
+    task = DownloadTask(
+        id='zip-view-fixture',
+        url='https://example.test/post',
+        title='图集',
+        downloadType=DownloadType.IMAGE_ZIP,
+        status=TaskStatus.COMPLETED,
+        localFilePath=str(zip_path),
+    )
+    task_manager.tasks[task.id] = task
+    try:
+        with TestClient(app) as client:
+            listing = client.get(f'/api/tasks/{task.id}/zip-entries')
+            assert listing.status_code == 200
+            assert listing.json()['entries'] == ['2.png', '10.jpg']
+
+            img = client.get(f'/api/tasks/{task.id}/zip-entry', params={'entry': '2.png'})
+            assert img.status_code == 200
+            assert img.content == b'png-2'
+            assert img.headers['content-type'].startswith('image/png')
+
+            assert client.get(f'/api/tasks/{task.id}/zip-entry', params={'entry': '../secret.png'}).status_code == 400
+            assert client.get(f'/api/tasks/{task.id}/zip-entry', params={'entry': 'notes.txt'}).status_code == 400
+    finally:
+        task_manager.tasks.pop(task.id, None)

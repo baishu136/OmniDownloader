@@ -16,7 +16,7 @@ class PixivJsonClientAndroidTest {
         Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(200).message("fixture")
             .body(body.toResponseBody("application/json".toMediaType())).build()
 
-    @Test fun requestUsesActualHostAndPathForSavedCookieAndKeepsValidJson() {
+    @Test fun requestUsesActualHostAndPathForSavedCookieAndKeepsValidJson(): Unit = kotlinx.coroutines.runBlocking {
         val scopes = mutableListOf<String>(); val requests = mutableListOf<Request>()
         val http = OkHttpClient.Builder().addInterceptor { chain ->
             requests += chain.request()
@@ -31,7 +31,7 @@ class PixivJsonClientAndroidTest {
         assertEquals(80, root.getJSONObject("body").getJSONArray("frames").getJSONObject(0).getInt("delay"))
     }
 
-    @Test fun missingCookieAndApiErrorNeverPretendSuccessOrRepeatRequest() {
+    @Test fun missingCookieAndApiErrorNeverPretendSuccessOrRepeatRequest(): Unit = kotlinx.coroutines.runBlocking {
         var calls = 0
         val http = OkHttpClient.Builder().addInterceptor { chain ->
             calls++; assertNull(chain.request().header("Cookie"))

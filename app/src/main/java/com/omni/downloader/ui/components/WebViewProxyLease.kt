@@ -29,12 +29,13 @@ internal class WebViewProxyLease private constructor() {
         private val gate = Mutex()
         private var owners = 0
         private var route = ""
-        suspend fun acquire(proxy: String): WebViewProxyLease = withContext(Dispatchers.Main.immediate) {
+        suspend fun acquire(proxy: String, strings: com.omni.downloader.ui.localization.AppStrings =
+                com.omni.downloader.ui.localization.ZhHansStrings): WebViewProxyLease = withContext(Dispatchers.Main.immediate) {
             gate.withLock {
                 val rule = ProxyConfiguration.parse(proxy)?.webViewUrl.orEmpty()
-                check(owners == 0 || route == rule) { "[NETWORK_ERROR] 浏览器网络已改变，请关闭旧页面后重试" }
+                check(owners == 0 || route == rule) { "[NETWORK_ERROR] ${strings.webProxyChanged}" }
                 val supported = WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)
-                check(rule.isBlank() || supported) { "[NETWORK_ERROR] 系统 WebView 暂不支持指定代理" }
+                check(rule.isBlank() || supported) { "[NETWORK_ERROR] ${strings.webProxyUnsupported}" }
                 if (owners == 0) {
                     try { if (supported) withTimeout(2500) { change(rule.takeIf(String::isNotBlank)) } }
                     catch (error: Exception) {

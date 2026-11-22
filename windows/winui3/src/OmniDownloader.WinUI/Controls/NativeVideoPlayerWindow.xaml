@@ -1,0 +1,188 @@
+<Window
+    x:Class="OmniDownloader.WinUI.Controls.NativeVideoPlayerWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="OmniDownloader · 媒体播放">
+
+    <Grid x:Name="RootGrid" KeyDown="RootGrid_KeyDown">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="44" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 自定义标题栏 -->
+        <Grid x:Name="TitleBarDragRegion" Grid.Row="0" Padding="14,0,148,0" ColumnSpacing="8" Background="Transparent">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <FontIcon x:Name="TitleIcon" Grid.Column="0" Glyph="&#xE768;" FontSize="14" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+            <TextBlock
+                x:Name="WindowTitleText"
+                Grid.Column="1"
+                Text="媒体播放"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                FontWeight="SemiBold"
+                TextTrimming="CharacterEllipsis"
+                VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- 播放列表与快捷工具栏 -->
+        <Grid
+            Grid.Row="1"
+            Padding="14,8"
+            ColumnSpacing="10"
+            RowSpacing="8"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="0,1,0,1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock x:Name="NowPlayingTitleText" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                <Border x:Name="EpisodeBadge" Style="{StaticResource OmniTagBorderStyle}" Visibility="Collapsed" VerticalAlignment="Center">
+                    <TextBlock x:Name="EpisodeBadgeText" Style="{StaticResource CaptionTextBlockStyle}" />
+                </Border>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <Button x:Name="PrevEpBtn" ToolTipService.ToolTip="上一集 (Ctrl+Left)" Visibility="Collapsed" Click="PrevEpBtn_Click" Padding="9,5">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <FontIcon Glyph="&#xE892;" FontSize="12" />
+                        <TextBlock Text="上一集" />
+                    </StackPanel>
+                </Button>
+
+                <ComboBox
+                    x:Name="PlaylistCombo"
+                    MinWidth="150"
+                    MaxWidth="240"
+                    Visibility="Collapsed"
+                    SelectionChanged="PlaylistCombo_SelectionChanged" />
+
+                <Button x:Name="NextEpBtn" ToolTipService.ToolTip="下一集 (Ctrl+Right)" Visibility="Collapsed" Click="NextEpBtn_Click" Padding="9,5">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="下一集" />
+                        <FontIcon Glyph="&#xE893;" FontSize="12" />
+                    </StackPanel>
+                </Button>
+
+                <Button x:Name="FullscreenBtn" ToolTipService.ToolTip="全屏切换 (F / F11)" Click="FullscreenBtn_Click" Padding="9,5">
+                    <FontIcon x:Name="FullscreenIcon" Glyph="&#xE740;" FontSize="13" />
+                </Button>
+
+                <Button ToolTipService.ToolTip="在电脑中定位文件" Click="LocateBtn_Click" Padding="9,5">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE8B7;" FontSize="13" />
+                        <TextBlock Text="定位" />
+                    </StackPanel>
+                </Button>
+
+                <Button ToolTipService.ToolTip="用系统默认播放器打开" Click="ExternalBtn_Click" Padding="9,5">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE8A7;" FontSize="13" />
+                        <TextBlock Text="系统播放" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- 主媒体播放舞台（MediaPlayerElement 原生硬件解码 + 完整传输控制条） -->
+        <Grid Grid.Row="2" Background="#FF000000">
+            <MediaPlayerElement
+                x:Name="PlayerElement"
+                AreTransportControlsEnabled="True"
+                AutoPlay="True"
+                Stretch="Uniform">
+                <MediaPlayerElement.TransportControls>
+                    <MediaTransportControls
+                        IsCompact="False"
+                        IsPlaybackRateEnabled="True"
+                        IsPlaybackRateButtonVisible="True"
+                        IsSkipBackwardEnabled="True"
+                        IsSkipBackwardButtonVisible="True"
+                        IsSkipForwardEnabled="True"
+                        IsSkipForwardButtonVisible="True"
+                        IsZoomEnabled="True"
+                        IsZoomButtonVisible="True"
+                        IsVolumeEnabled="True"
+                        IsVolumeButtonVisible="True"
+                        IsRepeatButtonVisible="True"
+                        IsRepeatEnabled="True" />
+                </MediaPlayerElement.TransportControls>
+            </MediaPlayerElement>
+
+            <!-- 纯音频播放封面信息卡片（不遮挡底部传输控制条） -->
+            <StackPanel
+                x:Name="AudioCoverPanel"
+                Visibility="Collapsed"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Margin="24,16,24,84"
+                Spacing="14">
+                <Border
+                    Width="200"
+                    Height="200"
+                    CornerRadius="14"
+                    Background="#FF1C1E26"
+                    BorderBrush="#33FFFFFF"
+                    BorderThickness="1"
+                    HorizontalAlignment="Center">
+                    <Grid>
+                        <FontIcon Glyph="&#xE8D6;" FontSize="54" Foreground="#B3C5FF" />
+                        <Image x:Name="AudioCoverImage" Stretch="UniformToFill" />
+                    </Grid>
+                </Border>
+                <TextBlock
+                    x:Name="AudioTitleText"
+                    Foreground="#FFFFFFFF"
+                    FontSize="17"
+                    FontWeight="SemiBold"
+                    TextWrapping="WrapWholeWords"
+                    TextAlignment="Center"
+                    MaxWidth="480" />
+                <TextBlock
+                    x:Name="AudioSubText"
+                    Foreground="#FFB8BECB"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    TextAlignment="Center" />
+            </StackPanel>
+
+            <ProgressRing
+                x:Name="LoadingRing"
+                IsActive="True"
+                Width="44"
+                Height="44"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center" />
+
+            <!-- 异常提示兜底面板 -->
+            <Border
+                x:Name="ErrorOverlay"
+                Visibility="Collapsed"
+                Background="#E014161D"
+                CornerRadius="12"
+                Padding="24"
+                MaxWidth="440"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+                <StackPanel Spacing="12">
+                    <FontIcon Glyph="&#xEA39;" FontSize="32" Foreground="#FFFCA5A5" HorizontalAlignment="Center" />
+                    <TextBlock
+                        x:Name="ErrorDetailText"
+                        Foreground="#FFFFFFFF"
+                        TextWrapping="WrapWholeWords"
+                        TextAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <Button Style="{StaticResource AccentButtonStyle}" Content="用系统默认程序播放" Click="ExternalBtn_Click" />
+                        <Button Content="定位文件" Click="LocateBtn_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

@@ -1,0 +1,130 @@
+{
+  "version": "1.7.16",
+  "versionCode": 75,
+  "date": "2026-11-08",
+  "jvm": {
+    "passed": 159,
+    "failed": 0
+  },
+  "python": {
+    "passed": 17,
+    "failed": 0
+  },
+  "browserFixtures": {
+    "passed": 5,
+    "optInLiveCaseSkipped": 1
+  },
+  "douyinRecoveryDownload": {
+    "downloadRequested": true,
+    "success": true,
+    "metadataMode": "captured-first-party-browser-item",
+    "mediaId": "7699370307513319141",
+    "width": 1080,
+    "height": 1920,
+    "formats": 33,
+    "sizeLabel": "",
+    "expiredFirstSourceSimulated": true,
+    "recoveryCandidates": 6,
+    "cachedMetadataAvailable": true,
+    "qualityPolicy": "QualitySelection(mode=BEST_AVAILABLE, maxHeight=0, targetFps=0, codecPreference=auto, container=mp4, allowLowerQuality=false, dynamicRangePreference=auto)",
+    "actualWidth": 1080,
+    "actualHeight": 1920,
+    "durationMs": 12446,
+    "hasAudio": true,
+    "bytes": 7198426
+  },
+  "douyinLiveBrowser": {
+    "success": false,
+    "mediaId": "7699370307513319141",
+    "status": "BLOCKED_BY_SITE_VERIFICATION",
+    "screenshot": "scratch/douyin-20261107/douyin-browser-visible.png"
+  },
+  "xiaohongshuLiveMetadata": [
+    {
+      "downloadRequested": false,
+      "success": true,
+      "metadataMode": "live-app-metadata",
+      "mediaId": "6acae60f000000001403b4e4",
+      "width": 2160,
+      "height": 3840,
+      "formats": 7,
+      "sizeLabel": "18.86 GiB"
+    },
+    {
+      "downloadRequested": false,
+      "success": true,
+      "metadataMode": "live-app-metadata",
+      "mediaId": "6acae60f000000001403b4e4",
+      "width": 2160,
+      "height": 3840,
+      "formats": 7,
+      "sizeLabel": "18.86 GiB"
+    },
+    {
+      "downloadRequested": false,
+      "success": true,
+      "metadataMode": "live-app-metadata",
+      "mediaId": "6acae60f000000001403b4e4",
+      "width": 2160,
+      "height": 3840,
+      "formats": 7,
+      "sizeLabel": "18.86 GiB"
+    }
+  ],
+  "bundledPythonXiaohongshu": {
+    "success": true,
+    "route": "bundled-android-python",
+    "mediaId": "6acae60f000000001403b4e4",
+    "width": 2160,
+    "height": 3840,
+    "formats": 7,
+    "qualityWarning": ""
+  },
+  "gif": {
+    "passed": 5,
+    "failed": 0,
+    "route": "local HTTP -> packaged FFmpeg -> MediaStore -> Android and Coil",
+    "checks": [
+      "native GIF < 1 KiB preserved byte-for-byte with changing decoded frames",
+      "video -> GIF: 15 frames, 480x853, 1000 ms",
+      "MP4 with .gif filename converted",
+      "truncated GIF / renamed MP4 rejected",
+      "zero-length FFmpeg library repaired from APK"
+    ],
+    "mime": "image/gif",
+    "legacyTaskMimeTests": "PASS"
+  },
+  "environment": {
+    "androidApi": 35,
+    "emulatorAbi": "x86_64",
+    "network": "developer HTTP proxy",
+    "physicalArm64Device": "NOT_AVAILABLE"
+  },
+  "limitations": [
+    "20 GB XHS original: metadata only; full file and HDR not verified",
+    "Direct emulator DNS failed; proxy checks passed",
+    "Final live Douyin WebView extraction blocked by login/CAPTCHA; automated bypass not attempted",
+    "ARM64 physical-device acceptance pending"
+  ],
+  "build": {
+    "assembleRelease": "PASS",
+    "lintRelease": "PASS",
+    "lintErrors": 0,
+    "lintWarnings": 46,
+    "optimizedReleaseSmoke": "PASS: cold installation, saved history, navigation and settings children",
+    "nativeExecutionOnArm64Release": "SKIPPED_ON_X86_EMULATOR"
+  },
+  "artifact": {
+    "bytes": 59542043,
+    "sha256": "640c7548491bb4cc40d40d5d6a2cc0a7f3119b1a2c9d5713c3baa5848f4f7085",
+    "abi": "arm64-v8a",
+    "signerSha256": "0bdc5678e09d4508829ff43f7c63f7ee6ab8af64134f0079cc186d8aedd41f4e",
+    "signatureMatches1715": true,
+    "zipCrc": "PASS",
+    "nativeLibrariesUnchangedFrom1715": 6,
+    "bundledSourceMatchesWorkspace": true,
+    "pythonExtrasChangedEntries": [
+      "omni_media.py"
+    ]
+  }
+}

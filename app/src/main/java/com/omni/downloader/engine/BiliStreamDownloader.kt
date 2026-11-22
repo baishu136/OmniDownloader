@@ -49,20 +49,32 @@ internal class BiliStreamDownloader(client: OkHttpClient, private val chunkBytes
     suspend fun download(primary: String, backups: List<String>, destination: File,
         headers: Map<String, String>, onProgress: (Long, Long, Long) -> Unit) {
         var lastError: Exception? = null
-        for (url in BiliStreamUrls.ordered(primary, backups)) {
+        val sources = BiliStreamUrls.ordered(primary, backups)
+        for (url in sources) {
             destination.delete()
             val working = File.createTempFile("bili-stream-", ".part", destination.parentFile)
             try {
                 var offset = 0L; var total = -1L; var validator: String? = null
                 var lastAt = System.nanoTime(); var lastBytes = 0L
-                do {
-                    val result = chunk(url, offset, total, validator, working, headers) { bytes, length ->
-                        val now = System.nanoTime()
-                        if (now - lastAt >= 150_000_000L) {
-                            onProgress(bytes, length, ((bytes - lastBytes).coerceAtLeast(0) * 1_000_000_000L / (now - lastAt)))
-                            lastAt = now; lastBytes = bytes
-                        }
+                val slowWatch = if (sources.size > 1 && url == sources.first()) SlowTransferWatch(System.nanoTime() / 1_000_000) else null
+                fun report(bytes: Long, length: Long) {
+                    val now = System.nanoTime()
+                    if (slowWatch?.sample(now / 1_000_000, bytes, length) == true) throw SlowMediaSource()
+                    if (now - lastAt >= 150_000_000L) {
+                        onProgress(bytes, length, ((bytes - lastBytes).coerceAtLeast(0) * 1_000_000_000L / (now - lastAt)))
+                        lastAt = now; lastBytes = bytes
                     }
+                }
+                val parallelRequest = Request.Builder().url(url)
+                headers.filterKeys { !it.equals("Cookie", true) && !it.equals("Authorization", true) }.forEach { (key,value) -> parallelRequest.header(key,value) }
+                if (ParallelRangeDownloader(this.client).download(parallelRequest.build(), working, ::report)) {
+                    currentCoroutineContext().ensureActive()
+                    if (!working.renameTo(destination)) working.copyTo(destination, overwrite = true)
+                    onProgress(destination.length(), destination.length(), 0)
+                    return
+                }
+                do {
+                    val result = chunk(url, offset, total, validator, working, headers, ::report)
                     require(result.size > offset) { "B站视频分段未返回新数据" }
                     offset = result.size; total = result.total; validator = result.validator
                 } while (total > 0 && offset < total)

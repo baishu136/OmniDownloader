@@ -17,7 +17,7 @@ from engine.ffmpeg_helper import FFmpegHelper
 from engine.media_verifier import verify
 from engine.quality import label
 
-HOSTS = {'哔哩哔哩': ('bilibili.com', 'b23.tv'), 'YouTube': ('youtube.com', 'youtu.be'),
+HOSTS = {'微博': ('weibo.com', 'weibo.cn'), '哔哩哔哩': ('bilibili.com', 'b23.tv'), 'YouTube': ('youtube.com', 'youtu.be'),
          'X (Twitter)': ('x.com', 'twitter.com', 't.co'), '抖音': ('douyin.com', 'iesdouyin.com'),
          '小红书': ('xiaohongshu.com', 'xhslink.com', 'xhslink.cn', 'rednote.com'),
          '小黑盒': ('xiaoheihe.cn', 'heybox.cn'), 'Pixiv': ('pixiv.net',),
@@ -44,6 +44,16 @@ def normalize(url):
         if platform(target) != '小红书' or not re.search(r'/(explore|discovery/item)/[a-z0-9]+', urlsplit(target).path):
             raise ValueError('[AUTH_REQUIRED] 登录页没有合法内容地址')
         return urlunsplit(urlsplit(target)._replace(scheme='https'))
+    if platform(url) == '微博':
+        match = re.fullmatch(r'/(?:status|detail|\d+)/([A-Za-z0-9]+)/?', parts.path)
+        media = parse_qs(parts.query).get('omni_media', [''])[0]
+        suffix = '?' + urlencode({'omni_media': media}) if media else ''
+        if match: return 'https://m.weibo.cn/detail/' + match[1] + suffix
+        video = re.fullmatch(r'/tv/show/(\d+:[0-9a-fA-F]+)/?', parts.path)
+        fid = parse_qs(parts.query).get('fid', [''])[0] if parts.hostname == 'video.weibo.com' else ''
+        if video: return 'https://weibo.com/tv/show/' + video[1] + suffix
+        if re.fullmatch(r'\d+:[0-9a-fA-F]+', fid): return 'https://weibo.com/tv/show/' + fid
+        raise ValueError('[NO_MEDIA] 请提供微博正文或视频页链接')
     return url
 
 

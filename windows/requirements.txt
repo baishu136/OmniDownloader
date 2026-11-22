@@ -4,6 +4,7 @@ yt-dlp[default]==2026.10.26
 yt-dlp-ejs==0.8.0
 requests==2.34.2
 PySocks==1.7.1
+gallery-dl==1.32.20
 aiofiles==25.1.0
 pywebview==6.2.1
 imageio-ffmpeg==0.7.0

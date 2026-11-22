@@ -10,13 +10,13 @@ internal class PixivJsonClient(
     private val client: OkHttpClient,
     private val cookieForUrl: (String) -> String?,
 ) {
-    fun get(url: String, knownRestrictedArtwork: Boolean = false, retry: Boolean = true): Result<JSONObject> {
+    suspend fun get(url: String, knownRestrictedArtwork: Boolean = false, retry: Boolean = true): Result<JSONObject> {
         val request = Request.Builder().url(url)
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             .header("Referer", "https://www.pixiv.net/").header("Accept", "application/json")
         cookieForUrl(url)?.takeIf { it.isNotBlank() }?.let { request.header("Cookie", it) }
         return runCatching {
-            client.newCall(request.build()).execute().use { response ->
+            BiliHttp.read(client,request.build()) { response ->
                 if (!response.isSuccessful) {
                     val restricted404 = response.code == 404 && knownRestrictedArtwork
                     val code = when {
@@ -40,8 +40,9 @@ internal class PixivJsonClient(
                 root
             }
         }.recoverCatching { error ->
+            if(error is kotlinx.coroutines.CancellationException) throw error
             if (!retry || MediaErrors.codeOf(error) != MediaErrorCode.NETWORK_ERROR) throw error
-            Thread.sleep(500)
+            kotlinx.coroutines.delay(500)
             get(url, knownRestrictedArtwork, retry = false).getOrThrow()
         }
     }

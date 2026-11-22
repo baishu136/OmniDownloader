@@ -1,0 +1,25 @@
+{
+  "version": "1.7.2",
+  "versionCode": 61,
+  "date": "2026-11-03",
+  "scope": "Android cookie serialization and legacy export normalization",
+  "ABI": "arm64-v8a",
+  "minimumAPI": 26,
+  "apkSHA256": "4173325aa677badcf09eb8ef15648e538fe312c2f1d4e4afb928131574c5cca9",
+  "tests": {
+    "jvm": 79,
+    "androidInstrumentation": 3,
+    "emulatorAPI": 35,
+    "legacyPlatforms": 12,
+    "loaders": [
+      "CPython MozillaCookieJar",
+      "yt-dlp YoutubeDLCookieJar",
+      "shared omni_media requests session"
+    ],
+    "actualYtDlpLocalMetadataAndDownload": "PASS byte-identical output",
+    "expiredProfileAnonymousFallback": "BLOCKED_AS_EXPECTED"
+  },
+  "physicalDevice": "NOT_CONNECTED",
+  "realAccountOnlineDownload": "NOT_VERIFIED",
+  "windowsIOS": "UNCHANGED"
+}

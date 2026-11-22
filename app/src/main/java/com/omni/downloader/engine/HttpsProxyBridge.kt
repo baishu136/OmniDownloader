@@ -45,6 +45,7 @@ internal class HttpsProxyBridge(
         sockets += remote
         var tls: SSLSocket? = null
         var forwarding = false
+        val pumpClosed = AtomicBoolean(false)
         try {
             if (closed.get()) return
             remote.connect(InetSocketAddress(configuration.host, configuration.port), 8_000)
@@ -58,11 +59,18 @@ internal class HttpsProxyBridge(
             workers.execute {
                 try { client.getInputStream().copyTo(encrypted.outputStream, 16 * 1024) }
                 catch (_: IOException) { }
-                finally { runCatching { remote.close() }; runCatching { client.close() } }
+                finally {
+                    pumpClosed.set(true)
+                    runCatching { remote.close() }; runCatching { client.close() }
+                }
             }
             encrypted.inputStream.copyTo(client.getOutputStream(), 16 * 1024)
         } catch (error: Exception) {
-            lastFailure = error as? IOException ?: IOException("HTTPS proxy transport failed", error)
+            // EOF on one direction closes its peer to unblock the other pump.
+            // The resulting SocketException is normal teardown, not a TLS failure.
+            if (!closed.get() && !(forwarding && pumpClosed.get() && error is SocketException)) {
+                lastFailure = error as? IOException ?: IOException("HTTPS proxy transport failed", error)
+            }
             if (!forwarding) runCatching {
                 client.getOutputStream().write("HTTP/1.1 502 Bad Gateway\r\nX-Omni-Proxy-Error: tls-proxy\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".toByteArray())
             }

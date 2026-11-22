@@ -65,6 +65,7 @@ fun RelaySiteCard(
     onDeleteSite: ((siteId: String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
     val domain = remember(site.url) {
         try {
             Uri.parse(site.url).host ?: ""
@@ -185,7 +186,7 @@ fun RelaySiteCard(
                             color = MaterialTheme.colorScheme.onError
                         )
                         Spacer(modifier = Modifier.width(5.dp))
-                        Text(text = "取消", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(text = strings.cancel, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     } else {
                         Icon(
                             imageVector = Icons.Outlined.Bolt,
@@ -194,7 +195,7 @@ fun RelaySiteCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "直接解析",
+                            text = strings.relayDirect,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -209,7 +210,7 @@ fun RelaySiteCard(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.OpenInBrowser,
-                        contentDescription = "窗口排查",
+                        contentDescription = strings.relayWindowDebug,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
                         modifier = Modifier.size(18.dp)
                     )
@@ -222,7 +223,7 @@ fun RelaySiteCard(
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Close,
-                            contentDescription = "删除",
+                            contentDescription = strings.deleteContentDesc,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                             modifier = Modifier.size(16.dp)
                         )
@@ -255,7 +256,7 @@ fun RelaySiteCard(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = resolvingStatus.ifBlank { "正在后台自动提取视频直链并加入下载..." },
+                                text = resolvingStatus.ifBlank { strings.relayResolvingDefault },
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 maxLines = 1,

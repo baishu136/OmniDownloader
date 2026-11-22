@@ -1,0 +1,3 @@
+10367dda995a7cc976ceada6da5e9151bac2c7bbb2dd02f7586ba2114abdbcdc  OmniDownloader-1.7.6-arm64-v8a.apk
+e6f795163ccd1d44dd445e14b649115fc03433cd80c565511f0d93095902bd75  OmniDownloader_Desktop-1.7.6.zip
+cbdce9351a2c3bba2a104b687877265d7617116f88071dc6136722916c28d107  OmniDownloader_Web-1.7.6.zip

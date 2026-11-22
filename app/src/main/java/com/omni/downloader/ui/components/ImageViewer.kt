@@ -16,22 +16,24 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import coil.compose.SubcomposeAsyncImage
+import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
 
 /** Uses the existing GIF/WebP decoder; zooming never changes the saved resource. */
 @Composable
-fun ImageViewer(count: Int, initialIndex: Int = 0, model: (Int) -> Any?,
-    onDismiss: () -> Unit, onSave: ((Int) -> Unit)? = null) {
+fun ImageViewer(count: Int, initialIndex: Int = 0, model: @Composable (Int) -> Any?,
+    onDismiss: () -> Unit, onSave: ((Int) -> Unit)? = null, itemLabel: (Int)->String? = {null}, saveLabel: ((Int)->String)? = null) {
     if (count <= 0) return
+    val strings = com.omni.downloader.ui.localization.LocalAppStrings.current
     var index by remember(count, initialIndex) { mutableIntStateOf(initialIndex.coerceIn(0, count - 1)) }
     var scale by remember(index) { mutableFloatStateOf(1f) }
     var offset by remember(index) { mutableStateOf(Offset.Zero) }
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Column(Modifier.fillMaxSize().background(Color.Black).windowInsetsPadding(WindowInsets.safeDrawing)) {
             Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("${index + 1} / $count", color = Color.White, modifier = Modifier.weight(1f))
-                onSave?.let { save -> TextButton(onClick = { save(index) }) { Text("保存此图") } }
-                TextButton(onClick = onDismiss) { Text("关闭") }
+                Text("${index + 1} / $count" + (itemLabel(index)?.let { " · $it" } ?: ""), color = Color.White, modifier = Modifier.weight(1f))
+                onSave?.let { save -> TextButton(onClick = { save(index) }) { Text(saveLabel?.invoke(index) ?: strings.saveThisImage) } }
+                TextButton(onClick = onDismiss) { Text(strings.close) }
             }
             Box(Modifier.fillMaxWidth().weight(1f)
                 .pointerInput(index) { detectTapGestures(onDoubleTap = { scale = if (scale > 1f) 1f else 2.5f; offset = Offset.Zero }) }
@@ -41,16 +43,21 @@ fun ImageViewer(count: Int, initialIndex: Int = 0, model: (Int) -> Any?,
                         (offset.x + pan.x).coerceIn(-size.width * (scale - 1) / 2, size.width * (scale - 1) / 2),
                         (offset.y + pan.y).coerceIn(-size.height * (scale - 1) / 2, size.height * (scale - 1) / 2))
                 } }, contentAlignment = Alignment.Center) {
-                SubcomposeAsyncImage(model = model(index), contentDescription = "第 ${index + 1} 张图片",
-                    contentScale = ContentScale.Fit,
-                    loading = { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() } },
-                    error = { Text("图片暂不可预览，可关闭后重试或保存原图", color = Color.White) },
-                    modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = scale; scaleY = scale; translationX = offset.x; translationY = offset.y })
+                val image = model(index)
+                if (image == null) CircularProgressIndicator()
+                else {
+                    var state by remember(index,image){mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty)}
+                    AsyncImage(model=image,contentDescription=strings.imageDesc.format(index+1),contentScale=ContentScale.Fit,
+                        onState={state=it},
+                        modifier=Modifier.fillMaxSize().graphicsLayer{scaleX=scale;scaleY=scale;translationX=offset.x;translationY=offset.y})
+                    if(state is AsyncImagePainter.State.Loading)CircularProgressIndicator(Modifier.align(Alignment.TopEnd).padding(16.dp).size(28.dp))
+                    if(state is AsyncImagePainter.State.Error)Text(strings.imagePreviewUnavailable,color=Color.White)
+                }
             }
             Row(Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                TextButton(enabled = index > 0, onClick = { index-- }) { Text("上一张") }
-                Text("双指缩放 · 双击还原/放大", color = Color.LightGray, style = MaterialTheme.typography.labelSmall)
-                TextButton(enabled = index < count - 1, onClick = { index++ }) { Text("下一张") }
+                TextButton(enabled = index > 0, onClick = { index-- }) { Text(strings.previousImage) }
+                Text(strings.zoomHint, color = Color.LightGray, style = MaterialTheme.typography.labelSmall)
+                TextButton(enabled = index < count - 1, onClick = { index++ }) { Text(strings.nextImage) }
             }
         }
     }

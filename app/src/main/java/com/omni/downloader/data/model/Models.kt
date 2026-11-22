@@ -199,9 +199,14 @@ data class DownloadTask(
 
 @Serializable data class ImageResource(
     val id: String, val url: String, val width: Int = 0, val height: Int = 0,
-    val original: Boolean = false, val watermark: String = "UNCONFIRMED"
+    val original: Boolean = false, val watermark: String = "UNCONFIRMED",
+    val headers: Map<String, String> = emptyMap(), val kind: String = "IMAGE", val sourceTitle: String = "",
+    val previewUrl: String = ""
 )
 @Serializable data class ImagePost(
     val platform: String, val url: String, val contentId: String, val title: String,
-    val author: String = "", val resources: List<ImageResource> = emptyList(), val route: String = ""
+    val author: String = "", val resources: List<ImageResource> = emptyList(), val route: String = "",
+    val profileUserId: String = "", val profileCursor: String = "", val profileComplete: Boolean = true,
+    val artistUserId: String = "", val artistArtworkIds: List<String> = emptyList(),
+    val artistOffset: Int = 0, val artistComplete: Boolean = true
 )

@@ -1,0 +1,70 @@
+{
+  "scope": "Android Xiaohongshu original-video discovery and Douyin targeted-browser extraction",
+  "version": "1.7.11",
+  "jvm": {
+    "passed": 120,
+    "failed": 0
+  },
+  "instrumentation": {
+    "regressionPassed": 4,
+    "regressionFailed": 0,
+    "device": "API35 x86_64 read-only emulator",
+    "realUserCredentialsUsed": false
+  },
+  "xhs": {
+    "downloadRequested": false,
+    "success": true,
+    "metadataMode": "live-app-metadata",
+    "mediaId": "6a96fc99000000000d0265ab",
+    "width": 4224,
+    "height": 3024,
+    "formats": 7,
+    "sizeLabel": "14.81 GiB",
+    "case": "xhs"
+  },
+  "douyinDownload": {
+    "downloadRequested": true,
+    "success": true,
+    "metadataMode": "replayed-first-party-response",
+    "mediaId": "7696865347672319930",
+    "width": 720,
+    "height": 1280,
+    "formats": 1,
+    "sizeLabel": "",
+    "actualWidth": 720,
+    "actualHeight": 1280,
+    "durationMs": 8500,
+    "hasAudio": true,
+    "bytes": 3482978,
+    "case": "douyin"
+  },
+  "douyinBackgroundParsing": {
+    "passed": false,
+    "result": "BROWSER_ASSIST_REQUIRED",
+    "liveAuthenticatedBrowserTested": false
+  },
+  "artifact": {
+    "version": "1.7.11",
+    "versionCode": 70,
+    "path": "release/1.7.11/OmniDownloader-1.7.11-arm64-v8a.apk",
+    "bytes": 59502147,
+    "sha256": "dfe8669a17d5b4c838abbe397c9db84563873e9575dd8881941fedf73b53dbd3",
+    "abi": [
+      "arm64-v8a"
+    ],
+    "archiveCrc": "passed",
+    "pythonAssetUnchangedFrom1_7_10": true,
+    "v2SignatureAndPriorSignerMatch": true,
+    "frozenBuildInputs": 181,
+    "inputsUnchanged": true,
+    "r8AndLintVital": "passed"
+  },
+  "knownLimits": [
+    "XHS original metadata/ranges verified; full 15.9GB original not downloaded; HDR not verified.",
+    "Douyin normal background metadata remained gated. Browser response observer/handoff passed native regression tests; actual file download tested using replay of the target first-party response.",
+    "No real phone or authenticated end-to-end browser session tested."
+  ],
+  "earlierFailures": "JUnit sparse duration optional-range request budget corrected; native fixtures corrected; actual Douyin source dimension/duration mismatch repaired without relaxing MediaVerifier. Initial logs retained under ignored .local/1.7.11.",
+  "windowsIosSharedPythonModifiedThisTask": false,
+  "publiclyPublished": false
+}

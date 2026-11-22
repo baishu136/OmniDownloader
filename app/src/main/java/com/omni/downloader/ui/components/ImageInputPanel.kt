@@ -35,7 +35,7 @@ internal fun ImageInputPanel(
     OutlinedTextField(
         value = input, onValueChange = onInput,
         modifier = Modifier.fillMaxWidth().testTag("images_link_input"),
-        label = { Text("粘贴单个作品链接或分享文字") }, maxLines = 3,
+        label = { Text(strings.imageInputLabel) }, maxLines = 3,
         trailingIcon = {
             if (input.isNotEmpty()) IconButton(onClick = { onInput("") }, modifier = Modifier.testTag("images_clear")) {
                 Icon(Icons.Outlined.Clear, contentDescription = strings.clear)
@@ -51,16 +51,16 @@ internal fun ImageInputPanel(
             TextButton(onClick = { pathsExpanded = true },
                 contentPadding = PaddingValues(vertical = 10.dp),
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("images_save_path")
-                    .semantics { contentDescription = "保存路径：$pathLabel" }) {
+                    .semantics { contentDescription = strings.savePathDesc.format(pathLabel) }) {
                 Text(pathLabel, maxLines = 2, overflow = TextOverflow.Ellipsis, textDecoration = TextDecoration.Underline)
             }
             OmniOptionMenu(expanded = pathsExpanded, onDismissRequest = { pathsExpanded = false }) {
-                OmniOptionMenuItem(label = "选择文件夹", onClick = { pathsExpanded = false; onChoosePath() })
-                OmniOptionMenuItem(label = "恢复默认目录", onClick = { pathsExpanded = false; onResetPath() })
+                OmniOptionMenuItem(label = strings.chooseFolder, onClick = { pathsExpanded = false; onChoosePath() })
+                OmniOptionMenuItem(label = strings.resetDefaultFolder, onClick = { pathsExpanded = false; onResetPath() })
             }
         }
         Button(shape = MaterialTheme.shapes.medium, onClick = onAnalyze, enabled = !busy && input.isNotBlank(), modifier = Modifier.heightIn(min = 48.dp).testTag("images_analyze")) {
-            Text(if (busy) "正在解析…" else "解析图文")
+            Text(if (busy) strings.analyzingEllipsis else strings.analyzeImages)
         }
     }
 }

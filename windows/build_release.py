@@ -8,7 +8,7 @@ import zipfile
 from tools.prepare_runtime import prepare
 
 BASE = Path(__file__).resolve().parent
-VERSION = '1.7.20'
+VERSION = '1.7.60'
 
 
 def main():
@@ -40,9 +40,13 @@ def main():
         import shutil
         for document in ('runtime-lock.json', 'THIRD_PARTY_NOTICES.md', 'README.md'):
             if (BASE / document).is_file(): shutil.copy2(BASE / document, result / document)
+        guide = BASE.parent / 'docs' / 'WINDOWS_LOGIN_1.7.59.md'
+        if guide.is_file(): shutil.copy2(guide, result / '登录会话修复说明.md')
+        x_guide = BASE.parent / 'docs' / 'WINDOWS_X_1.7.60.md'
+        if x_guide.is_file(): shutil.copy2(x_guide, result / 'X解析修复说明.md')
         if (BASE / 'licenses').is_dir(): shutil.copytree(BASE / 'licenses', result / 'licenses', dirs_exist_ok=True)
         (result / '使用说明.txt').write_text(
-            f'OmniDownloader {VERSION}\n双击{name}.exe启动。\n设置中导入对应平台Netscape Cookie文件；凭据由Windows用户DPAPI保护。\n'
+            f'OmniDownloader {VERSION}\n双击{name}.exe启动。\n设置 → 账号 → 浏览器登录；Google登录后返回目标平台，再点击保存会话并关闭。\n也可导入对应平台Netscape Cookie文件；凭据由Windows用户DPAPI保护。\n'
             '最高画质按实际可访问源排序，不保证账户可取得4K/8K。\n充电专属视频需要对应账户权益；试看不会作为完整成品。\n'
             '小黑盒动态页面请使用桌面独立版辅助浏览器，播放目标后手动确认捕获媒体。\nPixiv支持Ugoira MP4/GIF/帧ZIP；独立图文页支持抖音、快手、B站动态、Pixiv、小红书、X、Pinterest的可访问图片及ZIP。\n'
             '故障任务可重试；导出失败会保留已验证成品。用户数据位于%LOCALAPPDATA%\\OmniDownloader。\n', encoding='utf-8')

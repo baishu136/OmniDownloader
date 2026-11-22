@@ -1,0 +1,504 @@
+{
+  "version": "1.7.0",
+  "date": "2026-11-03",
+  "unitTests": {
+    "androidJVM": 68,
+    "windowsPytest": 30
+  },
+  "windows": {
+    "latestSampleSuccesses": 27,
+    "samples": [
+      {
+        "caseId": "bilibili_single.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:37:47.313572+00:00",
+        "success": true,
+        "videoFormats": 6,
+        "children": 0,
+        "maxPixels": 334768,
+        "elapsedMs": 1655
+      },
+      {
+        "caseId": "bilibili_single.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:37:48.961320+00:00",
+        "success": true,
+        "videoFormats": 6,
+        "children": 0,
+        "maxPixels": 408960,
+        "elapsedMs": 1641
+      },
+      {
+        "caseId": "bilibili_collection.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:37:50.598882+00:00",
+        "success": true,
+        "videoFormats": 6,
+        "children": 0,
+        "maxPixels": 408960,
+        "elapsedMs": 2561
+      },
+      {
+        "caseId": "bilibili_collection.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:37:53.161359+00:00",
+        "success": true,
+        "videoFormats": 6,
+        "children": 0,
+        "maxPixels": 408960,
+        "elapsedMs": 3281
+      },
+      {
+        "caseId": "douyin_video.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:51:11.211574+00:00",
+        "success": false,
+        "errorCode": "CHALLENGE_REQUIRED",
+        "elapsedMs": 1500
+      },
+      {
+        "caseId": "douyin_video.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:51:12.708381+00:00",
+        "success": false,
+        "errorCode": "CHALLENGE_REQUIRED",
+        "elapsedMs": 1437
+      },
+      {
+        "caseId": "kuaishou_video.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:51:14.147062+00:00",
+        "success": false,
+        "errorCode": "EXTRACTOR_CHANGED",
+        "elapsedMs": 3860
+      },
+      {
+        "caseId": "kuaishou_video.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:51:18.009287+00:00",
+        "success": false,
+        "errorCode": "EXTRACTOR_CHANGED",
+        "elapsedMs": 2546
+      },
+      {
+        "caseId": "xhs_video.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:38:10.996743+00:00",
+        "success": true,
+        "videoFormats": 1,
+        "children": 0,
+        "maxPixels": 921600,
+        "elapsedMs": 1406
+      },
+      {
+        "caseId": "xhs_video.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:38:12.399860+00:00",
+        "success": true,
+        "videoFormats": 1,
+        "children": 0,
+        "maxPixels": 921600,
+        "elapsedMs": 1625
+      },
+      {
+        "caseId": "youtube_video.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:38:14.032834+00:00",
+        "success": false,
+        "errorCode": "CHALLENGE_REQUIRED",
+        "elapsedMs": 4687
+      },
+      {
+        "caseId": "youtube_video.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:38:18.712381+00:00",
+        "success": false,
+        "errorCode": "CHALLENGE_REQUIRED",
+        "elapsedMs": 4437
+      },
+      {
+        "caseId": "tiktok_video.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:38:23.153048+00:00",
+        "success": true,
+        "videoFormats": 1,
+        "children": 0,
+        "maxPixels": 0,
+        "elapsedMs": 2953
+      },
+      {
+        "caseId": "tiktok_video.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:38:26.107765+00:00",
+        "success": true,
+        "videoFormats": 1,
+        "children": 0,
+        "maxPixels": 0,
+        "elapsedMs": 2546
+      },
+      {
+        "caseId": "x_video.primary",
+        "round": 3,
+        "recordedAt": "2026-11-02T14:46:14.708888+00:00",
+        "success": true,
+        "videoFormats": 5,
+        "children": 0,
+        "maxPixels": 1893376,
+        "elapsedMs": 1594
+      },
+      {
+        "caseId": "x_video.backup",
+        "round": 3,
+        "recordedAt": "2026-11-02T14:46:16.303439+00:00",
+        "success": true,
+        "videoFormats": 8,
+        "children": 0,
+        "maxPixels": 1889280,
+        "elapsedMs": 1936
+      },
+      {
+        "caseId": "x_gif.primary",
+        "round": 3,
+        "recordedAt": "2026-11-02T14:46:18.248133+00:00",
+        "success": true,
+        "videoFormats": 1,
+        "children": 0,
+        "maxPixels": 0,
+        "elapsedMs": 1218
+      },
+      {
+        "caseId": "x_gif.backup",
+        "round": 3,
+        "recordedAt": "2026-11-02T14:46:19.459707+00:00",
+        "success": true,
+        "videoFormats": 1,
+        "children": 0,
+        "maxPixels": 0,
+        "elapsedMs": 1219
+      },
+      {
+        "caseId": "instagram_video.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:38:35.671544+00:00",
+        "success": true,
+        "videoFormats": 8,
+        "children": 0,
+        "maxPixels": 2073600,
+        "elapsedMs": 3609
+      },
+      {
+        "caseId": "instagram_video.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:38:39.269102+00:00",
+        "success": true,
+        "videoFormats": 2,
+        "children": 0,
+        "maxPixels": 921600,
+        "elapsedMs": 4110
+      },
+      {
+        "caseId": "facebook_video.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:51:20.559657+00:00",
+        "success": true,
+        "videoFormats": 7,
+        "children": 0,
+        "maxPixels": 2073600,
+        "elapsedMs": 3875
+      },
+      {
+        "caseId": "facebook_video.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:51:24.432007+00:00",
+        "success": true,
+        "videoFormats": 8,
+        "children": 0,
+        "maxPixels": 2073600,
+        "elapsedMs": 4578
+      },
+      {
+        "caseId": "pinterest_video.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:38:52.936174+00:00",
+        "success": true,
+        "videoFormats": 4,
+        "children": 0,
+        "maxPixels": 921600,
+        "elapsedMs": 8500
+      },
+      {
+        "caseId": "pinterest_video.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:39:01.439071+00:00",
+        "success": true,
+        "videoFormats": 4,
+        "children": 0,
+        "maxPixels": 777600,
+        "elapsedMs": 7296
+      },
+      {
+        "caseId": "heybox_video.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:39:08.724274+00:00",
+        "success": false,
+        "errorCode": "BROWSER_ASSIST_REQUIRED",
+        "elapsedMs": 1750
+      },
+      {
+        "caseId": "heybox_video.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:39:10.477855+00:00",
+        "success": false,
+        "errorCode": "BROWSER_ASSIST_REQUIRED",
+        "elapsedMs": 1500
+      },
+      {
+        "caseId": "pixiv_ugoira.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:51:29.008059+00:00",
+        "success": true,
+        "videoFormats": 3,
+        "children": 0,
+        "maxPixels": 0,
+        "elapsedMs": 921
+      },
+      {
+        "caseId": "pixiv_ugoira.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:51:29.926197+00:00",
+        "success": false,
+        "errorCode": "CONTENT_UNAVAILABLE",
+        "elapsedMs": 921
+      },
+      {
+        "caseId": "douyin_images.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:51:30.849637+00:00",
+        "success": false,
+        "errorCode": "CHALLENGE_REQUIRED",
+        "elapsedMs": 1125
+      },
+      {
+        "caseId": "douyin_images.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:51:31.977068+00:00",
+        "success": false,
+        "errorCode": "CHALLENGE_REQUIRED",
+        "elapsedMs": 1483
+      },
+      {
+        "caseId": "pixiv_images.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:39:16.859244+00:00",
+        "success": true,
+        "imageCount": 2,
+        "elapsedMs": 1031
+      },
+      {
+        "caseId": "pixiv_images.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:39:17.886089+00:00",
+        "success": true,
+        "imageCount": 7,
+        "elapsedMs": 1046
+      },
+      {
+        "caseId": "xhs_images.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:39:18.938533+00:00",
+        "success": true,
+        "imageCount": 7,
+        "elapsedMs": 1046
+      },
+      {
+        "caseId": "xhs_images.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:39:19.985132+00:00",
+        "success": true,
+        "imageCount": 5,
+        "elapsedMs": 1858
+      },
+      {
+        "caseId": "x_images.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:39:21.844631+00:00",
+        "success": true,
+        "imageCount": 1,
+        "elapsedMs": 2531
+      },
+      {
+        "caseId": "x_images.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:39:24.366971+00:00",
+        "success": true,
+        "imageCount": 2,
+        "elapsedMs": 1438
+      },
+      {
+        "caseId": "pinterest_images.primary",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:39:25.800978+00:00",
+        "success": true,
+        "imageCount": 1,
+        "elapsedMs": 6453
+      },
+      {
+        "caseId": "pinterest_images.backup",
+        "round": 1,
+        "recordedAt": "2026-11-02T14:39:32.261139+00:00",
+        "success": true,
+        "imageCount": 1,
+        "elapsedMs": 6858
+      }
+    ],
+    "realOriginalAndZipJobs": 8,
+    "packagedZipJobs": 2,
+    "packagedPreviewHTTP": 200
+  },
+  "ios": {
+    "swiftGrammarFiles": 22,
+    "browserScriptFixtures": 5,
+    "projectReferencesChecked": true,
+    "appleSDKBuild": "NOT_RUN_WINDOWS",
+    "deviceRun": "NOT_RUN_NO_APPLE_DEVICE",
+    "status": "SOURCE_IMPLEMENTED_NOT_SDK_BUILT_OR_DEVICE_VERIFIED"
+  },
+  "android": {
+    "device": "vivo V2352A, Android 15 ARM64",
+    "baseline": "code51 initially; missing requests dependency and HTTPS proxy tunnel HTTP400 reproduced",
+    "installedPythonVpnPublicRoute": {
+      "successful": 12,
+      "total": 12,
+      "notEquivalentToFullApp": true
+    },
+    "releaseUITest": {
+      "successful": 10,
+      "total": 12,
+      "samples": [
+        {
+          "caseId": "x_video.primary",
+          "route": "release_ui",
+          "round": 1,
+          "recordedAt": "2026-11-02T15:47:23.619649+00:00",
+          "success": true,
+          "kind": "VIDEO",
+          "elapsedMs": 9016
+        },
+        {
+          "caseId": "x_video.backup",
+          "route": "release_ui",
+          "round": 1,
+          "recordedAt": "2026-11-02T15:47:32.631922+00:00",
+          "success": true,
+          "kind": "VIDEO",
+          "elapsedMs": 7983
+        },
+        {
+          "caseId": "x_gif.primary",
+          "route": "release_ui",
+          "round": 1,
+          "recordedAt": "2026-11-02T15:47:40.623809+00:00",
+          "success": true,
+          "kind": "ANIMATED_VIDEO",
+          "elapsedMs": 8360
+        },
+        {
+          "caseId": "x_gif.backup",
+          "route": "release_ui",
+          "round": 1,
+          "recordedAt": "2026-11-02T15:47:48.980161+00:00",
+          "success": true,
+          "kind": "ANIMATED_VIDEO",
+          "elapsedMs": 6343
+        },
+        {
+          "caseId": "pixiv_images.primary",
+          "route": "release_ui",
+          "round": 1,
+          "recordedAt": "2026-11-02T15:47:55.320589+00:00",
+          "success": true,
+          "kind": "IMAGE_POST",
+          "imageCount": 2,
+          "elapsedMs": 4078
+        },
+        {
+          "caseId": "pixiv_images.backup",
+          "route": "release_ui",
+          "round": 1,
+          "recordedAt": "2026-11-02T15:47:59.403155+00:00",
+          "success": true,
+          "kind": "IMAGE_POST",
+          "imageCount": 7,
+          "elapsedMs": 4000
+        },
+        {
+          "caseId": "xhs_images.primary",
+          "route": "release_ui",
+          "round": 1,
+          "recordedAt": "2026-11-02T15:48:03.400124+00:00",
+          "success": false,
+          "errorCode": "AUTH_REQUIRED",
+          "elapsedMs": 3468
+        },
+        {
+          "caseId": "xhs_images.backup",
+          "route": "release_ui",
+          "round": 1,
+          "recordedAt": "2026-11-02T15:48:06.876908+00:00",
+          "success": false,
+          "errorCode": "AUTH_REQUIRED",
+          "elapsedMs": 3531
+        },
+        {
+          "caseId": "x_images.primary",
+          "route": "release_ui",
+          "round": 1,
+          "recordedAt": "2026-11-02T15:48:10.397980+00:00",
+          "success": true,
+          "kind": "IMAGE_POST",
+          "imageCount": 1,
+          "elapsedMs": 9031
+        },
+        {
+          "caseId": "x_images.backup",
+          "route": "release_ui",
+          "round": 1,
+          "recordedAt": "2026-11-02T15:48:19.435593+00:00",
+          "success": true,
+          "kind": "IMAGE_POST",
+          "imageCount": 2,
+          "elapsedMs": 7764
+        },
+        {
+          "caseId": "pinterest_images.primary",
+          "route": "release_ui",
+          "round": 1,
+          "recordedAt": "2026-11-02T15:48:27.205308+00:00",
+          "success": true,
+          "kind": "IMAGE_POST",
+          "imageCount": 1,
+          "elapsedMs": 27625
+        },
+        {
+          "caseId": "pinterest_images.backup",
+          "route": "release_ui",
+          "round": 1,
+          "recordedAt": "2026-11-02T15:48:54.828505+00:00",
+          "success": true,
+          "kind": "IMAGE_POST",
+          "imageCount": 1,
+          "elapsedMs": 12843
+        }
+      ],
+      "observer": "fresh hierarchy file, content-kind and original-link checks",
+      "realSaveJobs": "DEFERRED_BY_USER_2026-11-03",
+      "deviceCurrentlyConnected": false
+    },
+    "releaseApkSHA256": "4663ab62559919d8c5984d0cc2ef0397fb07d3f6a72171b6f96e03a4978f53f7"
+  },
+  "youtubeCookies": {
+    "androidWindowsScopedEncryptedStorage": "verified with non-account fixtures",
+    "ios": "Keychain plus local WKWebView, MP4/AAC foreground downloads; not built or run with Apple SDK",
+    "realAccountBotChallenge": "NOT_VERIFIED_NO_ACCOUNT_COOKIE_SUPPLIED"
+  }
+}

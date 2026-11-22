@@ -1,2027 +1,1118 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OmniDownloader - 全能音视频下载器</title>
-  <link rel="shortcut icon" href="data:image/png;base64,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">
-  <link rel="icon" type="image/png" href="data:image/png;base64,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">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>OmniDownloader</title>
+  <link rel="icon" href="/static/favicon.ico">
   <script>
-    // Apply the cached preference before rendering; the server remains authoritative.
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
-    let currentTheme = 'auto';
-
-    function applyTheme(theme, persist = false) {
-      currentTheme = ['auto', 'light', 'dark'].includes(theme) ? theme : 'auto';
-      document.documentElement.classList.toggle('dark',
-        currentTheme === 'dark' || (currentTheme === 'auto' && systemTheme.matches));
-      if (persist) {
-        try { localStorage.setItem('omni_theme', currentTheme); } catch (e) { /* Storage may be disabled. */ }
-      }
-    }
-
-    try { currentTheme = localStorage.getItem('omni_theme') || 'auto'; } catch (e) { /* Use the system theme. */ }
-    applyTheme(currentTheme);
-    systemTheme.addEventListener('change', () => {
-      if (currentTheme === 'auto') applyTheme('auto');
-    });
-  </script>
-  <!-- Tailwind CSS CDN -->
-  <link rel="stylesheet" href="/static/theme.css">
-  <!-- Material Symbols & Icons -->
-  <link rel="stylesheet" href="/static/vendor/fontawesome/css/all.min.css">
-  
-  <style>
-    :root { color-scheme: light; }
-    html.dark { color-scheme: dark; background: #020617; }
-    html.dark body { background-color: #020617; color: #f1f5f9; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-      user-select: none;
-    }
-    /* 自定义美化滚动条 */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(79, 70, 229, 0.25);
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(79, 70, 229, 0.5);
-    }
-    .fade-in {
-      animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .pulse-bar {
-      background-size: 200% 100%;
-      background-image: linear-gradient(90deg, #4F46E5 0%, #0284C7 50%, #4F46E5 100%);
-      animation: pulseMove 2s infinite linear;
-    }
-    @keyframes pulseMove {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-  </style>
-  <link rel="stylesheet" href="/static/desktop.css">
-</head>
-<body class="bg-[#F8FAFC] dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-200 dark:selection:bg-indigo-800">
-
-  <!-- 顶部现代化导航栏 -->
-  <header class="sticky top-0 z-40 bg-white/85 dark:bg-slate-800/85 backdrop-blur-md border-b border-indigo-100/70 dark:border-indigo-900/70 shadow-sm transition-colors">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-      <!-- 品牌标识 (安卓原版专属 Logo 图标) -->
-      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
-        <img src="/static/logo.svg" alt="OmniDownloader" class="omni-brand-logo" width="40" height="40" />
-        <div>
-          <h1 class="font-bold text-lg leading-tight bg-gradient-to-r from-indigo-600 via-indigo-700 to-cyan-600 bg-clip-text text-transparent">OmniDownloader</h1>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">全能多媒体下载利器 · Windows版</p>
-        </div>
-      </div>
-
-      <!-- 导航标签 -->
-      <nav class="flex items-center space-x-1 sm:space-x-2 bg-indigo-50/80 dark:bg-indigo-950/80 p-1.5 rounded-2xl border border-indigo-100 dark:border-indigo-900">
-        <button id="nav-home" onclick="switchTab('home')" class="px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center space-x-2 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm">
-          <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
-          <span>解析下载</span>
-        </button>
-        <button id="nav-images" onclick="switchTab('images')" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300">图文</button>
-        <button id="nav-tasks" onclick="switchTab('tasks')" class="px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400">
-          <i class="fa-solid fa-list-check text-xs"></i>
-          <span>任务列表</span>
-          <span id="badge-running-count" class="hidden ml-1 px-1.5 py-0.2 text-[10px] rounded-full bg-indigo-600 text-white font-bold">0</span>
-        </button>
-        <button id="nav-settings" onclick="switchTab('settings')" class="px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400">
-          <i class="fa-solid fa-gear text-xs"></i>
-          <span>系统设置</span>
-        </button>
-      </nav>
-
-      <!-- 快捷动作：一键打开下载文件夹 & 使用指南 -->
-      <div class="flex items-center space-x-2">
-        <button onclick="openGuideModal()" title="查看多语言使用说明 (Instructions)" class="px-3 py-1.5 flex items-center space-x-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold transition shadow-xs">
-          <i class="fa-solid fa-book-open"></i>
-          <span class="hidden sm:inline">使用说明</span>
-        </button>
-        <button onclick="openFolder()" title="打开下载文件夹" class="w-9 h-9 flex items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 transition">
-          <i class="fa-regular fa-folder-open"></i>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- 主体内容区域 -->
-  <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 space-y-6">
-
-    <!-- === TAB 1: 主页解析 (HOME) === -->
-    <section id="tab-home" class="space-y-6 fade-in">
-      <!-- 搜索解析卡片 -->
-      <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-indigo-100/80 dark:border-indigo-900/80 relative overflow-hidden">
-        <div class="absolute -right-8 -top-8 w-44 h-44 bg-indigo-100/40 dark:bg-indigo-900/40 rounded-full blur-2xl pointer-events-none"></div>
-
-        <div class="max-w-2xl mx-auto space-y-4 text-center">
-          <h2 class="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100">万能音视频极速提取</h2>
-          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            支持 哔哩哔哩多P、抖音免水印、TikTok、快手、小红书、YouTube、Twitter/X 等 10+ 平台
-          </p>
-
-          <!-- 链接输入框组合 -->
-          <div class="relative flex items-center mt-4">
-            <input
-              type="text"
-              id="input-url"
-              placeholder="在此粘贴分享口令或视频链接 (如 https://...)"
-              class="w-full pl-12 pr-28 py-4 bg-slate-50 dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 rounded-2xl outline-none text-sm transition shadow-inner"
-              onkeydown="if(event.key==='Enter') startAnalyze()"
-            />
-            <div class="absolute left-4 text-indigo-500 dark:text-indigo-400">
-              <i class="fa-solid fa-link"></i>
-            </div>
-
-            <div class="absolute right-2.5 flex items-center space-x-1.5">
-              <button onclick="pasteClipboard()" title="读取剪贴板" class="px-2.5 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-100/70 dark:bg-indigo-900/70 hover:bg-indigo-200/70 dark:hover:bg-indigo-800/70 rounded-xl transition">
-                <i class="fa-regular fa-paste mr-1"></i>粘贴
-              </button>
-              <button onclick="openHeyboxAssist()" class="px-2 text-xs text-indigo-600">浏览器辅助</button>
-              <button onclick="captureHeyboxMedia()" class="px-2 text-xs text-indigo-600">读取已播放媒体</button>
-              <button id="btn-analyze" onclick="startAnalyze()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-500/15 transition flex items-center space-x-1">
-                <span>解析</span>
-                <i class="fa-solid fa-arrow-right text-[10px]"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- 支持的平台标签 -->
-          <div class="flex flex-wrap items-center justify-center gap-2 pt-2 text-[11px] text-slate-500 dark:text-slate-400">
-            <span class="px-2.5 py-1 bg-pink-50 dark:bg-pink-950 text-[#FB7299] rounded-lg font-medium border border-pink-100/60 dark:border-pink-900/60"><i class="fa-brands fa-bilibili mr-1"></i>Bilibili</span>
-            <span class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg font-medium border border-slate-200/60 dark:border-slate-600/60"><i class="fa-solid fa-music mr-1"></i>抖音/TikTok</span>
-            <span class="px-2.5 py-1 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 rounded-lg font-medium border border-red-100/60 dark:border-red-900/60"><i class="fa-brands fa-youtube mr-1"></i>YouTube</span>
-            <span class="px-2.5 py-1 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-lg font-medium border border-red-100/60 dark:border-red-900/60"><i class="fa-solid fa-book-bookmark mr-1"></i>小红书</span>
-            <span class="px-2.5 py-1 bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400 rounded-lg font-medium border border-orange-100/60 dark:border-orange-900/60"><i class="fa-solid fa-video mr-1"></i>快手</span>
-            <span class="px-2.5 py-1 bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-300 rounded-lg font-medium border border-sky-100/60 dark:border-sky-900/60"><i class="fa-brands fa-twitter mr-1"></i>X (Twitter)</span>
-            <span class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 rounded-lg font-medium border border-rose-100/60 dark:border-rose-900/60"><i class="fa-brands fa-instagram mr-1"></i>Instagram</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 备用中转解析站板块 (仅在已添加中转网站时展示) -->
-      <div id="relay-sites-section" class="hidden bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-indigo-100/80 dark:border-indigo-900/80 space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2.5">
-            <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-              <i class="fa-solid fa-globe text-sm"></i>
-            </div>
-            <div>
-              <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100">备用中转解析站</h3>
-              <p class="text-[11px] text-slate-400">当直连解析遇防爬或失效时，可利用备用网站提取直链</p>
-            </div>
-          </div>
-          <button onclick="switchTab('settings')" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 shadow-xs">
-            <i class="fa-solid fa-gear text-[11px]"></i>
-            <span>管理</span>
-          </button>
-        </div>
-
-        <!-- 站点列表卡片网格 -->
-        <div id="relay-sites-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          <!-- 动态渲染 -->
-        </div>
-      </div>
-
-      <!-- 解析结果展示抽屉 / 卡片 -->
-      <div id="analyze-result" class="hidden bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-indigo-100 dark:border-indigo-900 space-y-6 fade-in">
-        <!-- 视频主体信息 -->
-        <div class="flex flex-col sm:row gap-5 items-start">
-          <div class="relative w-full sm:w-56 h-36 bg-slate-100 dark:bg-slate-700 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
-            <img id="meta-thumb" src="" alt="封面" class="w-full h-full object-cover" />
-            <div id="meta-duration" class="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/70 text-white text-[10px] font-medium backdrop-blur-sm">
-              00:00
-            </div>
-            <div id="meta-site" class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-gradient-to-r from-indigo-600 to-cyan-600 text-white text-[10px] font-semibold backdrop-blur-sm shadow-sm">
-              平台
-            </div>
-          </div>
-          <div class="flex-1 space-y-2">
-            <h3 id="meta-title" class="font-bold text-base sm:text-lg text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug">视频标题</h3>
-            <p id="meta-author" class="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center space-x-1.5">
-              <i class="fa-regular fa-circle-user text-indigo-600 dark:text-indigo-400"></i>
-              <span>创作者名字</span>
-            </p>
-            <p id="meta-access" class="text-xs text-slate-500"></p><p id="meta-url" class="text-[11px] text-slate-400 truncate max-w-lg"></p>
-          </div>
-        </div>
-
-        <hr class="border-indigo-50 dark:border-indigo-900">
-
-        <!-- 1. 下载类型选择 (音画合流, 纯画面, 提取音频, 动图GIF, 保存封面) -->
-        <div class="space-y-3">
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">选择下载模式</label>
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5" id="download-type-container">
-            <button onclick="selectDownloadType('VIDEO_WITH_AUDIO')" data-type="VIDEO_WITH_AUDIO" class="type-btn p-3 rounded-2xl border-2 border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-100 text-left transition flex flex-col justify-between">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold">音画合流</span>
-                <i class="fa-solid fa-circle-check text-indigo-600 dark:text-indigo-400 text-xs"></i>
-              </div>
-              <span class="text-[10px] text-slate-500 dark:text-slate-400">完整高清视频+音轨</span>
-            </button>
-
-            <button onclick="selectDownloadType('VIDEO_ONLY')" data-type="VIDEO_ONLY" class="type-btn p-3 rounded-2xl border border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500 text-slate-700 dark:text-slate-200 text-left transition flex flex-col justify-between">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold">仅纯画面</span>
-                <i class="fa-regular fa-circle text-slate-300 dark:text-slate-500 text-xs"></i>
-              </div>
-              <span class="text-[10px] text-slate-500 dark:text-slate-400">消音纯画面素材</span>
-            </button>
-
-            <button onclick="selectDownloadType('AUDIO_ONLY')" data-type="AUDIO_ONLY" class="type-btn p-3 rounded-2xl border border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500 text-slate-700 dark:text-slate-200 text-left transition flex flex-col justify-between">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold">提取音频</span>
-                <i class="fa-regular fa-circle text-slate-300 dark:text-slate-500 text-xs"></i>
-              </div>
-              <span class="text-[10px] text-slate-500 dark:text-slate-400">MP3 / 无损音乐</span>
-            </button>
-
-            <button onclick="selectDownloadType('GIF')" data-type="GIF" class="type-btn p-3 rounded-2xl border border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500 text-slate-700 dark:text-slate-200 text-left transition flex flex-col justify-between">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold">动图 (GIF)</span>
-                <i class="fa-regular fa-circle text-slate-300 dark:text-slate-500 text-xs"></i>
-              </div>
-              <span class="text-[10px] text-slate-500 dark:text-slate-400">精彩片段转动图</span>
-            </button>
-
-            <button onclick="selectDownloadType('COVER')" data-type="COVER" class="type-btn p-3 rounded-2xl border border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500 text-slate-700 dark:text-slate-200 text-left transition flex flex-col justify-between">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold">保存封面</span>
-                <i class="fa-regular fa-circle text-slate-300 dark:text-slate-500 text-xs"></i>
-              </div>
-              <span class="text-[10px] text-slate-500 dark:text-slate-400">高清原图独立保存</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 2. 清晰度选择区 (视频清晰度选项) -->
-        <div id="resolution-section" class="space-y-3">
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">选择视频清晰度</label>
-          <div class="flex flex-wrap gap-2 text-xs">
-            <select id="quality-policy" class="p-2 rounded border dark:bg-slate-800" aria-label="画质策略">
-              <option value="BEST_AVAILABLE">最高源画质（包含4K/8K）</option><option value="EXACT_FORMAT">下方精确格式</option>
-              <option value="MAX_2160">严格上限4K</option><option value="TARGET_4320">指定8K档位</option><option value="COMPATIBLE">兼容优先 H.264</option><option value="HDR">最高HDR源</option><option value="SDR">最高SDR源</option><option value="FPS60">至少60fps</option>
-            </select>
-            <select id="quality-container" class="p-2 rounded border dark:bg-slate-800" aria-label="容器"><option value="auto">自动容器</option><option value="mp4">MP4</option><option value="mkv">MKV</option></select>
-            <label><input id="quality-allow-lower" type="checkbox">允许较低画质</label>
-          </div>
-          <div id="format-options-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <!-- 动态填充 format 选项 -->
-          </div>
-        </div>
-
-        <!-- 3. 音频格式选择区 (当选择 AUDIO_ONLY 时呈现) -->
-        <div id="audio-format-section" class="hidden space-y-3">
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">选择导出音频格式</label>
-          <div class="flex flex-wrap gap-2.5">
-            <button onclick="selectAudioFormat('mp3')" data-audio="mp3" class="audio-fmt-btn px-4 py-2.5 rounded-xl border-2 border-indigo-600 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-bold">MP3 (高兼容性)</button>
-            <button onclick="selectAudioFormat('m4a')" data-audio="m4a" class="audio-fmt-btn px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-xs font-bold">M4A (高音质 AAC)</button>
-            <button onclick="selectAudioFormat('flac')" data-audio="flac" class="audio-fmt-btn px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-xs font-bold">FLAC (无损品质)</button>
-            <button onclick="selectAudioFormat('opus')" data-audio="opus" class="audio-fmt-btn px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-xs font-bold">OPUS (超低延迟)</button>
-          </div>
-        </div>
-
-        <!-- 4. 多分集与合集选择列表 (若检测到多P视频或系列合集) -->
-        <div id="collection-section" class="hidden space-y-3 bg-indigo-50/40 dark:bg-indigo-950/40 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-900">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <span class="text-xs font-bold text-indigo-950 dark:text-indigo-100">检测到多分集 / 合集资源</span>
-              <span id="collection-count-badge" class="px-2 py-0.5 text-[10px] bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-200 rounded-full font-bold">共 0 集</span>
-            </div>
-            <div class="flex items-center space-x-2 text-xs">
-              <button onclick="selectAllEpisodes(true)" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">全选</button>
-              <span class="text-slate-300 dark:text-slate-500">|</span>
-              <button onclick="invertEpisodes()" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">反选</button>
-            </div>
-          </div>
-          <div id="episodes-list" class="max-h-48 overflow-y-auto space-y-1.5 pr-1 text-xs">
-            <!-- 动态填充各分P选择框 -->
-          </div>
-        </div>
-
-        <!-- 底部提交大按钮 -->
-        <div class="pt-2 flex justify-end">
-          <button id="btn-submit-download" onclick="submitDownload()" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white font-bold rounded-2xl shadow-md shadow-indigo-500/20 transition flex items-center justify-center space-x-2">
-            <i class="fa-solid fa-arrow-down-to-line"></i>
-            <span>立即加入下载队列</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- === TAB 2: 任务列表 (TASKS) === -->
-    <section id="tab-images" class="hidden space-y-4 fade-in">
-      <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 space-y-4 border border-indigo-100 dark:border-indigo-900">
-        <h2 class="text-2xl font-bold">图文下载</h2>
-        <p>抖音 · 快手 · B站动态 · Pixiv · 小红书 · X · Pinterest</p>
-        <textarea id="image-url" aria-label="图文作品链接" rows="2" class="w-full p-3 rounded-xl border dark:bg-slate-900" placeholder="粘贴单个作品链接或分享文字"></textarea>
-        <button id="image-analyze" onclick="analyzeImages()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl">解析图文</button>
-        <button onclick="openImagesAssist()" class="px-4 py-2 border rounded-xl">浏览器辅助（抖音）</button>
-        <button id="image-browser-capture" onclick="captureBrowserImages()" class="px-4 py-2 border rounded-xl">提取已打开的图文</button>
-        <p id="image-error" role="alert" class="text-red-500 whitespace-pre-wrap"></p>
-        <div id="image-result" hidden>
-          <h3 id="image-title" class="font-bold text-lg"></h3>
-          <p id="image-source" class="text-sm my-2"></p>
-          <div class="flex flex-wrap gap-3 my-4">
-            <button onclick="selectImages(true)" class="px-3 py-2 border rounded-xl">全选</button>
-            <button onclick="selectImages(false)" class="px-3 py-2 border rounded-xl">清空选择</button>
-            <button onclick="downloadImages(false)" class="px-3 py-2 bg-indigo-600 text-white rounded-xl">保存所选原图</button>
-            <button onclick="downloadImages(true)" class="px-3 py-2 border rounded-xl">打包 ZIP</button>
-          </div>
-          <div id="image-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
-        </div>
-      </div>
-    </section>
-    <section id="tab-tasks" class="hidden space-y-4 fade-in">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">下载管理</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">查看传输进度与历史记录</p>
-        </div>
-        <div class="flex items-center space-x-2">
-          <button onclick="clearAllHistoryTasks()" title="一键清空所有已完成/失败/已取消的历史记录" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-xl text-xs font-semibold transition shadow-sm flex items-center space-x-1.5">
-            <i class="fa-regular fa-trash-can"></i>
-            <span>清空记录</span>
-          </button>
-          <button onclick="openFolder()" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-semibold hover:bg-indigo-50 dark:hover:bg-indigo-950 transition shadow-sm flex items-center space-x-1.5">
-            <i class="fa-regular fa-folder-open"></i>
-            <span>打开下载目录</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 任务容器 -->
-      <div id="tasks-container" class="space-y-3">
-        <!-- 动态生成任务卡片 -->
-      </div>
-
-      <!-- 无任务空状态 -->
-      <div id="tasks-empty" class="hidden text-center py-16 bg-white dark:bg-slate-800 rounded-3xl border border-indigo-100/60 dark:border-indigo-900/60 p-8 space-y-3">
-        <div class="w-16 h-16 mx-auto bg-indigo-50 dark:bg-indigo-950 text-indigo-400 rounded-full flex items-center justify-center text-2xl">
-          <i class="fa-solid fa-inbox"></i>
-        </div>
-        <h3 class="font-bold text-slate-700 dark:text-slate-200 text-sm">暂无下载任务</h3>
-        <p class="text-xs text-slate-400 max-w-xs mx-auto">粘贴视频链接并点击解析，即可开始高清音视频下载</p>
-        <button onclick="switchTab('home')" class="mt-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-500/15 transition">去解析下载</button>
-      </div>
-    </section>
-
-    <!-- === TAB 3: 系统设置 (SETTINGS) === -->
-    <section id="tab-settings" class="hidden space-y-6 fade-in">
-      <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-indigo-100 dark:border-indigo-900 space-y-6">
-        <div>
-          <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">系统与引擎偏好</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">配置下载存储位置、网络代理与 B站 高清权限</p>
-        </div>
-
-        <hr class="border-indigo-50 dark:border-indigo-900">
-
-        <!-- 外观主题：网页版与桌面版共用 -->
-        <div class="space-y-2">
-          <label for="setting-theme" class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">外观主题</label>
-          <select id="setting-theme" onchange="applyTheme(this.value)" class="px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-xs outline-none focus:border-indigo-600">
-            <option value="auto">跟随系统</option>
-            <option value="light">浅色</option>
-            <option value="dark">深色</option>
-          </select>
-          <p class="text-[11px] text-slate-400">切换后立即预览，点击「保存配置更改」保存；跟随系统会自动响应系统主题变化。</p>
-        </div>
-
-        <!-- 1. 下载保存路径 -->
-        <div class="space-y-2">
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">下载保存目录</label>
-          <div class="flex items-center space-x-2">
-            <input type="text" id="setting-download-dir" class="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-xs outline-none focus:border-indigo-600" />
-            <button onclick="openFolder()" class="px-3 py-2.5 bg-indigo-100 dark:bg-indigo-900 hover:bg-indigo-200 dark:hover:bg-indigo-800 text-indigo-800 dark:text-indigo-200 text-xs font-semibold rounded-xl transition">
-              <i class="fa-regular fa-folder mr-1"></i>打开
-            </button>
-          </div>
-          <p class="text-[11px] text-slate-400">下载完成的所有媒体文件将自动保存在此文件夹中</p>
-        </div>
-
-        <!-- 2. 网络代理设置 -->
-        <div class="space-y-2">
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">网络代理 (HTTP / SOCKS5)</label>
-          <input type="text" id="setting-proxy" placeholder="例如: http://127.0.0.1:7890 或 socks5://127.0.0.1:1080" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-xs outline-none focus:border-indigo-600" />
-          <p class="text-[11px] text-slate-400">用于顺畅解析与下载海外受限平台资源（YouTube, TikTok, Twitter/X 等），留空表示直连</p>
-        </div>
-
-        <!-- 2.5 第三方中转解析网站 (Relay Sites 管理) -->
-        <div class="space-y-3 pt-1">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">第三方中转解析网站</label>
-              <span id="settings-relay-count" class="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded-full">0 个</span>
-            </div>
-            <button onclick="handleOpenAddRelaySite()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 shadow-sm shadow-indigo-500/20">
-              <i class="fa-solid fa-plus text-[10px]"></i>
-              <span>添加网站</span>
-            </button>
-          </div>
-          <p class="text-[11px] text-slate-400">自定义添加备用解析站点，在直连解析遇防爬或失效时使用</p>
-          <div id="settings-relay-sites-container" class="space-y-2">
-            <!-- 动态渲染中转站管理列表 -->
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <label class="block text-sm font-bold">平台会话与引擎</label>
-            <div class="rounded-xl border p-3 space-y-2">
-              <h3 class="font-semibold">YouTube Cookie</h3>
-              <p class="text-sm">从已登录 YouTube 的浏览器导出 Netscape cookies.txt。导入后，解析与下载自动使用同一会话；遇到人机验证请先在浏览器完成，再更新文件。</p>
-              <input id="youtube-cookie-file" type="file" accept=".txt,text/plain" aria-label="YouTube cookies.txt 文件" />
-              <button onclick="importYoutubeCookies()" class="p-2 rounded-xl bg-indigo-600 text-white">导入 / 更新 YouTube Cookie</button>
-              <a href="https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies" target="_blank" rel="noopener noreferrer" class="underline text-sm">官方导出说明</a>
-              <p id="youtube-cookie-status" role="status" class="text-sm"></p>
-            </div>
-
-          <select id="session-platform" class="p-2 rounded-xl dark:bg-slate-900"><option>YouTube</option><option>X (Twitter)</option><option>小红书</option><option>小黑盒</option><option>Pixiv</option><option>抖音</option><option>哔哩哔哩</option><option>Pinterest</option><option>Instagram</option><option>Facebook</option><option>TikTok</option><option>快手</option></select>
-          <label class="flex items-center gap-2"><input type="checkbox" id="session-disable-cookie" onchange="toggleSessionCookie()" /> 禁用所选平台 Cookie</label>
-          <p id="session-policy-status" class="text-xs text-slate-500" role="status">关闭后新解析与新下载不使用已保存会话；会话继续加密保留。</p>
-          <input type="file" id="session-file" accept=".txt" class="block text-xs" />
-          <button onclick="importSession()" class="p-2 rounded-xl bg-indigo-600 text-white">导入Cookies文件</button>
-          <button onclick="clearSession()" class="p-2 rounded-xl border">清除所选会话</button>
-          <button onclick="showEngineStatus()" class="p-2 rounded-xl border">查看引擎组件</button>
-          <p class="text-xs text-slate-500">会话由Windows当前用户加密保存。仅本机可管理会话，导入后重新解析原链接。</p>
-        </div>
-        <!-- 3. B站 Cookie 授权 -->
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">B站 登录凭证 (SESSDATA / Cookie)</label>
-            <span id="bili-cookie-status" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hidden"><i class="fa-solid fa-shield-halved mr-1"></i>已配置凭证</span>
-          </div>
-          <textarea id="setting-bili-cookie" rows="3" placeholder="在此粘贴您的 B站 SESSDATA 值或完整 Cookie 字符串" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-xs outline-none focus:border-indigo-600 font-mono"></textarea>
-          <p class="text-[11px] text-slate-400">填入已开通大会员的 Cookie 即可解锁 4K、1080P60 极清画质及专属番剧下载</p>
-        </div>
-
-        <!-- 4. 并发下载数 -->
-        <div class="space-y-2">
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">最大同时下载任务数</label>
-          <select id="setting-concurrent" class="px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-xs outline-none focus:border-indigo-600">
-            <option value="1">1 个 (低带宽消耗)</option>
-            <option value="2">2 个</option>
-            <option value="3" selected>3 个 (推荐)</option>
-            <option value="5">5 个 (极速并发)</option>
-          </select>
-        </div>
-
-        <!-- 5. 网页端下载偏好 -->
-        <div class="space-y-2">
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">网页版下载偏好</label>
-          <div class="p-3.5 bg-indigo-50/60 dark:bg-indigo-950/60 rounded-2xl border border-indigo-100 dark:border-indigo-900 space-y-1.5">
-            <label class="flex items-center space-x-2.5 cursor-pointer">
-              <input type="checkbox" id="setting-auto-browser-download" class="rounded text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 w-4 h-4" />
-              <span class="text-xs font-bold text-indigo-950 dark:text-indigo-100">下载混流完成后，自动调起浏览器原生下载</span>
-            </label>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 pl-6.5">
-              开启后，视频在服务端处理合并完成后，浏览器将自动调起文件另存为或直接保存到当前设备的浏览器下载文件夹（特别适合手机、平板等局域网设备）。
-            </p>
-          </div>
-        </div>
-
-        <!-- 6. Windows 系统开机自启动 -->
-        <div class="space-y-2">
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">系统集成与常驻</label>
-          <div class="p-3.5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-600 space-y-1.5">
-            <label class="flex items-center space-x-2.5 cursor-pointer">
-              <input type="checkbox" id="setting-autostart" class="rounded text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 w-4 h-4" />
-              <span class="text-xs font-bold text-slate-800 dark:text-slate-100">开机自动在后台运行网页服务 (静默常驻托盘)</span>
-            </label>
-            <p class="text-[11px] text-slate-400 pl-6.5">
-              开机后自动在后台启动下载服务并常驻右下角系统托盘，不弹黑框与窗口。随时在浏览器输入 http://127.0.0.1:58000 即可极速使用。
-            </p>
-          </div>
-        </div>
-
-        <!-- 7. 关于与版本信息 -->
-        <div class="space-y-2 pt-1">
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">关于与版本</label>
-          <div class="p-4 bg-indigo-50/50 dark:bg-indigo-950/50 rounded-2xl border border-indigo-100 dark:border-indigo-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-            <div class="space-y-1">
-              <div class="flex items-center space-x-2">
-                <span class="font-bold text-slate-800 dark:text-slate-100 text-sm">OmniDownloader</span>
-                <span class="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-bold">v1.5.3 稳定版</span>
-              </div>
-              <p class="text-slate-500 dark:text-slate-400 text-[11px]">全平台现代化媒体音视频下载矩阵 · Windows 网页纯后台 / 桌面独立双形态</p>
-            </div>
-            <div class="flex items-center space-x-2">
-              <button onclick="openGuideModal()" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-xl font-semibold transition flex items-center space-x-1 shadow-2xs">
-                <i class="fa-solid fa-book-open text-xs"></i>
-                <span>使用手册</span>
-              </button>
-              <a href="https://github.com/baishu136/OmniDownloader" target="_blank" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition flex items-center space-x-1 shadow-sm shadow-indigo-500/20">
-                <i class="fa-brands fa-github text-xs"></i>
-                <span>开源主页</span>
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- 保存按钮 -->
-        <div class="pt-4 flex justify-end">
-          <button onclick="saveSettings()" class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition">
-            保存配置更改
-          </button>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- 多语言使用指南弹窗模态框 (Multilingual Guide Modal) -->
-  <div id="guide-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 fade-in">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl border border-indigo-100 dark:border-indigo-900 overflow-hidden">
-      <!-- 模态框头部：标题与语言切换选择器 -->
-      <div class="p-4 sm:p-5 border-b border-indigo-100/70 dark:border-indigo-900/70 bg-slate-50/70 dark:bg-slate-900/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-shrink-0">
-        <div class="flex items-center space-x-2.5">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
-            <i class="fa-solid fa-book-bookmark text-sm"></i>
-          </div>
-          <div>
-            <h3 id="guide-modal-title" class="font-bold text-base text-slate-800 dark:text-slate-100">使用说明指南 · User Guide</h3>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400">OmniDownloader 全平台多媒体下载利器</p>
-          </div>
-        </div>
-
-        <!-- 4 国语言切换胶囊 -->
-        <div class="flex items-center space-x-1 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-600 shadow-xs text-xs font-semibold">
-          <button onclick="switchGuideLang('zh-cn')" id="btn-lang-zh-cn" class="px-2.5 py-1.5 rounded-lg transition bg-indigo-600 text-white shadow-xs">🇨🇳 简中</button>
-          <button onclick="switchGuideLang('zh-tw')" id="btn-lang-zh-tw" class="px-2.5 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400">🇭🇰 繁中</button>
-          <button onclick="switchGuideLang('en')" id="btn-lang-en" class="px-2.5 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400">🇺🇸 EN</button>
-          <button onclick="switchGuideLang('ja')" id="btn-lang-ja" class="px-2.5 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400">🇯🇵 日本語</button>
-          <button onclick="closeGuideModal()" class="ml-1 w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
-            <i class="fa-solid fa-xmark text-sm"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- 模态框主体滚动区域 -->
-      <div class="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6 text-slate-700 dark:text-slate-200 text-xs sm:text-sm leading-relaxed">
-
-        <!-- 1. 简体中文说明 -->
-        <div id="guide-content-zh-cn" class="space-y-5">
-          <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/60 rounded-2xl border border-indigo-100 dark:border-indigo-900">
-            <h4 class="font-bold text-indigo-950 dark:text-indigo-100 text-sm mb-2 flex items-center"><i class="fa-solid fa-rocket text-indigo-600 dark:text-indigo-400 mr-2"></i>极速上手三步法</h4>
-            <ol class="list-decimal list-inside space-y-1 text-slate-700 dark:text-slate-200 text-xs sm:text-sm">
-              <li><strong>复制链接</strong>：在哔哩哔哩、抖音、快手、小红书、TikTok、YouTube 等平台复制分享口令或网页地址。</li>
-              <li><strong>一键解析</strong>：回到本页面，点击【粘贴】按钮后轻触【解析】（或直接在输入框敲回车）。</li>
-              <li><strong>选择格式下载</strong>：自主选择音画合流 (MP4)、纯视频画面、提取 MP3/M4A/FLAC 无损音频或 GIF 动图，点击开始下载。</li>
-            </ol>
-          </div>
-
-          <div class="space-y-3">
-            <h4 class="font-bold text-slate-900 dark:text-slate-50 text-sm flex items-center"><i class="fa-solid fa-layer-group text-indigo-600 dark:text-indigo-400 mr-2"></i>核心特色与导出模式</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-600/80">
-                <strong class="text-indigo-700 dark:text-indigo-300 block mb-1">🎬 音画合流 (MP4)</strong>
-                支持 4K、1080P60、1080P、720P。底层采用独立内置 FFmpeg 纯硬件级毫秒无损合成音视频流。
-              </div>
-              <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-600/80">
-                <strong class="text-cyan-700 dark:text-cyan-300 block mb-1">🔇 纯视频画面</strong>
-                自动剥离背景音轨，生成无声纯净视频，非常适合二创、混剪或鬼畜素材提取。
-              </div>
-              <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-600/80">
-                <strong class="text-purple-700 dark:text-purple-300 block mb-1">🎵 提取音频</strong>
-                直接抓取最高品质音频轨，支持转码为 MP3 (320kbps)、M4A、FLAC 无损或 OPUS。
-              </div>
-              <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-600/80">
-                <strong class="text-amber-700 dark:text-amber-300 block mb-1">🖼️ 动态图 (GIF) / 高清封面</strong>
-                双通道调色板算法生成高画质免播放器预览动图，或一键保存原始超清视频封面图。
-              </div>
-            </div>
-          </div>
-
-          <div class="p-4 bg-amber-50/70 dark:bg-amber-950/70 rounded-2xl border border-amber-200/80 dark:border-amber-800/80 space-y-2">
-            <h4 class="font-bold text-amber-950 dark:text-amber-100 text-sm flex items-center"><i class="fa-brands fa-bilibili text-[#FB7299] mr-2"></i>解锁 B站 4K / 1080P60 高清画质 (SESSDATA 获取方法)</h4>
-            <p class="text-xs text-amber-900/90 dark:text-amber-100/90">
-              可用画质取决于目标视频、账户权益和平台返回。配置对应账户的 <code>SESSDATA</code> 后重新解析；充电专属内容还需要该视频对应的充电权益：
-            </p>
-            <ol class="list-decimal list-inside space-y-1 text-xs text-amber-900/90 dark:text-amber-100/90">
-              <li>在电脑浏览器打开 <strong>bilibili.com</strong> 并登录您的账号；</li>
-              <li>在页面任意位置按键盘 <strong>F12</strong> 打开开发者工具，切换到【<strong>Application</strong> / 存储 / 应用程序】标签；</li>
-              <li>在左侧展开【<strong>Cookies</strong>】-> 点击 <code>https://www.bilibili.com</code>；</li>
-              <li>在列表中找到名为 <code>SESSDATA</code> 的项，双击复制它的 <strong>Value</strong> 值；</li>
-              <li>点击本网页顶部的【<strong>系统设置</strong>】-> 粘贴到【<strong>B站登录凭证</strong>】输入框中，点击【保存配置】即可立即生效！</li>
-            </ol>
-          </div>
-
-          <div class="space-y-2 text-xs">
-            <h4 class="font-bold text-slate-900 dark:text-slate-50 text-sm flex items-center"><i class="fa-solid fa-desktop text-indigo-600 dark:text-indigo-400 mr-2"></i>桌面独立版与网页版说明</h4>
-            <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-300">
-              <li><strong>桌面独立客户端 (Desktop App)</strong>：拥有独立原生窗口，基于微软 Edge WebView2 启动，关闭窗口即安全退出。</li>
-              <li><strong>网页纯后台版 (Web App)</strong>：静默常驻右下角任务栏托盘，内存开销极小。在设置中开启“浏览器原生接管下载”后，还可让手机/平板在同一局域网通过浏览器访问下载。</li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- 2. 繁體中文說明 -->
-        <div id="guide-content-zh-tw" class="hidden space-y-5">
-          <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/60 rounded-2xl border border-indigo-100 dark:border-indigo-900">
-            <h4 class="font-bold text-indigo-950 dark:text-indigo-100 text-sm mb-2 flex items-center"><i class="fa-solid fa-rocket text-indigo-600 dark:text-indigo-400 mr-2"></i>極速上手三步驟</h4>
-            <ol class="list-decimal list-inside space-y-1 text-slate-700 dark:text-slate-200 text-xs sm:text-sm">
-              <li><strong>複製連結</strong>：於 Bilibili、抖音、快手、小紅書、TikTok、YouTube 等平台複製分享口令或網址。</li>
-              <li><strong>一鍵解析</strong>：回到本頁面，點選【貼上】後點擊【解析】（或於輸入框直接按 Enter）。</li>
-              <li><strong>選擇格式下載</strong>：依需求挑選音畫合流 (MP4)、純視訊畫面、提取 MP3/M4A/FLAC 無損音訊或動圖，即可極速下載。</li>
-            </ol>
-          </div>
-
-          <div class="p-4 bg-amber-50/70 dark:bg-amber-950/70 rounded-2xl border border-amber-200/80 dark:border-amber-800/80 space-y-2 text-xs">
-            <h4 class="font-bold text-amber-950 dark:text-amber-100 text-sm flex items-center"><i class="fa-brands fa-bilibili text-[#FB7299] mr-2"></i>解鎖 B站 4K / 1080P60 超高畫質 (SESSDATA 獲取方式)</h4>
-            <ol class="list-decimal list-inside space-y-1 text-amber-900/90 dark:text-amber-100/90">
-              <li>電腦瀏覽器開啟 <strong>bilibili.com</strong> 並登入帳號；</li>
-              <li>按 <strong>F12</strong> 開啟開發者工具，切換至【<strong>Application</strong> / 儲存】標籤；</li>
-              <li>展開【<strong>Cookies</strong>】-> 點擊 <code>https://www.bilibili.com</code>；</li>
-              <li>於清單中找到 <code>SESSDATA</code>，複製其 <strong>Value</strong> 數值；</li>
-              <li>至本網頁【<strong>系統設定</strong>】貼上並儲存，即可永久暢享 4K/1080P60 畫質！</li>
-            </ol>
-          </div>
-        </div>
-
-        <!-- 3. English Instructions -->
-        <div id="guide-content-en" class="hidden space-y-5">
-          <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/60 rounded-2xl border border-indigo-100 dark:border-indigo-900">
-            <h4 class="font-bold text-indigo-950 dark:text-indigo-100 text-sm mb-2 flex items-center"><i class="fa-solid fa-rocket text-indigo-600 dark:text-indigo-400 mr-2"></i>Quick Start Guide (3 Simple Steps)</h4>
-            <ol class="list-decimal list-inside space-y-1 text-slate-700 dark:text-slate-200 text-xs sm:text-sm">
-              <li><strong>Copy Video URL</strong>: Copy the link from Bilibili, Douyin, TikTok, YouTube, Xiaohongshu, Kuaishou, Twitter/X, etc.</li>
-              <li><strong>Parse Link</strong>: Click <strong>Paste</strong> and press <strong>Parse</strong> (or hit Enter on keyboard).</li>
-              <li><strong>Select & Download</strong>: Choose your desired resolution (4K/1080P/720P) or extract high-fidelity MP3/M4A/FLAC audio, then start downloading immediately!</li>
-            </ol>
-          </div>
-
-          <div class="space-y-3">
-            <h4 class="font-bold text-slate-900 dark:text-slate-50 text-sm flex items-center"><i class="fa-solid fa-layer-group text-indigo-600 dark:text-indigo-400 mr-2"></i>Key Features & Export Options</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-600/80">
-                <strong class="text-indigo-700 dark:text-indigo-300 block mb-1">🎬 Video + Audio (MP4)</strong>
-                Supports 4K, 1080P60, 1080P, 720P with built-in hardware-accelerated FFmpeg muxing.
-              </div>
-              <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-600/80">
-                <strong class="text-cyan-700 dark:text-cyan-300 block mb-1">🔇 Video Only (Mute)</strong>
-                Strips audio track automatically, great for video editing and content remixing.
-              </div>
-              <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-600/80">
-                <strong class="text-purple-700 dark:text-purple-300 block mb-1">🎵 Extract Audio</strong>
-                Extracts lossless audio tracks and converts to MP3 (up to 320kbps), M4A, or FLAC.
-              </div>
-              <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-600/80">
-                <strong class="text-amber-700 dark:text-amber-300 block mb-1">🖼️ Animated GIF & HD Cover</strong>
-                Dual-palette algorithm for crystal-clear GIFs without external players, or save full-res cover art.
-              </div>
-            </div>
-          </div>
-
-          <div class="p-4 bg-amber-50/70 dark:bg-amber-950/70 rounded-2xl border border-amber-200/80 dark:border-amber-800/80 space-y-2 text-xs">
-            <h4 class="font-bold text-amber-950 dark:text-amber-100 text-sm flex items-center"><i class="fa-brands fa-bilibili text-[#FB7299] mr-2"></i>How to Unlock Bilibili 4K & 1080P60 (SESSDATA Setup)</h4>
-            <p class="text-amber-900/90 dark:text-amber-100/90">Unregistered guests are restricted to 480P by Bilibili. Configure your <code>SESSDATA</code> cookie to unlock 4K:</p>
-            <ol class="list-decimal list-inside space-y-1 text-amber-900/90 dark:text-amber-100/90">
-              <li>Log in to <strong>bilibili.com</strong> in your desktop browser;</li>
-              <li>Press <strong>F12</strong> to open Developer Tools, go to <strong>Application</strong> -> <strong>Cookies</strong> -> <code>https://www.bilibili.com</code>;</li>
-              <li>Find the item named <code>SESSDATA</code> and copy its <strong>Value</strong>;</li>
-              <li>Navigate to <strong>Settings</strong> tab in OmniDownloader, paste it into the <strong>Bilibili Cookie</strong> field, and save.</li>
-            </ol>
-          </div>
-        </div>
-
-        <!-- 4. 日本語取扱説明書 -->
-        <div id="guide-content-ja" class="hidden space-y-5">
-          <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/60 rounded-2xl border border-indigo-100 dark:border-indigo-900">
-            <h4 class="font-bold text-indigo-950 dark:text-indigo-100 text-sm mb-2 flex items-center"><i class="fa-solid fa-rocket text-indigo-600 dark:text-indigo-400 mr-2"></i>クイックスタート (簡単3ステップ)</h4>
-            <ol class="list-decimal list-inside space-y-1 text-slate-700 dark:text-slate-200 text-xs sm:text-sm">
-              <li><strong>URLをコピー</strong>：Bilibili、TikTok、YouTube、X (Twitter)、小紅書等から動画URLをコピーします。</li>
-              <li><strong>ワンクリック解析</strong>：【貼り付け】をクリックして【解析】ボタンを押します（Enterキーでも可）。</li>
-              <li><strong>形式を選択して保存</strong>：高画質MP4、音声のみ(MP3/M4A/FLAC)、またはGIFを選択してダウンロード開始！</li>
-            </ol>
-          </div>
-
-          <div class="p-4 bg-amber-50/70 dark:bg-amber-950/70 rounded-2xl border border-amber-200/80 dark:border-amber-800/80 space-y-2 text-xs">
-            <h4 class="font-bold text-amber-950 dark:text-amber-100 text-sm flex items-center"><i class="fa-brands fa-bilibili text-[#FB7299] mr-2"></i>Bilibili 4K / 1080P60 解放手順 (SESSDATA 設定)</h4>
-            <ol class="list-decimal list-inside space-y-1 text-amber-900/90 dark:text-amber-100/90">
-              <li>ブラウザで <strong>bilibili.com</strong> にアクセスしてログインします。</li>
-              <li><strong>F12</strong> キーを押してデベロッパーツールを開き、【<strong>Application</strong>】->【<strong>Cookies</strong>】を選択します。</li>
-              <li><code>SESSDATA</code> を見つけてその値をコピーします。</li>
-              <li>本アプリの【<strong>設定</strong>】画面で貼り付けて保存すれば、4K動画のダウンロードが可能になります。</li>
-            </ol>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- 模态框底部 -->
-      <div class="p-4 border-t border-indigo-100 dark:border-indigo-900 bg-slate-50 dark:bg-slate-900 flex items-center justify-between flex-shrink-0">
-        <div class="text-[11px] text-slate-400">
-          OmniDownloader 多语言说明书 · 随时可在导航栏轻触打开
-        </div>
-        <button onclick="closeGuideModal()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm transition">
-          关闭说明
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 第三方网页使用须知与兼容性提示模态框 -->
-  <div id="relay-compat-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 fade-in">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full shadow-2xl border border-indigo-100 dark:border-indigo-900 p-6 space-y-5">
-      <div class="flex flex-col items-center text-center space-y-2">
-        <div class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-inner">
-          <i class="fa-solid fa-shield-halved text-xl"></i>
-        </div>
-        <h3 class="font-bold text-base text-slate-800 dark:text-slate-100">第三方网页使用须知与兼容性提示</h3>
-      </div>
-
-      <div class="space-y-3 text-left">
-        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700 space-y-1">
-          <div class="text-xs font-bold text-indigo-600 dark:text-indigo-400">1. 服务性质声明</div>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">备用中转功能仅提供第三方网页的快捷导航与直链下载支持，本应用未内置亦未与任何第三方中转解析站点达成合作，不保证任何第三方网站的长期可用性。</p>
-        </div>
-        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700 space-y-1">
-          <div class="text-xs font-bold text-indigo-600 dark:text-indigo-400">2. 兼容性与网页行为</div>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">各站点的页面交互、反爬机制及解析链路存在较大差异。使用过程中若遇人机验证、广告跳转、临时失效或防盗链拦截均属于网页端行为，建议优先使用主界面的原生直连解析。</p>
-        </div>
-        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700 space-y-1">
-          <div class="text-xs font-bold text-indigo-600 dark:text-indigo-400">3. 安全与隐私保护</div>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">请确保您添加并访问的网址合法合规。在加载第三方网页时，请勿输入个人账号、密码或敏感隐私信息，防范钓鱼与安全风险。</p>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-end space-x-2 pt-2">
-        <button onclick="closeRelayCompatModal()" class="px-4 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition">取消</button>
-        <button onclick="confirmRelayCompatModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition">我已知晓并继续</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 添加备用中转网站模态框 -->
-  <div id="add-relay-site-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 fade-in">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full shadow-2xl border border-indigo-100 dark:border-indigo-900 p-6 space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
-        <div class="flex items-center space-x-2">
-          <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-            <i class="fa-solid fa-plus text-xs"></i>
-          </div>
-          <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100">添加备用中转网站</h3>
-        </div>
-        <button onclick="closeAddRelaySiteModal()" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
-          <i class="fa-solid fa-xmark text-sm"></i>
-        </button>
-      </div>
-
-      <p class="text-xs text-slate-500 dark:text-slate-400">输入网址后将自动检索网站名称，也可手动修改：</p>
-
-      <div class="space-y-3">
-        <!-- 1. 网站完整网址 (置顶) -->
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-200">网站完整网址</label>
-            <span id="fetch-title-status" class="text-[10px] text-indigo-600 dark:text-indigo-400 hidden font-medium flex items-center">
-              <i class="fa-solid fa-circle-notch fa-spin mr-1"></i>正在检索名称...
-            </span>
-          </div>
-          <div class="relative flex items-center">
-            <input type="text" id="input-site-url" oninput="handleUrlInputWithDebounce()" placeholder="https://..." class="w-full pl-3.5 pr-20 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 rounded-xl outline-none text-xs transition" />
-            <div class="absolute right-2 flex items-center space-x-1">
-              <button type="button" onclick="triggerManualFetchTitle()" title="重新获取名称" class="w-6 h-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-200/50 dark:hover:bg-slate-600/50 transition text-xs">
-                <i class="fa-solid fa-arrows-rotate"></i>
-              </button>
-              <button type="button" onclick="clearUrlInput()" title="清空" class="w-6 h-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-600/50 transition text-xs">
-                <i class="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. 网站名称 (第二位) -->
-        <div>
-          <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-200 mb-1">网站名称</label>
-          <input type="text" id="input-site-name" oninput="markNameManuallyEdited()" placeholder="例如：备用解析工具" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 rounded-xl outline-none text-xs transition" />
-        </div>
-      </div>
-
-      <div class="flex items-center justify-end space-x-2 pt-2">
-        <button onclick="closeAddRelaySiteModal()" class="px-4 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition">取消</button>
-        <button onclick="submitAddRelaySite()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition">确认添加</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 全局轻量 Toast 提示框 -->
-  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-12 opacity-0 transition-all duration-300 pointer-events-none px-4 py-3 bg-slate-900/90 text-white text-xs font-medium rounded-2xl shadow-xl backdrop-blur-md flex items-center space-x-2">
-    <i id="toast-icon" class="fa-solid fa-circle-check text-cyan-400"></i>
-    <span id="toast-msg">操作成功</span>
-  </div>
-
-  <!-- JavaScript 交互驱动核心 -->
-  <script>
-    let currentMetadata = null;
-    let selectedType = 'VIDEO_WITH_AUDIO';
-    let selectedFormatId = '';
-    let selectedAudioFormat = 'mp3';
-    let allTasks = [];
-    let relaySites = [];
-    let hasShownRelayCompatTip = false;
-    let fetchTitleTimer = null;
-    let isNameManuallyEdited = false;
-    let lastFetchedTitle = '';
-
-    // 获取并渲染备用中转站
-    async function fetchRelaySites() {
+    (function () {
+      var stored = 'auto', amoled = 'false';
       try {
-        const res = await fetch('/api/relay-sites');
-        if (res.ok) {
-          const data = await res.json();
-          relaySites = data.relaySites || [];
-          hasShownRelayCompatTip = Boolean(data.hasShownRelayCompatTip);
-          renderRelaySites();
-        }
-      } catch (e) {
-        console.error('获取备用中转站失败:', e);
-      }
-    }
-
-    function renderRelaySites() {
-      const homeSection = document.getElementById('relay-sites-section');
-      const homeContainer = document.getElementById('relay-sites-container');
-      const settingsContainer = document.getElementById('settings-relay-sites-container');
-      const settingsCount = document.getElementById('settings-relay-count');
-
-      if (settingsCount) {
-        settingsCount.textContent = `${relaySites.length} 个`;
-      }
-
-      // 1. 主页部分：若无中转站，主页完全不占位展示
-      if (homeSection) {
-        if (!relaySites || relaySites.length === 0) {
-          homeSection.classList.add('hidden');
-        } else {
-          homeSection.classList.remove('hidden');
-          if (homeContainer) {
-            homeContainer.innerHTML = relaySites.map(site => {
-              const safeName = site.name || '备用站点';
-              const safeUrl = site.url || '#';
-              const initial = safeName.charAt(0).toUpperCase();
-              return `
-                <div class="p-3.5 bg-slate-50/80 dark:bg-slate-900/80 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/40 border border-slate-200/80 dark:border-slate-600/80 hover:border-indigo-200 dark:hover:border-indigo-800 rounded-2xl transition flex items-center justify-between group shadow-xs">
-                  <div class="flex items-center space-x-3 overflow-hidden cursor-pointer" onclick="openRelaySite('${safeUrl}')">
-                    <div class="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-center text-xs flex-shrink-0">
-                      ${initial}
-                    </div>
-                    <div class="overflow-hidden">
-                      <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate" title="${safeName}">${safeName}</h4>
-                      <span class="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 truncate block mt-0.5" title="${safeUrl}">
-                        ${safeUrl.replace(/^https?:\/\//, '')}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="flex items-center space-x-1 flex-shrink-0">
-                    <button onclick="openRelaySite('${safeUrl}')" title="访问此网站" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-800 transition">
-                      <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                    </button>
-                  </div>
-                </div>
-              `;
-            }).join('');
-          }
-        }
-      }
-
-      // 2. 设置页部分：管理列表展示
-      if (settingsContainer) {
-        if (!relaySites || relaySites.length === 0) {
-          settingsContainer.innerHTML = `
-            <div class="p-4 bg-slate-50 dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-600 rounded-2xl text-center text-slate-400 text-xs">
-              暂未配置任何备用中转网站，点击右上角「添加网站」快速录入
-            </div>
-          `;
-        } else {
-          settingsContainer.innerHTML = relaySites.map(site => {
-            const safeName = site.name || '备用站点';
-            const safeUrl = site.url || '#';
-            const initial = safeName.charAt(0).toUpperCase();
-            return `
-              <div class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-600/80 rounded-xl flex items-center justify-between hover:bg-indigo-50/30 dark:hover:bg-indigo-950/30 transition">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                  <div class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-center text-xs flex-shrink-0">
-                    ${initial}
-                  </div>
-                  <div class="overflow-hidden">
-                    <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${safeName}</div>
-                    <div class="text-[10px] text-slate-400 truncate">${safeUrl}</div>
-                  </div>
-                </div>
-                <button onclick="deleteRelaySite('${site.id}')" title="删除此网站" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition flex-shrink-0">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
-              </div>
-            `;
-          }).join('');
-        }
-      }
-    }
-
-    function handleOpenAddRelaySite() {
-      if (!hasShownRelayCompatTip) {
-        const modal = document.getElementById('relay-compat-modal');
-        if (modal) modal.classList.remove('hidden');
-      } else {
-        openAddRelaySiteModal();
-      }
-    }
-
-    function closeRelayCompatModal() {
-      const modal = document.getElementById('relay-compat-modal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    async function confirmRelayCompatModal() {
-      closeRelayCompatModal();
-      hasShownRelayCompatTip = true;
-      try {
-        await fetch('/api/relay-sites/confirm-tip', { method: 'POST' });
+        stored = localStorage.getItem('omni_theme') || 'auto';
+        amoled = localStorage.getItem('omni_amoled') || 'false';
       } catch (e) {}
-      openAddRelaySiteModal();
-    }
+      var dark = stored === 'dark' || (stored === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var root = document.documentElement;
+      root.dataset.theme = dark ? 'dark' : 'light';
+      root.dataset.amoled = (dark && amoled === 'true') ? 'true' : 'false';
+      root.style.colorScheme = dark ? 'dark' : 'light';
+    })();
+  </script>
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/layout.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  <link rel="stylesheet" href="/static/css/pages.css">
+</head>
+<body>
+<div class="app">
+  <!-- ================= 响应式导航栏：桌面端 NavigationRail / 移动端 Bottom NavigationBar ================= -->
+  <nav class="nav-rail" aria-label="主导航">
+    <div class="nav-rail__brand" title="OmniDownloader">
+      <i data-icon="cloud_download"></i>
+    </div>
 
-    function openAddRelaySiteModal() {
-      document.getElementById('input-site-name').value = '';
-      document.getElementById('input-site-url').value = '';
-      isNameManuallyEdited = false;
-      lastFetchedTitle = '';
-      const statusEl = document.getElementById('fetch-title-status');
-      if (statusEl) statusEl.classList.add('hidden');
+    <div class="nav-rail__items">
+      <button class="m3-nav-item is-active" data-nav="home" aria-current="page">
+        <span class="m3-nav-item__indicator">
+          <i data-icon="home" data-icon-filled="home_filled"></i>
+        </span>
+        <span class="m3-nav-item__label">首页</span>
+      </button>
 
-      const modal = document.getElementById('add-relay-site-modal');
-      if (modal) modal.classList.remove('hidden');
-      setTimeout(() => {
-        document.getElementById('input-site-url')?.focus();
-      }, 100);
-    }
+      <button class="m3-nav-item" data-nav="batch">
+        <span class="m3-nav-item__indicator">
+          <i data-icon="playlist_play" data-icon-filled="playlist_play_filled"></i>
+        </span>
+        <span class="m3-nav-item__label">批量下载</span>
+      </button>
 
-    function closeAddRelaySiteModal() {
-      const modal = document.getElementById('add-relay-site-modal');
-      if (modal) modal.classList.add('hidden');
-      if (fetchTitleTimer) {
-        clearTimeout(fetchTitleTimer);
-        fetchTitleTimer = null;
-      }
-    }
+      <button class="m3-nav-item" data-nav="tasks">
+        <span class="m3-nav-item__indicator">
+          <i data-icon="download" data-icon-filled="download_filled"></i>
+          <span class="nav-badge" id="nav-task-badge" hidden>0</span>
+        </span>
+        <span class="m3-nav-item__label">任务</span>
+      </button>
 
-    function markNameManuallyEdited() {
-      isNameManuallyEdited = true;
-    }
+      <button class="m3-nav-item" data-nav="settings">
+        <span class="m3-nav-item__indicator">
+          <i data-icon="settings" data-icon-filled="settings_filled"></i>
+        </span>
+        <span class="m3-nav-item__label">设置</span>
+      </button>
+    </div>
 
-    function clearUrlInput() {
-      document.getElementById('input-site-url').value = '';
-      if (!isNameManuallyEdited) {
-        document.getElementById('input-site-name').value = '';
-      }
-      const statusEl = document.getElementById('fetch-title-status');
-      if (statusEl) statusEl.classList.add('hidden');
-    }
+    <div class="nav-rail__footer">
+      <button class="m3-nav-item" id="nav-help" title="使用帮助" aria-label="使用帮助">
+        <span class="m3-nav-item__indicator">
+          <i data-icon="help"></i>
+        </span>
+        <span class="m3-nav-item__label">帮助</span>
+      </button>
+    </div>
+  </nav>
 
-    function handleUrlInputWithDebounce() {
-      if (fetchTitleTimer) clearTimeout(fetchTitleTimer);
-      const url = document.getElementById('input-site-url').value.trim();
-      if (!url || url.length < 5 || !url.includes('.')) return;
+  <!-- ================= 主工作区 ================= -->
+  <main class="workspace" id="workspace">
 
-      fetchTitleTimer = setTimeout(() => {
-        executeFetchTitle(url);
-      }, 700);
-    }
-
-    function triggerManualFetchTitle() {
-      const url = document.getElementById('input-site-url').value.trim();
-      if (!url) {
-        showToast('请先输入网址', true);
-        return;
-      }
-      executeFetchTitle(url);
-    }
-
-    async function executeFetchTitle(rawUrl) {
-      const statusEl = document.getElementById('fetch-title-status');
-      if (statusEl) statusEl.classList.remove('hidden');
-
-      try {
-        const res = await fetch(`/api/relay-sites/fetch-title?url=${encodeURIComponent(rawUrl)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.title) {
-            const nameInput = document.getElementById('input-site-name');
-            if (nameInput) {
-              if (!isNameManuallyEdited || !nameInput.value || nameInput.value === lastFetchedTitle) {
-                nameInput.value = data.title;
-                lastFetchedTitle = data.title;
-                isNameManuallyEdited = false;
-              }
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('获取网站标题失败:', e);
-      } finally {
-        if (statusEl) statusEl.classList.add('hidden');
-      }
-    }
-
-    async function submitAddRelaySite() {
-      const name = document.getElementById('input-site-name').value.trim();
-      let url = document.getElementById('input-site-url').value.trim();
-      if (!name || !url) {
-        showToast('请完整输入网站名称与网址', true);
-        return;
-      }
-      try {
-        const res = await fetch('/api/relay-sites', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, url })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          relaySites = data.relaySites || [];
-          renderRelaySites();
-          closeAddRelaySiteModal();
-          showToast('成功添加备用中转网站');
-        } else {
-          const err = await res.json();
-          showToast(err.detail || '添加失败', true);
-        }
-      } catch (e) {
-        showToast('添加异常: ' + e.message, true);
-      }
-    }
-
-    async function deleteRelaySite(siteId) {
-      if (!confirm('确定要从列表中移除该网站吗？')) return;
-      try {
-        const res = await fetch(`/api/relay-sites/${siteId}`, { method: 'DELETE' });
-        if (res.ok) {
-          const data = await res.json();
-          relaySites = data.relaySites || [];
-          renderRelaySites();
-          showToast('已移除该网站');
-        }
-      } catch (e) {
-        showToast('删除失败: ' + e.message, true);
-      }
-    }
-
-    function openRelaySite(url) {
-      const curInput = (document.getElementById('input-url')?.value || '').trim();
-      if (curInput) {
-        navigator.clipboard?.writeText(curInput);
-        showToast('已将待下载链接复制至剪贴板，正在前往备用站...');
-      }
-      window.open(url, '_blank');
-    }
-
-    // 多语言使用说明模态框控制
-    function openGuideModal() {
-      const modal = document.getElementById('guide-modal');
-      if (modal) modal.classList.remove('hidden');
-    }
-
-    function closeGuideModal() {
-      const modal = document.getElementById('guide-modal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    function switchGuideLang(lang) {
-      const langs = ['zh-cn', 'zh-tw', 'en', 'ja'];
-      langs.forEach(l => {
-        const content = document.getElementById(`guide-content-${l}`);
-        const btn = document.getElementById(`btn-lang-${l}`);
-        if (l === lang) {
-          if (content) content.classList.remove('hidden');
-          if (btn) {
-            btn.className = 'px-2.5 py-1.5 rounded-lg transition bg-indigo-600 text-white shadow-xs';
-          }
-        } else {
-          if (content) content.classList.add('hidden');
-          if (btn) {
-            btn.className = 'px-2.5 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400';
-          }
-        }
-      });
-    }
-
-    // 初始化运行
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('setting-theme').value = currentTheme;
-      loadSettings();
-      fetchTasks();
-      fetchRelaySites();
-      initSSE();
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          closeGuideModal();
-          closeRelayCompatModal();
-          closeAddRelaySiteModal();
-        }
-      });
-    });
-
-    let imagePost = null;
-    let imageViewer = null, viewerUrls = [], viewerIndex = 0, viewerScale = 1, viewerFocus = null;
-    function renderImageViewer() {
-      const img = imageViewer.querySelector('img');
-      viewerScale = 1; img.style.transform = 'scale(1)'; img.src = viewerUrls[viewerIndex];
-      imageViewer.querySelector('[data-count]').textContent = `${viewerIndex+1} / ${viewerUrls.length}`;
-      imageViewer.querySelector('[data-prev]').disabled = viewerIndex === 0;
-      imageViewer.querySelector('[data-next]').disabled = viewerIndex === viewerUrls.length-1;
-      imageViewer.querySelector('[data-error]').hidden = true;
-    }
-    function openImageViewer(urls, index=0) {
-      if(!urls.length) return;
-      if(!imageViewer) {
-        imageViewer = document.createElement('dialog');
-        imageViewer.setAttribute('aria-label','图片查看器');
-        imageViewer.style.cssText = 'width:96vw;height:94vh;max-width:none;max-height:none;background:#111;color:white;border:0;border-radius:16px;padding:16px;';
-        imageViewer.innerHTML = '<div style="display:flex;justify-content:space-between"><span data-count></span><button data-close>关闭</button></div><div style="height:calc(100% - 70px);overflow:auto;display:flex;align-items:center;justify-content:center"><img alt="图片预览" style="max-width:100%;max-height:100%;object-fit:contain;transform-origin:center"><span data-error hidden>图片暂不可预览，请关闭后重试或保存原图</span></div><div style="display:flex;justify-content:space-between;gap:16px"><button data-prev>上一张</button><span>滚轮缩放 · 双击还原</span><button data-next>下一张</button></div>';
-        document.body.append(imageViewer);
-        imageViewer.querySelector('[data-close]').onclick = () => imageViewer.close();
-        imageViewer.onclose = () => { imageViewer.querySelector('img').removeAttribute('src'); viewerFocus?.focus(); };
-        imageViewer.querySelector('[data-prev]').onclick = () => { if(viewerIndex>0) {viewerIndex--;renderImageViewer();} };
-        imageViewer.querySelector('[data-next]').onclick = () => { if(viewerIndex<viewerUrls.length-1) {viewerIndex++;renderImageViewer();} };
-        const img = imageViewer.querySelector('img');
-        img.onerror = () => { imageViewer.querySelector('[data-error]').hidden = false; };
-        img.ondblclick = () => {viewerScale=1;img.style.transform='scale(1)';};
-        img.addEventListener('wheel', e => { e.preventDefault();viewerScale=Math.max(1,Math.min(8,viewerScale*(e.deltaY<0?1.2:1/1.2)));img.style.transform=`scale(${viewerScale})`; },{passive:false});
-        imageViewer.addEventListener('keydown', e => {
-          if(e.key==='ArrowLeft') imageViewer.querySelector('[data-prev]').click();
-          if(e.key==='ArrowRight') imageViewer.querySelector('[data-next]').click();
-        });
-      }
-      viewerFocus=document.activeElement; viewerUrls=urls; viewerIndex=Math.max(0,Math.min(index,urls.length-1));
-      renderImageViewer(); if(!imageViewer.open) imageViewer.showModal();
-    }
-    const selectedImages = new Set();
-    async function analyzeImages() {
-      const button = document.getElementById('image-analyze');
-      button.disabled = true; button.textContent = '正在解析…';
-      imagePost = null; selectedImages.clear();
-      document.getElementById('image-error').textContent = '';
-      document.getElementById('image-result').hidden = true;
-      try {
-        const response = await fetch('/api/images/analyze', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:document.getElementById('image-url').value})});
-        const post = await response.json();
-        if (!response.ok) throw new Error(post.detail || '解析失败');
-        showImagePost(post);
-      } catch(error) { document.getElementById('image-error').textContent = error.message; }
-      finally { button.disabled = false; button.textContent = '解析图文'; }
-    }
-    function showImagePost(post) {
-      selectedImages.clear();
-        imagePost = post; post.resources.forEach(item => selectedImages.add(item.id));
-        document.getElementById('image-title').textContent = post.title;
-        document.getElementById('image-source').textContent = `${post.resources.length} 张图片。` + (post.resources.some(item => !item.original) ? '部分图片为平台可用资源，暂不能确认无水印或原始尺寸。' : '平台返回的原图资源；保留原始格式及动画。');
-        const grid = document.getElementById('image-grid'); grid.replaceChildren();
-        post.resources.forEach((item,index) => {
-          const card = document.createElement('div'); card.className = 'border rounded-xl p-2';
-          const image = document.createElement('img'); image.src = item.previewUrl || item.url; image.referrerPolicy = 'no-referrer'; image.loading = 'lazy'; image.alt = `第 ${index+1} 张`; image.className = 'w-full h-44 object-contain';
-          const check = document.createElement('input'); check.type = 'checkbox'; check.checked = true; check.dataset.imageId = item.id;
-          check.setAttribute('aria-label', `选择第 ${index+1} 张图片`);
-          image.tabIndex = 0; image.style.cursor = 'zoom-in';
-          image.onclick = () => openImageViewer(post.resources.map(i => i.previewUrl || i.url), index);
-          image.onkeydown = e => { if(e.key === 'Enter') image.click(); };
-          check.addEventListener('change', () => check.checked ? selectedImages.add(item.id) : selectedImages.delete(item.id));
-          card.append(image,check,document.createTextNode(` ${index+1} · ${item.width}×${item.height} · ${item.original ? '平台原图' : '来源待确认'}`)); grid.append(card);
-        });
-        document.getElementById('image-result').hidden = false;
-    }
-    async function openImagesAssist() {
-      const response=await fetch('/api/browser-assist/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:document.getElementById('image-url').value})});
-      const result=await response.json();showToast(response.ok?'请在新窗口打开目标抖音图文，完成验证后返回点击提取':result.detail,!response.ok);
-    }
-    async function captureBrowserImages() {
-      const button=document.getElementById('image-browser-capture');button.disabled=true;
-      try {
-        const response=await fetch('/api/browser-assist/images',{method:'POST'});const post=await response.json();
-        if(!response.ok) throw new Error(post.detail||'读取失败');
-        showImagePost(post);document.getElementById('image-error').textContent='';
-      } catch(error){document.getElementById('image-error').textContent=error.message;}
-      finally{button.disabled=false;}
-    }
-    function selectImages(value) {
-      document.querySelectorAll('[data-image-id]').forEach(check => {check.checked=value; if(value)selectedImages.add(check.dataset.imageId);else selectedImages.delete(check.dataset.imageId);});
-    }
-    async function downloadImages(archive) {
-      if (!imagePost || !selectedImages.size) return showToast('请先选择图片',true);
-      const ids = imagePost.resources.filter(item => selectedImages.has(item.id)).map(item => item.id);
-      const groups = archive ? [ids] : ids.map(id => [id]);
-      const group = crypto.randomUUID();
-      const tasks = groups.map((batch,index) => ({url:imagePost.url,title:`${imagePost.title} (${archive ? '原图归档' : index+1})`,author:imagePost.author,downloadType:archive?'IMAGE_ZIP':'IMAGE',imagePlatform:imagePost.platform,selectedImageIds:batch,mediaId:imagePost.contentId,collectionId:groups.length>1?group:null,collectionTitle:imagePost.title,episodeIndex:index+1,episodeTotal:groups.length}));
-      const response = await fetch('/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tasks})});
-      if (!response.ok) return showToast((await response.json()).detail||'创建任务失败',true);
-      switchTab('tasks');
-    }
-
-    // 标签切换
-    function switchTab(tab) {
-      ['home', 'images', 'tasks', 'settings'].forEach(t => {
-        const el = document.getElementById(`tab-${t}`);
-        const nav = document.getElementById(`nav-${t}`);
-        if (t === tab) {
-          el.classList.remove('hidden');
-          nav.classList.add('bg-white', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400', 'shadow-sm');
-          nav.classList.remove('text-slate-600', 'dark:text-slate-300');
-        } else {
-          el.classList.add('hidden');
-          nav.classList.remove('bg-white', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400', 'shadow-sm');
-          nav.classList.add('text-slate-600', 'dark:text-slate-300');
-        }
-      });
-      if (tab === 'tasks') {
-        fetchTasks();
-      }
-    }
-
-    // 弹出 Toast
-    function showToast(msg, isError = false) {
-      const toast = document.getElementById('toast');
-      const toastMsg = document.getElementById('toast-msg');
-      const toastIcon = document.getElementById('toast-icon');
-
-      toastMsg.innerText = msg;
-      if (isError) {
-        toastIcon.className = 'fa-solid fa-circle-exclamation text-rose-400';
-      } else {
-        toastIcon.className = 'fa-solid fa-circle-check text-cyan-400';
-      }
-
-      toast.classList.remove('translate-y-12', 'opacity-0');
-      setTimeout(() => {
-        toast.classList.add('translate-y-12', 'opacity-0');
-      }, 3000);
-    }
-
-    // 粘贴剪贴板内容
-    async function pasteClipboard() {
-      try {
-        const text = await navigator.clipboard.readText();
-        if (text) {
-          document.getElementById('input-url').value = text.trim();
-          showToast("已粘贴剪贴板内容");
-          startAnalyze();
-        }
-      } catch (err) {
-        showToast("无法直接读取剪贴板，请手动使用 Ctrl+V 粘贴", true);
-      }
-    }
-
-    // 发起视频解析
-    async function startAnalyze() {
-      const url = document.getElementById('input-url').value.trim();
-      if (!url) {
-        showToast("请输入有效视频链接或分享口令", true);
-        return;
-      }
-
-      const btn = document.getElementById('btn-analyze');
-      const origHtml = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i><span>解析中</span>`;
-
-      try {
-        const resp = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ url })
-        });
-        const data = await resp.json();
-        if (!resp.ok) {
-          throw new Error(data.detail || "解析失败");
-        }
-        currentMetadata = data;
-        selectedType = data.isGif ? 'VIDEO_ONLY' : 'VIDEO_WITH_AUDIO';
-        renderAnalyzeResult(data);
-        selectDownloadType(selectedType);
-      } catch (e) {
-        showToast(e.message, true);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = origHtml;
-      }
-    }
-
-    // 渲染解析结果
-    function renderAnalyzeResult(data) {
-      document.getElementById('analyze-result').classList.remove('hidden');
-      document.getElementById('meta-title').innerText = data.title;
-      document.getElementById('meta-author').innerHTML = `<i class="fa-regular fa-circle-user text-indigo-600 dark:text-indigo-400"></i><span>${data.author || '网络创作者'}</span>`;
-      document.getElementById('meta-thumb').src = data.thumbnailUrl || '';
-      document.getElementById('meta-duration').innerText = data.durationText || '';
-      document.getElementById('meta-site').innerText = data.siteName || '网络视频';
-      document.getElementById('meta-url').innerText = data.url;
-      document.getElementById('meta-access').innerText = data.siteName === '哔哩哔哩' ? `当前账号：${data.accountName || '未验证'} · 访问：${data.accessState || 'UNKNOWN'}` : '';
-
-      // 默认选中第一项清晰度
-      selectedFormatId = (data.availableVideoFormats && data.availableVideoFormats.length > 0)
-        ? data.availableVideoFormats[0].formatId
-        : 'best';
-
-      renderFormatOptions(data.availableVideoFormats || []);
-      renderEpisodes(data.multiMediaList || []);
-      selectDownloadType(selectedType);
-
-      // 自动平滑滚动到结果卡片
-      document.getElementById('analyze-result').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    // 切换下载类型
-    function selectDownloadType(type) {
-      selectedType = type;
-      document.querySelectorAll('.type-btn').forEach(btn => {
-        const btnType = btn.dataset.type;
-        const icon = btn.querySelector('i');
-        if (btnType === type) {
-          btn.className = 'type-btn p-3 rounded-2xl border-2 border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-100 text-left transition flex flex-col justify-between';
-          icon.className = 'fa-solid fa-circle-check text-indigo-600 dark:text-indigo-400 text-xs';
-        } else {
-          btn.className = 'type-btn p-3 rounded-2xl border border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500 text-slate-700 dark:text-slate-200 text-left transition flex flex-col justify-between';
-          icon.className = 'fa-regular fa-circle text-slate-300 dark:text-slate-500 text-xs';
-        }
-      });
-
-      const resSection = document.getElementById('resolution-section');
-      const audioSection = document.getElementById('audio-format-section');
-
-      if (type === 'VIDEO_WITH_AUDIO' || type === 'VIDEO_ONLY') {
-        resSection.classList.remove('hidden');
-        audioSection.classList.add('hidden');
-      } else if (type === 'AUDIO_ONLY') {
-        resSection.classList.add('hidden');
-        audioSection.classList.remove('hidden');
-      } else {
-        resSection.classList.add('hidden');
-        audioSection.classList.add('hidden');
-      }
-    }
-
-    // 渲染清晰度选项
-    function renderFormatOptions(formats) {
-      const container = document.getElementById('format-options-container');
-      container.innerHTML = '';
-
-      formats.forEach((fmt, idx) => {
-        const isSelected = fmt.formatId === selectedFormatId || (idx === 0 && !selectedFormatId);
-        const card = document.createElement('div');
-        card.className = `p-3 rounded-2xl cursor-pointer border transition flex flex-col justify-between ${
-          isSelected ? 'border-2 border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/50' : 'border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500'
-        }`;
-        card.onclick = () => {
-          selectedFormatId = fmt.formatId;
-          document.getElementById('quality-policy').value = 'EXACT_FORMAT';
-          renderFormatOptions(formats);
-        };
-
-        card.innerHTML = `
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs font-bold text-slate-800 dark:text-slate-100">${fmt.resolutionLabel}</span>
-            <i class="${isSelected ? 'fa-solid fa-circle-check text-indigo-600 dark:text-indigo-400' : 'fa-regular fa-circle text-slate-300 dark:text-slate-500'} text-xs"></i>
+    <!-- S01 首页 (HomeScreen) -->
+    <section class="page" id="page-home" aria-label="首页">
+      <div class="home-stack">
+        <!-- 顶部品牌区 HomeHero -->
+        <header class="home-hero">
+          <div class="home-hero__badge-box" aria-hidden="true">
+            <i data-icon="cloud_download"></i>
           </div>
-          <div class="flex items-center justify-between text-[10px] text-slate-400">
-            <span>${fmt.ext.toUpperCase()}</span>
-            <span>${fmt.approximateSize || fmt.note || ''}</span>
+          <div class="home-hero__title-wrap">
+            <span class="home-hero__title">OmniDownloader</span>
+            <span class="home-hero__ver">v1.7.60</span>
           </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    // 切换导出音频格式
-    function selectAudioFormat(fmt) {
-      selectedAudioFormat = fmt;
-      document.querySelectorAll('.audio-fmt-btn').forEach(btn => {
-        if (btn.dataset.audio === fmt) {
-          btn.className = 'audio-fmt-btn px-4 py-2.5 rounded-xl border-2 border-indigo-600 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-bold';
-        } else {
-          btn.className = 'audio-fmt-btn px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-xs font-bold';
-        }
-      });
-    }
-
-    // 渲染合集列表
-    function renderEpisodes(multiList) {
-      const colSection = document.getElementById('collection-section');
-      const container = document.getElementById('episodes-list');
-      container.innerHTML = '';
-
-      if (!multiList || multiList.length <= 1) {
-        colSection.classList.add('hidden');
-        return;
-      }
-
-      colSection.classList.remove('hidden');
-      document.getElementById('collection-count-badge').innerText = `共 ${multiList.length} 集`;
-
-      multiList.forEach((ep, idx) => {
-        const item = document.createElement('label');
-        item.className = 'flex items-center space-x-2.5 p-2 rounded-xl hover:bg-indigo-100/50 dark:hover:bg-indigo-900/50 cursor-pointer transition';
-        item.innerHTML = `
-          <input type="checkbox" name="episode-item" value="${idx}" checked class="rounded text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 w-4 h-4" />
-          <span class="font-medium text-slate-700 dark:text-slate-200 truncate">${ep.title}</span>
-          <span class="text-[10px] text-slate-400 ml-auto flex-shrink-0">${ep.durationText || ''}</span>
-        `;
-        container.appendChild(item);
-      });
-    }
-
-    function selectAllEpisodes(checked) {
-      document.querySelectorAll('input[name="episode-item"]').forEach(cb => cb.checked = checked);
-    }
-
-    function invertEpisodes() {
-      document.querySelectorAll('input[name="episode-item"]').forEach(cb => cb.checked = !cb.checked);
-    }
-
-    async function openHeyboxAssist() {
-      const response = await fetch('/api/browser-assist/open', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:document.getElementById('input-url').value})});
-      const data = await response.json(); showToast(response.ok ? '请在新窗口手动播放目标视频，然后点击读取已播放媒体' : data.detail, !response.ok);
-    }
-    async function captureHeyboxMedia() {
-      const response = await fetch('/api/browser-assist/candidates'); const data = await response.json();
-      if (!response.ok) { showToast(data.detail,true); return; }
-      if (!data.length) { showToast('尚未发现可保存的已播放源；blob或加密媒体不适用',true); return; }
-      const source = data[0];
-      if (!confirm(`确认保存刚刚播放的目标内容？\n${source.title}\n${source.width}×${source.height}\n来源：${new URL(source.url).hostname}`)) return;
-      const result = await fetch('/api/download', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tasks:[{url:source.url,title:source.title || '小黑盒视频',downloadType:'VIDEO_WITH_AUDIO',selectedResolution:'best',qualitySelection:{mode:'BEST_AVAILABLE'}}]})});
-      showToast(result.ok ? '已加入下载队列' : '提交失败',!result.ok);
-    }
-
-    function selectedQualityPolicy(batch = false) {
-      const choice = document.getElementById('quality-policy').value;
-      const intent = {mode:choice, allowLowerQuality:document.getElementById('quality-allow-lower').checked,
-                      container:document.getElementById('quality-container').value};
-      if (choice.startsWith('MAX_') || choice.startsWith('TARGET_')) {
-        intent.maxHeight = Number(choice.split('_')[1]); intent.mode = choice.startsWith('MAX_') ? 'MAX_HEIGHT' : 'TARGET_TIER';
-      }
-      if (choice === 'HDR' || choice === 'SDR') { intent.mode = 'BEST_AVAILABLE'; intent.dynamicRangePreference = choice; }
-      if (choice === 'FPS60') { intent.mode = 'BEST_AVAILABLE'; intent.targetFps = 60; }
-      if (choice === 'COMPATIBLE') { intent.mode = 'BEST_AVAILABLE'; intent.codecPreference = 'avc'; }
-      if (batch && choice === 'EXACT_FORMAT') {
-        const format = currentMetadata.availableVideoFormats.find(f => f.formatId === selectedFormatId);
-        intent.mode = 'MAX_HEIGHT'; intent.maxHeight = format ? Math.min(format.width || format.height, format.height) : 0;
-      }
-      return intent;
-    }
-
-    // 提交下载
-    async function submitDownload() {
-      if (!currentMetadata) return;
-
-      const tasksToCreate = [];
-      const multi = currentMetadata.multiMediaList || [];
-
-      if (multi.length > 1) {
-        // 多集分批加入
-        const checkedBoxes = Array.from(document.querySelectorAll('input[name="episode-item"]:checked'));
-        if (checkedBoxes.length === 0) {
-          showToast("请至少勾选一个分集进行下载", true);
-          return;
-        }
-
-        checkedBoxes.forEach(cb => {
-          const idx = parseInt(cb.value);
-          const ep = multi[idx];
-          tasksToCreate.push({
-            url: ep.url,
-            title: `${currentMetadata.title} - ${ep.title}`,
-            downloadType: selectedType,
-            selectedResolution: 'best',
-            mediaId: ep.mediaId || '',
-            qualitySelection: selectedQualityPolicy(true),
-            audioFormat: selectedAudioFormat,
-            thumbnailUrl: ep.thumbnailUrl || currentMetadata.thumbnailUrl,
-            author: currentMetadata.author,
-            collectionId: currentMetadata.url,
-            collectionTitle: currentMetadata.title,
-            episodeIndex: idx + 1,
-            episodeTotal: multi.length
-          });
-        });
-      } else {
-        // 单集加入
-        tasksToCreate.push({
-          url: currentMetadata.url,
-          title: currentMetadata.title,
-          downloadType: selectedType,
-          selectedResolution: selectedQualityPolicy().mode === 'EXACT_FORMAT' ? selectedFormatId : 'best',
-          selectedVideoFormatId: selectedQualityPolicy().mode === 'EXACT_FORMAT' ? selectedFormatId : '',
-          mediaId: currentMetadata.mediaId || '',
-          qualitySelection: selectedQualityPolicy(),
-          audioFormat: selectedAudioFormat,
-          thumbnailUrl: currentMetadata.thumbnailUrl,
-          author: currentMetadata.author
-        });
-      }
-
-      const btn = document.getElementById('btn-submit-download');
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i><span>正在加入队列...</span>`;
-
-      try {
-        const resp = await fetch('/api/download', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ tasks: tasksToCreate })
-        });
-        if (!resp.ok) throw new Error("提交下载失败");
-
-        showToast(`已成功添加 ${tasksToCreate.length} 个下载任务！`);
-        // 自动跳转到任务列表
-        setTimeout(() => {
-          switchTab('tasks');
-        }, 500);
-      } catch (e) {
-        showToast(e.message, true);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-arrow-down-to-line"></i><span>立即加入下载队列</span>`;
-      }
-    }
-
-    // 获取并更新任务列表
-    async function fetchTasks() {
-      try {
-        const resp = await fetch('/api/tasks');
-        allTasks = await resp.json();
-        renderTaskList(allTasks);
-      } catch (e) {
-        console.error("加载任务失败", e);
-      }
-    }
-
-    // 一键清空历史下载记录
-    async function clearAllHistoryTasks() {
-      const finishedTasks = allTasks.filter(t => ['COMPLETED', 'FAILED', 'CANCELLED'].includes(t.status));
-      if (!finishedTasks || finishedTasks.length === 0) {
-        showToast("暂无可清空的历史记录");
-        return;
-      }
-
-      if (!confirm(`确定要清空全部 ${finishedTasks.length} 条已完成/失败的历史下载记录吗？\n（注：本地已下载完成的文件不会被删除）`)) {
-        return;
-      }
-
-      try {
-        const resp = await fetch('/api/tasks/clear', { method: 'POST' });
-        if (resp.ok) {
-          showToast(`已清空 ${finishedTasks.length} 条历史记录`);
-          await fetchTasks();
-        } else {
-          showToast("清空记录失败", true);
-        }
-      } catch (err) {
-        showToast("请求失败: " + err.message, true);
-      }
-    }
-
-    // 安全转义 HTML 文本，杜绝 XSS 注入风险
-    function escapeHtml(str) {
-      if (str === null || str === undefined) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    function getStatusBadgeHtml(status) {
-      switch(status) {
-        case 'DOWNLOADING':
-          return '<span class="px-2 py-0.5 text-[10px] rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold"><i class="fa-solid fa-arrow-down mr-1"></i>正在下载</span>';
-        case 'PROCESSING':
-          return '<span class="px-2 py-0.5 text-[10px] rounded-md bg-cyan-50 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 font-bold"><i class="fa-solid fa-arrows-spin fa-spin mr-1"></i>混流封装中</span>';
-        case 'COMPLETED':
-          return '<span class="px-2 py-0.5 text-[10px] rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold"><i class="fa-solid fa-check mr-1"></i>已完成</span>';
-        case 'WAITING_FOR_AUTH':
-          return '<span class="text-amber-600 text-xs">等待登录/验证，请导入会话后重试</span>';
-        case 'FAILED':
-          return '<span class="px-2 py-0.5 text-[10px] rounded-md bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold"><i class="fa-solid fa-xmark mr-1"></i>下载失败</span>';
-        case 'CANCELLED':
-          return '<span class="px-2 py-0.5 text-[10px] rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold">已取消</span>';
-        default:
-          return '<span class="px-2 py-0.5 text-[10px] rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold">排队中</span>';
-      }
-    }
-
-    function getTaskActionsHtml(t) {
-      let actions = '';
-      if (t.status === 'FAILED' || t.status === 'CANCELLED' || t.status === 'WAITING_FOR_AUTH') {
-        actions += `<button onclick="fetch('/api/tasks/${t.id}/retry',{method:'POST'}).then(() => fetchTasks())" class="px-3 py-1.5 rounded-lg border text-xs">${t.errorCode === 'EXPORT_FAILED' ? '重试导出' : '重试'}</button>`;
-      }
-
-      if (t.status === 'COMPLETED') {
-        if(['IMAGE','COVER','GIF'].includes(t.downloadType)) actions += `<button onclick="openImageViewer(['/api/tasks/${t.id}/download'])" class="px-3 py-1.5 rounded-lg border text-xs">查看图片</button>`;
-        actions += `
-          <a href="/api/tasks/${t.id}/download" download title="通过浏览器保存到当前设备" class="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-xs transition shadow-sm">
-            <i class="fa-solid fa-download"></i>
-          </a>
-          <button onclick="openFile('${t.id}')" title="在服务端电脑中定位" class="w-7 h-7 flex items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-xs transition">
-            <i class="fa-regular fa-folder-open"></i>
+          <button class="icon-btn icon-btn--sm" id="btn-home-help" title="使用说明" aria-label="使用说明">
+            <i data-icon="help"></i>
           </button>
-        `;
-      }
-      if (t.status === 'DOWNLOADING' || t.status === 'PENDING') {
-        actions += `
-          <button onclick="cancelTask('${t.id}')" title="取消下载" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-rose-100 dark:hover:bg-rose-900 hover:text-rose-600 dark:hover:text-rose-400 text-xs transition">
-            <i class="fa-solid fa-stop"></i>
+        </header>
+
+        <!-- 支持平台标签 HomePlatformChips -->
+        <div class="platform-wrap" id="platform-wrap">
+          <div class="platform-chips" id="platform-list"></div>
+          <div class="platform-catalog-row">
+            <button class="btn btn-text btn-sm" id="btn-ytdlp-catalog" type="button">yt-dlp 支持的平台</button>
+          </div>
+        </div>
+
+        <!-- 链接输入卡片 HomeInputPanel -->
+        <div class="omni-card omni-card--compact">
+          <div class="m3-filled-field">
+            <span class="m3-filled-field__leading"><i data-icon="link"></i></span>
+            <input id="input-url" type="text"
+                   placeholder="粘贴视频链接或分享文本..."
+                   aria-label="粘贴视频链接或分享文本..."
+                   spellcheck="false" autocomplete="off">
+            <div class="m3-filled-field__trailing">
+              <button class="icon-btn icon-btn--sm" id="btn-input-inline" type="button" title="粘贴" aria-label="粘贴">
+                <i data-icon="content_paste"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="home-input-actions">
+            <button class="btn btn-tonal" id="btn-paste" type="button">
+              <i data-icon="content_paste"></i>
+              <span>粘贴剪贴板</span>
+            </button>
+            <button class="btn btn-primary" id="btn-analyze" type="button">
+              <span id="analyze-btn-icon"><i data-icon="bolt"></i></span>
+              <span id="analyze-label">立即解析</span>
+            </button>
+          </div>
+
+          <!-- 浏览器辅助（折叠收纳，避免干扰主流程） -->
+          <details class="home-assist">
+            <summary>
+              <span>浏览器辅助提取</span>
+              <i data-icon="expand_more" class="m-icon--sm"></i>
+            </summary>
+            <div class="home-assist__body">
+              <button class="btn btn-outline btn-sm" id="btn-browser-assist" type="button">
+                <i data-icon="open_in_new"></i>
+                <span>浏览器辅助</span>
+              </button>
+              <button class="btn btn-outline btn-sm" id="btn-capture-media" type="button">
+                <i data-icon="play_circle"></i>
+                <span>读取已播放媒体</span>
+              </button>
+              <button class="btn btn-outline btn-sm" id="btn-capture-images" type="button">
+                <i data-icon="photo_library"></i>
+                <span>提取已打开的图文</span>
+              </button>
+            </div>
+          </details>
+        </div>
+
+        <!-- 解析错误卡 -->
+        <div class="parse-error-card" id="parse-error" hidden role="alert">
+          <i data-icon="error"></i>
+          <div class="parse-error-card__body">
+            <div class="parse-error-card__title" id="parse-error-title">解析未能成功</div>
+            <div class="parse-error-card__msg" id="parse-error-hint"></div>
+            <div class="parse-error-card__actions" id="parse-error-actions"></div>
+          </div>
+        </div>
+
+        <!-- 最近解析结果快捷恢复条（关闭弹窗后可再次点开） -->
+        <div class="parsed-resume-bar" id="parsed-resume-bar" hidden tabindex="0" role="button">
+          <span class="omni-icon-box"><i data-icon="videocam"></i></span>
+          <div style="flex:1;min-width:0">
+            <div class="parsed-resume-bar__title" id="parsed-resume-title"></div>
+            <div class="caption" id="parsed-resume-sub">点击选择画质并开始下载</div>
+          </div>
+          <span class="btn btn-text btn-sm">下载配置</span>
+        </div>
+
+        <!-- 图文解析结果区（对齐 Android homeImageItems） -->
+        <div id="image-result" hidden class="home-stack">
+          <div class="image-results-head">
+            <div class="image-results-head__title" id="image-title"></div>
+            <div class="image-results-head__sub">
+              <span id="image-count"></span> · <span id="image-source"></span>
+            </div>
+            <div class="caption" id="image-selection" style="color:var(--primary);font-weight:600">已选 0 张</div>
+          </div>
+          <div class="image-actions-bar">
+            <div class="row">
+              <button class="btn btn-text btn-sm" id="btn-image-select-all" type="button">全选</button>
+              <button class="btn btn-text btn-sm" id="btn-image-select-none" type="button">取消全选</button>
+            </div>
+            <div class="row">
+              <button class="btn btn-outline btn-sm" id="btn-image-zip" type="button">
+                <i data-icon="zip"></i>
+                <span>导出 ZIP</span>
+              </button>
+              <button class="btn btn-primary btn-sm" id="btn-image-save" type="button">
+                <i data-icon="download"></i>
+                <span>保存</span>
+              </button>
+            </div>
+          </div>
+          <div class="image-grid" id="image-grid"></div>
+        </div>
+
+        <!-- 备用中转站区块（对齐 Android relaySitesItems） -->
+        <div id="relay-section" hidden>
+          <div class="omni-section-header">
+            <div class="omni-section-header__text">
+              <div class="omni-section-header__title">第三方中转网站</div>
+            </div>
+            <button class="btn btn-text btn-sm" data-nav="settings" data-settings-cat="relay" type="button">前往设置</button>
+          </div>
+          <div class="relay-list" id="relay-home-list"></div>
+          <button class="btn btn-text btn-block btn-sm" id="btn-relay-expand" hidden type="button" style="margin-top:4px"></button>
+        </div>
+
+        <!-- 正在下载 / 最近任务区块（对齐 Android HomeActiveTasksSection） -->
+        <div id="recent-section" hidden>
+          <div class="omni-section-header">
+            <div class="omni-section-header__text">
+              <div class="omni-section-header__title" id="recent-section-title">正在下载的任务</div>
+            </div>
+            <button class="btn btn-text btn-sm" data-nav="tasks" type="button">查看全部</button>
+          </div>
+          <div class="stack" id="recent-list"></div>
+        </div>
+      </div>
+
+      <!-- 回到顶部 FAB（图文浏览长列表时显示） -->
+      <button class="btn btn-primary-container" id="btn-home-top" hidden type="button"
+              aria-label="回到顶部"
+              style="position:fixed;right:20px;bottom:86px;width:48px;height:48px;padding:0;border-radius:14px;z-index:30;box-shadow:var(--shadow-menu)">
+        <i data-icon="keyboard_arrow_up"></i>
+      </button>
+    </section>
+
+    <!-- S02 批量下载 (BatchDownloadScreen) -->
+    <section class="page" id="page-batch" hidden aria-labelledby="batch-title">
+      <div class="batch-stack">
+        <header class="android-page-head">
+          <div class="android-page-head__titles">
+            <h1 class="android-page-head__title" id="batch-title">批量下载</h1>
+            <p class="android-page-head__subtitle">支持分享文本、TXT 文件、100 条链接去重</p>
+          </div>
+        </header>
+
+        <div class="omni-card">
+          <div class="filter-chips" style="margin-bottom:10px">
+            <button class="filter-chip is-selected" id="batch-mode-smart" type="button">智能识别</button>
+            <button class="filter-chip" id="batch-mode-manual" type="button">逐条输入</button>
+          </div>
+
+          <div class="field">
+            <textarea class="textarea" id="batch-text" rows="4"
+                      placeholder="粘贴包含多个视频或图文链接的分享文本，每批最多 100 条..."></textarea>
+          </div>
+
+          <div class="row-wrap" style="margin-top:10px">
+            <button class="btn btn-text btn-sm" id="batch-paste" type="button">
+              <i data-icon="content_paste"></i>
+              <span>粘贴剪贴板</span>
+            </button>
+            <label class="btn btn-text btn-sm batch-file-btn">
+              <i data-icon="folder_open"></i>
+              <span>导入 TXT</span>
+              <input id="batch-file" type="file" accept=".txt,text/plain">
+            </label>
+            <span class="spacer"></span>
+            <button class="btn btn-tonal btn-sm" id="batch-add" type="button">识别并添加</button>
+          </div>
+          <p class="caption" id="batch-error" role="alert" style="color:var(--status-error);margin-top:6px" hidden></p>
+        </div>
+
+        <!-- 批量选项与启动按钮 -->
+        <div class="omni-card">
+          <div class="batch-options-row">
+            <select id="batch-type" aria-label="下载类型">
+              <option value="VIDEO_WITH_AUDIO">音画合流（图文自动 ZIP）</option>
+              <option value="VIDEO_ONLY">纯画面</option>
+              <option value="AUDIO_ONLY">提取音频</option>
+              <option value="GIF">动态图</option>
+              <option value="COVER">封面</option>
+              <option value="IMAGE">原图</option>
+              <option value="IMAGE_ZIP">原图 ZIP</option>
+            </select>
+            <select id="batch-audio" aria-label="音频格式" hidden>
+              <option value="mp3">MP3</option>
+              <option value="m4a">M4A</option>
+              <option value="flac">FLAC</option>
+              <option value="opus">OPUS</option>
+            </select>
+            <label class="row" style="cursor:pointer;font-size:13.5px">
+              <input type="checkbox" id="batch-all">
+              <span>下载全部分集</span>
+            </label>
+          </div>
+
+          <button class="btn btn-primary btn-lg btn-block" id="batch-start" type="button" style="margin-top:12px">
+            <i data-icon="bolt"></i>
+            <span>开始批量下载</span>
           </button>
-        `;
-      }
-      actions += `
-        <button onclick="deleteTask('${t.id}')" title="删除记录" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs transition">
-          <i class="fa-solid fa-trash-can"></i>
+
+          <div class="row-wrap" style="margin-top:8px">
+            <span class="caption" id="batch-summary"></span>
+            <span class="spacer"></span>
+            <button class="btn btn-text btn-sm" data-nav="tasks" type="button">查看任务</button>
+          </div>
+        </div>
+
+        <!-- 待提交待处理链接列表 -->
+        <div id="batch-draft-section" hidden>
+          <div class="omni-section-header">
+            <div class="omni-section-header__text">
+              <div class="omni-section-header__title" id="batch-draft-title">待下载链接 (0)</div>
+            </div>
+            <button class="btn btn-text btn-sm" id="batch-clear-draft" type="button">清空输入</button>
+          </div>
+          <div class="stack" id="batch-draft-list"></div>
+        </div>
+
+        <!-- 历史批次记录 -->
+        <div id="batch-history-section" hidden>
+          <div class="omni-section-header">
+            <div class="omni-section-header__text">
+              <div class="omni-section-header__title">批次记录</div>
+            </div>
+          </div>
+          <div class="stack" id="batch-jobs" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S03 任务页 (TasksScreen) -->
+    <section class="page" id="page-tasks" hidden aria-labelledby="tasks-title">
+      <header class="android-page-head">
+        <div class="android-page-head__titles">
+          <h1 class="android-page-head__title" id="tasks-title">下载管理</h1>
+          <p class="android-page-head__subtitle" id="tasks-subtitle">下载中 0</p>
+        </div>
+        <div class="android-page-head__actions">
+          <button class="icon-btn" id="btn-open-folder" title="打开文件夹" aria-label="打开文件夹" type="button">
+            <i data-icon="folder_open"></i>
+          </button>
+          <button class="icon-btn icon-btn--primary" id="btn-clear-history" title="清空记录" aria-label="清空记录" hidden type="button">
+            <i data-icon="delete_sweep"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Android 同款 3 段式滑动切换器 OmniSegmentedTabs -->
+      <div class="omni-segmented" id="task-filter" role="tablist" aria-label="任务筛选" style="--seg-count:3;--seg-index:0">
+        <div class="omni-segmented__indicator" aria-hidden="true"></div>
+        <button class="omni-segmented__tab is-active" data-filter="all" data-seg-idx="0" role="tab" aria-selected="true">全部 (0)</button>
+        <button class="omni-segmented__tab" data-filter="active" data-seg-idx="1" role="tab" aria-selected="false">下载中 (0)</button>
+        <button class="omni-segmented__tab" data-filter="done" data-seg-idx="2" role="tab" aria-selected="false">已完成 (0)</button>
+      </div>
+
+      <div class="tasks-list" id="tasks-container"></div>
+
+      <div class="omni-empty" id="tasks-empty" hidden>
+        <div class="omni-empty__circle" id="tasks-empty-icon"><i data-icon="inbox"></i></div>
+        <div class="omni-empty__title" id="tasks-empty-title">暂无任何下载任务</div>
+        <div class="omni-empty__desc" id="tasks-empty-desc">粘贴视频链接并解析，即可开始下载。</div>
+      </div>
+    </section>
+
+    <!-- S04 设置页 (SettingsScreen + SettingsNavigation 分层结构) -->
+    <section class="page" id="page-settings" hidden aria-labelledby="settings-toolbar-title">
+      <!-- 顶部工具栏 SettingsToolbar -->
+      <header class="settings-toolbar">
+        <button class="icon-btn" id="btn-settings-back" hidden title="返回" aria-label="返回" type="button">
+          <i data-icon="arrow_back"></i>
         </button>
-      `;
-      return actions;
-    }
+        <h1 class="settings-toolbar__title" id="settings-toolbar-title">偏好设置</h1>
+        <!-- 一级页面右侧直接切换外观主题（对齐 Android SettingsScreen ROOT 右上角 SettingDropdown） -->
+        <div class="omni-dropdown" id="theme-dropdown-wrap">
+          <button class="omni-dropdown__trigger" id="theme-dropdown-btn" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span id="theme-dropdown-label">跟随系统</span>
+            <i data-icon="arrow_drop_down"></i>
+          </button>
+        </div>
+      </header>
 
-    function getProgressBarClass(status) {
-      switch(status) {
-        case 'PROCESSING': return 'bg-cyan-500';
-        case 'COMPLETED': return 'bg-emerald-500';
-        case 'FAILED': return 'bg-rose-500';
-        case 'CANCELLED': return 'bg-slate-400';
-        default: return 'bg-gradient-to-r from-indigo-600 to-cyan-500';
-      }
-    }
+      <!-- 一级菜单 (SettingsPage.ROOT) -->
+      <div id="settings-root-view">
+        <div class="omni-setting-row" style="padding:11px 8px">
+          <span class="omni-icon-box"><i data-icon="language"></i></span>
+          <div class="omni-setting-row__body">
+            <div class="omni-setting-row__title">语言 (Language)</div>
+          </div>
+          <div class="omni-dropdown" id="lang-dropdown-wrap">
+            <button class="omni-dropdown__trigger" id="lang-dropdown-btn" type="button" aria-haspopup="menu" aria-expanded="false">
+              <span id="lang-dropdown-label">简体中文</span>
+              <i data-icon="arrow_drop_down"></i>
+            </button>
+          </div>
+        </div>
 
-    function buildTaskCardHtml(t) {
-      const isAnimated = t.status === 'DOWNLOADING';
-      const progressColor = getProgressBarClass(t.status);
-      const safeTitle = escapeHtml(t.title);
-      const safeResolution = t.selectedResolution ? `<span>· ${escapeHtml(t.selectedResolution)}</span>` : '';
-      const safeSize = t.fileSizeText ? `<span>· ${escapeHtml(t.fileSizeText)}</span>` : '';
-      const safeDownloadType = escapeHtml(({IMAGE:'原始图片',IMAGE_ZIP:'图文 ZIP 归档'})[t.downloadType] || t.downloadType);
-      const safeEta = t.etaText ? `剩余: ${escapeHtml(t.etaText)}` : (t.errorMessage ? `<span class="text-rose-500 dark:text-rose-400 truncate max-w-xs">${escapeHtml(t.errorMessage)}</span>` : '');
+        <div id="settings-category-list">
+          <button class="settings-cat-row" data-cat="downloads" type="button">
+            <span class="settings-cat-row__icon"><i data-icon="folder"></i></span>
+            <span class="settings-cat-row__text">
+              <div class="settings-cat-row__title">下载与存储</div>
+              <div class="settings-cat-row__summary">保存目录、并发与自动化行为</div>
+            </span>
+            <span class="settings-cat-row__arrow"><i data-icon="chevron_right"></i></span>
+          </button>
 
-      return `
-        <div id="task-card-${t.id}" data-status="${t.status}" class="task-card-item bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 border border-indigo-100/70 dark:border-indigo-900/70 shadow-sm space-y-3 transition hover:shadow-md">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-center space-x-3 min-w-0">
-              <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden flex-shrink-0 relative">
-                ${t.thumbnailUrl ? `<img src="${escapeHtml(t.thumbnailUrl)}" class="w-full h-full object-cover" />` : `<div class="w-full h-full flex items-center justify-center text-indigo-400"><i class="fa-solid fa-file-video"></i></div>`}
-              </div>
-              <div class="min-w-0">
-                <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 truncate" title="${safeTitle}">${safeTitle}</h4>
-                <div class="flex items-center space-x-2 text-[11px] text-slate-400 mt-0.5">
-                  <span>${safeDownloadType}</span>
-                  ${safeResolution}
-                  ${safeSize}
-                </div>
-              </div>
-            </div>
-            <div class="flex-shrink-0 flex items-center space-x-2">
-              <span class="task-status-badge-container">${getStatusBadgeHtml(t.status)}</span>
-              <div class="task-actions-container flex items-center space-x-2">${getTaskActionsHtml(t)}</div>
+          <button class="settings-cat-row" data-cat="network" type="button">
+            <span class="settings-cat-row__icon"><i data-icon="public"></i></span>
+            <span class="settings-cat-row__text">
+              <div class="settings-cat-row__title">网络代理</div>
+              <div class="settings-cat-row__summary">HTTP 与 SOCKS 代理连接</div>
+            </span>
+            <span class="settings-cat-row__arrow"><i data-icon="chevron_right"></i></span>
+          </button>
+
+          <button class="settings-cat-row" data-cat="relay" type="button">
+            <span class="settings-cat-row__icon"><i data-icon="dns"></i></span>
+            <span class="settings-cat-row__text">
+              <div class="settings-cat-row__title">中转站</div>
+              <div class="settings-cat-row__summary">添加、管理和删除解析站点</div>
+            </span>
+            <span class="settings-cat-row__arrow"><i data-icon="chevron_right"></i></span>
+          </button>
+
+          <button class="settings-cat-row" data-cat="accounts" type="button">
+            <span class="settings-cat-row__icon"><i data-icon="account_circle"></i></span>
+            <span class="settings-cat-row__text">
+              <div class="settings-cat-row__title">账号</div>
+              <div class="settings-cat-row__summary">Cookie 与登录管理</div>
+            </span>
+            <span class="settings-cat-row__arrow"><i data-icon="chevron_right"></i></span>
+          </button>
+
+          <button class="settings-cat-row" data-cat="engine" type="button">
+            <span class="settings-cat-row__icon"><i data-icon="cloud_download"></i></span>
+            <span class="settings-cat-row__text">
+              <div class="settings-cat-row__title">下载引擎</div>
+              <div class="settings-cat-row__summary">运行状态与组件更新</div>
+            </span>
+            <span class="settings-cat-row__arrow"><i data-icon="chevron_right"></i></span>
+          </button>
+
+          <button class="settings-cat-row" data-cat="about" type="button">
+            <span class="settings-cat-row__icon"><i data-icon="info"></i></span>
+            <span class="settings-cat-row__text">
+              <div class="settings-cat-row__title">关于</div>
+              <div class="settings-cat-row__summary">应用版本与支持平台</div>
+            </span>
+            <span class="settings-cat-row__arrow"><i data-icon="chevron_right"></i></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 二级子页：下载与存储 (DOWNLOADS) -->
+      <div class="settings-subpage" data-panel="downloads" hidden>
+        <div class="omni-section-header">
+          <div class="omni-section-header__text"><div class="omni-section-header__title">存储目录设置</div></div>
+        </div>
+        <div class="omni-card">
+          <div class="row" style="gap:12px">
+            <span class="omni-icon-box"><i data-icon="folder"></i></span>
+            <div style="flex:1;min-width:0">
+              <div class="truncate" id="setting-download-dir-preview" style="font-size:13.5px;font-weight:600;color:var(--primary)">默认目录</div>
+              <div class="caption">所有媒体文件将保存在此文件夹</div>
             </div>
           </div>
+          <div class="field" style="margin-top:12px">
+            <input class="input" id="setting-download-dir" type="text" spellcheck="false" placeholder="输入保存路径">
+          </div>
+          <div class="row-wrap" style="justify-content:flex-end;margin-top:10px">
+            <button class="btn btn-outline btn-sm" id="btn-open-download-dir" type="button">
+              <i data-icon="folder_open"></i>
+              <span>打开</span>
+            </button>
+            <button class="btn btn-primary btn-sm" id="btn-save-downloads" type="button">保存设置</button>
+          </div>
+        </div>
 
-          <!-- 进度条与速率 -->
-          <div class="space-y-1.5">
-            <div class="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-              <div class="task-progress-bar h-full rounded-full transition-all duration-300 ${progressColor} ${isAnimated ? 'pulse-bar' : ''}" style="width: ${Math.min(Math.max(t.progress, 0), 100)}%"></div>
+        <div class="omni-section-header">
+          <div class="omni-section-header__text"><div class="omni-section-header__title">下载与系统行为</div></div>
+        </div>
+        <div class="omni-card" style="padding:4px 0">
+          <div class="omni-setting-row">
+            <span class="omni-icon-box"><i data-icon="downloading"></i></span>
+            <div class="omni-setting-row__body">
+              <div class="omni-setting-row__title">最大同时下载任务数</div>
+              <div class="omni-setting-row__desc">并发越高占用带宽越多</div>
             </div>
-            <div class="flex items-center justify-between text-[11px] text-slate-400">
-              <span class="task-progress-text">${t.progress.toFixed(1)}% ${t.speedText ? '· ' + escapeHtml(t.speedText) : ''}</span>
-              <span class="task-eta-text">${safeEta}</span>
+            <select id="setting-concurrent" style="width:auto;min-height:36px;padding:4px 28px 4px 10px">
+              <option value="1">1 个</option>
+              <option value="2">2 个</option>
+              <option value="3">3 个</option>
+              <option value="5">5 个</option>
+            </select>
+          </div>
+          <hr class="omni-divider omni-divider--indent">
+          <label class="omni-setting-row" style="cursor:pointer">
+            <span class="omni-icon-box"><i data-icon="file_save"></i></span>
+            <div class="omni-setting-row__body">
+              <div class="omni-setting-row__title">完成后自动调起浏览器下载</div>
+              <div class="omni-setting-row__desc">适合局域网内的手机或平板取回文件</div>
+            </div>
+            <span class="m3-switch">
+              <input type="checkbox" id="setting-auto-browser-download">
+              <span class="m3-switch__track"></span>
+            </span>
+          </label>
+          <hr class="omni-divider omni-divider--indent">
+          <label class="omni-setting-row" style="cursor:pointer">
+            <span class="omni-icon-box"><i data-icon="bolt"></i></span>
+            <div class="omni-setting-row__body">
+              <div class="omni-setting-row__title">开机自动运行网页服务</div>
+              <div class="omni-setting-row__desc">在后台静默启动，常驻系统托盘</div>
+            </div>
+            <span class="m3-switch">
+              <input type="checkbox" id="setting-autostart">
+              <span class="m3-switch__track"></span>
+            </span>
+          </label>
+          <hr class="omni-divider omni-divider--indent">
+          <label class="omni-setting-row" style="cursor:pointer">
+            <span class="omni-icon-box"><i data-icon="dark_mode"></i></span>
+            <div class="omni-setting-row__body">
+              <div class="omni-setting-row__title">纯黑背景 (AMOLED)</div>
+              <div class="omni-setting-row__desc">深色模式下使用纯黑底色降低功耗</div>
+            </div>
+            <span class="m3-switch">
+              <input type="checkbox" id="setting-amoled">
+              <span class="m3-switch__track"></span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 二级子页：网络代理 (NETWORK) -->
+      <div class="settings-subpage" data-panel="network" hidden>
+        <div class="omni-section-header">
+          <div class="omni-section-header__text">
+            <div class="omni-section-header__title">网络代理设置 (Proxy)</div>
+            <div class="omni-section-header__sub">支持 HTTP / HTTPS / SOCKS5 代理；留空时使用直连网络</div>
+          </div>
+        </div>
+        <div class="omni-card">
+          <input class="input" id="setting-proxy" type="text" placeholder="http://127.0.0.1:7890" spellcheck="false">
+          <div class="row-wrap" style="justify-content:flex-end;margin-top:10px">
+            <button class="btn btn-outline btn-sm" id="btn-clear-proxy" hidden type="button">清空代理</button>
+            <button class="btn btn-primary btn-sm" id="btn-save-proxy" type="button">保存并应用</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 二级子页：中转站 (RELAY) -->
+      <div class="settings-subpage" data-panel="relay" hidden>
+        <div class="omni-section-header">
+          <div class="omni-section-header__text">
+            <div class="omni-section-header__title" id="relay-header-title">第三方中转网站 (0)</div>
+            <div class="omni-section-header__sub">自定义添加备用解析站点，在首页中转解析时直接调用</div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-add-relay" type="button">
+            <i data-icon="add"></i>
+            <span>添加网址</span>
+          </button>
+        </div>
+        <div class="stack" id="relay-settings-list"></div>
+      </div>
+
+      <!-- 二级子页：账号 (ACCOUNTS) -->
+      <div class="settings-subpage" data-panel="accounts" hidden>
+        <div class="omni-section-header">
+          <div class="omni-section-header__text">
+            <div class="omni-section-header__title">平台会话</div>
+            <div class="omni-section-header__sub">导入 Netscape Cookies 文件，解析与下载共用同一会话；Cookie 仅保存在本机加密存储中。</div>
+          </div>
+        </div>
+        <div class="omni-card">
+          <div class="row" style="gap:12px">
+            <span class="omni-icon-box"><i data-icon="account_circle"></i></span>
+            <div style="flex:1;min-width:0">
+              <div class="caption">平台</div>
+              <div style="font-size:15px;font-weight:600" id="session-platform-label">YouTube</div>
+            </div>
+            <select id="session-platform" style="width:auto;min-height:38px" aria-label="选择平台">
+              <option value="YouTube">YouTube</option>
+              <option value="X (Twitter)">X (Twitter)</option>
+              <option value="小红书">小红书</option>
+              <option value="小黑盒">小黑盒</option>
+              <option value="Pixiv">Pixiv</option>
+              <option value="抖音">抖音</option>
+              <option value="哔哩哔哩">哔哩哔哩</option>
+              <option value="微博">微博</option>
+              <option value="Pinterest">Pinterest</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Facebook">Facebook</option>
+              <option value="TikTok">TikTok</option>
+              <option value="快手">快手</option>
+            </select>
+          </div>
+
+          <label class="row" style="justify-content:space-between;margin-top:14px;cursor:pointer">
+            <div style="flex:1;min-width:0;padding-right:10px">
+              <div style="font-size:14px;font-weight:600">停用该平台 Cookie</div>
+              <div class="caption" id="session-policy-status">开启后新解析与新下载使用匿名请求，但仍保留已保存的会话</div>
+            </div>
+            <span class="m3-switch">
+              <input type="checkbox" id="session-disable-cookie">
+              <span class="m3-switch__track"></span>
+            </span>
+          </label>
+
+          <div class="row-wrap" style="margin-top:12px">
+            <span class="omni-pill" id="session-status-pill">未导入</span>
+            <span class="spacer"></span>
+            <button class="btn btn-primary btn-sm" id="btn-browser-login" type="button">浏览器登录</button>
+            <button class="btn btn-outline btn-sm" id="btn-save-browser-session" type="button">保存会话并关闭</button>
+            <button class="btn btn-outline btn-sm" id="btn-clear-session" type="button">清除会话</button>
+            <label class="btn btn-primary btn-sm batch-file-btn">
+              <span>导入 Cookies 文件</span>
+              <input type="file" id="session-file" accept=".txt,text/plain" aria-label="导入 Cookies 文件">
+            </label>
+          </div>
+          <p class="caption" id="browser-login-status" role="status">使用独立 Edge 窗口登录。Google 登录后请返回目标平台，再保存会话；已保存不等于账号已验证。</p>
+        </div>
+
+        <div class="omni-section-header" style="margin-top:6px">
+          <div class="omni-section-header__text">
+            <div class="omni-section-header__title">登录哔哩哔哩 (Cookie / SESSDATA)</div>
+          </div>
+        </div>
+        <div class="omni-card">
+          <div class="row" style="gap:12px">
+            <span class="omni-icon-box"><i data-icon="language"></i></span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:500">账号登录与可用画质</div>
+              <div class="caption" id="bili-cookie-status" style="color:var(--success)" hidden>凭据已保存，实际画质取决于账号权益与内容</div>
+            </div>
+          </div>
+          <p class="caption" style="margin-top:8px">在电脑浏览器登录 bilibili.com 后按 F12，在 Application → Cookies 中复制 SESSDATA 粘贴到下方即可。</p>
+          <textarea class="textarea mono" id="setting-bili-cookie" rows="2" style="margin-top:10px" placeholder="粘贴 SESSDATA=xxx 或完整 Cookie (留空使用游客身份)"></textarea>
+          <div class="row-wrap" style="justify-content:flex-end;margin-top:10px">
+            <button class="btn btn-outline btn-sm" id="btn-clear-bili" hidden type="button">清空凭证</button>
+            <button class="btn btn-primary btn-sm" id="btn-save-bili" type="button">保存并应用</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 二级子页：下载引擎 (ENGINE) -->
+      <div class="settings-subpage" data-panel="engine" hidden>
+        <div class="omni-section-header">
+          <div class="omni-section-header__text"><div class="omni-section-header__title">核心引擎组件</div></div>
+        </div>
+        <div class="omni-card">
+          <div class="row" style="gap:12px">
+            <span class="omni-icon-box"><i data-icon="system_update_alt"></i></span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:500">核心引擎状态</div>
+              <div class="caption">解析、下载与格式转换组件在本机运行</div>
+            </div>
+            <span class="omni-pill omni-pill--success" id="engine-ready-pill">正常运行</span>
+          </div>
+          <button class="btn btn-primary btn-block" id="btn-check-engine" type="button" style="margin-top:12px">
+            <i data-icon="refresh"></i>
+            <span>检查组件状态</span>
+          </button>
+        </div>
+
+        <div class="omni-card">
+          <div class="row" style="gap:12px">
+            <span class="omni-icon-box"><i data-icon="info"></i></span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:500">组件版本</div>
+              <div class="caption" id="engine-status" style="color:var(--primary)">正在探测本机引擎环境...</div>
             </div>
           </div>
         </div>
-      `;
-    }
+      </div>
 
-    function updateTaskCardDom(cardEl, t) {
-      if (!cardEl) return;
-      const prevStatus = cardEl.dataset.status;
-      if (prevStatus !== t.status) {
-        cardEl.dataset.status = t.status;
-        const badgeContainer = cardEl.querySelector('.task-status-badge-container');
-        if (badgeContainer) badgeContainer.innerHTML = getStatusBadgeHtml(t.status);
-        const actionsContainer = cardEl.querySelector('.task-actions-container');
-        if (actionsContainer) actionsContainer.innerHTML = getTaskActionsHtml(t);
-      }
+      <!-- 二级子页：关于 (ABOUT) -->
+      <div class="settings-subpage" data-panel="about" hidden>
+        <div class="about-hero">
+          <div class="home-hero__badge-box" style="width:56px;height:56px;border-radius:16px">
+            <i data-icon="cloud_download" class="m-icon--xl" style="width:28px;height:28px"></i>
+          </div>
+          <div class="about-hero__title">OmniDownloader v1.7.60</div>
+          <div class="about-hero__sub">支持 哔哩哔哩、抖音、快手、小红书、YouTube、TikTok、X 等 10 大主流平台</div>
+        </div>
 
-      const bar = cardEl.querySelector('.task-progress-bar');
-      if (bar) {
-        bar.style.width = `${Math.min(Math.max(t.progress, 0), 100)}%`;
-        const expectedColor = getProgressBarClass(t.status);
-        bar.className = `task-progress-bar h-full rounded-full transition-all duration-300 ${expectedColor} ${t.status === 'DOWNLOADING' ? 'pulse-bar' : ''}`;
-      }
+        <div class="omni-card" style="padding:6px 16px">
+          <div class="about-info-row"><span>版本</span><span>v1.7.60</span></div>
+          <div class="about-info-row"><span>运行形态</span><span>Windows 网页版服务 (本机 58000)</span></div>
+          <div class="about-info-row"><span>开源协议</span><span>MIT License</span></div>
+        </div>
 
-      const progressText = cardEl.querySelector('.task-progress-text');
-      if (progressText) {
-        progressText.textContent = `${t.progress.toFixed(1)}% ${t.speedText ? '· ' + t.speedText : ''}`;
-      }
+        <button class="btn btn-tonal btn-block" id="btn-check-update" type="button">
+          <i data-icon="system_update_alt"></i>
+          <span>检查应用更新</span>
+        </button>
+        <a class="btn btn-primary btn-block" id="application-update-link" hidden target="_blank" rel="noopener noreferrer">下载更新</a>
 
-      const etaText = cardEl.querySelector('.task-eta-text');
-      if (etaText) {
-        if (t.etaText) {
-          etaText.textContent = `剩余: ${t.etaText}`;
-        } else if (t.errorMessage) {
-          etaText.innerHTML = `<span class="text-rose-500 dark:text-rose-400 truncate max-w-xs">${escapeHtml(t.errorMessage)}</span>`;
-        } else {
-          etaText.textContent = '';
-        }
-      }
-    }
+        <button class="btn btn-outline btn-block" id="btn-open-guide" type="button">
+          <i data-icon="help"></i>
+          <span>使用说明</span>
+        </button>
 
-    function updateRunningBadge(count) {
-      const runningBadge = document.getElementById('badge-running-count');
-      if (!runningBadge) return;
-      const runningCount = typeof count === 'number' ? count : allTasks.filter(t => t.status === 'DOWNLOADING' || t.status === 'PROCESSING' || t.status === 'PENDING').length;
-      if (runningCount > 0) {
-        runningBadge.innerText = runningCount;
-        runningBadge.classList.remove('hidden');
-      } else {
-        runningBadge.classList.add('hidden');
-      }
-    }
+        <a class="btn btn-outline btn-block" href="https://github.com/baishu136/OmniDownloader" target="_blank" rel="noopener noreferrer">
+          <div style="text-align:center;padding:4px 0">
+            <div style="font-weight:700">GitHub</div>
+            <div class="caption">github.com/baishu136/OmniDownloader</div>
+          </div>
+        </a>
+      </div>
+    </section>
+  </main>
+</div>
 
-    // 增量合流调度管理器：同一渲染帧内合并多次高频 SSE 更新
-    const pendingTaskUpdates = new Map();
-    let taskUpdateRafId = null;
+<!-- ================= FormatSelectorSheet (Android 同款解析配置抽屉) ================= -->
+<div class="sheet-overlay" id="format-sheet-overlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-media-title">
+    <div class="sheet__handle-bar">
+      <div class="sheet__handle" aria-hidden="true"></div>
+      <button class="icon-btn icon-btn--sm sheet__close" data-close="format-sheet-overlay" aria-label="关闭" type="button">
+        <i data-icon="close"></i>
+      </button>
+    </div>
 
-    function flushPendingTaskUpdates() {
-      taskUpdateRafId = null;
-      if (pendingTaskUpdates.size === 0) return;
+    <div class="sheet__body">
+      <!-- 视频头部概览 -->
+      <div class="sheet-media-head">
+        <div class="sheet-media-thumb" id="sheet-thumb-box">
+          <img id="meta-thumb" alt="">
+          <button class="sheet-cover-save" id="btn-save-cover-direct" type="button" title="存入相册">
+            <i data-icon="image"></i>
+            <span>存入相册</span>
+          </button>
+        </div>
+        <div class="sheet-media-info">
+          <div class="sheet-media-title" id="sheet-media-title">视频标题</div>
+          <div class="sheet-media-tags">
+            <span class="sheet-tag" id="meta-site">平台</span>
+            <span class="sheet-tag sheet-tag--gif" id="meta-gif-badge" hidden>动态图 GIF</span>
+            <span class="caption" id="meta-duration"></span>
+            <span class="caption truncate" id="meta-author"></span>
+          </div>
+        </div>
+      </div>
 
-      const container = document.getElementById('tasks-container');
-      const emptyEl = document.getElementById('tasks-empty');
-      if (!container) return;
+      <div class="sheet-account-note" id="meta-access" hidden></div>
 
-      updateRunningBadge();
+      <!-- 多视频 / 合集模式切换 -->
+      <div id="collection-wrapper" hidden>
+        <div class="sheet-mode-switch">
+          <button class="sheet-mode-switch__btn is-active" id="btn-mode-single" type="button">
+            <i data-icon="videocam"></i>
+            <span>下载单集</span>
+          </button>
+          <button class="sheet-mode-switch__btn" id="btn-mode-collection" type="button">
+            <i data-icon="video_library"></i>
+            <span id="btn-mode-collection-label">下载合集</span>
+          </button>
+        </div>
 
-      pendingTaskUpdates.forEach((t, taskId) => {
-        const card = document.getElementById(`task-card-${taskId}`);
-        if (card) {
-          updateTaskCardDom(card, t);
-        } else {
-          // 新增任务：增量构建并置顶插入，绝不重写整表 DOM
-          const temp = document.createElement('div');
-          temp.innerHTML = buildTaskCardHtml(t);
-          if (temp.firstElementChild) {
-            container.prepend(temp.firstElementChild);
-            if (emptyEl) emptyEl.classList.add('hidden');
-          }
-        }
-      });
-      pendingTaskUpdates.clear();
-    }
+        <!-- 单集芯片横栏 -->
+        <div id="single-parts-panel">
+          <div class="caption" id="single-parts-prompt" style="color:var(--primary);font-weight:600;margin-top:10px">点击切换当前预览与下载的分P/分集:</div>
+          <div class="sheet-parts-row" id="single-parts-row"></div>
+        </div>
 
-    // 渲染任务列表（仅在初次加载或清空记录等全量变动时调用，保持滚动位置与卡片稳定性）
-    function renderTaskList(tasks) {
-      const container = document.getElementById('tasks-container');
-      const emptyEl = document.getElementById('tasks-empty');
+        <!-- 合集多选列表 -->
+        <div id="collection-section" hidden>
+          <div class="sheet-episodes-head">
+            <span class="sheet-episodes-head__count" id="collection-count-badge">已选 0 / 0 集</span>
+            <div class="sheet-mini-actions">
+              <button class="sheet-mini-pill" id="btn-episodes-all" type="button">全选</button>
+              <button class="sheet-mini-pill" id="btn-episodes-invert" type="button">反选</button>
+              <button class="sheet-mini-pill sheet-mini-pill--muted" id="btn-episodes-none" type="button">取消全选</button>
+            </div>
+          </div>
+          <div class="sheet-episodes-box" id="episodes-list"></div>
+        </div>
+      </div>
 
-      updateRunningBadge();
+      <hr class="omni-divider" style="margin:14px 0">
 
-      if (!tasks || tasks.length === 0) {
-        container.innerHTML = '';
-        emptyEl.classList.remove('hidden');
-        return;
-      }
-      emptyEl.classList.add('hidden');
+      <!-- 下载模式行 + 右侧保存封面 Switch -->
+      <div class="sheet-type-header">
+        <h3>下载模式</h3>
+        <label class="sheet-save-cover-toggle" id="save-cover-toggle-wrap">
+          <span>保存封面</span>
+          <span class="m3-switch m3-switch--compact">
+            <input type="checkbox" id="toggle-save-cover">
+            <span class="m3-switch__track"></span>
+          </span>
+        </label>
+      </div>
 
-      // 检查当前 DOM 是否已有对应节点，优先增量复用
-      const existingCards = new Map();
-      container.querySelectorAll('.task-card-item').forEach(el => {
-        const id = el.id.replace('task-card-', '');
-        existingCards.set(id, el);
-      });
+      <div class="sheet-mode-grid" id="download-type-container">
+        <button class="mode-tab-chip is-selected" data-type="VIDEO_WITH_AUDIO" type="button">
+          <i data-icon="videocam"></i>
+          <span>音画合流</span>
+        </button>
+        <button class="mode-tab-chip" data-type="VIDEO_ONLY" type="button">
+          <i data-icon="volume_off"></i>
+          <span>纯画面</span>
+        </button>
+        <button class="mode-tab-chip" data-type="AUDIO_ONLY" type="button">
+          <i data-icon="audiotrack"></i>
+          <span>提取音频</span>
+        </button>
+        <button class="mode-tab-chip" data-type="GIF" type="button">
+          <i data-icon="gif"></i>
+          <span>动态图</span>
+        </button>
+      </div>
 
-      const isStructureSame = existingCards.size === tasks.length && tasks.every(t => existingCards.has(t.id));
-      if (isStructureSame) {
-        tasks.forEach(t => {
-          updateTaskCardDom(existingCards.get(t.id), t);
-        });
-        return;
-      }
+      <!-- 质量提示与警告 -->
+      <p class="caption" id="sheet-quality-evidence" hidden style="margin-top:12px"></p>
+      <p class="caption" id="sheet-quality-warning" hidden style="margin-top:6px;color:var(--status-error)"></p>
 
-      container.innerHTML = tasks.map(t => buildTaskCardHtml(t)).join('');
-    }
+      <!-- 视频清晰度与策略 -->
+      <div id="resolution-section" style="margin-top:14px">
+        <div class="caption" id="resolution-hint">选择视频分辨率 (自动合成最佳声音)</div>
+        <div class="quality-policy-bar">
+          <select id="quality-policy" aria-label="画质策略">
+            <option value="BEST_AVAILABLE">最高源画质（含 4K/8K）</option>
+            <option value="EXACT_FORMAT">下方精确格式</option>
+            <option value="MAX_2160">严格上限 4K</option>
+            <option value="TARGET_4320">指定 8K 档位</option>
+            <option value="COMPATIBLE">兼容优先 H.264</option>
+            <option value="HDR">最高 HDR 源</option>
+            <option value="SDR">最高 SDR 源</option>
+            <option value="FPS60">至少 60fps</option>
+          </select>
+          <select id="quality-container" aria-label="容器">
+            <option value="auto">自动容器</option>
+            <option value="mp4">MP4</option>
+            <option value="mkv">MKV</option>
+          </select>
+          <label class="row" style="font-size:12px;cursor:pointer">
+            <input type="checkbox" id="quality-allow-lower">
+            <span>允许较低画质</span>
+          </label>
+        </div>
+        <div class="format-list" id="format-options-container"></div>
+      </div>
 
-    // 触发浏览器原生文件另存为/下载
-    function triggerBrowserDownload(taskId) {
-      const link = document.createElement('a');
-      link.href = `/api/tasks/${taskId}/download`;
-      link.setAttribute('download', '');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+      <!-- 音频编码格式 -->
+      <div id="audio-format-section" hidden style="margin-top:14px">
+        <div class="caption" style="margin-bottom:8px">选择导出的音频格式</div>
+        <div class="format-list" id="audio-options-container">
+          <button class="format-row-item is-selected" data-audio="mp3" type="button">
+            <input type="radio" name="audio-fmt" checked tabindex="-1">
+            <span>MP3 (通用兼容 · 320kbps)</span>
+          </button>
+          <button class="format-row-item" data-audio="m4a" type="button">
+            <input type="radio" name="audio-fmt" tabindex="-1">
+            <span>M4A (AAC 高音质 · 小体积)</span>
+          </button>
+          <button class="format-row-item" data-audio="flac" type="button">
+            <input type="radio" name="audio-fmt" tabindex="-1">
+            <span>FLAC (无损音质)</span>
+          </button>
+          <button class="format-row-item" data-audio="opus" type="button">
+            <input type="radio" name="audio-fmt" tabindex="-1">
+            <span>OPUS (高压缩效率)</span>
+          </button>
+        </div>
+      </div>
 
-    // SSE 实时状态推送推流
-    function initSSE() {
-      const evtSource = new EventSource('/api/events');
-      evtSource.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.type === 'task_update') {
-            const updated = data.task;
-            const idx = allTasks.findIndex(t => t.id === updated.id);
-            const prevStatus = idx !== -1 ? allTasks[idx].status : null;
+      <!-- GIF 动图说明 -->
+      <div id="gif-format-section" hidden style="margin-top:14px">
+        <div class="gif-explain-card">
+          <strong>高保真 GIF 动图转换</strong>
+          • 内置 FFmpeg 双 Pass 调色板引擎，还原细腻生动色彩与紧凑体积<br>
+          • 导出为标准 .gif 格式，无需播放器即可直接预览与转发<br>
+          • 如需保存原画视频文件，可随时切换回「音画合流」下载为 MP4
+        </div>
+      </div>
+    </div>
 
-            if (idx !== -1) {
-              allTasks[idx] = updated;
-            } else {
-              allTasks.unshift(updated);
-            }
+    <!-- 吸底固定操作栏 Sticky Footer -->
+    <div class="sheet__footer">
+      <button class="btn btn-primary btn-lg btn-block" id="btn-submit-download" type="button">
+        <i data-icon="download"></i>
+        <span id="submit-download-label">开始下载</span>
+      </button>
+      <button class="btn btn-outline btn-block" id="btn-sheet-secondary" hidden type="button">
+        <i data-icon="video_library"></i>
+        <span id="sheet-secondary-label"></span>
+      </button>
+    </div>
+  </div>
+</div>
 
-            // 若任务变为完成状态且用户开启了自动浏览器保存
-            if (updated.status === 'COMPLETED' && prevStatus !== 'COMPLETED') {
-              const autoDownload = localStorage.getItem('omni_auto_browser_download') !== 'false';
-              if (autoDownload) {
-                showToast(`任务已就绪，正在调起浏览器保存: ${updated.title}`);
-                triggerBrowserDownload(updated.id);
-              }
-            }
+<!-- ================= 各类 AlertDialog ================= -->
+<!-- 使用说明弹窗 -->
+<div class="dialog-overlay" id="guide-modal" hidden>
+  <div class="dialog dialog--wide" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+    <div class="dialog__header">
+      <div>
+        <div class="dialog__title" id="guide-title">使用说明</div>
+        <div class="dialog__subtitle">OmniDownloader 全平台多媒体下载利器</div>
+      </div>
+      <div class="row">
+        <div class="omni-segmented" id="guide-lang" style="--seg-count:4;--seg-index:0;width:210px;height:36px">
+          <div class="omni-segmented__indicator"></div>
+          <button class="omni-segmented__tab is-active" data-lang="zh-cn" data-seg-idx="0" type="button">简中</button>
+          <button class="omni-segmented__tab" data-lang="zh-tw" data-seg-idx="1" type="button">繁中</button>
+          <button class="omni-segmented__tab" data-lang="en" data-seg-idx="2" type="button">EN</button>
+          <button class="omni-segmented__tab" data-lang="ja" data-seg-idx="3" type="button">日本語</button>
+        </div>
+        <button class="icon-btn icon-btn--sm" data-close="guide-modal" aria-label="关闭" type="button"><i data-icon="close"></i></button>
+      </div>
+    </div>
+    <div class="dialog__body" data-no-i18n>
+      <div class="guide-body stack" data-guide="zh-cn">
+        <div class="guide-block">
+          <h4>极速上手三步法</h4>
+          <ol>
+            <li><strong>复制链接</strong>：在哔哩哔哩、抖音、快手、小红书、TikTok、YouTube 等平台复制分享口令或网页地址。</li>
+            <li><strong>一键解析</strong>：点击【粘贴剪贴板】或粘贴后点击【立即解析】。</li>
+            <li><strong>选择格式下载</strong>：在底部弹窗选择音画合流、纯画面、音频或动图，开始下载。</li>
+          </ol>
+        </div>
+        <div class="guide-block guide-warn">
+          <h4>解锁 B站 4K / 1080P60（SESSDATA）</h4>
+          <ol>
+            <li>在浏览器打开 bilibili.com 并登录账号；</li>
+            <li>按 F12，进入 Application → Cookies → https://www.bilibili.com；</li>
+            <li>找到 <code>SESSDATA</code> 并复制其值，在【设置 → 账号】中粘贴并保存。</li>
+          </ol>
+        </div>
+      </div>
+      <div class="guide-body stack" data-guide="zh-tw" hidden>
+        <div class="guide-block">
+          <h4>極速上手三步驟</h4>
+          <ol>
+            <li><strong>複製連結</strong>：於 Bilibili、抖音、快手、小紅書、TikTok、YouTube 等平台複製分享口令或網址。</li>
+            <li><strong>一鍵解析</strong>：點選【貼上剪貼簿】後點擊【立即解析】。</li>
+            <li><strong>選擇格式下載</strong>：選擇音畫合流、純畫面、音訊或動圖後下載。</li>
+          </ol>
+        </div>
+        <div class="guide-block guide-warn">
+          <h4>解鎖 B站 4K / 1080P60（SESSDATA）</h4>
+          <ol>
+            <li>開啟 bilibili.com 並登入帳號；</li>
+            <li>按 F12 → Application → Cookies → https://www.bilibili.com 複製 <code>SESSDATA</code> 貼到【設定 → 帳號】。</li>
+          </ol>
+        </div>
+      </div>
+      <div class="guide-body stack" data-guide="en" hidden>
+        <div class="guide-block">
+          <h4>Quick Start</h4>
+          <ol>
+            <li><strong>Copy the URL</strong> from Bilibili, Douyin, TikTok, YouTube, Xiaohongshu, Kuaishou or X.</li>
+            <li><strong>Analyze</strong>: click Paste Clipboard or paste a link and tap Analyze.</li>
+            <li><strong>Download</strong>: select Video, Mute, Audio, or GIF in the format sheet.</li>
+          </ol>
+        </div>
+        <div class="guide-block guide-warn">
+          <h4>Unlock Bilibili 4K / 1080P60</h4>
+          <ol>
+            <li>Log in to bilibili.com in your browser, open DevTools → Application → Cookies, copy <code>SESSDATA</code>, and paste it in Settings → Accounts.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="guide-body stack" data-guide="ja" hidden>
+        <div class="guide-block">
+          <h4>クイックスタート</h4>
+          <ol>
+            <li><strong>URLをコピー</strong>：Bilibili、TikTok、YouTube、小紅書などから動画URLをコピーします。</li>
+            <li><strong>解析開始</strong>：リンクを貼り付けて【解析開始】を押します。</li>
+            <li><strong>ダウンロード</strong>：動画・映像のみ・音声・GIF を選んでダウンロードします。</li>
+          </ol>
+        </div>
+        <div class="guide-block guide-warn">
+          <h4>Bilibili 4K / 1080P60 解放</h4>
+          <ol>
+            <li>bilibili.com にログインし、F12 → Application → Cookies から <code>SESSDATA</code> をコピーして設定 → アカウントに貼り付けて保存します。</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <div class="dialog__footer">
+      <button class="btn btn-primary" data-close="guide-modal" type="button">关闭</button>
+    </div>
+  </div>
+</div>
 
-            // 增量调度：使用 requestAnimationFrame 合并帧内更新，消除整体 DOM 销毁重建与滑动掉帧
-            pendingTaskUpdates.set(updated.id, updated);
-            if (!taskUpdateRafId) {
-              taskUpdateRafId = requestAnimationFrame(flushPendingTaskUpdates);
-            }
-          } else if (data.type === 'task_deleted') {
-            allTasks = allTasks.filter(t => t.id !== data.taskId);
-            pendingTaskUpdates.delete(data.taskId);
-            const cardEl = document.getElementById(`task-card-${data.taskId}`);
-            if (cardEl) cardEl.remove();
-            if (allTasks.length === 0) {
-              document.getElementById('tasks-empty')?.classList.remove('hidden');
-            }
-            updateRunningBadge();
-          } else if (data.type === 'focus_page') {
-            try {
-              window.focus();
-            } catch(e) {}
-            showToast("OmniDownloader 页面已就绪！");
-          } else if (data.type === 'tasks_cleared') {
-            fetchTasks();
-          }
-        } catch(err) {
-          // ignore keepalive
-        }
-      };
-      evtSource.onerror = () => {
-        try { evtSource.close(); } catch(e) {}
-        setTimeout(initSSE, 1000);
-      };
-    }
+<!-- 错误详情弹窗 (Android HomeScreen / TaskErrorSection 对齐) -->
+<div class="dialog-overlay" id="error-detail-modal" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="error-detail-title">
+    <div class="dialog__header">
+      <div class="dialog__title-row">
+        <span class="dialog__icon dialog__icon--error"><i data-icon="error"></i></span>
+        <div class="dialog__title" id="error-detail-title">失败日志详情</div>
+      </div>
+      <button class="icon-btn icon-btn--sm" data-close="error-detail-modal" aria-label="关闭" type="button"><i data-icon="close"></i></button>
+    </div>
+    <div class="dialog__body">
+      <pre class="mono" id="error-detail-text" style="white-space:pre-wrap;word-break:break-word;margin:0;padding:12px;border-radius:10px;background:var(--surface-variant-30);font-size:12px;max-height:240px;overflow:auto"></pre>
+      <div class="caption" id="error-detail-tip" style="color:var(--primary)">提示: 解析 YouTube / X 需配合科学上网；如已开启代理，可在设置中配置代理端口。</div>
+    </div>
+    <div class="dialog__footer">
+      <button class="btn btn-text" id="btn-error-go-settings" hidden type="button">前往设置</button>
+      <button class="btn btn-text" data-close="error-detail-modal" type="button">关闭</button>
+      <button class="btn btn-primary" id="btn-copy-error-log" type="button">复制错误日志</button>
+    </div>
+  </div>
+</div>
 
-    // 任务操作 API
-    async function cancelTask(taskId) {
-      await fetch(`/api/tasks/${taskId}/cancel`, { method: 'POST' });
-      showToast("已请求取消任务");
-    }
+<!-- 中转兼容须知弹窗 -->
+<div class="dialog-overlay" id="relay-compat-modal" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="relay-compat-title">
+    <div class="dialog__header">
+      <div class="dialog__title-row">
+        <span class="omni-icon-box" style="border-radius:50%"><i data-icon="security"></i></span>
+        <div>
+          <div class="dialog__title" id="relay-compat-title">第三方网页使用须知</div>
+        </div>
+      </div>
+    </div>
+    <div class="dialog__body">
+      <div class="guide-block">
+        <h4>服务性质</h4>
+        <p>备用中转功能仅提供第三方网页的快捷导航与直链下载支持，本应用未与任何第三方站点合作，不保证其长期可用性。</p>
+      </div>
+      <div class="guide-block">
+        <h4>兼容性与网页行为</h4>
+        <p>人机验证、广告跳转、临时失效或防盗链拦截均属于第三方网页行为，建议优先使用原生直连解析。</p>
+      </div>
+      <div class="guide-block">
+        <h4>安全与隐私</h4>
+        <p>请勿在第三方网页输入账号、密码或敏感信息，防范钓鱼风险。</p>
+      </div>
+    </div>
+    <div class="dialog__footer">
+      <button class="btn btn-text" data-close="relay-compat-modal" type="button">取消</button>
+      <button class="btn btn-primary" id="btn-relay-compat-confirm" type="button">我已知晓并继续</button>
+    </div>
+  </div>
+</div>
 
-    async function deleteTask(taskId) {
-      await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
-      showToast("已删除任务记录");
-    }
+<!-- 添加中转站弹窗 -->
+<div class="dialog-overlay" id="add-relay-modal" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="add-relay-title">
+    <div class="dialog__header">
+      <div class="dialog__title-row">
+        <span class="dialog__icon"><i data-icon="add"></i></span>
+        <div class="dialog__title" id="add-relay-title">添加网址</div>
+      </div>
+      <button class="icon-btn icon-btn--sm" data-close="add-relay-modal" aria-label="关闭" type="button"><i data-icon="close"></i></button>
+    </div>
+    <div class="dialog__body">
+      <p class="caption">输入网址后会自动检索网站名称，也可手动修改。</p>
+      <div class="field">
+        <label class="field__label" for="input-site-url">网站网址</label>
+        <div class="row">
+          <input class="input" id="input-site-url" type="text" placeholder="https://...">
+          <button class="icon-btn icon-btn--primary" id="btn-fetch-title" title="重新获取名称" aria-label="重新获取名称" type="button">
+            <i data-icon="refresh"></i>
+          </button>
+        </div>
+        <span class="field__hint" id="fetch-title-status" hidden style="color:var(--primary)">正在检索网页名称...</span>
+      </div>
+      <div class="field">
+        <label class="field__label" for="input-site-name">网站名称</label>
+        <input class="input" id="input-site-name" type="text" placeholder="例如：备用解析工具">
+      </div>
+      <p class="caption" id="add-relay-error" style="color:var(--status-error)" hidden></p>
+    </div>
+    <div class="dialog__footer">
+      <button class="btn btn-text" data-close="add-relay-modal" type="button">取消</button>
+      <button class="btn btn-primary" id="btn-submit-relay" type="button">确认添加</button>
+    </div>
+  </div>
+</div>
 
-    async function openFile(taskId) {
-      const resp = await fetch(`/api/tasks/${taskId}/open`, { method: 'POST' });
-      if (!resp.ok) {
-        showToast("无法打开文件，可能已被移动或删除", true);
-      }
-    }
+<!-- 通用确认弹窗（支持可选勾选删除本地文件） -->
+<div class="dialog-overlay" id="confirm-modal" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="dialog__header">
+      <div class="dialog__title" id="confirm-title">确认操作</div>
+    </div>
+    <div class="dialog__body">
+      <p id="confirm-message"></p>
+      <label class="row" id="confirm-checkbox-row" hidden style="cursor:pointer;margin-top:6px;font-size:13.5px">
+        <input type="checkbox" id="confirm-checkbox">
+        <span id="confirm-checkbox-label">同时删除本地文件</span>
+      </label>
+    </div>
+    <div class="dialog__footer">
+      <button class="btn btn-text" id="confirm-cancel" type="button">取消</button>
+      <button class="btn btn-danger" id="confirm-ok" type="button">确认</button>
+    </div>
+  </div>
+</div>
 
-    async function openFolder() {
-      await fetch('/api/open-folder', { method: 'POST' });
-    }
+<!-- yt-dlp 支持平台目录搜索弹窗 -->
+<div class="dialog-overlay" id="platform-catalog" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="platform-catalog-title">
+    <div class="dialog__header">
+      <div class="dialog__title" id="platform-catalog-title">yt-dlp 支持的平台</div>
+      <button class="icon-btn icon-btn--sm" data-close="platform-catalog" aria-label="关闭" type="button"><i data-icon="close"></i></button>
+    </div>
+    <div class="dialog__body">
+      <p class="caption">当前引擎提供的解析器。可用格式以链接的实际解析结果为准，部分平台需要登录或额外组件。</p>
+      <input class="input" id="extractor-search" type="search" placeholder="搜索解析器...">
+      <div id="extractor-rows" style="max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:4px" aria-live="polite"></div>
+    </div>
+    <div class="dialog__footer">
+      <button class="btn btn-text" data-close="platform-catalog" type="button">关闭</button>
+    </div>
+  </div>
+</div>
 
-    // 配置项读写
-    async function loadSettings() {
-      try {
-        const resp = await fetch('/api/settings');
-        if (!resp.ok) throw new Error('无法读取配置');
-        const data = await resp.json();
-        applyTheme(data.theme, true);
-        document.getElementById('setting-theme').value = currentTheme;
-        document.getElementById('setting-download-dir').value = data.downloadDir || '';
-        document.getElementById('setting-proxy').value = data.proxyUrl || '';
-        document.getElementById('setting-bili-cookie').value = data.bilibiliCookie || '';
-        document.getElementById('setting-concurrent').value = data.maxConcurrentTasks || 3;
+<div class="toast-stack" id="toast-stack" aria-live="polite"></div>
 
-        // 本地偏好：是否自动调起浏览器下载
-        const autoDownload = localStorage.getItem('omni_auto_browser_download') !== 'false';
-        document.getElementById('setting-auto-browser-download').checked = autoDownload;
-
-        // Windows 系统开机自启动状态
-        document.getElementById('setting-autostart').checked = !!data.autoStart;
-
-        if (data.hasBilibiliSession) {
-          document.getElementById('bili-cookie-status').classList.remove('hidden');
-        }
-      } catch (e) {
-        console.error("加载设置失败", e);
-      }
-    }
-
-
-    async function importYoutubeCookies() {
-      const input = document.getElementById('youtube-cookie-file');
-      const file = input.files[0];
-      if (!file) return showToast('请选择 Netscape cookies.txt 文件', true);
-      if (file.size > 2*1024*1024) return showToast('Cookie 文件不得超过 2MB',true);
-      try {
-        const response = await fetch('/api/sessions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform:'YouTube',cookies:await file.text()})});
-        const data = await response.json();
-        document.getElementById('youtube-cookie-status').textContent = response.ok ? 'YouTube Cookie 已加密保存，请重新解析原链接。' : data.detail || '导入失败';
-      } catch(error) { showToast('导入失败，请确认本地服务正在运行',true); }
-      finally { input.value=''; }
-    }
-
-    async function loadSessionPolicy() {
-      const platform = document.getElementById('session-platform').value;
-      const response = await fetch('/api/sessions');
-      if (!response.ok) return;
-      const data = await response.json();
-      const info = data.find(row => row.platform === platform);
-      document.getElementById('session-disable-cookie').checked = info?.enabled === false;
-      document.getElementById('session-policy-status').textContent = info?.enabled === false
-        ? '已禁用：新解析与新下载使用匿名请求，已保存会话保留。更新文件不会自动开启。'
-        : '已开启：新解析与新下载可使用该平台已保存的 Cookie。';
-    }
-    document.getElementById('session-platform').addEventListener('change', loadSessionPolicy);
-    loadSessionPolicy();
-    async function toggleSessionCookie() {
-      const disabled = document.getElementById('session-disable-cookie').checked;
-      try {
-        const response = await fetch('/api/sessions/' + encodeURIComponent(document.getElementById('session-platform').value), {
-          method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({enabled:!disabled})
-        });
-        if (!response.ok) throw new Error('Cookie开关保存失败');
-        showToast(disabled ? 'Cookie已禁用，会话保留' : 'Cookie已开启，请重新解析');
-      } catch (error) { showToast(error.message, true); }
-      await loadSessionPolicy();
-    }
-    async function importSession() {
-      const file = document.getElementById('session-file').files[0];
-      if (!file || file.size > 1048576) { showToast('请选择不超过1MiB的Cookies文件', true); return; }
-      const response = await fetch('/api/sessions', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({platform:document.getElementById('session-platform').value, cookies:await file.text()})});
-      const data = await response.json(); document.getElementById('session-file').value = '';
-      showToast(response.ok ? '会话已导入，请重新解析原链接' : data.detail || '导入失败', !response.ok);
-      await loadSessionPolicy();
-    }
-    async function clearSession() {
-      const response = await fetch('/api/sessions/' + encodeURIComponent(document.getElementById('session-platform').value), {method:'DELETE'});
-      showToast(response.ok ? '会话已清除' : '清除失败，请在本机操作', !response.ok);
-      await loadSessionPolicy();
-    }
-    async function showEngineStatus() {
-      const data = await (await fetch('/api/engine/diagnostics')).json();
-      showToast('Python '+data.python+' · yt-dlp '+data.ytDlp+' · EJS '+data.ejs+' · JS运行时 '+(data.denoAvailable?'可用':'缺失'));
-    }
-
-    async function saveSettings() {
-      const autoDownload = document.getElementById('setting-auto-browser-download').checked;
-      localStorage.setItem('omni_auto_browser_download', autoDownload ? 'true' : 'false');
-
-      const payload = {
-        theme: document.getElementById('setting-theme').value,
-        downloadDir: document.getElementById('setting-download-dir').value.trim(),
-        proxyUrl: document.getElementById('setting-proxy').value.trim(),
-        bilibiliCookie: document.getElementById('setting-bili-cookie').value.trim(),
-        maxConcurrentTasks: parseInt(document.getElementById('setting-concurrent').value),
-        autoStart: document.getElementById('setting-autostart').checked
-      };
-
-      try {
-        const resp = await fetch('/api/settings', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(payload)
-        });
-        if (!resp.ok) throw new Error('配置保存失败');
-        applyTheme(payload.theme, true);
-        showToast("设置已成功保存！");
-        if (payload.bilibiliCookie) {
-          document.getElementById('bili-cookie-status').classList.remove('hidden');
-        } else {
-          document.getElementById('bili-cookie-status').classList.add('hidden');
-        }
-      } catch (e) {
-        showToast("保存失败: " + e.message, true);
-      }
-    }
-  </script>
-  <script src="/static/parity.js"></script>
+<script type="module" src="/static/js/app.js"></script>
 </body>
 </html>

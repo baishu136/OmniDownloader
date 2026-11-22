@@ -10,7 +10,7 @@ from pathlib import Path
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGES = {'requests': '2.34.2', 'urllib3': '2.8.0', 'certifi': '2026.10.23', 'idna': '3.20', 'charset_normalizer': '3.5.2'}
+PACKAGES = {'requests': '2.34.2', 'urllib3': '2.8.0', 'certifi': '2026.10.23', 'idna': '3.20', 'charset_normalizer': '3.5.2', 'gallery_dl': '1.32.20'}
 
 
 def build():
@@ -18,6 +18,9 @@ def build():
     browser.parent.mkdir(parents=True, exist_ok=True)
     browser.write_bytes((ROOT / 'windows/web/douyin-images-capture.js').read_bytes())
     files = {'omni_media.py': (ROOT / 'windows/engine/media_resolver.py').read_bytes()}
+    files['omni_pixiv_guard.py'] = (ROOT / 'windows/engine/pixiv_guard.py').read_bytes()
+    files['omni_x_guard.py'] = (ROOT / 'windows/engine/x_guard.py').read_bytes()
+    files['yt_dlp_plugins/extractor/omni_x_guard.py'] = (ROOT / 'windows/engine/x_guard_plugin.py').read_bytes()
     # requests' SOCKS adapter is optional; ship the pure-Python dependency so
     # Android image extraction uses the same SOCKS5 route as native/yt-dlp.
     assert importlib.metadata.version('PySocks') == '1.7.1'

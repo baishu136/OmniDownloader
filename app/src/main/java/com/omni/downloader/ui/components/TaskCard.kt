@@ -71,6 +71,7 @@ import com.omni.downloader.data.model.TaskStatus
 import com.omni.downloader.data.repository.TaskProgress
 import com.omni.downloader.ui.design.LocalTabActive
 import com.omni.downloader.ui.design.OmniPillButton
+import com.omni.downloader.ui.localization.AppStrings
 import com.omni.downloader.ui.localization.LocalAppStrings
 import com.omni.downloader.ui.theme.LocalStatusColors
 import kotlinx.coroutines.flow.StateFlow
@@ -121,7 +122,7 @@ fun TaskCard(
         TaskStatus.PROCESSING -> strings.statusProcessing
         TaskStatus.COMPLETED -> strings.statusCompleted
         TaskStatus.FAILED -> strings.statusFailed
-        TaskStatus.WAITING_FOR_AUTH -> "等待登录/验证"
+        TaskStatus.WAITING_FOR_AUTH -> strings.statusWaitingAuth
         TaskStatus.CANCELLED -> strings.statusCancelled
     }
 
@@ -167,9 +168,9 @@ fun TaskCard(
                                 DownloadType.VIDEO_ONLY -> "${strings.badgeMute}: ${task.selectedResolution}"
                                 DownloadType.AUDIO_ONLY -> "${strings.badgeAudio}: ${task.audioFormat.ext.uppercase()}"
                                 DownloadType.GIF -> "${strings.badgeGif}: GIF"
-                                DownloadType.COVER -> "${strings.badgeCover}: 原图"
-                                DownloadType.IMAGE -> "图文：原始图片"
-                                DownloadType.IMAGE_ZIP -> "图文：ZIP 归档"
+                                DownloadType.COVER -> strings.coverOriginal.format(strings.badgeCover)
+                                DownloadType.IMAGE -> strings.imageOriginal
+                                DownloadType.IMAGE_ZIP -> strings.imageZip
                             },
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -216,7 +217,7 @@ fun TaskCard(
 
                     TaskStatus.COMPLETED -> {
                         OmniPillButton(
-                            text = if (isImageTask) "查看" else strings.play,
+                            text = if (isImageTask) strings.viewAction else strings.play,
                             icon = when (task.downloadType) {
                                 DownloadType.COVER -> Icons.Outlined.Image
                                 DownloadType.GIF -> Icons.Outlined.Visibility
@@ -227,15 +228,15 @@ fun TaskCard(
                                 if (isImageTask) {
                                     showGifPreviewDialog = true
                                 } else {
-                                    openMediaFile(context, task.localFilePath, task.downloadType)
+                                    openMediaFile(context, task.localFilePath, task.downloadType, strings)
                                 }
                             }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         TaskIconBtn(
                             icon = Icons.Outlined.Share,
-                            contentDescription = "分享",
-                            onClick = { shareMediaFile(context, task.localFilePath, task.title, task.downloadType) }
+                            contentDescription = strings.share,
+                            onClick = { shareMediaFile(context, task.localFilePath, task.title, task.downloadType, strings) }
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         TaskIconBtn(
@@ -247,7 +248,7 @@ fun TaskCard(
 
                     TaskStatus.FAILED, TaskStatus.WAITING_FOR_AUTH, TaskStatus.CANCELLED -> {
                         OmniPillButton(
-                            text = if (task.errorMessage.contains("[EXPORT_FAILED]")) "重试导出" else strings.retry,
+                            text = if (task.errorMessage.contains("[EXPORT_FAILED]")) strings.retryExport else strings.retry,
                             icon = Icons.Outlined.Refresh,
                             primary = true,
                             onClick = { onRetry(task.id) }
@@ -304,7 +305,7 @@ private fun TaskCover(task: DownloadTask) {
             if (mediaCoverModel == null) null
             else {
                 ImageRequest.Builder(context)
-                    .data(mediaCoverModel)
+                    .data(com.omni.downloader.engine.ImagePreviewPolicy.thumbnail(mediaCoverModel))
                     .size(184, 116)
                     .bitmapConfig(android.graphics.Bitmap.Config.RGB_565)
                     .crossfade(false)
@@ -322,7 +323,7 @@ private fun TaskCover(task: DownloadTask) {
         if (imageRequest != null) {
             AsyncImage(
                 model = imageRequest,
-                contentDescription = "封面",
+                contentDescription = LocalAppStrings.current.coverContentDesc,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
@@ -336,6 +337,7 @@ private fun TaskCover(task: DownloadTask) {
 @Composable
 private fun TaskErrorSection(errorMessage: String) {
     val context = LocalContext.current
+    val strings = LocalAppStrings.current
     var showErrorDetailDialog by remember { mutableStateOf(false) }
     val statusColors = LocalStatusColors.current
 
@@ -349,7 +351,7 @@ private fun TaskErrorSection(errorMessage: String) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "错误: $errorMessage",
+            text = strings.errorPrefix.format(errorMessage),
             style = MaterialTheme.typography.bodySmall,
             color = statusColors.error,
             maxLines = 2,
@@ -358,7 +360,7 @@ private fun TaskErrorSection(errorMessage: String) {
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(
-            text = "查看详情",
+            text = strings.viewDetails,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold
@@ -369,7 +371,7 @@ private fun TaskErrorSection(errorMessage: String) {
         AlertDialog(
             onDismissRequest = { showErrorDetailDialog = false },
             icon = { Icon(Icons.Outlined.Error, contentDescription = null, tint = statusColors.error) },
-            title = { Text("下载失败详细日志", fontWeight = FontWeight.Bold) },
+            title = { Text(strings.failureLogTitle, fontWeight = FontWeight.Bold) },
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     androidx.compose.foundation.text.selection.SelectionContainer {
@@ -385,15 +387,15 @@ private fun TaskErrorSection(errorMessage: String) {
                 Button(shape = MaterialTheme.shapes.medium, onClick = {
                     val clip = android.content.ClipData.newPlainText("ErrorLog", errorMessage)
                     (context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager)?.setPrimaryClip(clip)
-                    Toast.makeText(context, "已复制错误日志", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, strings.errorLogCopied, Toast.LENGTH_SHORT).show()
                     showErrorDetailDialog = false
                 }) {
-                    Text("复制日志")
+                    Text(strings.copyLog)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showErrorDetailDialog = false }) {
-                    Text("关闭")
+                    Text(strings.close)
                 }
             }
         )
@@ -460,7 +462,7 @@ private fun TaskDownloadingProgressSection(
         ) {
             Text(
                 text = if (liveProgress.status == TaskStatus.PROCESSING) {
-                    "正在合并音视频轨..."
+                    LocalAppStrings.current.mergingTracks
                 } else {
                     "${liveProgress.progress.toInt()}% · ${liveProgress.speedText}"
                 },
@@ -469,7 +471,7 @@ private fun TaskDownloadingProgressSection(
             )
             if (liveProgress.etaText.isNotEmpty()) {
                 Text(
-                    text = "剩余 ${liveProgress.etaText}",
+                    text = LocalAppStrings.current.remainingTime.format(liveProgress.etaText),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -502,11 +504,11 @@ private fun resolveMediaMime(context: Context, filePath: String, downloadType: D
     return com.omni.downloader.engine.MediaFileType.mime(header, filePath, declared, downloadType)
 }
 
-private fun openMediaFile(context: Context, filePath: String, downloadType: DownloadType) {
+internal fun openMediaFile(context: Context, filePath: String, downloadType: DownloadType, strings: AppStrings) {
     try {
         val file = File(filePath)
         if (!filePath.startsWith("content://") && !file.exists()) {
-            Toast.makeText(context, "文件不存在或已被移动", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, strings.fileMissing, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -516,20 +518,23 @@ private fun openMediaFile(context: Context, filePath: String, downloadType: Down
 
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, mimeType)
+            clipData = android.content.ClipData.newRawUri(null, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)
+    } catch (e: java.io.FileNotFoundException) {
+        Toast.makeText(context, strings.fileMissing, Toast.LENGTH_SHORT).show()
     } catch (e: Exception) {
-        Toast.makeText(context, "未找到可打开此文件的播放器或相册", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, strings.noPlayer, Toast.LENGTH_SHORT).show()
     }
 }
 
-private fun shareMediaFile(context: Context, filePath: String, title: String, downloadType: DownloadType) {
+private fun shareMediaFile(context: Context, filePath: String, title: String, downloadType: DownloadType, strings: AppStrings) {
     try {
         val file = File(filePath)
         if (!filePath.startsWith("content://") && !file.exists()) {
-            Toast.makeText(context, "文件不存在或已被移动", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, strings.fileMissing, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -541,10 +546,10 @@ private fun shareMediaFile(context: Context, filePath: String, title: String, do
             putExtra(Intent.EXTRA_TITLE, title)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(intent, "分享视频").apply {
+        context.startActivity(Intent.createChooser(intent, strings.shareVideo).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         })
     } catch (e: Exception) {
-        Toast.makeText(context, "分享失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, strings.shareFailed.format(e.message), Toast.LENGTH_SHORT).show()
     }
 }

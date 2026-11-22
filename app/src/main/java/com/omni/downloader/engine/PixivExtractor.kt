@@ -28,11 +28,11 @@ object PixivExtractor {
     private const val DESKTOP_UA =
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-    private val httpClient = OkHttpClient.Builder().proxySelector(NetworkProxy)
+    private val httpClient = PixivNetwork.configure(OkHttpClient.Builder().proxySelector(NetworkProxy)
         .followRedirects(false)
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .build()
+        ).build()
 
     private data class UgoiraMeta(
         val artworkId: String,
@@ -119,6 +119,7 @@ object PixivExtractor {
                     )
                 )
             } catch (e: Exception) {
+                if(e is kotlinx.coroutines.CancellationException) throw e
                 Log.e(TAG, "Pixiv 解析失败", e)
                 Result.failure(Exception(MediaErrors.describe(MediaErrors.classify(e.message.orEmpty()), e.message), e))
             }
@@ -167,16 +168,17 @@ object PixivExtractor {
                 onProgressUpdate = onProgressUpdate
             )
         } catch (e: Exception) {
+            if(e is kotlinx.coroutines.CancellationException) throw e
             Log.e(TAG, "Pixiv 下载失败", e)
-            Result.failure(Exception(MediaErrors.describe(MediaErrorCode.POSTPROCESS_FAILED, e.message), e))
+            Result.failure(Exception(MediaErrors.describe(MediaErrors.codeOf(e).takeUnless { it==MediaErrorCode.UNKNOWN } ?: MediaErrorCode.POSTPROCESS_FAILED, e.message), e))
         }
     }
 
-    private fun fetchIllust(context: Context, artworkId: String): Result<JSONObject> =
+    private suspend fun fetchIllust(context: Context, artworkId: String): Result<JSONObject> =
         requestJson(context, "https://www.pixiv.net/ajax/illust/$artworkId?lang=zh")
             .mapCatching { it.optJSONObject("body") ?: error("Pixiv 作品信息为空") }
 
-    private fun fetchUgoiraMeta(context: Context, artworkId: String, knownRestrictedArtwork: Boolean = false): Result<UgoiraMeta> =
+    private suspend fun fetchUgoiraMeta(context: Context, artworkId: String, knownRestrictedArtwork: Boolean = false): Result<UgoiraMeta> =
         requestJson(context, "https://www.pixiv.net/ajax/illust/$artworkId/ugoira_meta?lang=zh", knownRestrictedArtwork)
             .mapCatching { root ->
                 val body = root.optJSONObject("body") ?: error("Ugoira 元数据为空")
@@ -200,7 +202,7 @@ object PixivExtractor {
                 UgoiraMeta(artworkId, zipUrl, frames)
             }
 
-    private fun requestJson(context: Context, url: String, knownRestrictedArtwork: Boolean = false): Result<JSONObject> =
+    private suspend fun requestJson(context: Context, url: String, knownRestrictedArtwork: Boolean = false): Result<JSONObject> =
         PixivJsonClient(httpClient) { requestUrl ->
             SessionRepository.getInstance(context).cookieHeader(SessionPlatforms.PIXIV, requestUrl)
         }.get(url, knownRestrictedArtwork)

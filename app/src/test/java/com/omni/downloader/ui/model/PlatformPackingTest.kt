@@ -13,4 +13,8 @@ class PlatformPackingTest {
         assertEquals(1, collapsedPlatformCount(100, List(8) { 70 }, 10, 30))
         assertEquals(0, collapsedPlatformCount(0, List(8) { 70 }, 10, 30))
     }
+
+    @Test fun reservesCatalogToggleEvenWhenEveryChipWouldFitWithoutIt() {
+        assertEquals(7, collapsedPlatformCount(310, List(8) { 70 }, 10, 48))
+    }
 }

@@ -664,8 +664,21 @@ def twitter_status(url, cookie_file=None, proxy='', public_only=False):
         for attempt in range(2):
             headers = {'User-Agent': 'Googlebot'}
             if attempt: headers['Cache-Control'] = 'no-cache'
-            status = extractor._download_json('https://cdn.syndication.twimg.com/tweet-result', identifier,
-                headers=headers, query={'id': identifier, 'token': token})
+            try:
+                status = extractor._download_json('https://cdn.syndication.twimg.com/tweet-result', identifier,
+                    headers=headers, query={'id': identifier, 'token': token})
+            except Exception as error:
+                message = str(error).lower()
+                denied = ('certificate_verify_failed' in message or 'certificate verify failed' in message
+                          or re.search(r'\b(?:401|403|404|429)\b', message))
+                transient = not denied and any(word in message for word in (
+                    'unexpected_eof', 'unexpected eof', 'eof occurred', 'connection reset',
+                    'connection aborted', 'remote end closed', 'server disconnected', 'timed out', 'timeout'))
+                if not transient: raise
+                if attempt:
+                    raise MediaError('NETWORK_ERROR', 'X公开媒体接口连接连续中断，请检查代理节点到 cdn.syndication.twimg.com 的连接后重试') from None
+                time.sleep(.4)
+                continue
             actual = str((status.get('id_str') or status.get('id')) or '').strip() if isinstance(status, dict) else ''
             if actual.isascii() and actual.isdigit():
                 if actual != identifier:

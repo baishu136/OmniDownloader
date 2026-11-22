@@ -1,0 +1,1230 @@
+{
+  "version": "1.7.6",
+  "androidVersionCode": 65,
+  "reportDate": "2026-11-04",
+  "timezone": "Asia/Shanghai",
+  "generatedAt": "2026-11-04T06:02:59.163413+00:00",
+  "scope": [
+    "Android",
+    "Windows"
+  ],
+  "automatedTests": {
+    "androidJvm": {
+      "passed": 96,
+      "failed": 0,
+      "log": ".local/1.7.6/junit-final.log"
+    },
+    "windowsPython": {
+      "passed": 54,
+      "failed": 0,
+      "log": ".local/1.7.6/pytest-final.log"
+    },
+    "androidDeviceComponents": {
+      "passed": 4,
+      "failed": 0,
+      "log": ".local/1.7.6/android-component-tests.log",
+      "device": "API35 x86_64 emulator"
+    }
+  },
+  "androidAcceptedDownloads": [
+    {
+      "caseId": "reported_ks_video.primary",
+      "platform": "快手",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "3xqjmdgqyr7u7xc",
+      "videoFormats": 4,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 29416,
+      "selectedSize": [
+        720,
+        1280
+      ],
+      "savedSize": [
+        720,
+        1280
+      ],
+      "savedDurationMs": 29534,
+      "hasAudio": true,
+      "savedBytes": 8522040,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 23924,
+      "error": "",
+      "recordedAt": "2026-11-04T05:15:18.977044+00:00",
+      "sourceLog": "android-focused.jsonl"
+    },
+    {
+      "caseId": "reported_ks_images.primary",
+      "platform": "快手",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "3xv5358vvb8eq9k",
+      "imageCount": 10,
+      "singleImageBytes": 304274,
+      "singleImageSize": [
+        1080,
+        1372
+      ],
+      "archiveBytes": 3929248,
+      "savedImageSizes": [
+        [
+          1080,
+          1372
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1620
+        ],
+        [
+          1080,
+          1620
+        ],
+        [
+          1080,
+          1434
+        ]
+      ],
+      "mediaStoreExport": true,
+      "elapsedMs": 45410,
+      "error": "",
+      "recordedAt": "2026-11-04T05:16:06.099732+00:00",
+      "sourceLog": "android-focused.jsonl"
+    },
+    {
+      "caseId": "xhs_video.backup",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "6937d509000000001d039d86",
+      "videoFormats": 7,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 132202,
+      "selectedSize": [
+        1280,
+        720
+      ],
+      "savedSize": [
+        1280,
+        720
+      ],
+      "savedDurationMs": 132201,
+      "hasAudio": true,
+      "savedBytes": 20376837,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 58960,
+      "error": "",
+      "recordedAt": "2026-11-04T05:25:35.633192+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "pixiv_ugoira.primary",
+      "platform": "Pixiv",
+      "expectedKind": "UGOIRA",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "151591764",
+      "videoFormats": 3,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 6430,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "savedSize": [
+        320,
+        240
+      ],
+      "savedDurationMs": 6431,
+      "hasAudio": false,
+      "savedBytes": 2744213,
+      "downloadType": "VIDEO_ONLY",
+      "mediaStoreExport": true,
+      "elapsedMs": 30007,
+      "error": "",
+      "recordedAt": "2026-11-04T05:26:15.275080+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "reported_pinterest.primary",
+      "platform": "Pinterest",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "682295412345233089",
+      "videoFormats": 4,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 0,
+      "selectedSize": [
+        234,
+        416
+      ],
+      "savedSize": [
+        234,
+        416
+      ],
+      "savedDurationMs": 8731,
+      "hasAudio": true,
+      "savedBytes": 261921,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 47190,
+      "error": "",
+      "recordedAt": "2026-11-04T05:28:19.246742+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "reported_bili_dynamic.primary",
+      "platform": "哔哩哔哩",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "1159422075074510854",
+      "imageCount": 4,
+      "singleImageBytes": 347443,
+      "singleImageSize": [
+        476,
+        381
+      ],
+      "archiveBytes": 2772610,
+      "savedImageSizes": [
+        [
+          476,
+          381
+        ],
+        [
+          375,
+          385
+        ],
+        [
+          375,
+          385
+        ],
+        [
+          375,
+          385
+        ]
+      ],
+      "mediaStoreExport": true,
+      "elapsedMs": 9948,
+      "error": "",
+      "recordedAt": "2026-11-04T05:28:48.235984+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "reported_x_loop.primary",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "2117614039912325120",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": true,
+      "durationMs": 0,
+      "maxAvailableSize": [
+        0,
+        0
+      ],
+      "originalSourceAvailable": false,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "savedSize": [
+        650,
+        430
+      ],
+      "savedDurationMs": 550,
+      "hasAudio": false,
+      "savedBytes": 48563,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 11997,
+      "error": "",
+      "recordedAt": "2026-11-04T05:36:21.212207+00:00",
+      "sourceLog": "android-best-final.jsonl"
+    },
+    {
+      "caseId": "reported_xhs_4k.primary",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "6937d509000000001d039d86",
+      "videoFormats": 7,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 132202,
+      "maxAvailableSize": [
+        3840,
+        2160
+      ],
+      "originalSourceAvailable": true,
+      "selectedSize": [
+        3840,
+        2160
+      ],
+      "savedSize": [
+        3840,
+        2160
+      ],
+      "savedDurationMs": 132245,
+      "hasAudio": true,
+      "savedBytes": 791858434,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 160736,
+      "error": "",
+      "recordedAt": "2026-11-04T05:55:30.066785+00:00",
+      "sourceLog": "android-4k-complete.jsonl"
+    }
+  ],
+  "androidAllReportedRuns": [
+    {
+      "caseId": "reported_ks_video.primary",
+      "platform": "快手",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "3xqjmdgqyr7u7xc",
+      "videoFormats": 4,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 29416,
+      "selectedSize": [
+        720,
+        1280
+      ],
+      "savedSize": [
+        720,
+        1280
+      ],
+      "savedDurationMs": 29534,
+      "hasAudio": true,
+      "savedBytes": 8522040,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 23924,
+      "error": "",
+      "recordedAt": "2026-11-04T05:15:18.977044+00:00",
+      "sourceLog": "android-focused.jsonl"
+    },
+    {
+      "caseId": "reported_ks_images.primary",
+      "platform": "快手",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "3xv5358vvb8eq9k",
+      "imageCount": 10,
+      "singleImageBytes": 304274,
+      "singleImageSize": [
+        1080,
+        1372
+      ],
+      "archiveBytes": 3929248,
+      "savedImageSizes": [
+        [
+          1080,
+          1372
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1440
+        ],
+        [
+          1080,
+          1620
+        ],
+        [
+          1080,
+          1620
+        ],
+        [
+          1080,
+          1434
+        ]
+      ],
+      "mediaStoreExport": true,
+      "elapsedMs": 45410,
+      "error": "",
+      "recordedAt": "2026-11-04T05:16:06.099732+00:00",
+      "sourceLog": "android-focused.jsonl"
+    },
+    {
+      "caseId": "reported_ks_images.backup",
+      "platform": "快手",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "COVERED_BY_OTHER_SAMPLE",
+      "mediaId": "3xfsgzwdzmh8dv2",
+      "imageCount": 6,
+      "elapsedMs": 13622,
+      "error": "",
+      "recordedAt": "2026-11-04T05:16:21.190579+00:00",
+      "sourceLog": "android-focused.jsonl"
+    },
+    {
+      "caseId": "reported_x_loop.primary",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "FAIL",
+      "mediaId": "2117614039912325120",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": true,
+      "durationMs": 0,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "failureStage": "DOWNLOAD",
+      "errorCode": "POSTPROCESS_FAILED",
+      "error": "[POSTPROCESS_FAILED] 无法验证成品媒体信息",
+      "elapsedMs": 31655,
+      "recordedAt": "2026-11-04T05:16:54.372972+00:00",
+      "sourceLog": "android-focused.jsonl"
+    },
+    {
+      "caseId": "xhs_video.primary",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "SKIPPED_DURATION_BUDGET",
+      "mediaId": "6ab8bf110000000013019e4e",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 1886761,
+      "selectedSize": [
+        1280,
+        720
+      ],
+      "elapsedMs": 42284,
+      "error": "",
+      "recordedAt": "2026-11-04T05:24:35.370973+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "xhs_video.backup",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "6937d509000000001d039d86",
+      "videoFormats": 7,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 132202,
+      "selectedSize": [
+        1280,
+        720
+      ],
+      "savedSize": [
+        1280,
+        720
+      ],
+      "savedDurationMs": 132201,
+      "hasAudio": true,
+      "savedBytes": 20376837,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 58960,
+      "error": "",
+      "recordedAt": "2026-11-04T05:25:35.633192+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "heybox_video.primary",
+      "platform": "小黑盒",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "BROWSER_ASSIST_REQUIRED",
+      "error": "[BROWSER_ASSIST_REQUIRED] 请在内置浏览器打开并播放目标内容后捕获媒体 (该分享页未返回公开视频源，请在内置浏览器打开目标帖子并播放以捕获媒体地址)",
+      "elapsedMs": 4685,
+      "recordedAt": "2026-11-04T05:25:41.722079+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "heybox_video.backup",
+      "platform": "小黑盒",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "BROWSER_ASSIST_REQUIRED",
+      "error": "[BROWSER_ASSIST_REQUIRED] 请在内置浏览器打开并播放目标内容后捕获媒体 (该分享页未返回公开视频源，请在内置浏览器打开目标帖子并播放以捕获媒体地址)",
+      "elapsedMs": 819,
+      "recordedAt": "2026-11-04T05:25:43.822886+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "pixiv_ugoira.primary",
+      "platform": "Pixiv",
+      "expectedKind": "UGOIRA",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "151591764",
+      "videoFormats": 3,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 6430,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "savedSize": [
+        320,
+        240
+      ],
+      "savedDurationMs": 6431,
+      "hasAudio": false,
+      "savedBytes": 2744213,
+      "downloadType": "VIDEO_ONLY",
+      "mediaStoreExport": true,
+      "elapsedMs": 30007,
+      "error": "",
+      "recordedAt": "2026-11-04T05:26:15.275080+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "pixiv_ugoira.backup",
+      "platform": "Pixiv",
+      "expectedKind": "UGOIRA",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "UNKNOWN",
+      "error": "connection closed",
+      "elapsedMs": 5350,
+      "recordedAt": "2026-11-04T05:26:21.926181+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "reported_douyin_video.primary",
+      "platform": "抖音",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "BROWSER_ASSIST_REQUIRED",
+      "error": "[BROWSER_ASSIST_REQUIRED] 抖音分享页仅返回作品ID，未提供目标详情；请在内置浏览器完成验证并打开目标作品后提取",
+      "elapsedMs": 39223,
+      "recordedAt": "2026-11-04T05:27:02.511996+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "reported_douyin_images.primary",
+      "platform": "抖音",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "BROWSER_ASSIST_REQUIRED",
+      "error": "[BROWSER_ASSIST_REQUIRED] 抖音分享页仅返回作品ID，未提供目标详情；请在内置浏览器完成验证并打开目标作品后提取",
+      "elapsedMs": 26982,
+      "recordedAt": "2026-11-04T05:27:30.773555+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "reported_pinterest.primary",
+      "platform": "Pinterest",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "682295412345233089",
+      "videoFormats": 4,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 0,
+      "selectedSize": [
+        234,
+        416
+      ],
+      "savedSize": [
+        234,
+        416
+      ],
+      "savedDurationMs": 8731,
+      "hasAudio": true,
+      "savedBytes": 261921,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 47190,
+      "error": "",
+      "recordedAt": "2026-11-04T05:28:19.246742+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "reported_instagram.primary",
+      "platform": "Instagram",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "ACCESS_DENIED",
+      "error": "[ACCESS_DENIED] 当前账号没有目标内容的可用访问权限 (ERROR: [Instagram] DceA6G7ywLu: This content isn't available to everyone: It can't be seen by certain audiences.)",
+      "elapsedMs": 5041,
+      "recordedAt": "2026-11-04T05:28:25.677085+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "reported_x_loop.primary",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "2117614039912325120",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": true,
+      "durationMs": 0,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "savedSize": [
+        0,
+        1
+      ],
+      "savedDurationMs": 550,
+      "hasAudio": false,
+      "savedBytes": 48563,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 9962,
+      "error": "",
+      "recordedAt": "2026-11-04T05:28:36.979346+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "reported_bili_dynamic.primary",
+      "platform": "哔哩哔哩",
+      "expectedKind": "IMAGE_POST",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "1159422075074510854",
+      "imageCount": 4,
+      "singleImageBytes": 347443,
+      "singleImageSize": [
+        476,
+        381
+      ],
+      "archiveBytes": 2772610,
+      "savedImageSizes": [
+        [
+          476,
+          381
+        ],
+        [
+          375,
+          385
+        ],
+        [
+          375,
+          385
+        ],
+        [
+          375,
+          385
+        ]
+      ],
+      "mediaStoreExport": true,
+      "elapsedMs": 9948,
+      "error": "",
+      "recordedAt": "2026-11-04T05:28:48.235984+00:00",
+      "sourceLog": "android-reported-final.jsonl"
+    },
+    {
+      "caseId": "reported_x_loop.primary",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "2117614039912325120",
+      "videoFormats": 2,
+      "children": 0,
+      "isGif": true,
+      "durationMs": 0,
+      "maxAvailableSize": [
+        0,
+        0
+      ],
+      "originalSourceAvailable": false,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "savedSize": [
+        650,
+        430
+      ],
+      "savedDurationMs": 550,
+      "hasAudio": false,
+      "savedBytes": 48563,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 11997,
+      "error": "",
+      "recordedAt": "2026-11-04T05:36:21.212207+00:00",
+      "sourceLog": "android-best-final.jsonl"
+    },
+    {
+      "caseId": "reported_xhs_4k.primary",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "parseSuccess": false,
+      "errorCode": "TIMEOUT_210S",
+      "downloadStatus": "NOT_VERIFIED",
+      "recordedAt": "2026-11-04T05:39:51.319006+00:00",
+      "sourceLog": "android-best-final.jsonl"
+    },
+    {
+      "caseId": "reported_xhs_4k.primary",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "parseSuccess": false,
+      "errorCode": "TIMEOUT_420S",
+      "downloadStatus": "NOT_VERIFIED",
+      "recordedAt": "2026-11-04T05:50:20.624750+00:00",
+      "sourceLog": "android-4k-resume.jsonl"
+    },
+    {
+      "caseId": "reported_xhs_4k.primary",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "direct",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "mediaId": "6937d509000000001d039d86",
+      "videoFormats": 7,
+      "children": 0,
+      "isGif": false,
+      "durationMs": 132202,
+      "maxAvailableSize": [
+        3840,
+        2160
+      ],
+      "originalSourceAvailable": true,
+      "selectedSize": [
+        3840,
+        2160
+      ],
+      "savedSize": [
+        3840,
+        2160
+      ],
+      "savedDurationMs": 132245,
+      "hasAudio": true,
+      "savedBytes": 791858434,
+      "downloadType": "VIDEO_WITH_AUDIO",
+      "mediaStoreExport": true,
+      "elapsedMs": 160736,
+      "error": "",
+      "recordedAt": "2026-11-04T05:55:30.066785+00:00",
+      "sourceLog": "android-4k-complete.jsonl"
+    },
+    {
+      "caseId": "pixiv_ugoira.primary",
+      "platform": "Pixiv",
+      "expectedKind": "UGOIRA",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "NETWORK_ERROR",
+      "error": "connection closed",
+      "elapsedMs": 10858,
+      "recordedAt": "2026-11-04T05:58:49.058334+00:00",
+      "sourceLog": "android-pixiv-final.jsonl"
+    },
+    {
+      "caseId": "pixiv_ugoira.backup",
+      "platform": "Pixiv",
+      "expectedKind": "UGOIRA",
+      "appVersion": "1.7.6",
+      "hasSession": false,
+      "testNetworkRoute": "host_system_proxy_bridge",
+      "parseSuccess": false,
+      "downloadStatus": "NOT_ATTEMPTED",
+      "failureStage": "PARSE",
+      "errorCode": "CONTENT_UNAVAILABLE",
+      "error": "[CONTENT_UNAVAILABLE] 内容不可用、已删除或无权访问 (作品接口 HTTP 404；请在 Pixiv 网页确认该账号能访问作品，并检查 Pixiv Cookie 已开启。匿名限制与作品删除均可能返回 404)",
+      "elapsedMs": 3059,
+      "recordedAt": "2026-11-04T05:58:53.456216+00:00",
+      "sourceLog": "android-pixiv-final.jsonl"
+    }
+  ],
+  "windowsParseRuns": [
+    {
+      "caseId": "xhs_video.backup",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-04T05:16:17.394126+00:00",
+      "mediaId": "6937d509000000001d039d86",
+      "videoFormats": 5,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 12437
+    },
+    {
+      "caseId": "xhs_video.primary",
+      "platform": "小红书",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-04T05:16:17.397126+00:00",
+      "mediaId": "6ab8bf110000000013019e4e",
+      "videoFormats": 6,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 13875
+    },
+    {
+      "caseId": "heybox_video.primary",
+      "platform": "小黑盒",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-04T05:16:31.029187+00:00",
+      "errorCode": "BROWSER_ASSIST_REQUIRED",
+      "error": "[BROWSER_ASSIST_REQUIRED] 分享页没有公开媒体，请在内置浏览器打开并播放目标内容",
+      "elapsedMs": 14233
+    },
+    {
+      "caseId": "heybox_video.backup",
+      "platform": "小黑盒",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-04T05:16:32.377494+00:00",
+      "errorCode": "BROWSER_ASSIST_REQUIRED",
+      "error": "[BROWSER_ASSIST_REQUIRED] 分享页没有公开媒体，请在内置浏览器打开并播放目标内容",
+      "elapsedMs": 15735
+    },
+    {
+      "caseId": "pixiv_ugoira.primary",
+      "platform": "Pixiv",
+      "expectedKind": "UGOIRA",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-04T05:16:46.435752+00:00",
+      "mediaId": "151591764",
+      "videoFormats": 3,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 9328
+    },
+    {
+      "caseId": "pixiv_ugoira.backup",
+      "platform": "Pixiv",
+      "expectedKind": "UGOIRA",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-04T05:16:49.765486+00:00",
+      "errorCode": "CONTENT_UNAVAILABLE",
+      "error": "404 Client Error: Not Found for url: <url>",
+      "elapsedMs": 8031
+    },
+    {
+      "caseId": "reported_douyin_images.primary",
+      "platform": "抖音",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-04T05:16:58.930324+00:00",
+      "errorCode": "BROWSER_ASSIST_REQUIRED",
+      "error": "[BROWSER_ASSIST_REQUIRED] 抖音分享页仅返回作品ID，未提供目标详情；请在内置浏览器完成验证并打开目标作品后提取",
+      "elapsedMs": 11937
+    },
+    {
+      "caseId": "reported_douyin_video.primary",
+      "platform": "抖音",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-04T05:16:56.934724+00:00",
+      "errorCode": "BROWSER_ASSIST_REQUIRED",
+      "error": "[BROWSER_ASSIST_REQUIRED] 抖音分享页仅返回作品ID，未提供目标详情；请在内置浏览器完成验证并打开目标作品后提取",
+      "elapsedMs": 21562
+    },
+    {
+      "caseId": "reported_ks_video.primary",
+      "platform": "快手",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-04T05:17:12.004015+00:00",
+      "mediaId": "3xqjmdgqyr7u7xc",
+      "videoFormats": 4,
+      "children": 0,
+      "isGif": false,
+      "elapsedMs": 7578
+    },
+    {
+      "caseId": "reported_ks_images.primary",
+      "platform": "快手",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-04T05:17:19.749418+00:00",
+      "mediaId": "3xv5358vvb8eq9k",
+      "imageCount": 10,
+      "elapsedMs": 13187
+    },
+    {
+      "caseId": "reported_ks_images.backup",
+      "platform": "快手",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-04T05:17:20.815688+00:00",
+      "mediaId": "3xfsgzwdzmh8dv2",
+      "imageCount": 6,
+      "elapsedMs": 13719
+    },
+    {
+      "caseId": "reported_pinterest.primary",
+      "platform": "Pinterest",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-04T05:17:34.006041+00:00",
+      "errorCode": "NETWORK_ERROR",
+      "error": "HTTPSConnectionPool(host='pin.it', port=443): Max retries exceeded with url: /Q0K5LjMyK (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)')))",
+      "elapsedMs": 5016
+    },
+    {
+      "caseId": "reported_instagram.primary",
+      "platform": "Instagram",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-04T05:17:35.707023+00:00",
+      "errorCode": "EXTRACTOR_CHANGED",
+      "error": "解析媒体资源失败: ERROR: [Instagram] DceA6G7ywLu: Unable to download webpage: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010) (caused by SSLError('[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)')); please report this issue on  <url> , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U",
+      "elapsedMs": 5344
+    },
+    {
+      "caseId": "reported_bili_dynamic.primary",
+      "platform": "哔哩哔哩",
+      "expectedKind": "IMAGE_POST",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-04T05:17:42.153982+00:00",
+      "mediaId": "1159422075074510854",
+      "imageCount": 4,
+      "elapsedMs": 655
+    },
+    {
+      "caseId": "reported_x_loop.primary",
+      "platform": "X (Twitter)",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": true,
+      "recordedAt": "2026-11-04T05:17:40.196450+00:00",
+      "mediaId": "2117614039912325120",
+      "videoFormats": 1,
+      "children": 0,
+      "isGif": true,
+      "elapsedMs": 3203
+    },
+    {
+      "caseId": "reported_instagram.primary",
+      "platform": "Instagram",
+      "expectedKind": "VIDEO",
+      "route": "windows_current_source_anonymous",
+      "parseSuccess": false,
+      "recordedAt": "2026-11-04T05:58:27.368266+00:00",
+      "errorCode": "ACCESS_DENIED",
+      "error": "解析媒体资源失败: ERROR: [Instagram] DceA6G7ywLu: This content isn't available to everyone: It can't be seen by certain audiences.",
+      "elapsedMs": 14014
+    }
+  ],
+  "windowsSourceDownloads": [
+    {
+      "caseId": "pixiv_ugoira.primary",
+      "platform": "Pixiv",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "recordedAt": "2026-11-04T05:39:13.177116+00:00",
+      "videoFormats": 3,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "actual": {
+        "width": 320,
+        "height": 240,
+        "audio": false,
+        "duration": 6.43
+      },
+      "bytes": 1455240
+    },
+    {
+      "caseId": "reported_ks_video.primary",
+      "platform": "快手",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "recordedAt": "2026-11-04T05:39:27.769643+00:00",
+      "videoFormats": 4,
+      "selectedSize": [
+        720,
+        1280
+      ],
+      "actual": {
+        "width": 720,
+        "height": 1280,
+        "audio": true,
+        "duration": 29.42
+      },
+      "bytes": 8522040
+    },
+    {
+      "caseId": "reported_ks_images.primary",
+      "platform": "快手",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "recordedAt": "2026-11-04T05:39:45.954454+00:00",
+      "imageCount": 10,
+      "archiveCount": 10,
+      "gifCount": 0,
+      "zipValid": true,
+      "bytes": 3929248
+    },
+    {
+      "caseId": "reported_pinterest.primary",
+      "platform": "Pinterest",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "recordedAt": "2026-11-04T05:40:00.130559+00:00",
+      "videoFormats": 4,
+      "selectedSize": [
+        720,
+        1280
+      ],
+      "actual": {
+        "width": 720,
+        "height": 1280,
+        "audio": true,
+        "duration": 8.57
+      },
+      "bytes": 993949
+    },
+    {
+      "caseId": "reported_x_loop.primary",
+      "platform": "X (Twitter)",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "recordedAt": "2026-11-04T05:40:32.955423+00:00",
+      "videoFormats": 1,
+      "selectedSize": [
+        0,
+        0
+      ],
+      "actual": {
+        "width": 650,
+        "height": 430,
+        "audio": false,
+        "duration": 0.55
+      },
+      "bytes": 48563
+    },
+    {
+      "caseId": "reported_bili_dynamic.primary",
+      "platform": "哔哩哔哩",
+      "parseSuccess": true,
+      "downloadStatus": "PASS",
+      "recordedAt": "2026-11-04T05:40:45.819391+00:00",
+      "imageCount": 4,
+      "archiveCount": 4,
+      "gifCount": 4,
+      "zipValid": true,
+      "bytes": 2772610
+    }
+  ],
+  "windowsPackagedDesktop": {
+    "version": "1.7.6",
+    "exeStartup": "PASS_LOCAL_API",
+    "visibleGUI": "NOT_VERIFIED_NO_TARGETABLE_WINDOW",
+    "htmlImageViewer": true,
+    "reported_ks_video": {
+      "status": "COMPLETED",
+      "bytes": 8522040,
+      "actual": {
+        "width": 720,
+        "height": 1280,
+        "audio": true,
+        "duration": 29.42
+      }
+    },
+    "reported_bili_dynamic": {
+      "status": "COMPLETED",
+      "bytes": 2772610,
+      "images": 4,
+      "gifs": 4,
+      "zipValid": true
+    }
+  },
+  "artifacts": [
+    {
+      "file": "release/1.7.6/OmniDownloader-1.7.6-arm64-v8a.apk",
+      "bytes": 59496347,
+      "sha256": "10367dda995a7cc976ceada6da5e9151bac2c7bbb2dd02f7586ba2114abdbcdc"
+    },
+    {
+      "file": "windows/release/OmniDownloader_Desktop-1.7.6.zip",
+      "bytes": 134654930,
+      "sha256": "e6f795163ccd1d44dd445e14b649115fc03433cd80c565511f0d93095902bd75"
+    },
+    {
+      "file": "windows/release/OmniDownloader_Web-1.7.6.zip",
+      "bytes": 140951875,
+      "sha256": "cbdce9351a2c3bba2a104b687877265d7617116f88071dc6136722916c28d107"
+    }
+  ],
+  "notes": [
+    "Raw runs are retained. The initial X verifier result with [0,1] dimensions is superseded by the final [650,430] verified result.",
+    "The original 4K file was 791858434 bytes. 210s and 420s harness limits interrupted earlier attempts; a final resumed save completed and exported via MediaStore.",
+    "Pixiv primary saved successfully in earlier Android/Windows tests but a later Android diagnostic encountered connection closed, now classified NETWORK_ERROR; no universal connectivity claim.",
+    "Instagram reported content returns ACCESS_DENIED; Pixiv backup returns 404; Douyin anonymous pages returned only item ID; Heybox share pages returned an SPA shell.",
+    "Actual account login, CAPTCHA, phone storage/UI, Windows visible GUI and iOS were not verified. Web/tray variant was build-only."
+  ]
+}

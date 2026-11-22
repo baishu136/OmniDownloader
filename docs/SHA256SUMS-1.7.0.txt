@@ -1,0 +1,4 @@
+4663ab62559919d8c5984d0cc2ef0397fb07d3f6a72171b6f96e03a4978f53f7  release/1.7.0/OmniDownloader-1.7.0-arm64-v8a.apk
+79390ee5fe18126abb875acc1ed66d0afaeef044f2c0780bd6dd44b48a88fa54  release/1.7.0/OmniDownloader-iOS-source-1.7.0.zip
+ff48f36d236b070b4d161254ecc33b93891bcdae47f70f974879c62e194279f1  windows/release/OmniDownloader_Desktop-1.7.0.zip
+0b20e74bfd173c6104b8b0bce3d1219088905c2645309a40dba8c7a1c0e494b8  windows/release/OmniDownloader_Web-1.7.0.zip

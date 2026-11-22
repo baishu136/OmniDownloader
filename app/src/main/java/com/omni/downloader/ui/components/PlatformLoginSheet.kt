@@ -37,6 +37,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,38 +56,50 @@ import kotlinx.coroutines.isActive
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun PlatformLoginSheet(
+internal fun PlatformLoginSheet(
     platform: String,
     onDismissRequest: () -> Unit,
-    onCookieCaptured: (String) -> Unit
+    onCookieCaptured: (String) -> Unit,
+    initialUrl: String? = null,
+    manageOnly: Boolean = false,
+    googleProfile: com.omni.downloader.data.repository.GoogleBrowserProfile? = null,
+    googleLabel: String? = null,
+    requireExplicitSave: Boolean = false
 ) {
     val strings = LocalAppStrings.current
     val config = remember(platform) { loginConfigFor(platform) }
+    val sessions=com.omni.downloader.data.repository.SessionRepository.getInstance(LocalContext.current)
+    val explicitSave=requireExplicitSave || googleProfile!=null ||
+        sessions.info(platform)?.status==com.omni.downloader.data.repository.SessionStatus.NEEDS_AUTH
+    val startUrl=initialUrl ?: config.startUrl
     var loadProgress by remember { mutableFloatStateOf(0f) }
     var isLoading by remember { mutableStateOf(true) }
     var captured by remember(platform) { mutableStateOf(false) }
     var desktop by rememberSaveable(platform) { mutableStateOf(BrowserIdentity.prefersDesktop(platform)) }
     var browser by remember { mutableStateOf<LoginBrowserController?>(null) }
-    var notice by remember(platform) { mutableStateOf(if (platform == com.omni.downloader.data.repository.SessionPlatforms.PIXIV)
-        "请使用能查看目标作品的 Pixiv 账号登录，完成后点击下方保存会话，再重新解析作品。" else "") }
-    var currentHost by remember(platform) { mutableStateOf(android.net.Uri.parse(config.startUrl).host.orEmpty()) }
+    var notice by remember(platform,manageOnly) { mutableStateOf(if(manageOnly) strings.sessionManageGoogleHint else if (platform == com.omni.downloader.data.repository.SessionPlatforms.PIXIV)
+        strings.pixivLoginHint else "") }
+    var currentHost by remember(platform,startUrl) { mutableStateOf(android.net.Uri.parse(startUrl).host.orEmpty()) }
     BackHandler { if (browser?.goBack() != true) onDismissRequest() }
 
     fun captureIfLoggedIn(force: Boolean): Boolean {
+        if(manageOnly) return false
+        if(explicitSave && !force) return false
         if (captured) return true
-        val cookie = CookieManager.getInstance().getCookie(config.cookieUrl).orEmpty()
+        val manager=googleProfile?.cookies ?: CookieManager.getInstance()
+        val cookie = manager.getCookie(config.cookieUrl).orEmpty()
         if (!canCaptureLoginCookie(config, cookie, manual = force)) {
-            if (force) notice = "尚未取得会话，请先完成网页登录后再保存"
+            if (force) notice = strings.sessionNotCaptured
             return false
         }
-        CookieManager.getInstance().flush()
+        manager.flush()
         captured = true
         onCookieCaptured(cookie)
         return true
     }
 
-    LaunchedEffect(captured) {
-        if (captured || !config.automaticCapture || config.loginMarkers.isEmpty()) return@LaunchedEffect
+    LaunchedEffect(captured,manageOnly,explicitSave) {
+        if (manageOnly || explicitSave || captured || !config.automaticCapture || config.loginMarkers.isEmpty()) return@LaunchedEffect
         while (isActive && !captured) {
             if (captureIfLoggedIn(force = false)) return@LaunchedEffect
             delay(1000)
@@ -126,12 +140,12 @@ fun PlatformLoginSheet(
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = platform,
+                                text = if(googleProfile!=null) "${googleLabel.orEmpty()} · $platform" else if(manageOnly) strings.sessionManageGoogle else platform,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = currentHost + if (desktop) " · 桌面网站" else " · 手机版",
+                                text = currentHost + if (desktop) strings.desktopSite else strings.mobileSite,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 11.sp
@@ -151,18 +165,24 @@ fun PlatformLoginSheet(
                 }
 
                 Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = { desktop = !desktop }) { Text(if (desktop) "切换手机版" else "切换桌面版") }
-                    TextButton(onClick = { browser?.reloadStart() }) { Text("重新加载登录页") }
+                    TextButton(onClick = { desktop = !desktop }) { Text(if (desktop) strings.switchToMobile else strings.switchToDesktop) }
+                    TextButton(onClick = { browser?.reloadStart() }) { Text(strings.reloadLogin) }
                 }
                 if (notice.isNotBlank()) Text(notice, Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodySmall)
+                if(googleProfile!=null) Row(Modifier.fillMaxWidth().padding(horizontal=12.dp)) {
+                    TextButton(onClick={browser?.navigate("https://accounts.google.com/")}){Text(strings.googleOpenGoogle)}
+                    TextButton(onClick={browser?.navigate(config.startUrl)}){Text(strings.googleOpenPlatform)}
+                }
                 AndroidView(
                     modifier = Modifier.weight(1f),
                     factory = { context ->
-                        LoginBrowserController(context, platform, config.startUrl, desktop,
+                        LoginBrowserController(context, platform, startUrl, desktop,
                             onProgress = { progress -> loadProgress = progress / 100f; isLoading = progress < 100 },
                             onPageFinished = { captureIfLoggedIn(force = false) },
                             onNotice = { notice = it },
-                            onLocation = { currentHost = android.net.Uri.parse(it).host.orEmpty() }
+                            onLocation = { currentHost = android.net.Uri.parse(it).host.orEmpty() },
+                            googleProfile = googleProfile,
+                            strings = strings
                         ).also { browser = it }.container
                     },
                     update = { browser?.setDesktop(desktop) },
@@ -176,8 +196,8 @@ fun PlatformLoginSheet(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Button(shape = MaterialTheme.shapes.medium, onClick = { captureIfLoggedIn(force = true) }) {
-                        Text(if (!config.automaticCapture) "我已登录，保存会话" else strings.sessionLoginDone)
+                    Button(shape = MaterialTheme.shapes.medium,modifier=Modifier.testTag("session_login_done"), onClick = { if(manageOnly) onDismissRequest() else captureIfLoggedIn(force = true) }) {
+                        Text(if(manageOnly) strings.sessionLoginDone else if(googleProfile!=null || explicitSave) strings.googleSavePlatform.format(platform) else if (!config.automaticCapture) strings.iHaveLoggedIn else strings.sessionLoginDone)
                     }
                 }
             }

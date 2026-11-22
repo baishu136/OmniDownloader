@@ -10,6 +10,8 @@ import ffmpegkit
     @AppStorage("omni.concurrent") private var concurrent=3
     @ObservedObject private var preferences=CookieStore.shared
     @ObservedObject private var sessions=PlatformSession.shared
+    @ObservedObject private var updates=AppUpdates.shared
+    @AppStorage("omni.update.automatic") private var automaticUpdates=true
     @StateObject private var browser=PlatformBrowser()
     @State private var page:Page?
     @State private var selectedSite="YouTube"
@@ -104,9 +106,12 @@ import ffmpegkit
             Text(engineInfo.isEmpty ? L("正在检查组件…"):engineInfo).font(.caption.monospaced()).textSelection(.enabled)
             Button(L("重新检查")){inspectEngine()}
             Text(L("媒体组件随应用版本更新；不会下载并执行外部程序。")).font(.caption).foregroundColor(OmniPalette.secondary)
-            Link(L("检查应用更新"),destination:URL(string:"https://github.com/baishu136/OmniDownloader/releases")!)
+            Toggle("自动检查应用更新",isOn:$automaticUpdates)
+            Button(updates.checking ? "正在检查…":"检查应用更新"){Task{await updates.check(force:true)}}.disabled(updates.checking)
+            if !updates.message.isEmpty{Text(updates.message).font(.caption)}
+            if let url=updates.releaseURL{Link("查看 iOS 更新",destination:url)}
         case .about:
-            HStack{Text("OmniDownloader").font(.title2.bold());Spacer();Text("1.7.21").foregroundColor(OmniPalette.primary)}
+            HStack{Text("OmniDownloader").font(.title2.bold());Spacer();Text("1.7.61").foregroundColor(OmniPalette.primary)}
             Text(L("支持平台")).font(.headline);OmniPlatformChips()
             Text("SwiftUI · WebKit · URLSession · FFmpegKit").font(.caption).foregroundColor(OmniPalette.secondary)
             Link("GitHub",destination:URL(string:"https://github.com/baishu136/OmniDownloader")!)

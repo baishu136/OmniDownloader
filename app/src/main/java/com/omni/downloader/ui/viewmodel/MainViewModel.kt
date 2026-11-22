@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.flowOn
 import com.omni.downloader.ui.model.TaskListState
 import com.omni.downloader.ui.model.buildTaskListState
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -49,12 +50,24 @@ import java.io.File
 import java.util.UUID
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+    /** 界面语言由 MainActivity 注入；提示文案在产生时就按当前语言本地化。 */
+    @Volatile
+    private var strings: com.omni.downloader.ui.localization.AppStrings =
+        com.omni.downloader.ui.localization.ZhHansStrings
+
+    fun updateStrings(value: com.omni.downloader.ui.localization.AppStrings) { strings = value }
+
     private val _analysisStage = MutableStateFlow("")
     val analysisStage: StateFlow<String> = _analysisStage.asStateFlow()
 
     private val repository = TaskRepository.getInstance(application)
     private val settingsRepository = SettingsRepository.getInstance(application)
     val inputDrafts = com.omni.downloader.data.repository.InputDraftRepository.getInstance(application)
+
+    init {
+        // 启动即按已保存的语言初始化，避免首个提示文案回落为中文。
+        strings = com.omni.downloader.ui.localization.resolveAppStrings(settingsRepository.appLanguage.value)
+    }
 
     val tasks: StateFlow<List<DownloadTask>> = repository.tasks
     val taskStructure: StateFlow<List<DownloadTask>> = repository.taskStructure
@@ -78,6 +91,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val imageInput = MutableStateFlow("")
     val imagePost = MutableStateFlow<com.omni.downloader.data.model.ImagePost?>(null)
     val imageBusy = MutableStateFlow(false)
+    private val imageSavePreparing=MutableStateFlow(false)
+    private fun savingImages(task:DownloadTask)=task.status in setOf(TaskStatus.PENDING,TaskStatus.DOWNLOADING,TaskStatus.PROCESSING) &&
+        (task.downloadType in setOf(DownloadType.IMAGE,DownloadType.IMAGE_ZIP) || task.selectedVideoFormatId.startsWith("ugoira_"))
+    val imageSaving:StateFlow<Boolean> = combine(imageSavePreparing,repository.taskStructure){preparing,list->preparing || list.any(::savingImages)}
+        .stateIn(viewModelScope,SharingStarted.Eagerly,false)
+    val artistAnimationFormat = MutableStateFlow("ugoira_gif")
     val imageError = MutableStateFlow("")
     val imageBrowserUrl = MutableStateFlow("")
     private var analysisJob: Job? = null
@@ -85,6 +104,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var analysisProcessId: String? = null
     private var activeAnalysisInput = ""
     private var activeAnalysisOrigin = MediaPage.VIDEO
+    private var profileScope = ""
     private val _mediaNavigation = MutableStateFlow<MediaNavigationRequest?>(null)
     val mediaNavigation = _mediaNavigation.asStateFlow()
 
@@ -101,28 +121,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
             val text = clipboard?.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty()
             val url = UrlSniffer.extractUrl(text)
-            if (url.isNullOrBlank()) _message.value = "剪贴板中未发现有效链接"
+            if (url.isNullOrBlank()) _message.value = strings.vmClipboardNoLink
             else updateImageInput(url)
-        } catch (_: Exception) { _message.value = "无法读取剪贴板" }
+        } catch (_: Exception) { _message.value = strings.vmClipboardUnreadable }
     }
 
     fun analyzeImages() = startRoutedAnalysis(imageInput.value, MediaPage.IMAGES)
 
     private fun cancelMediaAnalysis() {
+        val oldJob=analysisJob;val oldProcess=analysisProcessId
         analysisGeneration++
         _analysisStage.value = ""
-        analysisJob?.cancel()
         analysisJob = null
-        analysisProcessId?.let(DownloadEngine::cancelMetadata)
         analysisProcessId = null
         _isAnalyzing.value = false
         imageBusy.value = false
         _mediaNavigation.value = null
+        oldJob?.cancel()
+        oldProcess?.let(DownloadEngine::cancelMetadata)
     }
 
     private fun startRoutedAnalysis(input: String, origin: MediaPage, autoDownload: Boolean = false, context: Context? = null) {
         val target = (UrlSniffer.extractUrl(input) ?: input).trim()
-        if (target.isBlank()) { _message.value = "请输入或粘贴作品链接"; return }
+        if (target.isBlank()) { _message.value = strings.vmEnterLink; return }
         if (analysisJob?.isActive == true && activeAnalysisInput == target && activeAnalysisOrigin == origin) return
         cancelMediaAnalysis()
         val generation = analysisGeneration
@@ -135,7 +156,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         activeAnalysisOrigin = origin
         var destination = origin
         var resolvedUrl = target
-        _metadata.value = null; imagePost.value = null
+        val profileHandle = com.omni.downloader.engine.XProfileInput.handle(target)
+        val artistId = com.omni.downloader.engine.PixivArtistInput.userId(target)
+        val currentProfileScope = if(artistId!=null) com.omni.downloader.engine.PixivArtistExtractor.scope(getApplication(),proxyUrl.value)
+            else com.omni.downloader.engine.XProfileImages.scope(getApplication(), proxyUrl.value)
+        val previousProfile = imagePost.value?.takeIf { profileScope == currentProfileScope && when(it.route) {
+            "x_profile" -> !it.profileComplete && com.omni.downloader.engine.XProfileInput.handle(it.url)?.lowercase() == profileHandle?.lowercase()
+            "pixiv_artist" -> !it.artistComplete && it.artistUserId==artistId
+            else -> false
+        } }
+        _metadata.value = null; imagePost.value = previousProfile
+        profileScope = currentProfileScope
         _showFormatSheet.value = false; _errorDialogDetail.value = null
         imageError.value = ""; imageBrowserUrl.value = ""
         fun showDestination(page: MediaPage) {
@@ -175,19 +206,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         } }).getOrThrow() },
                     images = { url: String ->
                         val imageUrl = MediaAnalysisRouter.imageInput(target, url)
-                        val json = com.omni.downloader.engine.SharedPython.run(getApplication(), "images", imageUrl, site, proxy, taskId = processId)
+                        val json = if (com.omni.downloader.engine.PixivArtistInput.userId(imageUrl)!=null) {
+                            val collection=com.omni.downloader.engine.PixivArtistExtractor.fetch(getApplication(),imageUrl,proxy,previousProfile) { page ->
+                                withContext(Dispatchers.Main.immediate) { if(generation==analysisGeneration) {
+                                    imagePost.value=page
+                                    _analysisStage.value = strings.vmArtistProgress.format(page.artistOffset, page.artistArtworkIds.size)
+                                } }
+                            }
+                            com.omni.downloader.engine.XProfileImages.manifest(collection)
+                        } else if (com.omni.downloader.engine.XProfileInput.handle(imageUrl) != null) {
+                            val collection = com.omni.downloader.engine.XProfileImages.fetch(getApplication(), imageUrl, proxy, processId, previousProfile) { page ->
+                                withContext(Dispatchers.Main.immediate) {
+                                    if (generation == analysisGeneration) {
+                                        imagePost.value = page
+                                        _analysisStage.value = strings.vmImagesFound.format(page.resources.size)
+                                    }
+                                }
+                            }
+                            com.omni.downloader.engine.XProfileImages.manifest(collection)
+                        } else com.omni.downloader.engine.SharedPython.run(getApplication(), "images", imageUrl, site, proxy, taskId = processId)
                         val post = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
                             .decodeFromString<com.omni.downloader.data.model.ImagePost>(json.toString())
-                        check(post.resources.isNotEmpty()) { "[NO_MEDIA] 该作品没有可确认的图片资源" }
+                        check(post.route in setOf("x_profile","pixiv_artist") || post.resources.isNotEmpty()) { "[NO_MEDIA] ${strings.vmNoMediaResources}" }
                         currentCoroutineContext().ensureActive()
-                        com.omni.downloader.engine.ImagePostSnapshots.put(getApplication(), json)
+                        if (post.route !in setOf("x_profile","pixiv_artist")) com.omni.downloader.engine.ImagePostSnapshots.put(getApplication(), json)
                         post
                     }
                 )
                 val content = router.analyze(resolvedUrl, origin, ::showDestination)
                 currentCoroutineContext().ensureActive()
                 if (douyinScope != null && douyinScope != com.omni.downloader.engine.DouyinAutoResolver.scope(getApplication(), proxy))
-                    throw CancellationException("解析会话已改变")
+                    throw CancellationException(strings.vmAnalysisCancelled)
                 if (generation != analysisGeneration) return@launch
                 when (content) {
                     is ParsedContent.Video -> {
@@ -208,7 +257,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (generation != analysisGeneration) return@launch
                 val detail = com.omni.downloader.engine.LogSanitizer.sanitize(error.message.orEmpty())
                 if (destination == MediaPage.IMAGES) imageError.value = detail
-                else { _errorDialogDetail.value = detail; _message.value = "解析失败，点击弹窗查看详情" }
+                else { _errorDialogDetail.value = detail; _message.value = strings.vmAnalysisFailedDetail }
                 if (com.omni.downloader.engine.MediaErrors.codeOf(error) in setOf(MediaErrorCode.AUTH_REQUIRED, MediaErrorCode.CHALLENGE_REQUIRED)) {
                     val platform = UrlSniffer.identifySite(resolvedUrl)
                     if (platform in SessionPlatforms.all) SessionRepository.getInstance(getApplication()).markStatus(platform, SessionStatus.NEEDS_AUTH)
@@ -287,20 +336,60 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     fun downloadImages(ids: Set<String>, archive: Boolean) {
         val post = imagePost.value ?: return
+        if(ids.isEmpty())return
+        if(repository.taskStructure.value.any(::savingImages) || !imageSavePreparing.compareAndSet(false,true)){
+            _message.value=strings.vmSaveInProgress;return
+        }
+        val selectedIds=ids.toSet();val animationFormat=artistAnimationFormat.value
+        viewModelScope.launch {
+          try{withContext(Dispatchers.IO){enqueueImages(post,selectedIds,archive,animationFormat)}}
+          catch(cancelled:CancellationException){throw cancelled}
+          catch(error:Exception){_message.value=com.omni.downloader.engine.LogSanitizer.sanitize(error.message.orEmpty())}
+          finally{imageSavePreparing.value=false}
+        }
+    }
+    private fun enqueueImages(post:com.omni.downloader.data.model.ImagePost,ids:Set<String>,archive:Boolean,animationFormat:String) {
+        if(post.route=="pixiv_artist") {
+            val jobs=com.omni.downloader.engine.PixivArtistInput.tasks(post,ids,archive,animationFormat)
+            com.omni.downloader.engine.PixivArtistInput.posts(post,ids).forEach { source ->
+                com.omni.downloader.engine.ImagePostSnapshots.put(getApplication(),com.omni.downloader.engine.XProfileImages.manifest(source))
+            }
+            repository.addTasks(jobs);startImageTasks(jobs)
+            return
+        }
         val selected = post.resources.filter { it.id in ids }
         if (selected.isEmpty()) return
         val group = UUID.randomUUID().toString()
-        val batches = if (archive) listOf(selected.map { it.id }) else selected.map { listOf(it.id) }
-        val jobs = batches.mapIndexed { index, batch -> DownloadTask(
-            id = UUID.randomUUID().toString(), url = post.url, title = "${post.title.take(70)} (${if (archive) "原图归档" else "${index + 1}/${selected.size}"})",
-            author = post.author, thumbnailUrl = selected.firstOrNull { it.id == batch.first() }?.url.orEmpty(),
+        val posts = if (post.route == "x_profile") com.omni.downloader.engine.XProfileInput.posts(post.copy(resources = selected)) else listOf(post.copy(resources = selected))
+        val plans = posts.flatMap { source ->
+            val batches = if (archive) listOf(source.resources.map { it.id }) else source.resources.map { listOf(it.id) }
+            batches.map { source to it }
+        }
+        if (plans.size > 500) { _message.value = strings.vmImageTaskLimit; return }
+        if (post.route == "x_profile") posts.forEach { source ->
+            com.omni.downloader.engine.ImagePostSnapshots.put(getApplication(), com.omni.downloader.engine.XProfileImages.manifest(source))
+        }
+        val jobs = plans.mapIndexed { index, (source, batch) -> DownloadTask(
+            id = UUID.randomUUID().toString(), url = source.url, title = "${source.title.take(70)} (${if (archive) strings.vmImageArchiveTitle else "${index + 1}/${selected.size}"})",
+            author = source.author, thumbnailUrl = source.resources.firstOrNull { it.id == batch.first() }?.url.orEmpty(),
             downloadType = if (archive) DownloadType.IMAGE_ZIP else DownloadType.IMAGE,
-            imagePlatform = post.platform, selectedImageIds = batch, mediaId = post.contentId, schemaVersion = 4,
-            collectionId = if (batches.size > 1) group else null, collectionTitle = post.title,
-            episodeIndex = index + 1, episodeTotal = batches.size
+            imagePlatform = source.platform, selectedImageIds = batch, mediaId = source.contentId, schemaVersion = 4,
+            collectionId = if (plans.size > 1) group else null, collectionTitle = post.title,
+            episodeIndex = index + 1, episodeTotal = plans.size
         ) }
         repository.addTasks(jobs)
-        jobs.forEach { DownloadService.startDownload(getApplication(), it.id) }
+        startImageTasks(jobs)
+    }
+    private fun startImageTasks(jobs:List<DownloadTask>) {
+        jobs.forEachIndexed{index,task->
+            try{DownloadService.startDownload(getApplication(),task.id)}
+            catch(error:Exception){jobs.drop(index).forEach{repository.markFailed(it.id,strings.vmImageSaveStartFailed)};throw error}
+        }
+    }
+    fun stopProfileAnalysis() {
+        if (imagePost.value?.route !in setOf("x_profile","pixiv_artist")) return
+        cancelMediaAnalysis()
+        imageError.value = strings.vmAnalysisStopped
     }
     val downloadPath: StateFlow<String> = settingsRepository.downloadPath
     val appLanguage: StateFlow<String> = settingsRepository.appLanguage
@@ -465,16 +554,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (!extracted.isNullOrEmpty()) {
                 updateInputUrl(extracted)
                 if (autoDownload) {
-                    _message.value = "已读取剪贴板，正在解析..."
+                    _message.value = strings.vmPastedAnalyzing
                     startAnalyze(rawUrl = extracted, autoDownload = true, context = context)
                 } else {
-                    _message.value = "已从剪贴板粘贴视频链接"
+                    _message.value = strings.vmPastedVideoLink
                 }
             } else {
-                _message.value = "剪贴板中未发现有效链接"
+                _message.value = strings.vmClipboardNoLink
             }
         } catch (e: Exception) {
-            _message.value = "无法读取剪贴板"
+            _message.value = strings.vmClipboardUnreadable
         }
     }
 
@@ -482,7 +571,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val targetUrl = (rawUrl ?: _inputUrl.value).trim()
         val extracted = UrlSniffer.extractUrl(targetUrl) ?: targetUrl
         if (extracted.isBlank()) {
-            _message.value = "请输入或粘贴视频网址"
+            _message.value = strings.vmEnterVideoUrl
             return
         }
 
@@ -496,8 +585,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
              extracted.contains("snapany.com", ignoreCase = true)
 
         if (isRelaySiteHome && !UrlSniffer.isDirectMediaUrl(extracted)) {
-            _message.value = "提示：此为中转网站地址，请粘贴具体视频链接"
-            _errorDialogDetail.value = "检测到您输入的是中转解析站地址 ($extracted)。\n\n请在输入框粘贴欲下载的真实视频链接（如 Bilibili、YouTube、TikTok、X 等平台的分享链接），或在下方中转站卡片内输入视频链接进行解析。"
+            _message.value = strings.vmRelayAddressHint
+            _errorDialogDetail.value = strings.vmRelayAddressDetail.format(extracted)
             return
         }
 
@@ -522,15 +611,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 val activeMeta = data.multiMediaList.getOrElse(_selectedMultiMediaIndex.value) { data }
                 _selectedVideoFormat.value = activeMeta.availableVideoFormats.firstOrNull()
-                // 默认下载类型始终锁定为原画视频 (VIDEO_WITH_AUDIO)，
-                // 彻底杜绝普通视频或短动效在粘贴自动下载时被私自执行 GIF 转码
-                _selectedDownloadType.value = if (activeMeta.isGif) DownloadType.VIDEO_ONLY else DownloadType.VIDEO_WITH_AUDIO
+                // 已识别动图默认导出 GIF，普通视频保留音画合流。
+                _selectedDownloadType.value = if (activeMeta.isGif) DownloadType.GIF else DownloadType.VIDEO_WITH_AUDIO
                 _selectedAudioFormat.value = AudioFormat.MP3
 
                 if (autoDownload && context != null) {
                     if (data.multiMediaList.size > 1) {
                         // 发现链接是合集/多视频时，不直接下载，而是先弹出下载选项由用户自己决定如何下载
-                        _message.value = "检测到合集内容(共${data.multiMediaList.size}个视频)，请选择下载选项"
+                        _message.value = strings.vmCollectionDetected.format(data.multiMediaList.size)
                         _showFormatSheet.value = true
                     } else {
                         startDownload(context)
@@ -556,10 +644,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         } else _selectedVideoFormat.value
         val audioFormat = _selectedAudioFormat.value
         val resolutionLabel = when (type) {
-            DownloadType.COVER -> "原图封面"
+            DownloadType.COVER -> strings.vmCoverOriginal
             DownloadType.AUDIO_ONLY -> audioFormat.ext.uppercase()
             DownloadType.GIF -> "GIF"
-            else -> format?.resolutionLabel ?: "默认画质"
+            else -> format?.resolutionLabel ?: strings.vmDefaultQuality
         }
 
         val task = DownloadTask(
@@ -591,11 +679,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val coverTask = DownloadTask(
                 id = UUID.randomUUID().toString().replace("-", "").take(12),
                 url = currentMeta.url,
-                title = "${currentMeta.title} (封面)",
+                title = strings.vmCoverSuffix.format(currentMeta.title),
                 author = currentMeta.author,
                 thumbnailUrl = currentMeta.thumbnailUrl,
                 downloadType = DownloadType.COVER,
-                selectedResolution = "原图封面",
+                selectedResolution = strings.vmCoverOriginal,
                 schemaVersion = 3,
                 audioFormat = AudioFormat.MP3
             )
@@ -604,7 +692,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         _showFormatSheet.value = false
-        _message.value = if (saveCover) "已加入下载队列 (含封面): ${task.title}" else "已加入下载队列: ${task.title}"
+        _message.value = if (saveCover) strings.vmAddedQueueWithCover.format(task.title)
+            else strings.vmAddedQueue.format(task.title)
     }
 
     /**
@@ -613,32 +702,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun startDirectDownload(
         context: Context,
         directUrl: String,
-        title: String = "中转下载视频",
-        author: String = "第三方中转",
+        title: String? = null,
+        author: String? = null,
         thumbnailUrl: String = ""
     ) {
-        val (cleanUrl, unpackedTitle) = UrlSniffer.unpackDirectMediaUrl(directUrl, title)
-        val candidateTitle = if (unpackedTitle.isNotBlank() && unpackedTitle != "中转下载视频" && unpackedTitle != "视频") unpackedTitle else title
+        val resolvedTitle = title?.takeIf { it.isNotBlank() } ?: strings.vmRelayVideoTitle
+        val (cleanUrl, unpackedTitle) = UrlSniffer.unpackDirectMediaUrl(directUrl, resolvedTitle)
+        val candidateTitle = if (unpackedTitle.isNotBlank() && unpackedTitle != resolvedTitle && unpackedTitle != strings.vmRelayVideoTitle) unpackedTitle else resolvedTitle
         val safeTitle = candidateTitle
             .replace(Regex("""[\\/:*?"<>|]"""), "_")
             .trim()
-            .ifBlank { "中转下载视频" }
+            .ifBlank { strings.vmRelayVideoTitle }
             .take(60)
 
         val task = DownloadTask(
             id = UUID.randomUUID().toString().replace("-", "").take(12),
             url = cleanUrl,
             title = safeTitle,
-            author = author,
+            author = author ?: strings.vmRelayAuthor,
             thumbnailUrl = thumbnailUrl,
             downloadType = DownloadType.VIDEO_WITH_AUDIO,
-            selectedResolution = "中转直链",
+            selectedResolution = strings.vmRelayDirectLink,
             schemaVersion = 3,
             audioFormat = AudioFormat.MP3
         )
         repository.addTask(task)
         DownloadService.startDownload(context, task.id)
-        _message.value = "已从备用站捕获并加入下载队列: $safeTitle"
+        _message.value = strings.vmRelayCaptured.format(safeTitle)
     }
 
     /** 把 UI 上选中的格式转换为持久化的质量意图。 */
@@ -687,7 +777,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         } else meta
 
         if (currentMeta.thumbnailUrl.isBlank()) {
-            _message.value = "未发现封面图地址"
+            _message.value = strings.vmNoCoverUrl
             return
         }
 
@@ -698,7 +788,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             author = currentMeta.author,
             thumbnailUrl = currentMeta.thumbnailUrl,
             downloadType = DownloadType.COVER,
-            selectedResolution = "原图封面",
+            selectedResolution = strings.vmCoverOriginal,
             schemaVersion = 3,
             audioFormat = AudioFormat.MP3
         )
@@ -707,7 +797,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         DownloadService.startDownload(context, task.id)
 
         _showFormatSheet.value = false
-        _message.value = "已开始下载封面: ${task.title}"
+        _message.value = strings.vmCoverStarted.format(task.title)
     }
 
     /**
@@ -729,7 +819,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         if (targetList.isEmpty()) {
-            _message.value = "请先勾选需要下载的视频"
+            _message.value = strings.vmSelectVideosFirst
             return
         }
 
@@ -738,15 +828,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val audioFormat = _selectedAudioFormat.value
 
         val resolutionLabel = when (type) {
-            DownloadType.COVER -> "原图封面"
+            DownloadType.COVER -> strings.vmCoverOriginal
             DownloadType.AUDIO_ONLY -> audioFormat.ext.uppercase()
             DownloadType.GIF -> "GIF"
-            else -> format?.resolutionLabel ?: "最佳画质"
+            else -> format?.resolutionLabel ?: strings.vmBestQuality
         }
 
         val isCollection = targetList.size > 1
         val collectionId = if (isCollection) "col_" + UUID.randomUUID().toString().replace("-", "").take(12) else null
-        val collectionTitle = meta.title.ifBlank { "合集视频" }
+        val collectionTitle = meta.title.ifBlank { strings.vmCollectionTitle }
         val totalEpisodes = targetList.size
 
         val tasksToAdd = mutableListOf<DownloadTask>()
@@ -796,11 +886,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val coverTask = DownloadTask(
                     id = UUID.randomUUID().toString().replace("-", "").take(12),
                     url = sub.url,
-                    title = "${sub.title} (封面)",
+                    title = strings.vmCoverSuffix.format(sub.title),
                     author = sub.author.ifBlank { meta.author },
                     thumbnailUrl = sub.thumbnailUrl,
                     downloadType = DownloadType.COVER,
-                    selectedResolution = "原图封面",
+                    selectedResolution = strings.vmCoverOriginal,
                     audioFormat = AudioFormat.MP3
                 )
                 tasksToAdd.add(coverTask)
@@ -814,9 +904,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         _showFormatSheet.value = false
         _message.value = if (isCollection) {
-            "已加入合集下载队列 (共 ${targetList.size} 集)"
+            strings.vmCollectionQueued.format(targetList.size)
         } else {
-            "已开始下载: ${targetList[0].title}"
+            strings.vmDownloadStarted.format(targetList[0].title)
         }
     }
 
@@ -837,12 +927,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun cancelTask(context: Context, taskId: String) {
         DownloadService.cancelDownload(context, taskId)
-        _message.value = "任务已取消"
+        _message.value = strings.vmTaskCancelled
     }
 
     fun deleteTask(taskId: String, deleteFile: Boolean) {
         repository.removeTask(taskId, deleteFile)
-        _message.value = if (deleteFile) "已删除记录与本地文件" else "已从列表移除"
+        _message.value = if (deleteFile) strings.vmDeletedWithFile else strings.vmRemovedFromList
     }
 
     /**
@@ -855,7 +945,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 DownloadService.cancelDownload(context, task.id)
             }
         }
-        _message.value = "合集下载已取消"
+        _message.value = strings.vmCollectionCancelled
     }
 
     /**
@@ -863,7 +953,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun deleteCollection(collectionId: String, deleteFile: Boolean) {
         repository.clearTasks({ it.collectionId == collectionId }, deleteLocalFiles = deleteFile)
-        _message.value = if (deleteFile) "已删除合集记录与本地文件" else "已从列表移除合集"
+        _message.value = if (deleteFile) strings.vmCollectionDeletedWithFile else strings.vmCollectionRemoved
     }
 
     /**
@@ -876,7 +966,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             repository.updateTaskProgress(task.id, 0f, "", "", TaskStatus.PENDING)
             DownloadService.startDownload(context, task.id)
         }
-        _message.value = "已重新开始下载合集中的未完成项 (${toRetry.size} 集)"
+        _message.value = strings.vmCollectionRetried.format(toRetry.size)
     }
 
     /**
@@ -892,7 +982,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         val count = repository.clearTasks(predicate, deleteLocalFiles = false)
-        _message.value = if (count > 0) "已清除 $count 条任务记录" else "暂无需要清除的历史记录"
+        _message.value = if (count > 0) strings.vmClearedCount.format(count) else strings.vmNothingToClear
     }
 
     /**
@@ -939,7 +1029,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val unfinishedIds = unfinished.map { it.id }.toSet()
             repository.clearTasks({ task -> task.id in unfinishedIds }, deleteLocalFiles = true)
 
-            _message.value = "已终止 ${unfinished.size} 个任务并清理残留文件"
+            _message.value = strings.vmStoppedTasks.format(unfinished.size)
         }
     }
 
@@ -949,9 +1039,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val res = DownloadEngine.updateEngine(context)
             _isUpdatingEngine.value = false
             res.onSuccess { msg ->
-                _message.value = "核心引擎更新成功: $msg"
+                _message.value = strings.vmEngineUpdated.format(msg)
             }.onFailure { err ->
-                _errorDialogDetail.value = "更新引擎失败:\n${err.message}"
+                _errorDialogDetail.value = strings.vmEngineUpdateFailed.format(err.message)
             }
         }
     }

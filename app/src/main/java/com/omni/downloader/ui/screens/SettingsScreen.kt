@@ -152,7 +152,7 @@ fun SettingsScreen(
             context.contentResolver.takePersistableUriPermission(uri,
                 android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             imageSettings.setImageDownloadPath(uri.toString())
-        } catch (_: SecurityException) { Toast.makeText(context, "未获得文件夹权限，请重新选择", Toast.LENGTH_LONG).show() }
+        } catch (_: SecurityException) { Toast.makeText(context, strings.folderPermissionDenied, Toast.LENGTH_LONG).show() }
     }
     var showPathDialog by remember { mutableStateOf(false) }
 
@@ -164,6 +164,8 @@ fun SettingsScreen(
     var importSessionPlatform by rememberSaveable { mutableStateOf(SessionPlatforms.YOUTUBE) }
     val sessionScope = rememberCoroutineScope()
     var showPlatformLogin by remember { mutableStateOf(false) }
+    var clearedSessionPlatform by remember { mutableStateOf<String?>(null) }
+    var manageGooglePlatform by remember { mutableStateOf<String?>(null) }
     val requestedPlatform by viewModel.requestedSessionPlatform.collectAsStateWithLifecycle()
     LaunchedEffect(requestedPlatform) {
         requestedPlatform?.let { platform ->
@@ -247,7 +249,8 @@ fun SettingsScreen(
         SettingsToolbar(selectedPage, actions = {
             if (selectedPage == SettingsPage.ROOT) SettingDropdown(options = listOf("system" to strings.appearanceSystem,
                 "light" to strings.appearanceLight, "dark" to strings.appearanceDark), currentValue = themeMode,
-                fallbackLabel = strings.appearanceSystem, onSelect = viewModel::setThemeMode)
+                fallbackLabel = strings.appearanceSystem, deferActionUntilClosed = false,
+                onSelect = viewModel::setThemeMode)
         }) { selectedPage = SettingsPage.ROOT }
         RetainedTabHost(selectedPage.ordinal, SettingsPage.entries.size, Modifier.weight(1f).fillMaxWidth()) { index ->
             val page = SettingsPage.entries[index]
@@ -310,7 +313,7 @@ fun SettingsScreen(
                             if (!isEngineReady && initError != null) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "反馈: $initError",
+                                    text = strings.engineFeedback.format(initError),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = statusColors.error
                                 )
@@ -447,11 +450,11 @@ fun SettingsScreen(
                                             if (generation == proxyTestGeneration) proxyResults = results
                                         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                                         catch (error: Exception) {
-                                            if (generation == proxyTestGeneration) proxyError = if (error is IllegalArgumentException) error.message else "连通性测试失败，请检查网络后重试"
+                                            if (generation == proxyTestGeneration) proxyError = if (error is IllegalArgumentException) error.message else strings.proxyTestFailed
                                         } finally { if (generation == proxyTestGeneration) proxyTesting = false }
                                     }
                                 }
-                            ) { Text(if (proxyTesting) "正在测试…" else "连通性测试") }
+                            ) { Text(if (proxyTesting) strings.proxyTesting else strings.proxyTestAction) }
                             proxyResults?.let { results ->
                                 Column(Modifier.testTag("proxy_result"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     results.forEach { result ->
@@ -557,8 +560,8 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.height(10.dp))
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
-                                    Text("禁用 Cookie", style = MaterialTheme.typography.titleSmall)
-                                    Text("仅影响 $selectedSessionPlatform 的后续解析和新下载；已保存会话继续加密保留。",
+                                    Text(strings.disableCookie, style = MaterialTheme.typography.titleSmall)
+                                    Text(strings.disableCookieHint.format(selectedSessionPlatform),
                                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 androidx.compose.material3.Switch(
@@ -572,7 +575,7 @@ fun SettingsScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 OmniStatusPill(
-                                    text = if (info?.cookieEnabled == false) "已禁用 · 会话保留" else when (status) {
+                                    text = if (info?.cookieEnabled == false) strings.cookieDisabledRetained else when (status) {
                                         SessionStatus.MISSING -> strings.sessionMissing
                                         SessionStatus.IMPORTED -> strings.sessionImported
                                         SessionStatus.NEEDS_AUTH -> strings.sessionNeedsAuth
@@ -584,19 +587,17 @@ fun SettingsScreen(
                                     }
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
-                                if (status != SessionStatus.MISSING) {
                                     OutlinedButton(shape = MaterialTheme.shapes.medium,
                                         onClick = {
                                             sessionRepository.clear(selectedSessionPlatform)
-                                            Toast.makeText(context, strings.sessionCleared, Toast.LENGTH_SHORT).show()
+                                            clearedSessionPlatform=selectedSessionPlatform
                                         },
-                                        modifier = Modifier.height(36.dp),
+                                        modifier = Modifier.height(36.dp).testTag("session_clear"),
                                         contentPadding = PaddingValues(horizontal = 12.dp)
                                     ) {
                                         Text(strings.sessionClear, style = MaterialTheme.typography.labelLarge)
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
-                                }
                                 Button(shape = MaterialTheme.shapes.medium,
                                     onClick = { importSessionPlatform = selectedSessionPlatform; sessionPicker.launch(arrayOf("*/*")) },
                                     modifier = Modifier.height(36.dp),
@@ -608,7 +609,7 @@ fun SettingsScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
                             if (selectedSessionPlatform == SessionPlatforms.YOUTUBE) {
-                                Text("Google 可能拒绝内置浏览器登录；遇到此情况请使用上方 cookies.txt 文件导入。", style = MaterialTheme.typography.bodySmall)
+                                Text(strings.googleLoginHint, style = MaterialTheme.typography.bodySmall)
                             }
                             Button(shape = MaterialTheme.shapes.medium,
                                 onClick = { showPlatformLogin = true },
@@ -623,9 +624,13 @@ fun SettingsScreen(
                                     modifier = Modifier.size(17.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text(strings.sessionLogin, style = MaterialTheme.typography.labelLarge)
+                                Text(if(status==SessionStatus.NEEDS_AUTH)strings.sessionReverify else strings.sessionLogin, style = MaterialTheme.typography.labelLarge)
                             }
                         }
+                    }
+
+                    item(key="settings_google_accounts") {
+                        com.omni.downloader.ui.components.GoogleAccountsCard(selectedSessionPlatform,onLegacy={manageGooglePlatform=selectedSessionPlatform})
                     }
 
                     // ==================== B站账号 ====================
@@ -805,11 +810,11 @@ fun SettingsScreen(
 
                     item(key = "settings_image_path") {
                         OmniCard(modifier = Modifier.testTag("settings_image_path")) {
-                            Text("图文下载路径", style = MaterialTheme.typography.titleMedium)
-                            Text(imagePath.ifBlank { "跟随默认下载路径" }, style = MaterialTheme.typography.bodySmall)
+                            Text(strings.imageDownloadPath, style = MaterialTheme.typography.titleMedium)
+                            Text(imagePath.ifBlank { strings.followDefaultDownloadPath }, style = MaterialTheme.typography.bodySmall)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(shape = MaterialTheme.shapes.medium, onClick = { imageSettings.setImageDownloadPath("") }, enabled = imagePath.isNotBlank()) { Text("跟随默认路径") }
-                                Button(shape = MaterialTheme.shapes.medium, onClick = { imageDirectoryPicker.launch(null) }) { Text("选择图文文件夹") }
+                                OutlinedButton(shape = MaterialTheme.shapes.medium, onClick = { imageSettings.setImageDownloadPath("") }, enabled = imagePath.isNotBlank()) { Text(strings.followDefaultPathAction) }
+                                Button(shape = MaterialTheme.shapes.medium, onClick = { imageDirectoryPicker.launch(null) }) { Text(strings.chooseImageFolder) }
                             }
                         }
                     }
@@ -1032,14 +1037,25 @@ fun SettingsScreen(
             onDismiss = { showAddSiteDialog = false },
             onAddSite = { site ->
                 viewModel.addRelaySite(site)
-                Toast.makeText(context, "已成功添加中转网站：${site.name}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, strings.relaySiteAdded.format(site.name), Toast.LENGTH_SHORT).show()
             }
         )
     }
 
+    if (tabActive && clearedSessionPlatform != null) {
+        AlertDialog(onDismissRequest={clearedSessionPlatform=null},modifier=Modifier.testTag("session_clear_hint"),
+            title={Text(strings.sessionCleared)},text={Text(strings.sessionManualClearHint)},
+            confirmButton={TextButton(onClick={clearedSessionPlatform=null},modifier=Modifier.testTag("session_clear_done")){Text(strings.sessionLoginDone)}},
+            dismissButton={TextButton(onClick={manageGooglePlatform=clearedSessionPlatform;clearedSessionPlatform=null},modifier=Modifier.testTag("session_manage_google")){Text(strings.sessionManageGoogle)}})
+    }
+    if (tabActive && manageGooglePlatform != null) {
+        PlatformLoginSheet(platform=manageGooglePlatform!!,onDismissRequest={manageGooglePlatform=null},
+            onCookieCaptured={},initialUrl="https://accounts.google.com/",manageOnly=true)
+    }
     if (tabActive && showPlatformLogin) {
         PlatformLoginSheet(
             platform = selectedSessionPlatform,
+            requireExplicitSave = sessionProfiles[selectedSessionPlatform]?.status != SessionStatus.MISSING,
             onDismissRequest = { showPlatformLogin = false },
             onCookieCaptured = { cookie ->
                 showPlatformLogin = false
@@ -1075,7 +1091,7 @@ fun SettingsScreen(
                     onClick = {
                         viewModel.removeRelaySite(targetSite.id)
                         siteToDelete = null
-                        Toast.makeText(context, "已删除：${targetSite.name}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, strings.relaySiteDeleted.format(targetSite.name), Toast.LENGTH_SHORT).show()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
 
@@ -1100,17 +1116,19 @@ private fun SettingDropdown(
     options: List<Pair<String, String>>,
     currentValue: String,
     fallbackLabel: String,
+    deferActionUntilClosed: Boolean = true,
     onSelect: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val currentLabel = options.firstOrNull { it.first == currentValue }?.second ?: fallbackLabel
 
     Box {
-        OutlinedButton(shape = MaterialTheme.shapes.medium,
+        // 无描边 + 无容器：语言与主题切换只保留文字与箭头，避免深色描边在浅色背景上显得突兀。
+        TextButton(shape = MaterialTheme.shapes.medium,
             onClick = { expanded = true },
             modifier = Modifier.height(34.dp),
             contentPadding = PaddingValues(horizontal = 10.dp),
-
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
         ) {
             Text(
                 text = currentLabel,
@@ -1128,7 +1146,8 @@ private fun SettingDropdown(
 
         OmniOptionMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { (code, label) ->
-                OmniOptionMenuItem(label = label, selected = code == currentValue, onClick = {
+                OmniOptionMenuItem(label = label, selected = code == currentValue,
+                    deferActionUntilClosed = deferActionUntilClosed, onClick = {
                     onSelect(code)
                     expanded = false
                 })
@@ -1146,6 +1165,7 @@ private fun RelaySiteSettingsItem(
     onDelete: () -> Unit
 ) {
     val context = LocalContext.current
+    val strings = LocalAppStrings.current
     val domain = remember(site.url) {
         try {
             Uri.parse(site.url).host ?: ""
@@ -1245,7 +1265,7 @@ private fun RelaySiteSettingsItem(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
-                    contentDescription = "删除",
+                    contentDescription = strings.deleteContentDesc,
                     tint = MaterialTheme.colorScheme.error.copy(alpha = 0.85f),
                     modifier = Modifier.size(18.dp)
                 )

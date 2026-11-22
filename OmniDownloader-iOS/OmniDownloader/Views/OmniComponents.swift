@@ -55,11 +55,7 @@ struct OmniPlatformChips:View{
             result[result.count-1].append(index);used += (used>0 ? 7:0)+next
         };return result
     }
-    private var displayed:[[Int]]{
-        if expanded || rows(sites.count,toggle:false).count<=2{return rows(sites.count,toggle:expanded)}
-        let count=(0..<sites.count).reversed().first{rows($0,toggle:true).count<=2} ?? 0
-        return rows(count,toggle:true)
-    }
+    private var displayed:[[Int]]{rows(sites.count,toggle:false)}
     var body:some View{
         GeometryReader{geometry in
             VStack(alignment:.leading,spacing:7){ForEach(Array(displayed.enumerated()),id:\.offset){_,row in

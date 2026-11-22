@@ -20,8 +20,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
@@ -48,6 +46,8 @@ val LocalStatusColors = staticCompositionLocalOf {
         info = LightPrimary
     )
 }
+
+internal val LocalMenuContainerColor = staticCompositionLocalOf { Color.White }
 
 private val LightColorScheme = lightColorScheme(
     primary = LightPrimary,
@@ -148,8 +148,6 @@ fun OmniDownloaderTheme(
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     } }
-    val colorScheme = animatedThemeColors(targetScheme)
-
     val targetStatusColors = remember(darkTheme) {
         if (darkTheme) {
             OmniStatusColors(
@@ -167,11 +165,8 @@ fun OmniDownloaderTheme(
             )
         }
     }
-    val statusColors = OmniStatusColors(
-        animateColorAsState(targetStatusColors.success, tween(320), label = "status-success").value,
-        animateColorAsState(targetStatusColors.warning, tween(320), label = "status-warning").value,
-        animateColorAsState(targetStatusColors.error, tween(320), label = "status-error").value,
-        animateColorAsState(targetStatusColors.info, tween(320), label = "status-info").value
+    val (colorScheme, statusColors, menuContainer) = animatedThemeColors(
+        targetScheme, targetStatusColors, if (darkTheme) targetScheme.surfaceVariant else Color.White
     )
 
     val view = LocalView.current
@@ -191,7 +186,7 @@ fun OmniDownloaderTheme(
         }
     }
 
-    CompositionLocalProvider(LocalStatusColors provides statusColors) {
+    CompositionLocalProvider(LocalStatusColors provides statusColors, LocalMenuContainerColor provides menuContainer) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,

@@ -247,8 +247,11 @@ def open_folder(icon=None, item=None):
 
 def on_exit(icon, item, server_thread):
     icon.stop()
+    from core.browser_login import browser_login
+    browser_login.shutdown()
     if server_thread:
         server_thread.stop()
+        server_thread.join(timeout=5)
     # 确保子进程完全退出
     os._exit(0)
 
