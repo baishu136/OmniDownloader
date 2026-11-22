@@ -84,7 +84,10 @@ struct BatchEntry:Identifiable,Codable {
                     let tasks=try makeTasks(result,group:id)
                     manager.addTasks(tasks);rows[index].count=DownloadManager.includingCovers(tasks).count;rows[index].state="已加入"
                 }catch is CancellationError{if epoch==scope{rows[index].state="等待"};return}
-                catch{rows[index].state="失败";rows[index].message=error.localizedDescription}
+                catch{
+                    guard epoch==scope,!Task.isCancelled,rows.indices.contains(index),rows[index].id==id else{return}
+                    rows[index].state="失败";rows[index].message=error.localizedDescription
+                }
                 save()
             }
         }

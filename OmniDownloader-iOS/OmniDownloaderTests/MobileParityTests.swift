@@ -2,6 +2,18 @@ import XCTest
 @testable import OmniDownloader
 
 final class MobileParityTests:XCTestCase {
+    @MainActor func testCancelledBatchCannotWriteIntoClearedRows()async throws {
+        let file=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".json")
+        defer{try? FileManager.default.removeItem(at:file)}
+        let batch=BatchDownloads(file:file);batch.draft="https://example.com/a.mp4"
+        var pending:CheckedContinuation<CapturedTarget,Error>?
+        batch.start(manager:DownloadManager(),capture:{_ in try await withCheckedThrowingContinuation{pending=$0}})
+        for _ in 0..<100{if pending != nil{break};await Task.yield()}
+        guard let pending=pending else{batch.cancel();XCTFail("batch did not start");return}
+        batch.cancel();batch.clear();pending.resume(throwing:URLError(.cancelled))
+        for _ in 0..<5{await Task.yield()}
+        XCTAssertTrue(batch.rows.isEmpty);XCTAssertFalse(batch.running)
+    }
     func testSharingTextDeduplicatesAndKeepsSignedURL() {
         XCTAssertEqual(BatchInput.links("分享 https://example.com/a.mp4?a=b%2Fc， https://example.com/a.mp4?a=b%2Fc BV1xx411c7mD"),["https://example.com/a.mp4?a=b%2Fc","https://www.bilibili.com/video/BV1xx411c7mD"])
         XCTAssertTrue(BatchInput.links("javascript:alert(1)").isEmpty)

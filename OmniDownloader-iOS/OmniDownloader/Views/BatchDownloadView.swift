@@ -65,6 +65,7 @@ import UniformTypeIdentifiers
             catch MediaRouting.images(let post){return .images(post)}
             catch is CancellationError{throw CancellationError()}
             catch {
+                try Task.checkCancellation()
                 let message=error.localizedDescription
                 if ["MEDIA_ID_MISMATCH","NO_MEDIA","RATE_LIMITED","ACCESS_DENIED","DRM","PREVIEW_ONLY"].contains(where:message.contains){throw error}
                 if OmniPlatform.detect(url)=="YouTube"{throw OmniPlatform.error("BROWSER_ASSIST_REQUIRED","YouTube 需要在首页验证播放器；不会把未知媒体加入下载队列")}
