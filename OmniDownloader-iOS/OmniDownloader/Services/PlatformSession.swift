@@ -6,15 +6,16 @@ import Network
 import WebKit
 
 enum OmniPlatform {
-    static let all = ["哔哩哔哩", "抖音", "快手", "小红书", "YouTube", "TikTok", "X (Twitter)", "Instagram", "Facebook", "Pinterest", "Pixiv", "小黑盒"]
+    static let all = ["哔哩哔哩", "抖音", "快手", "小红书", "微博", "YouTube", "西瓜视频", "TikTok", "X (Twitter)", "Instagram", "Facebook", "Reddit", "Twitch", "优酷", "爱奇艺", "AcFun", "虎牙", "TED", "Internet Archive", "Pinterest", "Pixiv", "小黑盒"]
     static let domains: [String: [String]] = [
+        "微博":["weibo.com","weibo.cn","t.cn"], "西瓜视频":["ixigua.com"], "Reddit":["reddit.com","redd.it"], "Twitch":["twitch.tv"], "优酷":["youku.com"], "爱奇艺":["iqiyi.com"], "AcFun":["acfun.cn"], "虎牙":["huya.com"], "TED":["ted.com"], "Internet Archive":["archive.org"],
         "哔哩哔哩": ["bilibili.com", "b23.tv"], "抖音": ["douyin.com", "iesdouyin.com"],
         "快手": ["kuaishou.com", "kwai.com", "gifshow.com", "chenzhongtech.com"],
         "小红书": ["xiaohongshu.com", "xhslink.com", "xhslink.cn", "rednote.com"],
         "YouTube": ["youtube.com", "youtu.be"], "TikTok": ["tiktok.com"], "X (Twitter)": ["x.com", "twitter.com", "t.co"],
         "Instagram": ["instagram.com"], "Facebook": ["facebook.com", "fb.watch", "fb.me"],
         "Pinterest": ["pinterest.com", "pin.it"], "Pixiv": ["pixiv.net"], "小黑盒": ["xiaoheihe.cn", "heybox.cn"]]
-    static let homes: [String: String] = ["哔哩哔哩":"https://www.bilibili.com", "抖音":"https://www.douyin.com", "快手":"https://www.kuaishou.com", "小红书":"https://www.xiaohongshu.com", "YouTube":"https://www.youtube.com", "TikTok":"https://www.tiktok.com", "X (Twitter)":"https://x.com", "Instagram":"https://www.instagram.com", "Facebook":"https://www.facebook.com", "Pinterest":"https://www.pinterest.com", "Pixiv":"https://www.pixiv.net", "小黑盒":"https://www.xiaoheihe.cn"]
+    static let homes: [String: String] = ["微博":"https://weibo.com", "西瓜视频":"https://www.ixigua.com", "Reddit":"https://www.reddit.com", "Twitch":"https://www.twitch.tv", "优酷":"https://www.youku.com", "爱奇艺":"https://www.iqiyi.com", "AcFun":"https://www.acfun.cn", "虎牙":"https://www.huya.com", "TED":"https://www.ted.com", "Internet Archive":"https://archive.org", "哔哩哔哩":"https://www.bilibili.com", "抖音":"https://www.douyin.com", "快手":"https://www.kuaishou.com", "小红书":"https://www.xiaohongshu.com", "YouTube":"https://www.youtube.com", "TikTok":"https://www.tiktok.com", "X (Twitter)":"https://x.com", "Instagram":"https://www.instagram.com", "Facebook":"https://www.facebook.com", "Pinterest":"https://www.pinterest.com", "Pixiv":"https://www.pixiv.net", "小黑盒":"https://www.xiaoheihe.cn"]
     static func owns(_ host: String, _ domain: String) -> Bool { host == domain || host.hasSuffix("." + domain) }
     static func detect(_ text: String) -> String {
         let host = URL(string: text)?.host?.lowercased() ?? ""
@@ -27,7 +28,7 @@ enum OmniPlatform {
             if site=="Facebook",let id=parts.queryItems?.first(where:{$0.name=="v"})?.value,id.allSatisfy(\.isNumber){return id}
             if site=="哔哩哔哩",parts.host=="t.bilibili.com",let id=parts.path.split(separator:"/").first,id.allSatisfy(\.isNumber){return String(id)}
         }
-        let patterns: [String: String] = ["抖音":#"/(?:video|note|share/video|share/note)/(\d+)"#,
+        let patterns: [String: String] = ["微博":#"/(?:status|detail|[0-9]+)/([a-zA-Z0-9]+)"#, "抖音":#"/(?:video|note|share/video|share/note)/(\d+)"#,
             "X (Twitter)":#"/status/(\d+)"#, "小红书":#"/(?:explore|discovery/item)/([a-zA-Z0-9]+)"#,
             "快手":#"/(?:short-video|photo)/([a-zA-Z0-9]+)"#, "Pixiv":#"/artworks/(\d+)"#,
             "哔哩哔哩":#"/(?:video|opus)/(BV[a-zA-Z0-9]+|\d+)"#, "Instagram":#"/(?:p|reel)/([a-zA-Z0-9_-]+)"#,

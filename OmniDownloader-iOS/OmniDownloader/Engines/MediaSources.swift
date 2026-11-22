@@ -178,6 +178,7 @@ enum MediaResolver {
             if var post=parsed.1{post.sourceScope=scope;throw MediaRouting.images(post)}
             throw OmniPlatform.error("NO_MEDIA","目标 X 帖子没有可导出的媒体")
         }
+        if site=="微博"{return try await WeiboExtractor.analyze(url)}
         if site=="Pixiv"{
             let post=try await ImagePostEngine.analyze(url)
             if post.frameArchive==nil{throw MediaRouting.images(post)}

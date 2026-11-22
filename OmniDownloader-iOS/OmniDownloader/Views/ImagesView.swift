@@ -6,6 +6,8 @@ extension Notification.Name{
 }
 
 @MainActor struct ImagesView:View{
+    var initialPost:ImagePost?=nil
+    var embedded=false
     @EnvironmentObject private var manager:DownloadManager
     @Environment(\.scenePhase) private var phase
     @AppStorage("omni.language") private var language="system"
@@ -29,6 +31,7 @@ extension Notification.Name{
                 ScrollView{
                     VStack(alignment:.leading,spacing:18){
                         OmniPageHeader(title:L("图文下载"))
+                        if !embedded{
                         OmniPlatformChips(sites:["抖音","快手","哔哩哔哩","Pixiv","小红书","X (Twitter)","Pinterest"])
                         VStack(spacing:12){
                             HStack{Image(systemName:"link").foregroundColor(OmniPalette.primary);TextField(L("粘贴图文链接或分享文本…"),text:$input).textInputAutocapitalization(.never).disableAutocorrection(true).keyboardType(.URL).onSubmit{start(input)}.accessibilityIdentifier("omni.images.url");Button{input=UIPasteboard.general.string ?? input}label:{Image(systemName:"doc.on.clipboard").frame(width:36,height:40)}.accessibilityLabel(L("粘贴剪贴板"))}.padding(.horizontal,14).padding(.vertical,8).background(OmniPalette.surfaceVariant.opacity(0.35),in:RoundedRectangle(cornerRadius:20))
@@ -36,6 +39,7 @@ extension Notification.Name{
                         }.padding(15).omniCard(radius:25)
                         if analyzing{HStack{ProgressView();Text(stage).font(.subheadline).foregroundColor(OmniPalette.secondary)}}
                         if !error.isEmpty{VStack(alignment:.leading,spacing:12){Text(error).font(.subheadline).foregroundColor(OmniPalette.error);if error.contains("AUTH_REQUIRED") || error.contains("CHALLENGE_REQUIRED") || error.contains("BROWSER_ASSIST_REQUIRED"){Button(L("打开内置浏览器验证")){validate()}}}.padding(16).omniCard()}
+                        }
                         if let post=post{
                             VStack(alignment:.leading,spacing:6){Text(post.title).font(.title3.bold()).lineLimit(3);Text(post.platform+" · "+post.author+" · \(post.resources.count) "+L("张图片")).font(.caption).foregroundColor(OmniPalette.secondary)}
                             if post.frameArchive != nil{
@@ -64,6 +68,7 @@ extension Notification.Name{
         .sheet(item:$preview){value in if let post=post{ImageGallery(resources:post.resources,site:post.platform,start:value.id)}}
         .onReceive(NotificationCenter.default.publisher(for:.omniShowImages)){if let post=$0.object as? ImagePost{accept(post)}}
         .onReceive(NotificationCenter.default.publisher(for:.omniAnalyzeImages)){if let url=$0.object as? String{input=url;start(url)}}
+        .onAppear{if let initialPost=initialPost,post==nil{accept(initialPost)}}
         .onChange(of:phase){if $0 == .background{cancel()}}
     }
     private func cancel(){generation=UUID();operation?.cancel();operation=nil;analyzing=false;browser.close()}

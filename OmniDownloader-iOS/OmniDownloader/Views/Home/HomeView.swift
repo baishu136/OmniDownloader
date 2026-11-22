@@ -21,6 +21,8 @@ struct SniffedMediaItem:Identifiable,Equatable{
     @State private var stage=""
     @State private var error=""
     @State private var metadata:VideoMetadata?
+    @State private var imagePost:ImagePost?
+    @State private var showCatalog=false
     @State private var showFormats=false
     @State private var analysis:Task<Void,Never>?
     @State private var generation=UUID()
@@ -39,8 +41,9 @@ struct SniffedMediaItem:Identifiable,Equatable{
             if browser.web != nil && !browser.visible{PlatformWebContent(browser:browser).frame(maxWidth:390,maxHeight:780).opacity(0).allowsHitTesting(false).accessibilityHidden(true)}
             ScrollView{
                 VStack(alignment:.leading,spacing:18){
-                    HStack(spacing:12){OmniBrand();Text("OmniDownloader").font(.system(size:24,weight:.heavy)).minimumScaleFactor(0.7).lineLimit(1);Text("v1.7.21").font(.caption.bold()).foregroundColor(OmniPalette.primary).padding(.horizontal,7).padding(.vertical,4).background(OmniPalette.primaryContainer,in:RoundedRectangle(cornerRadius:8));Spacer(minLength:0)}.padding(.vertical,6)
+                    HStack(spacing:12){OmniBrand();Text("OmniDownloader").font(.system(size:24,weight:.heavy)).minimumScaleFactor(0.7).lineLimit(1);Text("v1.7.61").font(.caption.bold()).foregroundColor(OmniPalette.primary).padding(.horizontal,7).padding(.vertical,4).background(OmniPalette.primaryContainer,in:RoundedRectangle(cornerRadius:8));Spacer(minLength:0)}.padding(.vertical,6)
                     OmniPlatformChips()
+                    Button("yt-dlp 支持的平台（参考名录）"){showCatalog=true}.font(.subheadline.weight(.semibold))
                     VStack(spacing:12){
                         HStack(spacing:10){OmniIcon(name:"link",size:20).foregroundColor(OmniPalette.primary);TextField(L("粘贴视频链接或分享文本…"),text:$input).textInputAutocapitalization(.never).disableAutocorrection(true).keyboardType(.URL).submitLabel(.go).onSubmit{start(input)}.accessibilityIdentifier("omni.video.url");if !input.isEmpty{Button{input=""}label:{OmniIcon(name:"xmark",size:20).foregroundColor(OmniPalette.secondary).frame(width:44,height:44)}.accessibilityLabel(L("清空"))};Button(action:paste){OmniIcon(name:"doc.on.clipboard",size:20).foregroundColor(OmniPalette.secondary).frame(width:44,height:44)}.accessibilityLabel(L("粘贴剪贴板"))}.padding(.horizontal,16).padding(.vertical,8).background(OmniPalette.surfaceVariant.opacity(0.35),in:RoundedRectangle(cornerRadius:22))
                         HStack(spacing:12){OmniAction(title:L("粘贴剪贴板"),icon:"doc.on.clipboard",disabled:analyzing,action:paste);OmniAction(title:L(analyzing ? "取消解析":"立即解析"),icon:analyzing ? "xmark":"bolt.fill",prominent:true,disabled:!analyzing && input.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty){if analyzing{cancel()}else{start(input)}}.accessibilityIdentifier("omni.action.analyze")}
@@ -59,6 +62,10 @@ struct SniffedMediaItem:Identifiable,Equatable{
                 }.padding(.horizontal,20).padding(.top,8)
             }
         }
+        .sheet(item:$imagePost){post in ImagesView(initialPost:post,embedded:true)}
+        .sheet(isPresented:$showCatalog){PlatformCatalogView()}
+        .onReceive(NotificationCenter.default.publisher(for:.omniAnalyzeImages)){if let url=$0.object as? String{input=url;start(url)}}
+        .onReceive(NotificationCenter.default.publisher(for:.omniShowImages)){if let post=$0.object as? ImagePost{imagePost=post}}
         .sheet(isPresented:$showFormats,onDismiss:{if pendingBrowser{pendingBrowser=false;validate()}}){if let metadata=metadata{FormatSelectorSheet(metadata:metadata,onMoreQuality:{pendingBrowser=true;showFormats=false})}}
         .sheet(isPresented:$browser.visible,onDismiss:{
             analysis?.cancel();analyzing=false;browser.close()
@@ -120,7 +127,7 @@ struct SniffedMediaItem:Identifiable,Equatable{
             else if present{showFormats=true}
         case .images(let post):
             if browser.visible{browser.visible=false}
-            NotificationCenter.default.post(name:.omniShowImages,object:post)
+            imagePost=post
         }
     }
     private func validate(){

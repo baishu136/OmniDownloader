@@ -53,8 +53,7 @@ enum ImagePostEngine {
         let id=OmniPlatform.identifier(url)
         guard id.range(of:#"^\d{8,24}$"#,options:.regularExpression) != nil else{throw OmniPlatform.error("MEDIA_ID_MISMATCH","需要目标 X 帖子")}
         let token=JSContext()?.evaluateScript("((Number('\(id)')/1e15)*Math.PI).toString(36).replace(/(0+|\\.)/g,'')").toString() ?? ""
-        let item=try await json("https://cdn.syndication.twimg.com/tweet-result?id=\(id)&lang=en&token=\(token)",site:"X (Twitter)")
-        guard item["id_str"] as? String==id else{throw OmniPlatform.error("MEDIA_ID_MISMATCH","X 未返回目标帖子")}
+        let item=try await XPublicResponse.confirmed(id:id){_ in try await json("https://cdn.syndication.twimg.com/tweet-result?id=\(id)&lang=en&token=\(token)",site:"X (Twitter)")}
         let details=item["mediaDetails"] as? [[String:Any]] ?? []
         var media:[[String:Any]]=[],images:[[String:Any]]=[]
         for entry in details{
