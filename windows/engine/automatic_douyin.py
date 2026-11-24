@@ -77,6 +77,7 @@ class CDP:
     def __init__(self, socket):
         self.socket, self.counter, self.pending = socket, 0, {}
         self.event_handler = None
+        self.last_error = None  # Private diagnostics; never included in public errors.
 
     def call(self, method, params=None, timeout=3):
         self.counter += 1
@@ -98,6 +99,7 @@ class CDP:
                     self.event_handler(message, self)
                 continue
             if 'error' in message:
+                self.last_error = message['error']
                 raise RuntimeError('[BROWSER_ASSIST_REQUIRED] 浏览器暂不能执行目标提取')
             return message.get('result') or {}
         raise TimeoutError('Target browser operation timed out')

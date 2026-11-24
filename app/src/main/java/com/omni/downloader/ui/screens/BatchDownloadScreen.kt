@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.ContentPaste
 import com.omni.downloader.ui.localization.LocalAppStrings
+import com.omni.downloader.ui.localization.localizeError
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -128,7 +129,7 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
                     Text(url, maxLines = 3)
                     val preparation = preparations[url]
                     val note = if (url in draft.batchTasks && preparation == null) strings.batchAddedToQueue else preparation?.note
-                    note?.let { Text(it, style = MaterialTheme.typography.bodySmall,
+                    note?.let { Text(strings.localizeError(it), style = MaterialTheme.typography.bodySmall,
                         color = if (preparation?.status == BatchPreparationStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
                 TextButton(onClick = { controller.removeLink(url) }) { Text(strings.batchRemove) }
@@ -143,7 +144,7 @@ import com.omni.downloader.ui.viewmodel.MainViewModel
         items(plan.items, key = { it.id }) { item ->
             OutlinedCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
                 Text(item.url, maxLines = 2)
-                Text(item.note.ifBlank { strings.batchWaiting }, color = if (item.status == BatchStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(strings.localizeError(item.note.ifBlank { strings.batchWaiting }), color = if (item.status == BatchStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
                 if (!running && item.status == BatchStatus.FAILED) TextButton(onClick = { onSingle(); viewModel.updateInputUrl(item.url); viewModel.startAnalyze() }) { Text(strings.batchSingleAnalyze) }
             } }
         }

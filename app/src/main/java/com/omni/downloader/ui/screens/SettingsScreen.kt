@@ -544,15 +544,15 @@ fun SettingsScreen(
                                     )
                                     Spacer(modifier = Modifier.height(1.dp))
                                     Text(
-                                        text = selectedSessionPlatform,
+                                        text = platformDisplayName(selectedSessionPlatform, strings),
                                         style = MaterialTheme.typography.bodyLarge,
                                         fontWeight = FontWeight.Medium
                                     )
                                 }
                                 SettingDropdown(
-                                    options = accountPlatforms.map { it to it },
+                                    options = accountPlatforms.map { it to platformDisplayName(it, strings) },
                                     currentValue = selectedSessionPlatform,
-                                    fallbackLabel = accountPlatforms.first(),
+                                    fallbackLabel = platformDisplayName(accountPlatforms.first(), strings),
                                     onSelect = { selectedSessionPlatform = it }
                                 )
                             }
@@ -561,7 +561,7 @@ fun SettingsScreen(
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
                                     Text(strings.disableCookie, style = MaterialTheme.typography.titleSmall)
-                                    Text(strings.disableCookieHint.format(selectedSessionPlatform),
+                                    Text(strings.disableCookieHint.format(platformDisplayName(selectedSessionPlatform, strings)),
                                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 androidx.compose.material3.Switch(
@@ -836,9 +836,8 @@ fun SettingsScreen(
                             OutlinedButton(shape = MaterialTheme.shapes.medium,
                                 onClick = {
                                     try {
-                                        context.cacheDir?.deleteRecursively()
-                                        val ytDir = File(context.noBackupFilesDir, "youtubedl-android")
-                                        if (ytDir.exists()) ytDir.deleteRecursively()
+                                        // 仅清理 cacheDir 子内容，保留 cacheDir 节点本身与运行期二进制目录，避免缓存清理后触发 ENOENT
+                                        com.omni.downloader.engine.SafeFiles.clearDirectoryContents(context.cacheDir)
                                         Toast.makeText(context, strings.cleanCacheSuccess, Toast.LENGTH_SHORT).show()
                                     } catch (e: Exception) {
                                         Toast.makeText(context, "${strings.statusFailed}: ${e.message}", Toast.LENGTH_SHORT).show()

@@ -70,9 +70,9 @@ import ffmpegkit
             Text(L("主题模式")).font(.headline)
             Picker(L("主题模式"),selection:$appearance){Text(L("跟随系统")).tag("system");Text(L("浅色")).tag("light");Text(L("深色")).tag("dark")}.pickerStyle(.segmented)
             Text(L("界面语言")).font(.headline)
-            Picker(L("界面语言"),selection:$language){Text(L("跟随系统")).tag("system");Text("简体中文").tag("zh-CN");Text("繁體中文").tag("zh-TW");Text("English").tag("en");Text("日本語").tag("ja")}.pickerStyle(.menu)
+            Picker(L("界面语言"),selection:$language){Text(L("跟随系统")).tag("system");Text(OmniLocalization.text("简体中文")).tag("zh-CN");Text(OmniLocalization.text("繁體中文")).tag("zh-TW");Text("English").tag("en");Text(OmniLocalization.text("日本語")).tag("ja")}.pickerStyle(.menu)
         case .downloads:
-            Text(L("保存目录")).font(.headline);Text(folder.isEmpty ? "文件 → OmniDownloader → Downloads":folder).font(.subheadline).foregroundColor(OmniPalette.secondary)
+            Text(L("保存目录")).font(.headline);Text(folder.isEmpty ? L("文件 → OmniDownloader → Downloads"):folder).font(.subheadline).foregroundColor(OmniPalette.secondary)
             HStack{Button(L("选择保存目录")){choosingFolder=true};Spacer();Button(L("恢复默认")){UserDefaults.standard.removeObject(forKey:"omni.folderBookmark");folder=""}}
             Divider();Toggle(L("自动保存到相册"),isOn:$preferences.autoSaveToAlbum)
             Text(L("文件先保存到目录；相册权限不足时仍保留文件。")).font(.caption).foregroundColor(OmniPalette.secondary)
@@ -93,7 +93,7 @@ import ffmpegkit
             OmniAction(title:L("添加中转网站"),icon:"plus",prominent:true){addingRelay=true}
         case .accounts:
             Text(L("Cookie 与登录管理")).font(.headline)
-            Picker(L("平台"),selection:$selectedSite){ForEach(OmniPlatform.all,id:\.self){Text($0).tag($0)}}.pickerStyle(.menu)
+            Picker(L("平台"),selection:$selectedSite){ForEach(OmniPlatform.cookiePlatforms,id:\.self){Text(L($0)).tag($0)}}.pickerStyle(.menu)
             Toggle(L("禁用 Cookie"),isOn:Binding(get:{!sessions.enabled(selectedSite)},set:{sessions.setEnabled(selectedSite,!$0)}))
             Text(count>0 ? L("已保存")+" \(count) "+L("项 Cookie"):L("尚未导入会话")).font(.subheadline).foregroundColor(OmniPalette.secondary)
             Text(L("禁用后新请求不使用会话，已保存会话继续保留。登录状态保存在本机钥匙串。")).font(.caption).foregroundColor(OmniPalette.secondary)
@@ -106,10 +106,10 @@ import ffmpegkit
             Text(engineInfo.isEmpty ? L("正在检查组件…"):engineInfo).font(.caption.monospaced()).textSelection(.enabled)
             Button(L("重新检查")){inspectEngine()}
             Text(L("媒体组件随应用版本更新；不会下载并执行外部程序。")).font(.caption).foregroundColor(OmniPalette.secondary)
-            Toggle("自动检查应用更新",isOn:$automaticUpdates)
-            Button(updates.checking ? "正在检查…":"检查应用更新"){Task{await updates.check(force:true)}}.disabled(updates.checking)
+            Toggle(OmniLocalization.text("自动检查应用更新"),isOn:$automaticUpdates)
+            Button(L(updates.checking ? "正在检查…":"检查应用更新")){Task{await updates.check(force:true)}}.disabled(updates.checking)
             if !updates.message.isEmpty{Text(updates.message).font(.caption)}
-            if let url=updates.releaseURL{Link("查看 iOS 更新",destination:url)}
+            if let url=updates.releaseURL{Link(L("查看 iOS 更新"),destination:url)}
         case .about:
             HStack{Text("OmniDownloader").font(.title2.bold());Spacer();Text("1.7.61").foregroundColor(OmniPalette.primary)}
             Text(L("支持平台")).font(.headline);OmniPlatformChips()
@@ -145,13 +145,13 @@ struct AddRelaySiteSheet: View {
         NavigationView {
             Form {
                 Section(
-                    header: Text("输入网址后将自动检索网站名称，也可手动修改："),
-                    footer: Text("添加后可在首页便捷调用备用中转服务提取直链。")
+                    header: Text(OmniLocalization.text("输入网址后将自动检索网站名称，也可手动修改：")),
+                    footer: Text(OmniLocalization.text("添加后可在首页便捷调用备用中转服务提取直链。"))
                 ) {
                     // 1. 网址输入框 (置顶)
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Text("网站完整网址")
+                            Text(OmniLocalization.text("网站完整网址"))
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(.primary)
                             Spacer()
@@ -159,7 +159,7 @@ struct AddRelaySiteSheet: View {
                                 HStack(spacing: 4) {
                                     ProgressView()
                                         .scaleEffect(0.7)
-                                    Text("正在检索名称...")
+                                    Text(OmniLocalization.text("正在检索名称..."))
                                         .font(.system(size: 11))
                                         .foregroundColor(OmniPalette.primary)
                                 }
@@ -198,7 +198,7 @@ struct AddRelaySiteSheet: View {
 
                     // 2. 网站名称输入框 (第二项)
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("网站名称")
+                        Text(OmniLocalization.text("网站名称"))
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(.primary)
 
@@ -216,16 +216,16 @@ struct AddRelaySiteSheet: View {
                     .padding(.vertical, 4)
                 }
             }
-            .navigationTitle("添加备用中转网站")
+            .navigationTitle(OmniLocalization.text("添加备用中转网站"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
+                    Button(OmniLocalization.text("取消")) {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("确认添加") {
+                    Button(OmniLocalization.text("确认添加")) {
                         submitAdd()
                     }
                     .disabled(siteUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || siteName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

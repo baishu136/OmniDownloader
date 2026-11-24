@@ -566,18 +566,14 @@ object BilibiliDirectExtractor {
                     }
                 }
 
-                var finalPublicFile = File(publicDir, "$cleanTitle.mp4")
-                try {
-                    mergedFile.copyTo(finalPublicFile, overwrite = true)
-                } catch (e: Exception) {
-                    finalPublicFile = File(publicDir, "bili_${bvid}_${System.currentTimeMillis()}.mp4")
-                    mergedFile.copyTo(finalPublicFile, overwrite = true)
-                }
+                val finalPublicFile = publishToPublicDir(
+                    context = context,
+                    source = mergedFile,
+                    publicDir = publicDir,
+                    primaryName = "$cleanTitle.mp4",
+                    fallbackName = "bili_${bvid}_${System.currentTimeMillis()}.mp4"
+                )
                 mergedFile.delete()
-
-                try {
-                    android.media.MediaScannerConnection.scanFile(context, arrayOf(finalPublicFile.absolutePath), null, null)
-                } catch (ignored: Exception) {}
 
                 onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
                 return@withContext Result.success(finalPublicFile.absolutePath)
@@ -612,19 +608,15 @@ object BilibiliDirectExtractor {
                 val mergedFile = File(stagingDir, "bili_${task.id}_final.mp4")
                 FFmpegExecutor.stripAudio(context, tempVideo, mergedFile).getOrThrow()
 
-                var finalPublicFile = File(publicDir, "$cleanTitle.mp4")
-                try {
-                    mergedFile.copyTo(finalPublicFile, overwrite = true)
-                } catch (e: Exception) {
-                    finalPublicFile = File(publicDir, "bili_${bvid}_${System.currentTimeMillis()}.mp4")
-                    mergedFile.copyTo(finalPublicFile, overwrite = true)
-                }
+                val finalPublicFile = publishToPublicDir(
+                    context = context,
+                    source = mergedFile,
+                    publicDir = publicDir,
+                    primaryName = "$cleanTitle.mp4",
+                    fallbackName = "bili_${bvid}_${System.currentTimeMillis()}.mp4"
+                )
                 tempVideo.delete()
                 mergedFile.delete()
-
-                try {
-                    android.media.MediaScannerConnection.scanFile(context, arrayOf(finalPublicFile.absolutePath), null, null)
-                } catch (ignored: Exception) {}
 
                 onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
                 return@withContext Result.success(finalPublicFile.absolutePath)
@@ -660,19 +652,15 @@ object BilibiliDirectExtractor {
                 FFmpegExecutor.extractAudio(context, tempAudio, actualStaging, ext).getOrThrow()
                 val actualExt = ext
 
-                var finalPublicFile = File(publicDir, "$cleanTitle.$actualExt")
-                try {
-                    actualStaging.copyTo(finalPublicFile, overwrite = true)
-                } catch (e: Exception) {
-                    finalPublicFile = File(publicDir, "bili_${bvid}_${System.currentTimeMillis()}.$actualExt")
-                    actualStaging.copyTo(finalPublicFile, overwrite = true)
-                }
+                val finalPublicFile = publishToPublicDir(
+                    context = context,
+                    source = actualStaging,
+                    publicDir = publicDir,
+                    primaryName = "$cleanTitle.$actualExt",
+                    fallbackName = "bili_${bvid}_${System.currentTimeMillis()}.$actualExt"
+                )
                 tempAudio.delete()
                 actualStaging.delete()
-
-                try {
-                    android.media.MediaScannerConnection.scanFile(context, arrayOf(finalPublicFile.absolutePath), null, null)
-                } catch (ignored: Exception) {}
 
                 onProgressUpdate(100f, "", "", TaskStatus.COMPLETED)
                 return@withContext Result.success(finalPublicFile.absolutePath)
@@ -761,12 +749,30 @@ object BilibiliDirectExtractor {
         return list
     }
 
-    private fun sanitizeFileName(name: String): String {
-        val clean = name.replace(Regex("[\\\\/:*?\"<>|\\r\\n]"), "_").trim()
-        val safe = clean.filter { ch ->
-            Character.isDefined(ch) && !Character.isISOControl(ch)
+    /** 安全导出暂存成品至公开目录并通知媒体库扫描 */
+    private fun publishToPublicDir(
+        context: Context,
+        source: File,
+        publicDir: File,
+        primaryName: String,
+        fallbackName: String
+    ): File {
+        SafeFiles.ensureDir(publicDir)
+        var finalPublicFile = File(publicDir, primaryName)
+        try {
+            SafeFiles.safeCopy(source, finalPublicFile, overwrite = true)
+        } catch (e: Exception) {
+            finalPublicFile = File(publicDir, fallbackName)
+            SafeFiles.safeCopy(source, finalPublicFile, overwrite = true)
         }
-        return if (safe.length > 70) safe.substring(0, 70).trim() else safe.ifEmpty { "video_${System.currentTimeMillis()}" }
+        try {
+            android.media.MediaScannerConnection.scanFile(context, arrayOf(finalPublicFile.absolutePath), null, null)
+        } catch (ignored: Exception) {}
+        return finalPublicFile
+    }
+
+    private fun sanitizeFileName(name: String): String {
+        return SafeFiles.sanitizeFileName(name, fallback = "video_${System.currentTimeMillis()}", maxUtf8Bytes = 180)
     }
 
     private data class DashVideoCandidate(

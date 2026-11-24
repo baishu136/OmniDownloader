@@ -14,21 +14,49 @@ public enum BackendConnectionMode
 /// <summary>
 /// 本地 Python 核心下载引擎探测与伴随生命周期管理器：
 /// 优先无冲突复用版本兼容的 OmniDownloader 服务（例如 58000 端口），
-/// 若未运行或既有的外部服务版本过低（缺少浏览器登录等 1.7.59+ 接口）且本地存在新版引擎时，
+/// 若未运行或既有的外部服务版本过低（缺少浏览器登录等 1.7.63+ 接口）且本地存在新版引擎时，
 /// 自动拉起仓库 omni_server.py（并强制统一 OMNI_STATE_DIR 共享配置与凭据）并在退出时安全清理子进程。
 /// </summary>
 public sealed class BackendProcessManager : IDisposable
 {
-    public static readonly Version MinimumRequiredBackendVersion = new(1, 7, 59);
+    public static readonly Version MinimumRequiredBackendVersion = new(1, 7, 63);
 
     private Process? _managedProcess;
+    private bool _sharedWebService;
     private readonly object _lock = new();
+
+    private string _statusNoteKey = string.Empty;
+    private object[] _statusNoteArgs = Array.Empty<object>();
 
     public BackendConnectionMode Mode { get; private set; } = BackendConnectionMode.Disconnected;
     public string ActiveBaseUrl { get; private set; } = "http://127.0.0.1:58000";
     public string ConnectedVersion { get; private set; } = string.Empty;
     public bool IsOutdatedBackend { get; private set; }
     public string LastStatusNote { get; private set; } = string.Empty;
+
+    private void SetStatusNote(string key, params object[] args)
+    {
+        _statusNoteKey = key;
+        _statusNoteArgs = args ?? Array.Empty<object>();
+        LastStatusNote = LocalizationService.Instance.T(key, _statusNoteArgs);
+    }
+
+    /// <summary>
+    /// 按当前活动语言重新格式化最近一条引擎状态文案，确保运行时切换界面语言后标题栏同步更新。
+    /// </summary>
+    public string GetLocalizedStatusNote()
+    {
+        if (string.IsNullOrWhiteSpace(_statusNoteKey))
+        {
+            return LastStatusNote;
+        }
+        if (_statusNoteKey == "已连接旧版服务 v%s (缺少 1.7.63+ 普通浏览器登录修复)" && _statusNoteArgs.Length == 1 && _statusNoteArgs[0] is null)
+        {
+            return LocalizationService.Instance.T(_statusNoteKey, LocalizationService.Instance.T("未知"));
+        }
+        LastStatusNote = LocalizationService.Instance.T(_statusNoteKey, _statusNoteArgs);
+        return LastStatusNote;
+    }
 
     public async Task<bool> EnsureConnectedAsync(
         OmniApiClient apiClient,
@@ -57,63 +85,46 @@ public sealed class BackendProcessManager : IDisposable
             {
                 Mode = isManaged ? BackendConnectionMode.ManagedBundledProcess : BackendConnectionMode.ExternalService;
                 IsOutdatedBackend = !compatible;
-                LastStatusNote = compatible
-                    ? (isManaged ? $"已启动本地伴随引擎 ({ActiveBaseUrl})" : $"已连接本机运行服务 ({ActiveBaseUrl})")
-                    : $"已连接旧版服务 v{(string.IsNullOrWhiteSpace(probe.Version) ? "未知" : probe.Version)} (缺少 1.7.59+ 登录接口)";
+                if (compatible)
+                {
+                    SetStatusNote(
+                        isManaged ? "已启动本地伴随引擎 (%s)" : "已连接本机运行服务 (%s)",
+                        ActiveBaseUrl);
+                }
+                else
+                {
+                    SetStatusNote(
+                        "已连接旧版服务 v%s (缺少 1.7.63+ 普通浏览器登录修复)",
+                        string.IsNullOrWhiteSpace(probe.Version) ? null! : probe.Version);
+                }
                 return true;
             }
 
-            // 既有外部本机服务版本过旧：若本机仓库有新版源码核心，则自动于相邻端口拉起新版伴随引擎，避开 404
-            var upgradeLayout = LocateServerAndPython();
-            var localVersion = upgradeLayout is null ? string.Empty : ReadLocalScriptVersion(upgradeLayout.Value.WindowsDir);
-            if (upgradeLayout is null || !IsVersionAtLeast(localVersion, MinimumRequiredBackendVersion))
-            {
-                Mode = BackendConnectionMode.ExternalService;
-                IsOutdatedBackend = true;
-                LastStatusNote = $"已连接旧版服务 v{probe.Version} ({ActiveBaseUrl} · 请升级服务)";
-                return true;
-            }
-
-            var upgradePort = FindAvailablePort(TryExtractPort(ActiveBaseUrl, 58000) + 1);
-            if (await StartManagedServerAsync(apiClient, upgradeLayout.Value, upgradePort, ct).ConfigureAwait(false))
-            {
-                IsOutdatedBackend = false;
-                LastStatusNote = $"已启新版伴随核心 ({ActiveBaseUrl} · 原服务 v{probe.Version} 过旧)";
-                return true;
-            }
-
-            // 伴随启动意外失败时回退连接原端口，不阻塞界面使用
-            apiClient.UpdateBaseUrl(targetUrl);
-            ActiveBaseUrl = apiClient.BaseUrl;
+            // A second core would compete for the same task/configuration files.
             Mode = BackendConnectionMode.ExternalService;
             IsOutdatedBackend = true;
-            LastStatusNote = $"已连接旧版服务 v{probe.Version} ({ActiveBaseUrl})";
+            SetStatusNote("旧版共享服务 v%s 正在运行，请从托盘正常退出后重连新版", probe.Version);
             return true;
         }
 
         if (!autoStartIfOffline || !IsLocalLoopbackUrl(ActiveBaseUrl))
         {
             Mode = BackendConnectionMode.Disconnected;
-            LastStatusNote = "未检测到运行中的本地服务";
+            SetStatusNote("未检测到运行中的本地服务");
             return false;
         }
 
         // 2. 自动搜寻本地 windows/omni_server.py + Python，或同级 OmniDownloader_Web.exe 并伴随启动
-        var layout = LocateServerAndPython();
         var port = FindAvailablePort(TryExtractPort(ActiveBaseUrl, 58000));
-        if (layout is not null)
-        {
-            return await StartManagedServerAsync(apiClient, layout.Value, port, ct).ConfigureAwait(false);
-        }
-
         var bundledWeb = LocateSiblingWebExe();
         if (bundledWeb is not null)
-        {
             return await StartBundledWebServerAsync(apiClient, bundledWeb, port, ct).ConfigureAwait(false);
-        }
+        var layout = LocateServerAndPython();
+        if (layout is not null)
+            return await StartManagedServerAsync(apiClient, layout.Value, port, ct).ConfigureAwait(false);
 
         Mode = BackendConnectionMode.Disconnected;
-        LastStatusNote = "未在本机找到 omni_server.py 或配套服务程序";
+        SetStatusNote("未在本机找到 omni_server.py 或配套服务程序");
         return false;
     }
 
@@ -175,20 +186,21 @@ public sealed class BackendProcessManager : IDisposable
                 psi.Environment["PYTHONUTF8"] = "1";
                 psi.Environment["PYTHONIOENCODING"] = "utf-8";
                 psi.Environment["OMNI_STATE_DIR"] = stateDir;
+                _sharedWebService = false;
                 _managedProcess = Process.Start(psi);
             }
         }
         catch (Exception ex)
         {
             Mode = BackendConnectionMode.Disconnected;
-            LastStatusNote = $"启动伴随 Python 服务失败 ({ex.Message})";
+            SetStatusNote("启动伴随 Python 服务失败 (%s)", ex.Message);
             return false;
         }
 
         if (!HasRunningManagedProcess() && !TryGetManagedExitCode(out _))
         {
             Mode = BackendConnectionMode.Disconnected;
-            LastStatusNote = "未能拉起伴随 Python 服务进程";
+            SetStatusNote("未能拉起伴随 Python 服务进程");
             return false;
         }
 
@@ -210,20 +222,21 @@ public sealed class BackendProcessManager : IDisposable
                 var psi = new ProcessStartInfo
                 {
                     FileName = webExePath,
-                    Arguments = "--silent",
+                    Arguments = "--silent --no-tray",
                     WorkingDirectory = Path.GetDirectoryName(webExePath) ?? AppContext.BaseDirectory,
                     CreateNoWindow = true,
                     UseShellExecute = false,
                 };
                 psi.Environment["OMNI_PORT"] = port.ToString();
                 psi.Environment["OMNI_STATE_DIR"] = stateDir;
+                _sharedWebService = true;
                 _managedProcess = Process.Start(psi);
             }
         }
         catch (Exception ex)
         {
             Mode = BackendConnectionMode.Disconnected;
-            LastStatusNote = $"启动内置服务程序失败 ({ex.Message})";
+            SetStatusNote("启动内置服务程序失败 (%s)", ex.Message);
             return false;
         }
 
@@ -242,7 +255,7 @@ public sealed class BackendProcessManager : IDisposable
             if (TryGetManagedExitCode(out var exitCode))
             {
                 Mode = BackendConnectionMode.Disconnected;
-                LastStatusNote = $"伴随服务启动后提前退出 (Code {exitCode})";
+                SetStatusNote("伴随服务启动后提前退出 (Code %d)", exitCode);
                 return false;
             }
             var probe = await TryProbeBackendAsync(apiClient, 1200, ct).ConfigureAwait(false);
@@ -251,7 +264,7 @@ public sealed class BackendProcessManager : IDisposable
                 Mode = BackendConnectionMode.ManagedBundledProcess;
                 ConnectedVersion = probe.Version;
                 IsOutdatedBackend = !IsVersionAtLeast(probe.Version, MinimumRequiredBackendVersion);
-                LastStatusNote = $"已启动本地伴随引擎 ({ActiveBaseUrl})";
+                SetStatusNote("已启动本地伴随引擎 (%s)", ActiveBaseUrl);
                 return true;
             }
             var delayMs = i < 8 ? 100 : (i < 20 ? 150 : 250);
@@ -259,7 +272,7 @@ public sealed class BackendProcessManager : IDisposable
         }
 
         Mode = BackendConnectionMode.Disconnected;
-        LastStatusNote = "等待伴随引擎就绪超时";
+        SetStatusNote("等待伴随引擎就绪超时");
         return false;
     }
 
@@ -453,12 +466,40 @@ public sealed class BackendProcessManager : IDisposable
         return null;
     }
 
-    private void StopManagedProcessInternal()
+    /// <summary>
+    /// 在桌面端关闭时按网页服务开关决定是否彻底结束关联的后台服务与全部子组件进程
+    /// </summary>
+    public async Task ShutdownAllAssociatedAsync(OmniApiClient? apiClient, bool stopAssociatedBackend)
+    {
+        if (stopAssociatedBackend && apiClient is not null)
+        {
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(1200));
+                await apiClient.ShutdownBackendAsync(cts.Token).ConfigureAwait(false);
+            }
+            catch
+            {
+                // 本地服务可能尚未监听或已退出
+            }
+        }
+
+        lock (_lock)
+        {
+            StopManagedProcessInternal(forceKillShared: stopAssociatedBackend);
+            if (stopAssociatedBackend)
+            {
+                Mode = BackendConnectionMode.Disconnected;
+            }
+        }
+    }
+
+    private void StopManagedProcessInternal(bool forceKillShared = false)
     {
         if (_managedProcess is null) return;
         try
         {
-            if (!_managedProcess.HasExited)
+            if ((forceKillShared || !_sharedWebService) && !_managedProcess.HasExited)
             {
                 _managedProcess.Kill(entireProcessTree: true);
             }
@@ -471,6 +512,7 @@ public sealed class BackendProcessManager : IDisposable
         {
             _managedProcess.Dispose();
             _managedProcess = null;
+            _sharedWebService = false;
         }
     }
 

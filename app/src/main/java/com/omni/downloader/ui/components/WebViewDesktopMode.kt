@@ -18,8 +18,9 @@ internal class WebViewDesktopMode(private val web: WebView) {
 
     fun apply(enabled: Boolean) {
         desktop = enabled
+        stripRequestedWithHeader(web)
         web.settings.apply {
-            userAgentString = if (enabled) BrowserIdentity.desktopUserAgent(originalAgent) else originalAgent
+            userAgentString = if (enabled) BrowserIdentity.desktopUserAgent(originalAgent) else BrowserIdentity.mobileUserAgent(originalAgent)
             useWideViewPort = true
             loadWithOverviewMode = true
             setSupportZoom(true)
@@ -31,9 +32,13 @@ internal class WebViewDesktopMode(private val web: WebView) {
             val builder = UserAgentMetadata.Builder(original)
             val brands = original.brandVersionList.filterNot { it.brand.contains("WebView", ignoreCase = true) }
             if (brands.isNotEmpty()) builder.setBrandVersionList(brands)
-            val metadata = if (enabled) builder
-                .setMobile(false).setPlatform("Windows").setPlatformVersion("10.0.0")
-                .setArchitecture("x86").setBitness(64).setModel("").setWow64(false).build() else original
+            val metadata = if (enabled) {
+                builder
+                    .setMobile(false).setPlatform("Windows").setPlatformVersion("10.0.0")
+                    .setArchitecture("x86").setBitness(64).setModel("").setWow64(false).build()
+            } else {
+                builder.build()
+            }
             WebSettingsCompat.setUserAgentMetadata(web.settings, metadata)
         }
         script?.remove(); script = null
@@ -49,11 +54,27 @@ internal class WebViewDesktopMode(private val web: WebView) {
     fun close() { script?.remove(); script = null }
 
     companion object {
-        // Responsive login pages otherwise still use the phone's CSS width even with a desktop UA.
+        /** 禁用 Chromium 默认发送的 X-Requested-With: <packageName> 头，避免站点 CORS/反爬拦截。 */
+        fun stripRequestedWithHeader(web: WebView) {
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.REQUESTED_WITH_HEADER_ALLOW_LIST)) {
+                WebSettingsCompat.setRequestedWithHeaderOriginAllowList(web.settings, emptySet())
+            }
+        }
+
+        // Responsive login pages otherwise still use the phone's CSS width even with a desktop UA,
+        // and anti-bot scripts check navigator.platform against the desktop User-Agent string.
         internal val VIEWPORT_SCRIPT = """
             (function(){
               if(window.top!==window || window.__omniDesktopViewport) return;
               window.__omniDesktopViewport=true;
+              try{
+                if(navigator.platform!=='Win32'){
+                  Object.defineProperty(Navigator.prototype,'platform',{get:function(){return 'Win32';},configurable:true});
+                }
+                if(navigator.maxTouchPoints>0){
+                  Object.defineProperty(Navigator.prototype,'maxTouchPoints',{get:function(){return 0;},configurable:true});
+                }
+              }catch(e){}
               var content='width=1280, user-scalable=yes';
               function apply(){
                 if(!document.head) return;

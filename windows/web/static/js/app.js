@@ -8,7 +8,7 @@ import { initImages } from './images.js';
 import { initBatch } from './batch.js';
 import { initTasks, refreshTasks } from './tasks.js';
 import { initSettings, showCategory } from './settings.js';
-import { openDialog, closeDialog, closeTopDialog } from './ui.js';
+import { openDialog, closeDialog, closeTopDialog, enhanceSelects } from './ui.js';
 
 const PAGES = ['home', 'batch', 'tasks', 'settings'];
 let currentPage = 'home';
@@ -139,6 +139,7 @@ async function boot() {
   initKeyboard();
 
   await initI18n();
+  enhanceSelects(document);
 
   initRelay();
   initHome();

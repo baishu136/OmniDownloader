@@ -113,11 +113,26 @@ public sealed class AppServices : IDisposable
         }
     }
 
+    public async Task ShutdownAsync(bool stopAssociatedBackend)
+    {
+        if (_isShuttingDown) return;
+        _isShuttingDown = true;
+
+        LocalState.Flush();
+        MainVm.PrepareShutdown();
+        CloseAllSecondaryWindows();
+        Dialogs.Dispose();
+        await BackendManager.ShutdownAllAssociatedAsync(ApiClient, stopAssociatedBackend).ConfigureAwait(false);
+        ApiClient.Dispose();
+        LocalState.Dispose();
+    }
+
     public void Dispose()
     {
         if (_isShuttingDown) return;
         _isShuttingDown = true;
 
+        LocalState.Flush();
         MainVm.PrepareShutdown();
         CloseAllSecondaryWindows();
         Dialogs.Dispose();

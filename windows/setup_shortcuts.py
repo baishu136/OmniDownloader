@@ -123,7 +123,7 @@ def is_autostart_enabled() -> bool:
     """检查是否已开启开机自启动"""
     # 1. 检查 Startup 快捷方式
     startup_lnk = get_startup_folder() / "OmniDownloader 网页版.lnk"
-    if startup_lnk.exists():
+    if startup_lnk.exists() or (get_startup_folder() / "OmniDownloaderWeb.lnk").exists():
         return True
 
     # 2. 检查注册表 Run 键
@@ -146,69 +146,31 @@ def is_autostart_enabled() -> bool:
 
 
 def enable_autostart(enable: bool = True):
-    """设置或取消开机自启动（同时维护 Startup 目录快捷方式与注册表 Run 键）"""
-    startup_dir = get_startup_folder()
-    startup_lnk = startup_dir / "OmniDownloader 网页版.lnk"
-    old_startup_lnk = startup_dir / "OmniDownloaderWeb.lnk"
-    key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
-    target = get_target_path()
-
+    """One per-user Run entry; migrate only our two legacy Startup shortcuts."""
+    startup = get_startup_folder().resolve()
+    links = [startup / name for name in ("OmniDownloader 网页版.lnk", "OmniDownloaderWeb.lnk")]
+    for link in links:
+        if link.resolve().parent != startup or link.is_symlink():
+            raise RuntimeError("[UNSAFE_STARTUP_LINK] 启动项路径不在许可目录内")
+    path = r"Software\Microsoft\Windows\CurrentVersion\Run"
     if enable:
-        # 1. 在 Startup 目录创建带图标的开机启动快捷方式
-        create_shortcut(
-            startup_lnk,
-            target,
-            description="OmniDownloader 网页版后台服务 (开机自启)",
-            arguments="--autostart"
-        )
-        print(f"[OK] 启动项快捷方式已写入: {startup_lnk}")
-
-        # 2. 写入注册表 Run 键 (开机带 --autostart 静默常驻)
-        try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
-            # 清理旧名称
-            try:
-                winreg.DeleteValue(key, "OmniDownloaderWeb")
-            except FileNotFoundError:
-                pass
+        target = Path(get_target_path()).resolve()
+        if not target.is_file(): raise RuntimeError("[STARTUP_TARGET_MISSING] 请完整解压程序后再开启网页服务开机启动")
+        with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, path, 0, winreg.KEY_SET_VALUE) as key:
             winreg.SetValueEx(key, "OmniDownloader_Web", 0, winreg.REG_SZ, f'"{target}" --autostart')
-            winreg.CloseKey(key)
-            print("[OK] 注册表自启动项已更新: HKCU\\...\\Run -> OmniDownloader_Web")
-        except Exception as e:
-            print(f"[警告] 写入注册表失败: {e}")
-
-        print("\n>>> 【开机自启动配置成功】<<<")
-        print("以后电脑开机后，OmniDownloader 将自动在后台静默运行并常驻托盘，随时打开浏览器均可极速使用！")
-
+            try: winreg.DeleteValue(key, "OmniDownloaderWeb")
+            except FileNotFoundError: pass
     else:
-        # 1. 移除 Startup 快捷方式
-        if startup_lnk.exists():
-            try:
-                startup_lnk.unlink()
-                print(f"[OK] 已移除启动项快捷方式: {startup_lnk}")
-            except Exception as e:
-                print(f"[警告] 移除快捷方式失败: {e}")
-
-        if old_startup_lnk.exists():
-            try:
-                old_startup_lnk.unlink()
-            except Exception:
-                pass
-
-        # 2. 移除注册表项
         try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
-            for name in ("OmniDownloader_Web", "OmniDownloaderWeb"):
-                try:
-                    winreg.DeleteValue(key, name)
-                    print(f"[OK] 已删除注册表项: {name}")
-                except FileNotFoundError:
-                    pass
-            winreg.CloseKey(key)
-        except Exception as e:
-            print(f"[警告] 删除注册表项失败: {e}")
-
-        print("\n>>> 【开机自启动已成功取消】<<<")
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0, winreg.KEY_SET_VALUE) as key:
+                for name in ("OmniDownloader_Web", "OmniDownloaderWeb"):
+                    try: winreg.DeleteValue(key, name)
+                    except FileNotFoundError: pass
+        except FileNotFoundError: pass
+    for link in links:
+        if link.exists(): link.unlink()
+    if is_autostart_enabled() != enable:
+        raise RuntimeError("[STARTUP_VERIFY_FAILED] 开机启动状态未能保存")
 
 
 def register_url_protocol():

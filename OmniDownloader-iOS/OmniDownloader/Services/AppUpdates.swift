@@ -46,7 +46,7 @@ enum ReleaseVersion {
             }
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey:"omni.update.lastCheck")
             version = found?.0 ?? ""; releaseURL = found?.1
-            message = found == nil ? "当前没有更新的 iOS 安装包" : "发现 \(version)。IPA 需按发布说明签名安装。"
-        } catch is CancellationError {} catch { message = "更新检查失败，请检查网络后重试" }
+            message = found == nil ? OmniLocalization.text("当前没有更新的 iOS 安装包") : OmniLocalization.fmt("发现 %@。IPA 需按发布说明签名安装。", version)
+        } catch is CancellationError {} catch { message = OmniLocalization.text("更新检查失败，请检查网络后重试") }
     }
 }

@@ -21,8 +21,8 @@ DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 
 def sanitize_filename(name: str) -> str:
-    clean = re.sub(r'[\\/:*?"<>|]', "_", name).strip()
-    return clean[:100] if len(clean) > 100 else clean
+    from engine.ytdlp_engine import clean_media_title
+    return clean_media_title(name)
 
 
 class DomesticDirectExtractor:
@@ -207,9 +207,9 @@ class DomesticDirectExtractor:
         if platform(task.url) in ('抖音', '小红书', '快手'):
             return await PlatformEngine.download(task, on_progress, cancel_event)
         clean_title = sanitize_filename(task.title)
-        download_dir = Path(config.download_dir)
+        download_dir = Path(config.resolve_download_dir(task.download_type))
         download_dir.mkdir(parents=True, exist_ok=True)
-        staging_dir = download_dir / ".staging"
+        staging_dir = Path(config.download_dir) / ".staging"
         staging_dir.mkdir(parents=True, exist_ok=True)
 
         video_url = task.selected_resolution if task.selected_resolution.startswith("http") else ""

@@ -27,6 +27,7 @@ import kotlinx.coroutines.withContext
 import androidx.compose.ui.platform.LocalContext
 import com.omni.downloader.ui.viewmodel.MainViewModel
 import com.omni.downloader.ui.localization.LocalAppStrings
+import com.omni.downloader.ui.localization.localizeError
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.content.Intent
@@ -87,7 +88,7 @@ internal class HomeImageResults(
     }
     if (active && browser && browserUrl.isNotBlank()) com.omni.downloader.ui.components.DouyinImagesBrowser(browserUrl,
         onDismiss = { browser = false }, onCaptured = { item, url -> browser = false; viewModel.acceptBrowserImages(item, url) })
-    return HomeImageResults(currentPost, selected, error, { selected = it }, { preview = it },
+    return HomeImageResults(currentPost, selected, strings.localizeError(error), { selected = it }, { preview = it },
         { viewModel.downloadImages(selected, it) }, { rememberImageRequest(requests,requireNotNull(currentPost).resources[it],true) },
         if (error.isNotBlank() && browserUrl.isNotBlank()) ({ browser = true }) else null,
         busy, viewModel::stopProfileAnalysis, { viewModel.startAnalyze() },animationFormat,{ viewModel.artistAnimationFormat.value=it },saving=saving)

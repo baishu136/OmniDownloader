@@ -37,6 +37,30 @@ enum NativeMediaPipeline {
             try await NativeFFmpeg.verify(file,task:task)
             try JSONEncoder().encode(Ready(signature:signature,name:file.lastPathComponent)).write(to:ready,options:[.atomic,.completeFileProtectionUntilFirstUserAuthentication])
         }
+        if task.downloadType == .gif, let source=staged {
+            let handle=try FileHandle(forReadingFrom:source)
+            let header=try handle.read(upToCount:6) ?? Data();try handle.close()
+            let actualGIF=["GIF87a","GIF89a"].contains(String(decoding:header,as:UTF8.self))
+            if !actualGIF {
+                let converted=work.appendingPathComponent("recovered.gif")
+                try await NativeFFmpeg.gif(source,output:converted)
+                try await NativeFFmpeg.verify(converted,task:task)
+                staged=converted
+            } else if source.pathExtension.lowercased() != "gif" {
+                try await NativeFFmpeg.verify(source,task:task)
+                let renamed=work.appendingPathComponent("verified.gif")
+                try? FileManager.default.removeItem(at:renamed)
+                try FileManager.default.copyItem(at:source,to:renamed);staged=renamed
+            }
+        }
+        if [.videoWithAudio,.videoOnly].contains(task.downloadType),let source=staged{
+            let reader=try FileHandle(forReadingFrom:source)
+            let bytes=try reader.read(upToCount:6) ?? Data();try reader.close()
+            if ["GIF87a","GIF89a"].contains(String(decoding:bytes,as:UTF8.self)){
+                let converted=work.appendingPathComponent("gif-encoded.mp4")
+                try await NativeFFmpeg.gifToVideo(source,output:converted);staged=converted
+            }
+        }
         guard let file=staged else{throw OmniPlatform.error("POSTPROCESS_FAILED","没有可导出的成品")}
         try await NativeFFmpeg.verify(file,task:task);try Task.checkCancellation();progress(98,"正在导出成品…")
         let output=try export(file,task:task)
@@ -117,6 +141,12 @@ enum NativeMediaPipeline {
         try Task.checkCancellation();progress(88,"正在处理媒体…")
         let output=work.appendingPathComponent("output."+(task.downloadType == .gif ? "gif":task.downloadType == .audioOnly ? task.audioFormat.rawValue:"mp4"))
         try? FileManager.default.removeItem(at:output)
+        let headerHandle=try FileHandle(forReadingFrom:input)
+        let inputPrefix=try headerHandle.read(upToCount:6) ?? Data();try headerHandle.close()
+        if [.videoWithAudio,.videoOnly].contains(task.downloadType),["GIF87a","GIF89a"].contains(String(decoding:inputPrefix,as:UTF8.self)){
+            try await NativeFFmpeg.gifToVideo(input,output:output)
+            return output
+        }
         switch task.downloadType{
         case .gif:
             let header=try Data(contentsOf:input,options:.mappedIfSafe).prefix(6)
@@ -187,8 +217,10 @@ enum NativeMediaPipeline {
             catch{throw OmniPlatform.error("EXPORT_FAILED","保存目录无法访问，已保留成品；请重新选择目录后重试")}
         }else{destination=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("Downloads",isDirectory:true);try FileManager.default.createDirectory(at:destination,withIntermediateDirectories:true)}
         defer{if access{destination.stopAccessingSecurityScopedResource()}}
-        let clean=String(task.title.replacingOccurrences(of:#"[\\/:*?"<>|\p{C}]"#,with:"_",options:.regularExpression).prefix(60))
-        let name=(clean.isEmpty ? "OmniDownloader":clean)+"_"+task.id
+        let cleanedTitle=task.title.replacingOccurrences(of:#"[\\/:*?"<>|\p{C}]"#,with:"_",options:.regularExpression)
+            .trimmingCharacters(in:CharacterSet(charactersIn:". ").union(.whitespacesAndNewlines))
+        let safePrefix=String(cleanedTitle.prefix(60))
+        let name=(safePrefix.isEmpty || safePrefix=="." || safePrefix==".." ? "OmniDownloader":safePrefix)+"_"+task.id
         var output=destination.appendingPathComponent(name+"."+source.pathExtension),index=1
         while FileManager.default.fileExists(atPath:output.path){output=destination.appendingPathComponent(name+"_\(index)."+source.pathExtension);index+=1}
         do{try FileManager.default.copyItem(at:source,to:output)}catch{throw OmniPlatform.error("EXPORT_FAILED","导出失败，已保留校验通过的成品，重试时无需重新下载")}

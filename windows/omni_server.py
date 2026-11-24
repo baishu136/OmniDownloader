@@ -52,7 +52,7 @@ async def lifespan(application):
         await asyncio.to_thread(browser_login.shutdown)
 
 
-app = FastAPI(title="OmniDownloader API", description="全能多媒体下载器 Windows 后端接口", version="1.7.60", lifespan=lifespan)
+app = FastAPI(title="OmniDownloader API", description="全能多媒体下载器 Windows 后端接口", version="1.7.65", lifespan=lifespan)
 
 # 允许跨域以便调试
 app.add_middleware(
@@ -103,10 +103,17 @@ class BatchCreateTaskRequest(BaseModel):
 
 class UpdateSettingsRequest(BaseModel):
     download_dir: Optional[str] = Field(None, alias="downloadDir")
+    follow_default_dir: Optional[bool] = Field(None, alias="followDefaultDir")
+    video_download_dir: Optional[str] = Field(None, alias="videoDownloadDir")
+    image_download_dir: Optional[str] = Field(None, alias="imageDownloadDir")
+    audio_download_dir: Optional[str] = Field(None, alias="audioDownloadDir")
+    show_recent_tasks_on_home: Optional[bool] = Field(None, alias="showRecentTasksOnHome")
+    enable_web_service: Optional[bool] = Field(None, alias="enableWebService")
     proxy_url: Optional[str] = Field(None, alias="proxyUrl")
     bilibili_cookie: Optional[str] = Field(None, alias="bilibiliCookie")
     max_concurrent_tasks: Optional[int] = Field(None, alias="maxConcurrentTasks")
     theme: Optional[Literal["auto", "light", "dark"]] = None
+    accent_color: Optional[str] = Field(None, alias="accentColor")
     auto_start: Optional[bool] = Field(None, alias="autoStart")
 
 class AddRelaySiteRequest(BaseModel):
@@ -254,6 +261,176 @@ async def image_preview(token: str, index: int):
         return Response(bytes(data), media_type={'jpg':'image/jpeg','png':'image/png','gif':'image/gif','webp':'image/webp','avif':'image/avif'}[extension], headers={'Cache-Control':'private, max-age=300','X-Content-Type-Options':'nosniff'})
     try: return await asyncio.to_thread(fetch)
     except Exception: raise HTTPException(400, '预览暂不可用，可尝试保存原图')
+
+
+def _is_safe_public_thumb_url(target_url: str) -> bool:
+    """校验封面代理目标是否为合法公网 HTTP(S) 地址，防止误访问内网或回环服务。"""
+    import ipaddress
+    try:
+        parsed = urllib.parse.urlparse(target_url)
+    except Exception:
+        return False
+    if parsed.scheme.lower() not in ('http', 'https') or not parsed.hostname:
+        return False
+    host = parsed.hostname.strip().lower()
+    if host in ('localhost', '127.0.0.1', '::1', '0.0.0.0') or host.endswith('.local'):
+        return False
+    try:
+        ip = ipaddress.ip_address(host)
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
+            return False
+    except ValueError:
+        pass
+    return True
+
+
+def _resolve_thumb_platform_and_headers(target_url: str, platform_hint: str = '') -> tuple[str, dict[str, str]]:
+    """根据封面域名推断平台标识与防盗链请求头（Referer/Accept）。"""
+    host = (urllib.parse.urlparse(target_url).hostname or '').lower()
+    headers = {
+        'Accept': 'image/jpeg,image/png,image/gif,image/webp,*/*;q=0.8',
+    }
+    if any(k in host for k in ('hdslb.com', 'bilibili.com')):
+        return (platform_hint or '哔哩哔哩'), {**headers, 'Referer': 'https://www.bilibili.com/'}
+    if any(k in host for k in ('pximg.net', 'pixiv.net')):
+        return (platform_hint or 'Pixiv'), {**headers, 'Referer': 'https://www.pixiv.net/'}
+    if any(k in host for k in ('sinaimg.cn', 'weibo.com', 'weibo.cn')):
+        return (platform_hint or '微博'), {**headers, 'Referer': 'https://weibo.com/'}
+    if any(k in host for k in ('xhscdn.com', 'xiaohongshu.com')):
+        return (platform_hint or '小红书'), {**headers, 'Referer': 'https://www.xiaohongshu.com/'}
+    if any(k in host for k in ('douyinpic.com', 'byteimg.com', 'douyincdn.com', 'douyin.com', 'iesdouyin.com')):
+        return (platform_hint or '抖音'), {**headers, 'Referer': 'https://www.douyin.com/'}
+    if any(k in host for k in ('yximgs.com', 'kuaishou.com', 'kwimgs.com')):
+        return (platform_hint or '快手'), {**headers, 'Referer': 'https://www.kuaishou.com/'}
+    if any(k in host for k in ('cdninstagram.com', 'fbcdn.net', 'instagram.com')):
+        return (platform_hint or 'Instagram'), {**headers, 'Referer': 'https://www.instagram.com/'}
+    if any(k in host for k in ('twimg.com', 'x.com', 'twitter.com')):
+        return (platform_hint or 'X (Twitter)'), {**headers, 'Referer': 'https://x.com/'}
+    return (platform_hint or ''), headers
+
+
+def _normalize_thumb_bytes_for_winui(raw_bytes: bytes) -> tuple[bytes, str] | None:
+    """识别图片头并在必要时将 WebP/AVIF 转为 WinUI 原生可直接解码的 JPEG/PNG。"""
+    if not raw_bytes or len(raw_bytes) < 12:
+        return None
+    if raw_bytes.startswith(b'\xff\xd8\xff'):
+        return raw_bytes, 'image/jpeg'
+    if raw_bytes.startswith(b'\x89PNG\r\n\x1a\n'):
+        return raw_bytes, 'image/png'
+    if raw_bytes[:6] in (b'GIF87a', b'GIF89a'):
+        return raw_bytes, 'image/gif'
+    if raw_bytes.startswith(b'BM'):
+        return raw_bytes, 'image/bmp'
+
+    # WebP / AVIF / HEIC 等现代格式统一转码，避免系统缺少 WIC 扩展导致 WinUI 封面空白
+    import io
+    try:
+        from PIL import Image
+        with Image.open(io.BytesIO(raw_bytes)) as img:
+            out = io.BytesIO()
+            if img.mode in ('RGBA', 'LA', 'P'):
+                img.convert('RGBA').save(out, format='PNG')
+                return out.getvalue(), 'image/png'
+            img.convert('RGB').save(out, format='JPEG', quality=90)
+            return out.getvalue(), 'image/jpeg'
+    except Exception:
+        pass
+    return None
+
+
+def _extract_local_task_thumb_bytes(task_id: str) -> tuple[bytes, str] | None:
+    """远程封面失效或空缺时，回退从已完成的本地成品读取图片或抽取首帧缩略图。"""
+    if not task_id:
+        return None
+    task = task_manager.get_task(task_id)
+    if not task or not getattr(task, 'local_file_path', ''):
+        return None
+    local_path = Path(task.local_file_path)
+    if not local_path.is_file():
+        return None
+    suffix = local_path.suffix.lower()
+    if suffix in ('.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'):
+        try:
+            data = local_path.read_bytes()
+            if len(data) <= 10 * 1024 * 1024:
+                return _normalize_thumb_bytes_for_winui(data)
+        except Exception:
+            return None
+    if suffix in ('.mp4', '.mkv', '.webm', '.mov', '.m4v', '.flv', '.ts'):
+        import shutil, subprocess
+        ffmpeg_bin = CURRENT_DIR / 'bin' / 'ffmpeg.exe'
+        if not ffmpeg_bin.is_file():
+            found = shutil.which('ffmpeg')
+            if not found:
+                return None
+            ffmpeg_bin = Path(found)
+        try:
+            res = subprocess.run(
+                [str(ffmpeg_bin), '-v', 'error', '-ss', '0.5', '-i', str(local_path),
+                 '-vframes', '1', '-vf', 'scale=360:-1', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-'],
+                capture_output=True, timeout=4, check=False
+            )
+            if res.returncode == 0 and res.stdout:
+                return _normalize_thumb_bytes_for_winui(res.stdout)
+        except Exception:
+            return None
+    return None
+
+
+@app.get('/api/media/thumb')
+async def media_thumb_proxy(url: str = '', platform: str = '', task_id: str = ''):
+    """安全代理并归一化视频/图集封面缩略图：复用后端代理、Cookie 与防盗链请求头，并将非通用格式转为 JPEG/PNG。"""
+    clean_url = (url or '').strip()
+    if clean_url.startswith('//'):
+        clean_url = 'https:' + clean_url
+    if clean_url and not _is_safe_public_thumb_url(clean_url):
+        raise HTTPException(400, '封面地址无效')
+    if not clean_url and not task_id:
+        raise HTTPException(400, '缺少封面参数')
+
+    def fetch_and_normalize():
+        from contextlib import nullcontext
+        from engine.media_resolver import session
+        from core.session_store import sessions
+
+        if clean_url:
+            plat_name, req_headers = _resolve_thumb_platform_and_headers(clean_url, platform)
+            ctx = sessions.cookie_file(plat_name) if plat_name else nullcontext(None)
+            candidates = [clean_url]
+            if clean_url.startswith('http://'):
+                candidates.append('https://' + clean_url[len('http://'):])
+            with ctx as cookie:
+                with session(cookie, config.proxy_url) as client:
+                    for candidate in candidates:
+                        try:
+                            with client.get(candidate, headers=req_headers, stream=True, timeout=(8, 15)) as resp:
+                                if not resp.ok:
+                                    continue
+                                data = bytearray()
+                                for chunk in resp.iter_content(65536):
+                                    data.extend(chunk)
+                                    if len(data) > 10 * 1024 * 1024:
+                                        raise ValueError('cover exceeds 10MB')
+                                normalized = _normalize_thumb_bytes_for_winui(bytes(data))
+                                if normalized is not None:
+                                    return normalized
+                        except Exception:
+                            continue
+
+        local_thumb = _extract_local_task_thumb_bytes(task_id)
+        if local_thumb is not None:
+            return local_thumb
+        return None
+
+    result = await asyncio.to_thread(fetch_and_normalize)
+    if result is None:
+        raise HTTPException(404, '封面暂不可用')
+    payload, media_type = result
+    return Response(
+        payload,
+        media_type=media_type,
+        headers={'Cache-Control': 'private, max-age=300', 'X-Content-Type-Options': 'nosniff'},
+    )
 
 
 def publish_image_preview(post):
@@ -678,14 +855,33 @@ async def update_settings(req: UpdateSettingsRequest, request: Request):
     if req.download_dir is not None:
         config.download_dir = req.download_dir
         os.makedirs(config.download_dir, exist_ok=True)
+    if req.follow_default_dir is not None:
+        config.follow_default_dir = bool(req.follow_default_dir)
+    if req.video_download_dir is not None:
+        config.video_download_dir = req.video_download_dir.strip()
+        if config.video_download_dir:
+            os.makedirs(config.video_download_dir, exist_ok=True)
+    if req.image_download_dir is not None:
+        config.image_download_dir = req.image_download_dir.strip()
+        if config.image_download_dir:
+            os.makedirs(config.image_download_dir, exist_ok=True)
+    if req.audio_download_dir is not None:
+        config.audio_download_dir = req.audio_download_dir.strip()
+        if config.audio_download_dir:
+            os.makedirs(config.audio_download_dir, exist_ok=True)
+    if req.show_recent_tasks_on_home is not None:
+        config.show_recent_tasks_on_home = bool(req.show_recent_tasks_on_home)
+    if req.enable_web_service is not None:
+        config.enable_web_service = bool(req.enable_web_service)
     if req.proxy_url is not None:
         config.proxy_url = req.proxy_url
     if req.bilibili_cookie is not None:
         if req.bilibili_cookie:
             from core.session_store import sessions
-            parts = req.bilibili_cookie if "=" in req.bilibili_cookie else "SESSDATA=" + req.bilibili_cookie
-            rows = [f".bilibili.com\tTRUE\t/\tTRUE\t0\t{k.strip()}\t{v.strip()}" for token in parts.split(";") if "=" in token for k, v in [token.split("=", 1)]]
-            sessions.import_text("哔哩哔哩", "# Netscape HTTP Cookie File\n" + "\n".join(rows))
+            try:
+                sessions.import_cookie_input("哔哩哔哩", req.bilibili_cookie, default_name="SESSDATA")
+            except (ValueError, OSError) as exc:
+                raise HTTPException(400, str(exc)) from None
         else:
             from core.browser_login import browser_login
             await asyncio.to_thread(browser_login.clear, '哔哩哔哩')
@@ -694,12 +890,20 @@ async def update_settings(req: UpdateSettingsRequest, request: Request):
         config.max_concurrent_tasks = req.max_concurrent_tasks
     if req.theme is not None:
         config.theme = req.theme
+    if req.accent_color is not None:
+        raw_accent = req.accent_color.strip()
+        if raw_accent.lower() in ("", "system", "auto"):
+            config.accent_color = "system"
+        elif re.fullmatch(r"#[0-9A-Fa-f]{6}", raw_accent):
+            config.accent_color = raw_accent.upper()
+        else:
+            raise HTTPException(400, "主题强调色格式无效，请使用 system 或 #RRGGBB")
     if req.auto_start is not None:
         try:
             from setup_shortcuts import enable_autostart
-            enable_autostart(req.auto_start)
-        except Exception as e:
-            print(f"[OmniServer] 设置自启动失败: {e}")
+            await asyncio.to_thread(enable_autostart, req.auto_start)
+        except Exception:
+            raise HTTPException(400, "[STARTUP_FAILED] 无法保存网页服务开机启动，请检查权限及程序位置") from None
 
     config.save()
     updated = config.to_dict()
@@ -803,10 +1007,24 @@ async def get_favicon():
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
+    if not getattr(config, "enable_web_service", True):
+        return HTMLResponse(
+            "<h2>OmniDownloader Web Service is disabled.</h2><p>Enable Web Service in the OmniDownloader desktop Settings to access the web companion.</p>",
+            status_code=403
+        )
     index_file = web_dir / "index.html"
     if index_file.exists():
         return FileResponse(index_file)
     return HTMLResponse("<h2>OmniDownloader Web UI 正在初始化...</h2>")
+
+
+_shutdown_handler = None
+
+
+def set_shutdown_handler(handler):
+    """由宿主托盘或独立运行入口注入进程退出回调，确保 /api/system/shutdown 可安全完整退出所有组件"""
+    global _shutdown_handler
+    _shutdown_handler = handler
 
 
 def start_server(host: str = "127.0.0.1", port: int = 58000):
@@ -948,12 +1166,52 @@ async def assist_images(request: Request):
     except Exception as exc: raise HTTPException(400, sanitize(exc))
 
 
+@app.post("/api/system/shutdown")
+async def shutdown_system(request: Request):
+    """仅限本机客户端调用：关闭浏览器会话、终止活动任务并优雅退出后台服务进程"""
+    require_local_session_action(request)
+    from core.browser_login import browser_login
+    try:
+        for tid in list(task_manager.cancel_events.keys()):
+            await task_manager.cancel_task(tid)
+    except Exception:
+        pass
+    try:
+        await asyncio.to_thread(browser_login.shutdown)
+    except Exception:
+        pass
+
+    handler = _shutdown_handler
+    if handler is not None:
+        import threading
+        t = threading.Timer(0.08, handler)
+        t.daemon = True
+        t.start()
+    if "pytest" not in sys.modules:
+        import threading
+        fallback = threading.Timer(0.65, lambda: os._exit(0))
+        fallback.daemon = True
+        fallback.start()
+    return {"status": "shutting_down", "handler": handler is not None}
+
+
 if __name__ == "__main__":
     import argparse
+    import threading
     parser = argparse.ArgumentParser(description="OmniDownloader Windows 服务端")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="监听地址 (0.0.0.0 支持局域网)")
     parser.add_argument("--port", type=int, default=58000, help="服务端口")
     args = parser.parse_args()
+
+    def _standalone_shutdown():
+        from core.browser_login import browser_login
+        try:
+            browser_login.shutdown()
+        except Exception:
+            pass
+        os._exit(0)
+
+    set_shutdown_handler(_standalone_shutdown)
 
     print(f"=====================================================")
     print(f"🚀 OmniDownloader Windows 服务已启动!")

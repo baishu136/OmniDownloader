@@ -69,7 +69,7 @@ export function renderHome() {
     card.innerHTML = `
       <div class="relay-site-card__logo" style="background:${color}22;color:${color}">${escapeHtml(ch)}</div>
       <div class="relay-site-card__body" title="${escapeHtml(site.url || '')}">
-        <div class="relay-site-card__name">${escapeHtml(site.name || '备用站点')}</div>
+        <div class="relay-site-card__name">${escapeHtml(site.name || t('备用站点'))}</div>
         <div class="relay-site-card__domain">${escapeHtml(hostOf(site.url))}</div>
       </div>
       <button class="btn btn-primary-container btn-sm" type="button">
@@ -103,7 +103,7 @@ export function renderSettings() {
   if (!list) return;
 
   if (!state.sites.length) {
-    list.innerHTML = '<div class="omni-card"><p class="caption" style="padding:12px 0">暂无配置任何中转网站，点击右上角添加</p></div>';
+    list.innerHTML = `<div class="omni-card"><p class="caption" style="padding:12px 0">${escapeHtml(t('暂无配置任何中转网站，点击右上角添加'))}</p></div>`;
     return;
   }
 
@@ -115,7 +115,7 @@ export function renderSettings() {
       <div class="row" style="gap:10px;padding:4px 6px;border-radius:12px;background:var(--surface-variant-30)">
         <div class="relay-site-card__logo" style="width:32px;height:32px;border-radius:9px;font-size:12px;background:${color}24;color:${color}">${escapeHtml(ch)}</div>
         <div style="flex:1;min-width:0">
-          <div class="truncate" style="font-size:13.5px;font-weight:600">${escapeHtml(site.name || '备用站点')}</div>
+          <div class="truncate" style="font-size:13.5px;font-weight:600">${escapeHtml(site.name || t('备用站点'))}</div>
           <div class="truncate caption">${escapeHtml(hostOf(site.url))}</div>
         </div>
         <button class="icon-btn icon-btn--sm" title="打开" aria-label="打开" type="button">${iconSvg('open_in_new')}</button>
@@ -193,7 +193,7 @@ async function submitSite() {
   errorEl.textContent = '';
   errorEl.hidden = true;
   if (!name || !url) {
-    errorEl.textContent = '请完整填写网站名称与网址。';
+    errorEl.textContent = t('请完整填写网站名称与网址。');
     errorEl.hidden = false;
     return;
   }

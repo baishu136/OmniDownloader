@@ -41,7 +41,7 @@ enum ImagePostEngine {
                 let source=row["src"] as? String ?? row["url"] as? String ?? "";guard NativeMediaParser.safeURL(source) else{return nil}
                 return PostImageResource(id:id+"-p\(index)",url:source,width:NativeMediaParser.number(row["width"]),height:NativeMediaParser.number(row["height"]))
             }
-            post=ImagePost(url:url,platform:site,contentId:id,title:(dynamic["desc"] as? [String:Any])?["text"] as? String ?? (opus["summary"] as? [String:Any])?["text"] as? String ?? "B站动态 \(id)",author:(modules["module_author"] as? [String:Any])?["name"] as? String ?? "",resources:resources)
+            post=ImagePost(url:url,platform:site,contentId:id,title:(dynamic["desc"] as? [String:Any])?["text"] as? String ?? (opus["summary"] as? [String:Any])?["text"] as? String ?? OmniLocalization.fmt("B站动态 %@", id),author:(modules["module_author"] as? [String:Any])?["name"] as? String ?? "",resources:resources)
         }else if site=="微博"{
             let result=try await WeiboExtractor.fetch(url)
             guard let images=try NativeMediaParser.parse(result,url:url).1 else{throw OmniPlatform.error("NO_MEDIA","该微博没有可导出的图片")};post=images

@@ -25,7 +25,7 @@ enum WeiboExtractor {
         let identities=["id","idstr","id_str","mid","bid","mblogid"].compactMap{item[$0]}.map{String(describing:$0)}
         guard !identities.isEmpty else{throw OmniPlatform.error("MEDIA_UNCONFIRMED","微博暂未确认目标作品，请验证登录后重试")}
         guard !id.isEmpty,identities.contains(id) else{throw OmniPlatform.error("MEDIA_ID_MISMATCH","微博没有返回目标作品")}
-        let title=(item["text_raw"] as? String ?? item["text"] as? String ?? "微博_\(id)").replacingOccurrences(of:#"<[^>]+>"#,with:"",options:.regularExpression)
+        let title=(item["text_raw"] as? String ?? item["text"] as? String ?? "\(OmniLocalization.text("微博"))_\(id)").replacingOccurrences(of:#"<[^>]+>"#,with:"",options:.regularExpression)
         let author=(item["user"] as? [String:Any])?["screen_name"] as? String ?? ""
         func entry(_ page:[String:Any],identity:String)->[String:Any]? {
             let info=page["media_info"] as? [String:Any] ?? [:]

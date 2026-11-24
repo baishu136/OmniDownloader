@@ -539,6 +539,7 @@ class AppStrings internal constructor(private val values: Array<String>) {
     val platformLabelYouku: String get() = values[528]
     val platformLabelIqiyi: String get() = values[529]
     val platformLabelHuya: String get() = values[530]
+    val analyzeClipboard: String get() = values[531]
 }
 
 private class AppStringsBuilder {
@@ -1073,6 +1074,7 @@ private class AppStringsBuilder {
     lateinit var platformLabelYouku: String
     lateinit var platformLabelIqiyi: String
     lateinit var platformLabelHuya: String
+    lateinit var analyzeClipboard: String
 
     fun build(): AppStrings = AppStrings(arrayOf(
         navHome,
@@ -1605,7 +1607,8 @@ private class AppStringsBuilder {
         platformLabelXigua,
         platformLabelYouku,
         platformLabelIqiyi,
-        platformLabelHuya
+        platformLabelHuya,
+        analyzeClipboard
     ))
 }
 
@@ -1716,8 +1719,8 @@ val ZhHansStrings = appStrings {
     formatSheetTitle = "下载配置"
     mediaSelection = "选择多媒体片段"
     downloadType = "下载模式"
-    typeVideo = "完整视频 (包含音轨)"
-    typeAudio = "纯音频 (MP3/M4A)"
+    typeVideo = "视频"
+    typeAudio = "音频"
     resolution = "视频画质"
     audioFormat = "音频编码格式"
     startDownload = "开始下载"
@@ -1735,13 +1738,13 @@ val ZhHansStrings = appStrings {
     selectedEpisodesCount = "已选 %d / %d 集"
     downloadSelected = "下载所选"
     pleaseSelectEpisode = "请至少勾选一个视频"
-    tabVideo = "音画合流"
+    tabVideo = "视频"
     tabVideoSub = "高清音画"
     tabMute = "纯画面"
     tabMuteSub = "无声素材"
-    tabAudio = "提取音频"
+    tabAudio = "音频"
     tabAudioSub = "MP3 / M4A"
-    tabGif = "动态图"
+    tabGif = "GIF"
     tabGifSub = "循环动效"
     attachedCoverTitle = "附加选项：视频原画封面"
     attachedCoverDesc = "提取发布者高清原图，直接存入系统相册"
@@ -1750,7 +1753,7 @@ val ZhHansStrings = appStrings {
     selectResolutionMute = "选择纯视频分辨率 (完全去除声音轨，静音素材)"
     selectAudioFormat = "选择导出的音频格式"
     gifEngineTitle = "高保真 GIF 动图转换"
-    gifEngineDesc = "• 内置 FFmpeg 双 Pass 调色板引擎，还原细腻生动色彩与紧凑体积\n• 导出为标准 .gif 格式，微信、相册、QQ 无需播放器即可直接开播与转发\n• 如需保存原画视频文件，可随时切换回「音画合流」下载为 MP4"
+    gifEngineDesc = "• 内置 FFmpeg 双 Pass 调色板引擎，还原细腻生动色彩与紧凑体积\n• 导出为标准 .gif 格式，微信、相册、QQ 无需播放器即可直接开播与转发\n• 如需保存原画视频文件，可随时切换回「视频」下载为 MP4"
     switchMultiVideoPrompt = "点击切换当前预览与独立下载的视频:"
     switchBilibiliPartPrompt = "点击切换当前预览与下载的分P/分集:"
     videoPartLabel = "视频 %d"
@@ -1781,10 +1784,10 @@ val ZhHansStrings = appStrings {
     statusCompleted = "已完成"
     statusFailed = "失败"
     statusCancelled = "已取消"
-    badgeVideo = "完整"
+    badgeVideo = "视频"
     badgeMute = "纯画面"
     badgeAudio = "音频"
-    badgeGif = "动图"
+    badgeGif = "GIF"
     badgeCover = "封面"
     collectionBadge = "合集"
     collectionEpisodesCount = "%d 集"
@@ -2144,6 +2147,7 @@ val ZhHansStrings = appStrings {
     platformLabelYouku = "优酷"
     platformLabelIqiyi = "爱奇艺"
     platformLabelHuya = "虎牙"
+    analyzeClipboard = "解析剪切板"
 }
 
 val ZhHantStrings = appStrings {
@@ -2250,8 +2254,8 @@ val ZhHantStrings = appStrings {
     formatSheetTitle = "下載設定"
     mediaSelection = "選取多媒體項目"
     downloadType = "下載模式"
-    typeVideo = "完整影片 (包含音訊)"
-    typeAudio = "僅音訊 (MP3/M4A)"
+    typeVideo = "視頻"
+    typeAudio = "音訊"
     resolution = "影片畫質"
     audioFormat = "音訊編碼格式"
     startDownload = "開始下載"
@@ -2269,13 +2273,13 @@ val ZhHantStrings = appStrings {
     selectedEpisodesCount = "已選 %d / %d 集"
     downloadSelected = "下載所選"
     pleaseSelectEpisode = "請至少勾選一個影片"
-    tabVideo = "完整影片"
+    tabVideo = "視頻"
     tabVideoSub = "高畫質音畫"
     tabMute = "純畫面"
     tabMuteSub = "無聲素材"
-    tabAudio = "擷取音訊"
+    tabAudio = "音訊"
     tabAudioSub = "MP3 / M4A"
-    tabGif = "動態圖"
+    tabGif = "GIF"
     tabGifSub = "循環動效"
     attachedCoverTitle = "附加選項：影片原圖封面"
     attachedCoverDesc = "擷取發布者高畫質原圖，直接儲存至系統相簿"
@@ -2284,7 +2288,7 @@ val ZhHantStrings = appStrings {
     selectResolutionMute = "選取純影片解析度 (完全去除聲音軌，靜音素材)"
     selectAudioFormat = "選取導出的音訊格式"
     gifEngineTitle = "高保真 GIF 動圖轉換"
-    gifEngineDesc = "• 內建 FFmpeg 雙 Pass 調色盤引擎，還原細膩生動色彩與緊湊體積\n• 匯出為標準 .gif 格式，通訊軟體與相簿可直接播放\n• 如需儲存原畫影片，可隨時切換回「完整影片」下載為 MP4"
+    gifEngineDesc = "• 內建 FFmpeg 雙 Pass 調色盤引擎，還原細膩生動色彩與緊湊體積\n• 匯出為標準 .gif 格式，通訊軟體與相簿可直接播放\n• 如需儲存原畫影片，可隨時切換回「視頻」下載為 MP4"
     switchMultiVideoPrompt = "點擊切換當前預覽與獨立下載的影片:"
     switchBilibiliPartPrompt = "點擊切換當前預覽與下載的分P/分集:"
     videoPartLabel = "影片 %d"
@@ -2315,10 +2319,10 @@ val ZhHantStrings = appStrings {
     statusCompleted = "已完成"
     statusFailed = "失敗"
     statusCancelled = "已取消"
-    badgeVideo = "完整"
+    badgeVideo = "視頻"
     badgeMute = "純畫面"
     badgeAudio = "音訊"
-    badgeGif = "動圖"
+    badgeGif = "GIF"
     badgeCover = "封面"
     collectionBadge = "合集"
     collectionEpisodesCount = "%d 集"
@@ -2678,6 +2682,7 @@ val ZhHantStrings = appStrings {
     platformLabelYouku = "優酷"
     platformLabelIqiyi = "愛奇藝"
     platformLabelHuya = "虎牙"
+    analyzeClipboard = "解析剪貼簿"
 }
 
 val EnStrings = appStrings {
@@ -2784,8 +2789,8 @@ val EnStrings = appStrings {
     formatSheetTitle = "Download Options"
     mediaSelection = "Select Item"
     downloadType = "Format Type"
-    typeVideo = "Video with Audio"
-    typeAudio = "Audio Only (MP3/M4A)"
+    typeVideo = "Video"
+    typeAudio = "Audio"
     resolution = "Resolution"
     audioFormat = "Audio Format"
     startDownload = "Download"
@@ -2805,7 +2810,7 @@ val EnStrings = appStrings {
     pleaseSelectEpisode = "Please select at least one video"
     tabVideo = "Video"
     tabVideoSub = "HD + Audio"
-    tabMute = "Mute"
+    tabMute = "Video only"
     tabMuteSub = "Video only"
     tabAudio = "Audio"
     tabAudioSub = "MP3 / M4A"
@@ -2850,7 +2855,7 @@ val EnStrings = appStrings {
     statusFailed = "Failed"
     statusCancelled = "Cancelled"
     badgeVideo = "Video"
-    badgeMute = "Mute"
+    badgeMute = "Video only"
     badgeAudio = "Audio"
     badgeGif = "GIF"
     badgeCover = "Cover"
@@ -3212,6 +3217,7 @@ val EnStrings = appStrings {
     platformLabelYouku = "Youku"
     platformLabelIqiyi = "iQIYI"
     platformLabelHuya = "Huya"
+    analyzeClipboard = "Analyze Clipboard"
 }
 
 val JaStrings = appStrings {
@@ -3318,8 +3324,8 @@ val JaStrings = appStrings {
     formatSheetTitle = "ダウンロード構成"
     mediaSelection = "メディアを選択"
     downloadType = "ダウンロード形式"
-    typeVideo = "動画（音声付き）"
-    typeAudio = "音声のみ (MP3/M4A)"
+    typeVideo = "動画"
+    typeAudio = "音声"
     resolution = "動画解像度"
     audioFormat = "音声形式"
     startDownload = "ダウンロード"
@@ -3330,7 +3336,7 @@ val JaStrings = appStrings {
     saveCoverSuccess = "カバー画像をアルバムに保存しました"
     coverDescription = "高画質な元画像カバーを直接アルバムに保存"
     downloadSingleMode = "単一動画"
-    downloadCollectionMode = "合集保存"
+    downloadCollectionMode = "一括保存"
     selectAll = "すべて選択"
     deselectAll = "選択解除"
     invertSelection = "反転"
@@ -3339,9 +3345,9 @@ val JaStrings = appStrings {
     pleaseSelectEpisode = "動画を1つ以上選択してください"
     tabVideo = "動画"
     tabVideoSub = "高画質・音声"
-    tabMute = "消音"
+    tabMute = "映像のみ"
     tabMuteSub = "映像のみ"
-    tabAudio = "音声抽出"
+    tabAudio = "音声"
     tabAudioSub = "MP3 / M4A"
     tabGif = "GIF"
     tabGifSub = "アニメ"
@@ -3384,11 +3390,11 @@ val JaStrings = appStrings {
     statusFailed = "失敗"
     statusCancelled = "キャンセル済"
     badgeVideo = "動画"
-    badgeMute = "映像"
+    badgeMute = "映像のみ"
     badgeAudio = "音声"
     badgeGif = "GIF"
     badgeCover = "カバー"
-    collectionBadge = "合集"
+    collectionBadge = "まとめ"
     collectionEpisodesCount = "%d 話"
     collectionTotalProgress = "全体進捗: %d/%d 話完了 (%d%%)"
     collectionCurrentSubTask = "現在ダウンロード中 (P%d/%d): %s"
@@ -3746,6 +3752,7 @@ val JaStrings = appStrings {
     platformLabelYouku = "Youku"
     platformLabelIqiyi = "iQIYI"
     platformLabelHuya = "虎牙"
+    analyzeClipboard = "クリップボードを解析"
 }
 fun resolveAppStrings(languagePreference: String): AppStrings {
     return when (languagePreference) {

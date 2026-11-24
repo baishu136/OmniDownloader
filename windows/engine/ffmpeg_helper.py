@@ -105,6 +105,7 @@ class FFmpegHelper:
         音视频轨合并 (Dash 混流)
         使用 -c copy 毫秒级无损合并并添加 faststart 标记
         """
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         args = [
             "-y",
             "-i", video_path,
@@ -118,6 +119,9 @@ class FFmpegHelper:
     @classmethod
     async def strip_audio(cls, video_path: str, output_path: str) -> bool:
         """纯视频画面提取（去声轨）"""
+        from engine.gif_media import inspect_gif
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        if inspect_gif(video_path): return await cls.gif_to_video(video_path, output_path)
         args = [
             "-y",
             "-i", video_path,
@@ -131,6 +135,7 @@ class FFmpegHelper:
     @classmethod
     async def extract_audio(cls, input_path: str, output_path: str, audio_format: str = "mp3") -> bool:
         """提取并转码为独立高音质音频文件"""
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         fmt = audio_format.lower()
         if fmt in ["m4a", "aac"]:
             args = ["-y", "-i", input_path, "-vn", "-c:a", "aac", "-b:a", "320k", output_path]
@@ -143,46 +148,66 @@ class FFmpegHelper:
         return await cls._run_command(args)
 
     @classmethod
+    async def gif_to_video(cls, source: str, output: str) -> bool:
+        from engine.gif_media import verify_gif
+        from engine.media_verifier import probe
+        verify_gif(source)
+        if Path(source).resolve() == Path(output).resolve(): return False
+        Path(output).parent.mkdir(parents=True, exist_ok=True)
+        success = await cls._run_command(['-y', '-ignore_loop', '1', '-i', source,
+            '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', '-vsync', 'vfr', '-an',
+            '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-f', 'mp4', output])
+        if success:
+            info = probe(output)
+            if info['width'] > 0 and info['height'] > 0 and info['duration'] > 0:
+                with open(output, 'rb') as file:
+                    if file.read(12)[4:8] == b'ftyp': return True
+        Path(output).unlink(missing_ok=True)
+        return False
+
+    @classmethod
     async def convert_to_gif(cls, video_path: str, output_path: str, max_duration: int = 15) -> bool:
         """
         将视频转换为高画质 GIF 动图
         使用调色板分析 (palettegen / paletteuse) 消除色斑
         """
-        palette_temp = output_path + ".palette.png"
+        from engine.gif_media import inspect_gif, verify_gif
+        import tempfile
+        source, output = Path(video_path), Path(output_path)
+        if source.resolve() == output.resolve():
+            try: verify_gif(source); return True
+            except RuntimeError: return False
+        output.parent.mkdir(parents=True, exist_ok=True)
+        if inspect_gif(source):
+            try:
+                verify_gif(source)
+                shutil.copyfile(source, output)
+                verify_gif(output)
+                return True
+            except (RuntimeError, OSError): return False
+        handle, palette_temp = tempfile.mkstemp(prefix='gif-palette-', suffix='.png', dir=output.parent)
+        os.close(handle)
+        scale = "fps=15,scale='min(480,iw)':-1:flags=lanczos"
         try:
-            # 1. 生成全局调色板 (限制前 max_duration 秒，帧率 15fps，宽度不超过 480)
-            vf_filter = "fps=15,scale=480:-1:flags=lanczos,palettegen=stats_mode=diff"
-            gen_args = [
-                "-y",
-                "-t", str(max_duration),
-                "-i", video_path,
-                "-vf", vf_filter,
-                palette_temp
-            ]
-            if not await cls._run_command(gen_args):
-                # 调色板生成失败，尝试简易转换
-                simple_args = [
-                    "-y",
-                    "-t", str(max_duration),
-                    "-i", video_path,
-                    "-vf", "fps=12,scale=360:-1:flags=lanczos",
-                    output_path
-                ]
-                return await cls._run_command(simple_args)
-
-            # 2. 应用调色板渲染高画质 GIF
-            use_args = [
-                "-y",
-                "-t", str(max_duration),
-                "-i", video_path,
-                "-i", palette_temp,
-                "-lavfi", "fps=15,scale=480:-1:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle",
-                output_path
-            ]
-            return await cls._run_command(use_args)
+            output.unlink(missing_ok=True)
+            common = ['-y', '-t', str(max_duration), '-i', str(source)]
+            palette = await cls._run_command(common + ['-vf', scale + ',palettegen=stats_mode=diff',
+                '-frames:v', '1', '-update', '1', palette_temp])
+            success = False
+            if palette:
+                success = await cls._run_command(common + ['-i', palette_temp, '-filter_complex',
+                    '[0:v]' + scale + '[v];[v][1:v]paletteuse=dither=bayer',
+                    '-an', '-c:v', 'gif', '-loop', '0', '-f', 'gif', str(output)])
+            if success:
+                try: verify_gif(output); return True
+                except RuntimeError: pass
+            output.unlink(missing_ok=True)
+            success = await cls._run_command(common + ['-vf', scale, '-an', '-pix_fmt', 'rgb8',
+                '-c:v', 'gif', '-loop', '0', '-f', 'gif', str(output)])
+            if success:
+                try: verify_gif(output); return True
+                except RuntimeError: pass
+            output.unlink(missing_ok=True)
+            return False
         finally:
-            if os.path.exists(palette_temp):
-                try:
-                    os.remove(palette_temp)
-                except Exception:
-                    pass
+            Path(palette_temp).unlink(missing_ok=True)

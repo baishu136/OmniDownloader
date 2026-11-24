@@ -1,9 +1,10 @@
 using System.Text.Json;
+using OmniDownloader.WinUI.Core.Models;
 
 namespace OmniDownloader.WinUI.Core.Services;
 
 /// <summary>
-/// WinUI 3 客户端本地轻量状态存储（服务端地址、语言、纯黑模式与批量输入草稿），存储于 %LOCALAPPDATA%\OmniDownloader\winui_state.json
+/// WinUI 3 客户端本地轻量状态存储（服务端地址、语言、纯黑模式、自定义主题色、组件配置与批量草稿），存储于 %LOCALAPPDATA%\OmniDownloader\winui_state.json
 /// </summary>
 public sealed class LocalClientState
 {
@@ -11,7 +12,19 @@ public sealed class LocalClientState
     public bool AutoStartBackend { get; set; } = true;
     public string Language { get; set; } = "zh-CN";
     public string Theme { get; set; } = "auto"; // auto | light | dark
+    public string AccentColor { get; set; } = "system"; // system | #RRGGBB
     public bool UsePureBlackDarkMode { get; set; } = false;
+    public bool ShowRecentTasksOnHome { get; set; } = true;
+    public bool EnableWebService { get; set; } = true;
+    public bool HasCompletedOnboarding { get; set; } = false;
+    public bool FollowDefaultDownloadDir { get; set; } = true;
+    public string VideoDownloadDir { get; set; } = string.Empty;
+    public string ImageDownloadDir { get; set; } = string.Empty;
+    public string AudioDownloadDir { get; set; } = string.Empty;
+    public bool AlwaysRememberCloseBehavior { get; set; } = false;
+    public string SavedCloseBehavior { get; set; } = string.Empty; // "" | "exit" | "tray"
+    public List<string> DisabledOptionalComponentIds { get; set; } = new();
+    public List<CustomComponentEntry> CustomComponents { get; set; } = new();
     public string BatchRawInputDraft { get; set; } = string.Empty;
     public List<string> BatchDraftLinks { get; set; } = new();
 }

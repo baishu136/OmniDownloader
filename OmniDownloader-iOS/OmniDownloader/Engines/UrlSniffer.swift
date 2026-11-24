@@ -59,7 +59,7 @@ public class UrlSniffer {
                     return first.prefix(1).uppercased() + first.dropFirst()
                 }
             }
-            return "备用网站"
+            return OmniLocalization.text("备用网站")
         }
 
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 6.0)
@@ -107,7 +107,8 @@ public class UrlSniffer {
     }
 
     /// 解析中转站提取的直链或携带 JWT Payload (如 SnapCDN/X2Twitter/TwitterSaver) 的长链接
-    public static func unpackDirectMediaUrl(rawUrl: String, defaultTitle: String = "中转下载视频") -> (url: String, title: String) {
+    public static func unpackDirectMediaUrl(rawUrl: String, defaultTitle: String = "") -> (url: String, title: String) {
+        let fallbackTitle = defaultTitle.isEmpty ? OmniLocalization.text("中转下载视频") : defaultTitle
         let trimmed = rawUrl.trimmingCharacters(in: .whitespacesAndNewlines)
         if let tokenRange = trimmed.range(of: "token=") {
             var tokenVal = String(trimmed[tokenRange.upperBound...])
@@ -128,7 +129,7 @@ public class UrlSniffer {
                        let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                         let realUrl = json["url"] as? String ?? ""
                         let filename = json["filename"] as? String ?? ""
-                        let title = filename.isEmpty ? defaultTitle : (filename as NSString).deletingPathExtension
+                        let title = filename.isEmpty ? fallbackTitle : (filename as NSString).deletingPathExtension
                         if !realUrl.isEmpty && realUrl.lowercased().hasPrefix("http") {
                             if isM3u8Url(urlString: realUrl) && (trimmed.contains("snapcdn") || trimmed.contains("get?token")) {
                                 return (trimmed, title)
@@ -139,7 +140,7 @@ public class UrlSniffer {
                 }
             }
         }
-        return (trimmed, defaultTitle)
+        return (trimmed, fallbackTitle)
     }
 
     /// 判断是否属于 M3U8 流

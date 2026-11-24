@@ -22,7 +22,32 @@ public sealed partial class NativeImageViewerWindow : Window
     private int _pixelHeight;
     private bool _isFitMode = true;
     private bool _isClosed;
+    private bool _isNarrowToolbar;
+    private bool _hideFooterHint;
     private CancellationTokenSource? _loadCts;
+
+    /// <summary>
+    /// 按窗口宽度切换图片工具栏折行状态及底部操作提示可见性，避免窄窗口按钮挤压或重叠。
+    /// </summary>
+    private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var narrowToolbar = e.NewSize.Width < 720;
+        if (_isNarrowToolbar != narrowToolbar)
+        {
+            _isNarrowToolbar = narrowToolbar;
+            Grid.SetRow(ToolbarActionsPanel, narrowToolbar ? 1 : 0);
+            Grid.SetColumn(ToolbarActionsPanel, narrowToolbar ? 0 : 1);
+            Grid.SetColumnSpan(ToolbarActionsPanel, narrowToolbar ? 2 : 1);
+            ToolbarActionsPanel.HorizontalAlignment = narrowToolbar ? HorizontalAlignment.Left : HorizontalAlignment.Right;
+        }
+
+        var hideHint = e.NewSize.Width < 460;
+        if (_hideFooterHint != hideHint)
+        {
+            _hideFooterHint = hideHint;
+            FooterHintText.Visibility = hideHint ? Visibility.Collapsed : Visibility.Visible;
+        }
+    }
 
     public NativeImageViewerWindow(
         AppServices services,
@@ -41,6 +66,7 @@ public sealed partial class NativeImageViewerWindow : Window
         WindowTitleText.Text = windowTitle;
 
         NativeShellHelper.ConfigureWindowChrome(this, TitleBarDragRegion, baseWidth: 980, baseHeight: 720);
+
         ApplyTheme();
 
         RootGrid.ActualThemeChanged += (_, _) => ApplyTheme();
@@ -64,9 +90,9 @@ public sealed partial class NativeImageViewerWindow : Window
 
     private void ApplyTheme()
     {
-        if (_isClosed) return;
+        if (_isClosed || NativeShellHelper.IsApplyingThemeRefresh) return;
         var state = _services.LocalState.Current;
-        NativeShellHelper.ApplyThemeAndTitleBarColors(this, state.Theme, state.UsePureBlackDarkMode);
+        NativeShellHelper.ApplyThemeAndTitleBarColors(this, state.Theme, state.UsePureBlackDarkMode, state.AccentColor);
     }
 
     private void NativeImageViewerWindow_Closed(object sender, WindowEventArgs args)
@@ -90,7 +116,7 @@ public sealed partial class NativeImageViewerWindow : Window
         var gen = ++_loadGeneration;
         var item = _entries[_index];
 
-        EntryTitleText.Text = string.IsNullOrWhiteSpace(item.Title) ? $"第 {_index + 1} 张" : item.Title;
+        EntryTitleText.Text = string.IsNullOrWhiteSpace(item.Title) ? _services.Loc.T("第 %d 张", _index + 1) : item.Title;
         UpdateMetaText(item);
 
         PrevBtn.IsEnabled = _entries.Count > 1;
@@ -130,6 +156,8 @@ public sealed partial class NativeImageViewerWindow : Window
             }
 
             PreviewImage.Source = bmp;
+            NativeShellHelper.PlayFadeIn(PreviewImage, durationMs: 130);
+    
             UpdateMetaText(item);
             ApplyFitZoom();
         }
@@ -210,7 +238,7 @@ public sealed partial class NativeImageViewerWindow : Window
     private void UpdateZoomLabel(float factor)
     {
         var pct = (int)Math.Round(factor * 100);
-        ZoomBadgeBtn.Content = _isFitMode ? $"适应 ({pct}%)" : $"{pct}%";
+        ZoomBadgeBtn.Content = _isFitMode ? _services.Loc.T("适应 (%d%%)", pct) : $"{pct}%";
     }
 
     private void ZoomScroller_SizeChanged(object sender, SizeChangedEventArgs e)

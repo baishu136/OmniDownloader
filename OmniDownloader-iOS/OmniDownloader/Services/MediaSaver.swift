@@ -46,7 +46,7 @@ public class MediaSaver {
         
         let newStatus = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
         if newStatus != .authorized && newStatus != .limited {
-            throw NSError(domain: "MediaSaver", code: 403, userInfo: [NSLocalizedDescriptionKey: "请在 iPhone【设置】中允许 OmniDownloader 访问您的《照片》以保存媒体文件"])
+            throw NSError(domain: "MediaSaver", code: 403, userInfo: [NSLocalizedDescriptionKey: OmniLocalization.text("请在 iPhone【设置】中允许 OmniDownloader 访问您的《照片》以保存媒体文件")])
         }
     }
     
@@ -67,7 +67,7 @@ public class MediaSaver {
         
         guard let p = placeholder,
               let created = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [p.localIdentifier], options: nil).firstObject else {
-            throw NSError(domain: "MediaSaver", code: 500, userInfo: [NSLocalizedDescriptionKey: "创建专属相簿失败"])
+            throw NSError(domain: "MediaSaver", code: 500, userInfo: [NSLocalizedDescriptionKey: OmniLocalization.text("创建专属相簿失败")])
         }
         return created
     }

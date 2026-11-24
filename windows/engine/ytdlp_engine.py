@@ -31,9 +31,22 @@ def format_bytes(value):
     return f'{value / 1048576:.1f} MB' if value else ''
 
 
+_WINDOWS_RESERVED_NAMES = {
+    'CON', 'PRN', 'AUX', 'NUL',
+    *(f'COM{i}' for i in range(1, 10)),
+    *(f'LPT{i}' for i in range(1, 10)),
+}
+
+
 def clean_media_title(title):
+    """清洗媒体标题为安全文件名，过滤控制字符、末尾点号与 Windows 保留设备名。"""
     title = re.sub(r'https?://\S+', '', title or '')
-    return re.sub(r'[\\/:*?"<>|\r\n\t]', '_', title).strip('. ')[:80] or 'video'
+    cleaned = re.sub(r'[\\/:*?"<>|\x00-\x1f]', '_', title).strip('. ')[:80]
+    if not cleaned or cleaned in ('.', '..'):
+        return 'video'
+    if cleaned.upper() in _WINDOWS_RESERVED_NAMES:
+        return f'_{cleaned}'
+    return cleaned
 
 
 extract_height_from_label = height_from_legacy
@@ -49,6 +62,34 @@ class YtDlpSafeLogger:
 class YtDlpEngine:
     _cache = {}
     _lock = threading.RLock()
+
+    _STALE_DOWNLOAD_KEYS = (
+        'requested_formats', 'requested_downloads', 'requested_subtitles', 'requested_entries',
+        'filepath', '_filename', 'filename',
+    )
+    _STALE_FORMAT_KEYS = (
+        'format', 'format_id', 'ext', 'protocol', 'url', 'manifest_url',
+        'resolution', 'width', 'height', 'fps', 'vcodec', 'acodec',
+        'tbr', 'abr', 'vbr', 'asr', 'filesize', 'filesize_approx',
+        'dynamic_range', 'aspect_ratio',
+    )
+
+    @classmethod
+    def _prepare_download_info(cls, info):
+        """清理 yt-dlp 预提取阶段遗留的流选择字段，避免后续单流下载时拼接双流 URL 触发 404。
+
+        extract_info(download=False) 若自动选中音视频分离流会在顶层写入 requested_formats，
+        再次调用 process_ie_result(download=True) 下载单一封装流时，yt-dlp 会将其覆盖为
+        '\\n'.join(f['url'] ...) 并导致 HTTP 404。
+        """
+        cleaned = copy.deepcopy(info)
+        for key in list(cleaned.keys()):
+            if key.startswith('__') or key in cls._STALE_DOWNLOAD_KEYS:
+                cleaned.pop(key, None)
+        if cleaned.get('formats'):
+            for key in cls._STALE_FORMAT_KEYS:
+                cleaned.pop(key, None)
+        return cleaned
 
     @classmethod
     def _build_ydl_opts(cls, proxy_url='', extra_headers=None):
@@ -240,17 +281,19 @@ class YtDlpEngine:
                         fid = str(selected['format_id'])
                         audio_tracks = any(f.get('vcodec') == 'none' for f in formats)
                         require_audio = bool(selected.get('acodec') and selected.get('acodec') != 'none') or audio_tracks
-                        if task.download_type == DownloadType.VIDEO_WITH_AUDIO and selected.get('acodec') == 'none' and not audio_tracks:
+                        gif_source = info.get('ext') == 'gif' or selected.get('vcodec') == 'gif' or bool(info.get('_omni_is_gif')) or '/tweet_video/' in str(selected.get('url', ''))
+                        if task.download_type == DownloadType.VIDEO_WITH_AUDIO and selected.get('acodec') == 'none' and not audio_tracks and not gif_source:
                             raise RuntimeError('[NO_AUDIO] 目标未提供音轨，请选择仅视频')
-                        if task.download_type == DownloadType.VIDEO_ONLY:
+                        if task.download_type == DownloadType.VIDEO_ONLY and not gif_source:
                             opts.update(format=fid, postprocessors=[{'key': 'FFmpegVideoRemuxer', 'preferedformat': 'mp4'}],
                                         postprocessor_args={'VideoRemuxer': ['-an']})
                         else:
-                            opts['format'] = fid if selected.get('acodec') != 'none' else f'{fid}+bestaudio'
+                            opts['format'] = fid if selected.get('acodec') != 'none' or not audio_tracks else f'{fid}+bestaudio'
                             opts['merge_output_format'] = 'mkv' if intent.get('container') == 'auto' else intent.get('container', 'mp4')
+                    download_info = cls._prepare_download_info(info)
                     ydl.params.update(opts)
                     with yt_dlp.YoutubeDL(opts) as downloader:
-                        result = downloader.process_ie_result(info, download=True)
+                        result = downloader.process_ie_result(download_info, download=True)
                     output = result.get('filepath') or result.get('_filename')
                     paths = final_paths + ([Path(output)] if output else [])
                     paths += [Path(f['filepath']) for f in result.get('requested_downloads', []) if f.get('filepath')]
@@ -270,8 +313,30 @@ class YtDlpEngine:
             elif task.download_type != DownloadType.COVER:
                 verify(source, selected, expected_duration, require_audio and task.download_type == DownloadType.VIDEO_WITH_AUDIO)
             ready.write_text(json.dumps({'signature': signature, 'file': source.name}), encoding='utf-8')
+        if task.download_type in (DownloadType.VIDEO_WITH_AUDIO, DownloadType.VIDEO_ONLY):
+            from engine.gif_media import inspect_gif
+            if inspect_gif(source) is not None:
+                target = staging / 'animated-source.mp4'
+                if not asyncio.run(FFmpegHelper.gif_to_video(str(source), str(target))):
+                    raise RuntimeError('[POSTPROCESS_FAILED] GIF 转 MP4 失败，原文件已保留')
+                source = target
+                ready.write_text(json.dumps({'signature': signature, 'file': source.name}), encoding='utf-8')
+        if task.download_type == DownloadType.GIF:
+            from engine.gif_media import inspect_gif, verify_gif
+            if inspect_gif(source) is None:
+                target = staging / ('recovered.gif' if source.name == 'result.gif' else 'result.gif')
+                if not asyncio.run(FFmpegHelper.convert_to_gif(str(source), str(target))):
+                    raise RuntimeError('[POSTPROCESS_FAILED] GIF 转换失败，原始文件已保留')
+                source = target
+            verify_gif(source)
+            if source.suffix.lower() != '.gif':
+                target = staging / 'verified.gif'
+                shutil.copyfile(source, target)
+                source = target
+            ready.write_text(json.dumps({'signature': signature, 'file': source.name}), encoding='utf-8')
         if cancel_event.is_set(): raise RuntimeError('[CANCELLED] 用户取消')
-        destination = Path(config.download_dir) / f'{title}{source.suffix}'
+        export_dir = Path(config.resolve_download_dir(task.download_type))
+        destination = export_dir / f'{title}{source.suffix}'
         index = 1
         while destination.exists():
             destination = destination.with_name(f'{title}_{index}{source.suffix}'); index += 1

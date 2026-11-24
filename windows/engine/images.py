@@ -50,10 +50,11 @@ class ImageEngine:
                 ready.write_text(json.dumps({'signature': signature, 'file': source.name}), encoding='utf-8')
             if cancel.is_set(): raise RuntimeError('[CANCELLED] 用户取消')
             progress(98, '', '正在导出', TaskStatus.PROCESSING)
-            destination = Path(config.download_dir) / f'{clean_media_title(task.title)}{source.suffix}'
+            export_dir = Path(config.resolve_download_dir(task.download_type))
+            destination = export_dir / f'{clean_media_title(task.title)}{source.suffix}'
             index = 1
             while destination.exists():
-                destination = Path(config.download_dir) / f'{clean_media_title(task.title)}_{index}{source.suffix}'
+                destination = export_dir / f'{clean_media_title(task.title)}_{index}{source.suffix}'
                 index += 1
             partial = destination.with_name('.' + destination.name + '.' + task.id + '.part')
             try:

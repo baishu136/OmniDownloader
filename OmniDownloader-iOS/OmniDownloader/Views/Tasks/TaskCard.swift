@@ -13,11 +13,11 @@ import QuickLook
     private var status:String{
         switch task.status{case .pending:return "等待中";case .analyzing:return "解析中";case .downloading:return "下载中";case .processing:return "处理中";case .completed:return "已完成";case .failed:return "失败";case .paused:return "已暂停";case .cancelled:return "已取消";case .waitingForAuth:return "等待验证"}
     }
-    private var type:String{switch task.downloadType{case .videoWithAudio,.auto:return "音画合流";case .videoOnly:return "纯画面";case .audioOnly:return task.audioFormat.rawValue.uppercased();case .gif:return "GIF";case .cover:return "封面";case .image:return "原图";case .imageZip:return "ZIP"}}
+    private var type:String{switch task.downloadType{case .videoWithAudio,.auto:return "视频";case .videoOnly:return "纯画面";case .audioOnly:return "音频";case .gif:return "GIF";case .cover:return "封面";case .image:return "原图";case .imageZip:return "ZIP"}}
     var body:some View{
         VStack(alignment:.leading,spacing:12){
-            HStack(alignment:.top,spacing:12){OmniRemoteImage(url:task.thumbnailUrl,site:task.imagePlatform ?? OmniPlatform.detect(task.url)).frame(width:76,height:55).clipShape(RoundedRectangle(cornerRadius:10));VStack(alignment:.leading,spacing:5){Text(task.title).font(.subheadline.weight(.semibold)).lineLimit(2);HStack{Text(L(type)).font(.caption2.bold()).padding(.horizontal,7).padding(.vertical,3).background(OmniPalette.primaryContainer,in:RoundedRectangle(cornerRadius:6));Text(task.selectedResolution).font(.caption2).foregroundColor(OmniPalette.secondary).lineLimit(1)}};Spacer(minLength:0)}
-            if active{ProgressView(value:Double(max(0,min(100,task.progress))),total:100).tint(OmniPalette.primary);HStack{Text(task.eta.isEmpty ? L(status):task.eta);Spacer();Text("\(Int(task.progress))%")}.font(.caption).foregroundColor(OmniPalette.secondary)}
+            HStack(alignment:.top,spacing:12){OmniRemoteImage(url:task.thumbnailUrl,site:task.imagePlatform ?? OmniPlatform.detect(task.url)).frame(width:76,height:55).clipShape(RoundedRectangle(cornerRadius:10));VStack(alignment:.leading,spacing:5){Text(task.title).font(.subheadline.weight(.semibold)).lineLimit(2);HStack{Text(L(type)).font(.caption2.bold()).padding(.horizontal,7).padding(.vertical,3).background(OmniPalette.primaryContainer,in:RoundedRectangle(cornerRadius:6));Text(L(task.selectedResolution)).font(.caption2).foregroundColor(OmniPalette.secondary).lineLimit(1)}};Spacer(minLength:0)}
+            if active{ProgressView(value:Double(max(0,min(100,task.progress))),total:100).tint(OmniPalette.primary);HStack{Text(task.eta.isEmpty ? L(status):L(task.eta));Spacer();Text("\(Int(task.progress))%")}.font(.caption).foregroundColor(OmniPalette.secondary)}
             else{Text(L(status)).font(.caption).foregroundColor(task.status == .failed || task.status == .waitingForAuth ? OmniPalette.error:OmniPalette.secondary)}
             if let error=task.errorMessage,!error.isEmpty{Text(error).font(.caption).foregroundColor(task.status == .completed ? OmniPalette.secondary:OmniPalette.error).textSelection(.enabled)}
             HStack(spacing:14){
@@ -49,5 +49,5 @@ struct FilePreview:UIViewControllerRepresentable{
 struct FilePreviewSheet:View{
     let url:URL
     @Environment(\.presentationMode) private var presentation
-    var body:some View{FilePreview(url:url).overlay(alignment:.topTrailing){Button{presentation.wrappedValue.dismiss()}label:{Image(systemName:"xmark.circle.fill").font(.title).padding(12).background(OmniPalette.surface.opacity(0.9),in:Circle())}.padding(10).accessibilityLabel("关闭")}}
+    var body:some View{FilePreview(url:url).overlay(alignment:.topTrailing){Button{presentation.wrappedValue.dismiss()}label:{Image(systemName:"xmark.circle.fill").font(.title).padding(12).background(OmniPalette.surface.opacity(0.9),in:Circle())}.padding(10).accessibilityLabel(OmniLocalization.text("关闭"))}}
 }

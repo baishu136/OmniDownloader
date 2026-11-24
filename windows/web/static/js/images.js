@@ -34,11 +34,11 @@ export function showPost(data) {
   state.selected.clear();
   (data.resources || []).forEach((item) => state.selected.add(item.id));
 
-  $('image-title').textContent = data.title || '图文作品';
-  $('image-count').textContent = `共 ${(data.resources || []).length} 张`;
-  $('image-source').textContent = (data.resources || []).some((item) => !item.original)
+  $('image-title').textContent = data.title || t('图文作品');
+  $('image-count').textContent = t('共 %d 张', (data.resources || []).length);
+  $('image-source').textContent = t((data.resources || []).some((item) => !item.original)
     ? '部分为平台可用资源'
-    : '原图资源';
+    : '原图资源');
 
   const grid = $('image-grid');
   const fragment = document.createDocumentFragment();
@@ -60,7 +60,7 @@ function buildCard(item, index, data) {
 
   const img = document.createElement('img');
   img.src = item.previewUrl || item.url;
-  img.alt = `第 ${index + 1} 张图片`;
+  img.alt = t('第 %d 张图片', index + 1);
   img.loading = 'lazy';
   img.decoding = 'async';
   img.referrerPolicy = 'no-referrer';
@@ -84,7 +84,7 @@ function buildCard(item, index, data) {
     if (!area.querySelector('.image-card__fail')) {
       const fail = document.createElement('div');
       fail.className = 'image-card__fail';
-      fail.textContent = '预览不可用';
+      fail.textContent = t('预览不可用');
       area.appendChild(fail);
     }
   });
@@ -96,7 +96,7 @@ function buildCard(item, index, data) {
   const check = document.createElement('input');
   check.type = 'checkbox';
   check.checked = true;
-  check.setAttribute('aria-label', `选择第 ${index + 1} 张`);
+  check.setAttribute('aria-label', t('选择第 %d 张', index + 1));
 
   const label = document.createElement('span');
   label.className = 'truncate';
@@ -152,7 +152,7 @@ async function downloadSingleImage(resourceId) {
   if (!state.post) return;
   const tasks = [{
     url: state.post.url,
-    title: `${state.post.title || '图片'}`,
+    title: `${state.post.title || t('图片')}`,
     author: state.post.author || '',
     downloadType: 'IMAGE',
     imagePlatform: state.post.platform,
@@ -194,7 +194,7 @@ async function downloadImages(archive) {
   }));
   try {
     await post('/api/download', { tasks });
-    toast(`已加入 ${tasks.length} 个下载任务`);
+    toast(t('已加入 %d 个下载任务', tasks.length));
     document.dispatchEvent(new CustomEvent('omni:navigate', { detail: { page: 'tasks' } }));
   } catch (e) {
     toast(e.message || '创建任务失败', 'error');
@@ -214,8 +214,8 @@ function ensureViewer() {
         <button class="btn btn-text btn-sm" data-close type="button">关闭</button>
       </div>
       <div class="viewer__stage">
-        <img alt="图片预览">
-        <span data-error hidden style="color:#E3E2E8;font-size:13px">图片暂不可预览</span>
+        <img alt="${escapeHtml(t('图片预览'))}">
+        <span data-error hidden style="color:#E3E2E8;font-size:13px">${escapeHtml(t('图片暂不可预览'))}</span>
       </div>
       <div class="viewer__foot">
         <button class="btn btn-text btn-sm" data-prev type="button">上一张</button>
@@ -265,11 +265,11 @@ function renderViewer() {
   const img = dialog.querySelector('img');
   img.classList.remove('is-zoomed');
   img.src = item.src;
-  const suffix = item.kind === 'UGOIRA' ? ' · 动图封面' : (item.label ? ` · ${item.label}` : '');
+  const suffix = item.kind === 'UGOIRA' ? ` · ${t('动图封面')}` : (item.label ? ` · ${item.label}` : '');
   dialog.querySelector('[data-count]').textContent = `${state.viewerIndex + 1} / ${state.viewerItems.length}${suffix}`;
   const saveBtn = dialog.querySelector('[data-save]');
   saveBtn.hidden = !item.id;
-  saveBtn.textContent = item.kind === 'UGOIRA' ? '下载动图' : '保存此图';
+  saveBtn.textContent = t(item.kind === 'UGOIRA' ? '下载动图' : '保存此图');
   dialog.querySelector('[data-prev]').disabled = state.viewerIndex === 0;
   dialog.querySelector('[data-next]').disabled = state.viewerIndex === state.viewerItems.length - 1;
   dialog.querySelector('[data-error]').hidden = true;

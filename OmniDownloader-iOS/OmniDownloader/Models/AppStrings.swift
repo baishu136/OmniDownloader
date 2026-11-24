@@ -59,10 +59,10 @@ public struct AppStrings {
     public var downloadType: String { OmniLocalization.text("下载模式") }
     public var saveCover: String { OmniLocalization.text("保存封面") }
     public var badgeCover: String { OmniLocalization.text("封面") }
-    public var tabVideo: String { OmniLocalization.text("音画合流") }
+    public var tabVideo: String { OmniLocalization.text("视频") }
     public var tabMute: String { OmniLocalization.text("纯画面") }
-    public var tabAudio: String { OmniLocalization.text("提取音频") }
-    public var tabGif: String { OmniLocalization.text("动态图") }
+    public var tabAudio: String { OmniLocalization.text("音频") }
+    public var tabGif: String { OmniLocalization.text("GIF") }
     public var selectResolutionWithAudio: String { OmniLocalization.text("选择视频分辨率 (自动合成最佳声音)") }
     public var selectResolutionMute: String { OmniLocalization.text("选择视频画面分辨率 (无声音)") }
     public var selectAudioFormat: String { OmniLocalization.text("选择音频格式 (无损原轨或通用格式)") }

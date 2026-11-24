@@ -38,8 +38,9 @@ internal class ParallelRangeDownloader(client: OkHttpClient,
         } } catch (cancelled: CancellationException) { throw cancelled }
         catch (error: Exception) { if (error is MediaHttpException) throw error else return@withContext false }
             ?: return@withContext false
+        SafeFiles.ensureDir(destination.parentFile)
         if (entity.length > (destination.parentFile!!.usableSpace - 64L * 1024 * 1024) / 2) return@withContext false
-        val folder = File.createTempFile("parallel-", ".tmp", destination.parentFile)
+        val folder = SafeFiles.createTempFile(destination.parentFile, "parallel-", ".tmp")
         check(folder.delete() && folder.mkdir())
         val bytes = AtomicLong(0)
         val progressLock = Any()

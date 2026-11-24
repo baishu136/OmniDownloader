@@ -267,13 +267,113 @@ select {
   appearance: none;
   padding-right: 34px;
   cursor: pointer;
-  background-color: var(--surface);
+  background-color: var(--menu-surface, var(--surface));
+  color: var(--text);
   background-image:
     linear-gradient(45deg, transparent 50%, var(--text-2) 50%),
     linear-gradient(135deg, var(--text-2) 50%, transparent 50%);
   background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
+}
+html[data-theme="dark"],
+html[data-theme="dark"] select,
+html[data-theme="dark"] select option,
+html[data-theme="dark"] select optgroup {
+  color-scheme: dark;
+}
+html[data-theme="light"],
+html[data-theme="light"] select,
+html[data-theme="light"] select option,
+html[data-theme="light"] select optgroup {
+  color-scheme: light;
+}
+select option,
+select optgroup {
+  background-color: var(--menu-surface, var(--surface));
+  color: var(--text);
+}
+
+/* ---------- 自绘 Fluent 下拉选择控件（替换暗色白底原生弹窗） ---------- */
+.omni-select-wrap {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}
+.omni-select-wrap:has(> select[hidden]),
+.omni-select-wrap[hidden] {
+  display: none;
+}
+.omni-native-select {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  border: 0 !important;
+}
+.omni-select-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--r-small);
+  background-color: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease-standard), background-color var(--t-fast) var(--ease-standard), box-shadow var(--t-fast) var(--ease-standard);
+}
+.omni-select-btn:hover {
+  border-color: var(--outline);
+  background-color: var(--surface-hover);
+}
+.omni-select-btn:focus-visible,
+.omni-select-btn[aria-expanded="true"] {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+.omni-select-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.omni-select-btn__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.omni-select-btn__arrow {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--t-fast) var(--ease-standard);
+}
+.omni-select-btn[aria-expanded="true"] .omni-select-btn__arrow {
+  transform: rotate(180deg);
+}
+.omni-option-menu--select {
+  width: max-content;
+  min-width: 160px;
 }
 
 input[type="checkbox"],

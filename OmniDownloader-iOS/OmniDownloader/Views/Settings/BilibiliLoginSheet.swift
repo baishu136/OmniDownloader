@@ -17,18 +17,18 @@ struct BilibiliLoginSheet: View {
                 }
                 
                 if isLoading {
-                    ProgressView("加载登录页面中...")
+                    ProgressView(OmniLocalization.text("加载登录页面中..."))
                         .padding()
                         .background(Color(UIColor.secondarySystemBackground))
                         .cornerRadius(10)
                         .shadow(radius: 5)
                 }
             }
-            .navigationTitle("B站账号安全登录")
+            .navigationTitle(OmniLocalization.text("B站账号安全登录"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
+                    Button(OmniLocalization.text("取消")) {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }

@@ -1,6 +1,8 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using OmniDownloader.WinUI.Core.Services;
+using OmniDownloader.WinUI.Helpers;
 using OmniDownloader.WinUI.Services;
 using Windows.UI;
 
@@ -9,6 +11,7 @@ namespace OmniDownloader.WinUI.Controls;
 public sealed class FeaturedPlatformChip
 {
     public string Name { get; }
+    public string DisplayName => LocalizationService.Instance.T(Name);
     public string Keywords { get; }
     public SolidColorBrush DotBrush { get; }
 
@@ -58,7 +61,8 @@ public sealed partial class PlatformCatalogDialog : ContentDialog
     {
         _services = services;
         InitializeComponent();
-        FeaturedHintText.Text = _services.Loc.SupportedPlatformsHint + "。部分高画质/会员或风控资源需在「设置 → 账号」完成登录后解析。";
+        Loaded += (_, _) => Localized.RefreshTree(this);
+        FeaturedHintText.Text = _services.Loc.SupportedPlatformsHint + "\n" + _services.Loc.T("部分高画质/会员或风控资源需在「设置 → 账号」完成登录后解析。");
         FeaturedPlatformsControl.ItemsSource = FeaturedPlatforms;
         _ = LoadCatalogAsync();
     }
@@ -88,21 +92,22 @@ public sealed partial class PlatformCatalogDialog : ContentDialog
             ? FeaturedPlatforms
             : FeaturedPlatforms.Where(p =>
                 p.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                p.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                 p.Keywords.Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
 
         FeaturedSection.Visibility = matchingFeatured.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         FeaturedPlatformsControl.ItemsSource = matchingFeatured;
         FeaturedHeaderText.Text = string.IsNullOrEmpty(query)
-            ? $"主流直连与深度适配平台 ({FeaturedPlatforms.Length})"
-            : $"匹配主流平台 ({matchingFeatured.Length})";
+            ? _services.Loc.T("主流直连与深度适配平台 (%d)", FeaturedPlatforms.Length)
+            : _services.Loc.T("匹配主流平台 (%d)", matchingFeatured.Length);
 
         var filtered = string.IsNullOrEmpty(query)
             ? _allExtractors
             : _allExtractors.Where(x => x.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
 
         SummaryText.Text = filtered.Count > 300
-            ? $"共匹配 {filtered.Count} 个解析器，当前展示前 300 项（输入关键词缩小范围）"
-            : $"共 {filtered.Count} 个解析器";
+            ? _services.Loc.T("共匹配 %d 个解析器，当前展示前 300 项（输入关键词缩小范围）", filtered.Count)
+            : _services.Loc.T("共 %d 个解析器", filtered.Count);
 
         ExtractorsListView.ItemsSource = filtered.Take(300).ToList();
     }

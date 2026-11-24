@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" data-theme="light" data-client="web-lite">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -24,222 +24,323 @@
   <link rel="stylesheet" href="/static/css/layout.css">
   <link rel="stylesheet" href="/static/css/components.css">
   <link rel="stylesheet" href="/static/css/pages.css">
+  <link rel="stylesheet" href="/static/css/web-lite.css">
 </head>
 <body>
-<div class="app">
-  <!-- ================= 响应式导航栏：桌面端 NavigationRail / 移动端 Bottom NavigationBar ================= -->
-  <nav class="nav-rail" aria-label="主导航">
-    <div class="nav-rail__brand" title="OmniDownloader">
-      <i data-icon="cloud_download"></i>
+<div class="app web-lite bd-workbench">
+  <!-- BilibiliDown 风格桌面工作台顶栏（配色跟随 WinUI 3 Fluent Design） -->
+  <header class="web-header">
+    <div class="web-header__left">
+      <img class="web-brand-logo" src="/static/logo.png" alt="" width="22" height="22">
+      <span class="web-brand">OmniDownloader</span>
+      <span class="web-client-badge">Web</span>
+      <span class="web-version" id="web-version">v1.7.65</span>
     </div>
-
-    <div class="nav-rail__items">
-      <button class="m3-nav-item is-active" data-nav="home" aria-current="page">
-        <span class="m3-nav-item__indicator">
-          <i data-icon="home" data-icon-filled="home_filled"></i>
-        </span>
-        <span class="m3-nav-item__label">首页</span>
+    <div class="web-header__right">
+      <span class="web-conn-status" id="web-conn-status">
+        <span class="web-conn-dot" aria-hidden="true"></span>
+        <span class="web-conn-text-hide-sm" id="web-conn-text">已连接本地引擎</span>
+      </span>
+      <button class="web-header__tool-btn" id="web-lang-toggle" type="button" aria-haspopup="menu" aria-label="界面语言" title="界面语言">
+        <i data-icon="language"></i>
+        <span class="web-conn-text-hide-sm" id="web-lang-label">简体中文</span>
+        <i data-icon="arrow_drop_down"></i>
       </button>
-
-      <button class="m3-nav-item" data-nav="batch">
-        <span class="m3-nav-item__indicator">
-          <i data-icon="playlist_play" data-icon-filled="playlist_play_filled"></i>
-        </span>
-        <span class="m3-nav-item__label">批量下载</span>
-      </button>
-
-      <button class="m3-nav-item" data-nav="tasks">
-        <span class="m3-nav-item__indicator">
-          <i data-icon="download" data-icon-filled="download_filled"></i>
-          <span class="nav-badge" id="nav-task-badge" hidden>0</span>
-        </span>
-        <span class="m3-nav-item__label">任务</span>
-      </button>
-
-      <button class="m3-nav-item" data-nav="settings">
-        <span class="m3-nav-item__indicator">
-          <i data-icon="settings" data-icon-filled="settings_filled"></i>
-        </span>
-        <span class="m3-nav-item__label">设置</span>
+      <button class="web-header__tool-btn web-theme" id="web-theme-toggle" aria-label="切换到深色" title="切换到深色" aria-pressed="false" type="button">
+        <i data-icon="dark_mode"></i>
+        <span class="web-conn-text-hide-sm" id="web-theme-label">深色外观</span>
       </button>
     </div>
+  </header>
 
-    <div class="nav-rail__footer">
-      <button class="m3-nav-item" id="nav-help" title="使用帮助" aria-label="使用帮助">
-        <span class="m3-nav-item__indicator">
-          <i data-icon="help"></i>
-        </span>
-        <span class="m3-nav-item__label">帮助</span>
+  <!-- 紧凑水平工作台导航条（桌面端位于顶栏下方，移动端自动贴底） -->
+  <nav class="web-rail" id="web-rail" aria-label="主导航">
+    <div class="web-rail__items">
+      <button class="web-rail__item is-active" data-nav="home" aria-label="解析工作台" title="解析工作台" aria-current="page" type="button">
+        <i data-icon="home" data-icon-filled="home_filled"></i>
+        <span class="web-rail__label">解析工作台</span>
+        <span class="web-rail__indicator" aria-hidden="true"></span>
       </button>
+      <button class="web-rail__item" data-nav="batch" aria-label="批量下载" title="批量下载" type="button">
+        <i data-icon="playlist_play" data-icon-filled="playlist_play_filled"></i>
+        <span class="web-rail__label">批量下载</span>
+        <span class="web-rail__indicator" aria-hidden="true"></span>
+      </button>
+      <button class="web-rail__item" data-nav="tasks" aria-label="下载管理" title="下载管理" type="button">
+        <i data-icon="download" data-icon-filled="download_filled"></i>
+        <span class="web-rail__label">下载管理</span>
+        <span class="nav-badge" id="nav-task-badge" hidden>0</span>
+        <span class="web-rail__indicator" aria-hidden="true"></span>
+      </button>
+    </div>
+    <div class="web-rail__meta" aria-hidden="true">
+      <span class="bd-shortcut-hint" id="bd-shortcut-hint">Ctrl+V 粘贴链接 · Enter 立即解析 · 双击标签页关闭</span>
     </div>
   </nav>
 
-  <!-- ================= 主工作区 ================= -->
   <main class="workspace" id="workspace">
-
-    <!-- S01 首页 (HomeScreen) -->
-    <section class="page" id="page-home" aria-label="首页">
+    <!-- 解析工作台（命令输入栏 + 多标签工作区 + 分栏详情/画质方格 + 最近任务） -->
+    <section class="page web-download" id="page-home" aria-label="下载">
       <div class="home-stack">
-        <!-- 顶部品牌区 HomeHero -->
-        <header class="home-hero">
-          <div class="home-hero__badge-box" aria-hidden="true">
-            <i data-icon="cloud_download"></i>
-          </div>
-          <div class="home-hero__title-wrap">
-            <span class="home-hero__title">OmniDownloader</span>
-            <span class="home-hero__ver">v1.7.60</span>
-          </div>
-          <button class="icon-btn icon-btn--sm" id="btn-home-help" title="使用说明" aria-label="使用说明">
-            <i data-icon="help"></i>
-          </button>
-        </header>
-
-        <!-- 支持平台标签 HomePlatformChips -->
-        <div class="platform-wrap" id="platform-wrap">
-          <div class="platform-chips" id="platform-list"></div>
-          <div class="platform-catalog-row">
-            <button class="btn btn-text btn-sm" id="btn-ytdlp-catalog" type="button">yt-dlp 支持的平台</button>
-          </div>
-        </div>
-
-        <!-- 链接输入卡片 HomeInputPanel -->
-        <div class="omni-card omni-card--compact">
-          <div class="m3-filled-field">
-            <span class="m3-filled-field__leading"><i data-icon="link"></i></span>
-            <input id="input-url" type="text"
-                   placeholder="粘贴视频链接或分享文本..."
-                   aria-label="粘贴视频链接或分享文本..."
-                   spellcheck="false" autocomplete="off">
-            <div class="m3-filled-field__trailing">
-              <button class="icon-btn icon-btn--sm" id="btn-input-inline" type="button" title="粘贴" aria-label="粘贴">
+        <!-- BilibiliDown 紧凑命令解析条 -->
+        <div class="omni-card web-input-card bd-parse-dock">
+          <div class="bd-parse-dock__row">
+            <div class="web-link-field">
+              <i data-icon="link"></i>
+              <input id="input-url" type="text" placeholder="输入或粘贴视频/图文链接、BV/av/ep/ss 号或分享文本..." aria-label="媒体链接" spellcheck="false" autocomplete="off">
+              <button class="icon-btn icon-btn--sm" id="btn-input-inline" type="button" title="粘贴" aria-label="粘贴"><i data-icon="content_paste"></i></button>
+            </div>
+            <div class="web-action-pair bd-parse-dock__actions">
+              <button class="btn btn-tonal" id="btn-paste" type="button">
                 <i data-icon="content_paste"></i>
+                <span>解析剪切板</span>
+              </button>
+              <button class="btn btn-primary" id="btn-analyze" type="button">
+                <span id="analyze-btn-icon"><i data-icon="bolt"></i></span>
+                <span id="analyze-label">立即解析</span>
               </button>
             </div>
           </div>
-
-          <div class="home-input-actions">
-            <button class="btn btn-tonal" id="btn-paste" type="button">
-              <i data-icon="content_paste"></i>
-              <span>粘贴剪贴板</span>
-            </button>
-            <button class="btn btn-primary" id="btn-analyze" type="button">
-              <span id="analyze-btn-icon"><i data-icon="bolt"></i></span>
-              <span id="analyze-label">立即解析</span>
-            </button>
+          <div class="bd-parse-dock__sub">
+            <span class="caption" id="bd-dock-tip">支持哔哩哔哩、抖音、快手、小红书、微博、YouTube、X (Twitter)、Pixiv 等多平台音视频与图文原图解析</span>
+            <button class="bd-mini-link" data-nav="batch" type="button">切换到批量队列</button>
           </div>
+        </div>
 
-          <!-- 浏览器辅助（折叠收纳，避免干扰主流程） -->
-          <details class="home-assist">
-            <summary>
-              <span>浏览器辅助提取</span>
-              <i data-icon="expand_more" class="m-icon--sm"></i>
-            </summary>
-            <div class="home-assist__body">
-              <button class="btn btn-outline btn-sm" id="btn-browser-assist" type="button">
-                <i data-icon="open_in_new"></i>
-                <span>浏览器辅助</span>
+        <!-- BilibiliDown 签名交互：已解析内容多标签工作栏（单击切换 / 双击或×关闭） -->
+        <div class="bd-tabs-shell" id="workspace-tabs-bar" hidden>
+          <div class="bd-tabs-scroll" id="workspace-tabs-list" role="tablist" aria-label="已解析媒体标签页"></div>
+          <div class="bd-tabs-controls">
+            <button class="icon-btn icon-btn--sm" id="btn-tab-new" type="button" title="新建解析" aria-label="新建解析"><i data-icon="add"></i></button>
+            <button class="icon-btn icon-btn--sm" id="btn-tabs-close-all" type="button" title="关闭全部标签" aria-label="关闭全部标签"><i data-icon="close"></i></button>
+          </div>
+        </div>
+
+        <!-- 页内下载选项卡片（保留 id="format-sheet-overlay" 与 data-inline="true" 位于 #page-home 内） -->
+        <section class="omni-card inline-download-options bd-workbench-card" id="format-sheet-overlay" hidden aria-label="下载选项" data-inline="true">
+          <div class="inline-download-options__content" aria-labelledby="sheet-media-title">
+            <div class="sheet__body">
+              <!-- BilibiliDown 左封面预览 / 右可复制详情双栏卡 + WinUI 3 封面保存控制 -->
+              <div class="sheet-media-head bd-media-split">
+                <div class="bd-media-cover-col">
+                  <div class="sheet-media-thumb bd-cover-preview" id="sheet-thumb-box" role="button" tabindex="0" title="点击预览高清封面">
+                    <img id="meta-thumb" alt="">
+                    <span class="bd-cover-preview__hint" id="bd-cover-preview-badge"><i data-icon="visibility"></i><span>查看封面</span></span>
+                  </div>
+                  <div class="sheet-cover-actions" id="cover-action-panel">
+                    <label class="sheet-save-cover-toggle" id="save-cover-toggle-wrap">
+                      <input type="checkbox" id="toggle-save-cover">
+                      <span>同时保存封面</span>
+                    </label>
+                    <div class="bd-cover-btn-row">
+                      <button class="btn btn-outline btn-sm" id="btn-save-cover-direct" type="button" title="单独保存封面">
+                        <span>单独保存封面</span>
+                      </button>
+                      <button class="icon-btn icon-btn--sm" id="btn-copy-cover-url" type="button" title="复制封面链接" aria-label="复制封面链接">
+                        <i data-icon="link"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="sheet-media-info bd-media-info-col">
+                  <div class="bd-title-row">
+                    <div class="sheet-media-title bd-copyable" data-no-i18n id="sheet-media-title" title="点击或双击复制标题">视频标题</div>
+                    <button class="icon-btn icon-btn--sm" id="btn-copy-title" type="button" title="复制标题" aria-label="复制标题"><i data-icon="content_paste"></i></button>
+                  </div>
+                  <div class="sheet-media-tags">
+                    <span class="sheet-tag" id="meta-site">平台</span>
+                    <span class="sheet-tag sheet-tag--gif" id="meta-gif-badge" hidden>GIF</span>
+                    <span class="bd-meta-chip" id="meta-duration" hidden></span>
+                    <button class="bd-meta-chip bd-meta-chip--copy" data-no-i18n id="meta-author" type="button" hidden title="点击复制作者名称"></button>
+                    <button class="bd-meta-chip bd-meta-chip--copy mono" data-no-i18n id="meta-media-id" type="button" hidden title="点击复制源链接或 ID"></button>
+                  </div>
+                  <div class="sheet-account-note" id="meta-access" hidden></div>
+                </div>
+              </div>
+
+              <!-- 多视频 / 合集模式切换 -->
+              <div id="collection-wrapper" hidden>
+                <div class="sheet-mode-switch">
+                  <button class="sheet-mode-switch__btn is-active" id="btn-mode-single" type="button">
+                    <i data-icon="videocam"></i>
+                    <span>单集独立预览</span>
+                  </button>
+                  <button class="sheet-mode-switch__btn" id="btn-mode-collection" type="button">
+                    <i data-icon="video_library"></i>
+                    <span id="btn-mode-collection-label">下载合集</span>
+                  </button>
+                </div>
+
+                <!-- 单集芯片横栏 -->
+                <div id="single-parts-panel">
+                  <div class="caption" id="single-parts-prompt" style="color:var(--primary);font-weight:600;margin-top:10px">点击切换当前预览与下载的分P/分集:</div>
+                  <div class="sheet-parts-row" id="single-parts-row"></div>
+                </div>
+
+                <!-- 合集多选列表 -->
+                <div id="collection-section" hidden>
+                  <div class="sheet-episodes-head">
+                    <span class="sheet-episodes-head__count" id="collection-count-badge">已选 0 / 0 集</span>
+                    <div class="sheet-mini-actions">
+                      <button class="sheet-mini-pill" id="btn-episodes-all" type="button">全选</button>
+                      <button class="sheet-mini-pill" id="btn-episodes-invert" type="button">反选</button>
+                      <button class="sheet-mini-pill sheet-mini-pill--muted" id="btn-episodes-none" type="button">取消全选</button>
+                    </div>
+                  </div>
+                  <div class="sheet-episodes-box" id="episodes-list"></div>
+                </div>
+              </div>
+
+              <hr class="omni-divider" style="margin:14px 0">
+
+              <!-- 双栏并排控制：下载模式 / 封装容器（对齐 WinUI 3 FormatSelectorPanel） -->
+              <div class="winui-three-combos">
+                <div class="field">
+                  <label class="field__label" for="download-type-select">下载模式</label>
+                  <select id="download-type-select" aria-label="下载模式">
+                    <option value="VIDEO_WITH_AUDIO">视频</option>
+                    <option value="VIDEO_ONLY">纯画面</option>
+                    <option value="AUDIO_ONLY">音频</option>
+                    <option value="GIF">GIF</option>
+                  </select>
+                </div>
+
+                <div class="field" id="quality-container-field">
+                  <label class="field__label" for="quality-container">封装容器</label>
+                  <select id="quality-container" aria-label="封装容器">
+                    <option value="auto">自动容器</option>
+                    <option value="mp4">MP4 容器</option>
+                    <option value="mkv">MKV 容器</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 质量提示与警告 -->
+              <p class="caption" id="sheet-quality-evidence" hidden style="margin-top:10px"></p>
+              <p class="caption" id="sheet-quality-warning" hidden style="margin-top:6px;color:var(--status-error)"></p>
+
+              <!-- 视频清晰度方格网格 -->
+              <div id="resolution-section" style="margin-top:12px">
+                <div class="winui-options-subrow">
+                  <span class="caption" id="resolution-hint">视频模式：自动匹配并无损合并最佳音轨</span>
+                </div>
+                <div class="caption winui-stream-heading" id="stream-grid-heading">可选视频流（点击选择清晰度、格式与体积）</div>
+                <div class="format-tile-grid" id="format-options-container"></div>
+              </div>
+
+              <!-- 音频编码格式 -->
+              <div id="audio-format-section" hidden style="margin-top:14px">
+                <div class="caption" style="margin-bottom:8px">选择导出的音频格式</div>
+                <div class="format-tile-grid" id="audio-options-container">
+                  <button class="format-row-item is-selected" data-audio="mp3" type="button">
+                    <input type="radio" name="audio-fmt" checked tabindex="-1">
+                    <span>MP3 (通用兼容 · 320kbps)</span>
+                  </button>
+                  <button class="format-row-item" data-audio="m4a" type="button">
+                    <input type="radio" name="audio-fmt" tabindex="-1">
+                    <span>M4A (AAC 高音质 · 小体积)</span>
+                  </button>
+                  <button class="format-row-item" data-audio="flac" type="button">
+                    <input type="radio" name="audio-fmt" tabindex="-1">
+                    <span>FLAC (无损音质)</span>
+                  </button>
+                  <button class="format-row-item" data-audio="opus" type="button">
+                    <input type="radio" name="audio-fmt" tabindex="-1">
+                    <span>OPUS (高压缩效率)</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- GIF 动图说明 -->
+              <div id="gif-format-section" hidden style="margin-top:14px">
+                <div class="gif-explain-card">
+                  <strong>高保真 GIF 动图转换</strong>
+                  • 内置 FFmpeg 双 Pass 调色板引擎，还原细腻生动色彩与紧凑体积<br>
+                  • 导出为标准 .gif 格式，无需播放器即可直接预览与转发<br>
+                  • 如需保存原画视频文件，可随时切换回「视频」下载为 MP4
+                </div>
+              </div>
+            </div>
+
+            <!-- 底部操作栏 -->
+            <div class="sheet__footer">
+              <button class="btn btn-primary" id="btn-submit-download" type="button">
+                <span id="submit-download-label">开始下载</span>
               </button>
-              <button class="btn btn-outline btn-sm" id="btn-capture-media" type="button">
-                <i data-icon="play_circle"></i>
-                <span>读取已播放媒体</span>
-              </button>
-              <button class="btn btn-outline btn-sm" id="btn-capture-images" type="button">
-                <i data-icon="photo_library"></i>
-                <span>提取已打开的图文</span>
+              <button class="btn btn-outline" id="btn-sheet-secondary" hidden type="button">
+                <span id="sheet-secondary-label"></span>
               </button>
             </div>
-          </details>
-        </div>
-
-        <!-- 解析错误卡 -->
-        <div class="parse-error-card" id="parse-error" hidden role="alert">
-          <i data-icon="error"></i>
-          <div class="parse-error-card__body">
-            <div class="parse-error-card__title" id="parse-error-title">解析未能成功</div>
-            <div class="parse-error-card__msg" id="parse-error-hint"></div>
-            <div class="parse-error-card__actions" id="parse-error-actions"></div>
           </div>
+        </section>
+
+        <!-- 解析错误提示 -->
+        <div class="omni-card web-analysis-state" id="parse-error" hidden role="alert">
+          <strong id="parse-error-title"></strong>
+          <p id="parse-error-hint"></p>
+          <div class="row-wrap" id="parse-error-actions"></div>
         </div>
 
-        <!-- 最近解析结果快捷恢复条（关闭弹窗后可再次点开） -->
         <div class="parsed-resume-bar" id="parsed-resume-bar" hidden tabindex="0" role="button">
           <span class="omni-icon-box"><i data-icon="videocam"></i></span>
           <div style="flex:1;min-width:0">
-            <div class="parsed-resume-bar__title" id="parsed-resume-title"></div>
+            <div class="parsed-resume-bar__title" data-no-i18n id="parsed-resume-title"></div>
             <div class="caption" id="parsed-resume-sub">点击选择画质并开始下载</div>
           </div>
           <span class="btn btn-text btn-sm">下载配置</span>
         </div>
 
-        <!-- 图文解析结果区（对齐 Android homeImageItems） -->
+        <!-- 图文解析结果 -->
         <div id="image-result" hidden class="home-stack">
-          <div class="image-results-head">
-            <div class="image-results-head__title" id="image-title"></div>
-            <div class="image-results-head__sub">
-              <span id="image-count"></span> · <span id="image-source"></span>
+          <div class="omni-card home-stack">
+            <div class="image-results-head">
+              <div class="image-results-head__title" data-no-i18n id="image-title"></div>
+              <div class="image-results-head__sub">
+                <span id="image-count"></span> · <span id="image-source"></span>
+              </div>
+              <div class="caption" id="image-selection" style="color:var(--primary);font-weight:600">已选 0 张</div>
             </div>
-            <div class="caption" id="image-selection" style="color:var(--primary);font-weight:600">已选 0 张</div>
+            <div class="image-actions-bar">
+              <div class="row">
+                <button class="btn btn-text btn-sm" id="btn-image-select-all" type="button">全选</button>
+                <button class="btn btn-text btn-sm" id="btn-image-select-none" type="button">取消全选</button>
+              </div>
+              <div class="row">
+                <button class="btn btn-outline btn-sm" id="btn-image-zip" type="button">
+                  <i data-icon="zip"></i>
+                  <span>导出 ZIP</span>
+                </button>
+                <button class="btn btn-primary btn-sm" id="btn-image-save" type="button">
+                  <i data-icon="download"></i>
+                  <span>保存</span>
+                </button>
+              </div>
+            </div>
+            <div class="image-grid" id="image-grid"></div>
           </div>
-          <div class="image-actions-bar">
-            <div class="row">
-              <button class="btn btn-text btn-sm" id="btn-image-select-all" type="button">全选</button>
-              <button class="btn btn-text btn-sm" id="btn-image-select-none" type="button">取消全选</button>
-            </div>
-            <div class="row">
-              <button class="btn btn-outline btn-sm" id="btn-image-zip" type="button">
-                <i data-icon="zip"></i>
-                <span>导出 ZIP</span>
-              </button>
-              <button class="btn btn-primary btn-sm" id="btn-image-save" type="button">
-                <i data-icon="download"></i>
-                <span>保存</span>
-              </button>
-            </div>
-          </div>
-          <div class="image-grid" id="image-grid"></div>
         </div>
 
-        <!-- 备用中转站区块（对齐 Android relaySitesItems） -->
-        <div id="relay-section" hidden>
-          <div class="omni-section-header">
-            <div class="omni-section-header__text">
-              <div class="omni-section-header__title">第三方中转网站</div>
-            </div>
-            <button class="btn btn-text btn-sm" data-nav="settings" data-settings-cat="relay" type="button">前往设置</button>
-          </div>
-          <div class="relay-list" id="relay-home-list"></div>
-          <button class="btn btn-text btn-block btn-sm" id="btn-relay-expand" hidden type="button" style="margin-top:4px"></button>
-        </div>
-
-        <!-- 正在下载 / 最近任务区块（对齐 Android HomeActiveTasksSection） -->
-        <div id="recent-section" hidden>
-          <div class="omni-section-header">
-            <div class="omni-section-header__text">
-              <div class="omni-section-header__title" id="recent-section-title">正在下载的任务</div>
-            </div>
+        <!-- 最近任务（对齐 WinUI 3 HomePage 底部最近任务区块） -->
+        <section id="recent-section" hidden class="winui-recent-section">
+          <div class="winui-recent-head">
+            <span class="winui-recent-title" id="recent-section-title">最近任务</span>
             <button class="btn btn-text btn-sm" data-nav="tasks" type="button">查看全部</button>
           </div>
-          <div class="stack" id="recent-list"></div>
-        </div>
+          <div class="home-stack" id="recent-list"></div>
+        </section>
       </div>
-
-      <!-- 回到顶部 FAB（图文浏览长列表时显示） -->
-      <button class="btn btn-primary-container" id="btn-home-top" hidden type="button"
-              aria-label="回到顶部"
-              style="position:fixed;right:20px;bottom:86px;width:48px;height:48px;padding:0;border-radius:14px;z-index:30;box-shadow:var(--shadow-menu)">
-        <i data-icon="keyboard_arrow_up"></i>
-      </button>
     </section>
 
-    <!-- S02 批量下载 (BatchDownloadScreen) -->
+    <!-- 批量下载页 -->
     <section class="page" id="page-batch" hidden aria-labelledby="batch-title">
       <div class="batch-stack">
-        <header class="android-page-head">
-          <div class="android-page-head__titles">
-            <h1 class="android-page-head__title" id="batch-title">批量下载</h1>
-            <p class="android-page-head__subtitle">支持分享文本、TXT 文件、100 条链接去重</p>
+        <div class="winui-page-head">
+          <div>
+            <h1 id="batch-title" class="winui-page-title">批量下载</h1>
+            <p class="caption">支持粘贴含多个分享链接的文本，自动去重识别并排队提交</p>
           </div>
-        </header>
+          <button class="btn btn-text btn-sm" data-nav="tasks" type="button">查看任务</button>
+        </div>
 
         <div class="omni-card">
           <div class="filter-chips" style="margin-bottom:10px">
@@ -253,17 +354,17 @@
           </div>
 
           <div class="row-wrap" style="margin-top:10px">
-            <button class="btn btn-text btn-sm" id="batch-paste" type="button">
+            <button class="btn btn-tonal btn-sm" id="batch-paste" type="button">
               <i data-icon="content_paste"></i>
               <span>粘贴剪贴板</span>
             </button>
-            <label class="btn btn-text btn-sm batch-file-btn">
+            <label class="btn btn-tonal btn-sm batch-file-btn">
               <i data-icon="folder_open"></i>
               <span>导入 TXT</span>
               <input id="batch-file" type="file" accept=".txt,text/plain">
             </label>
             <span class="spacer"></span>
-            <button class="btn btn-tonal btn-sm" id="batch-add" type="button">识别并添加</button>
+            <button class="btn btn-primary btn-sm" id="batch-add" type="button">识别并添加</button>
           </div>
           <p class="caption" id="batch-error" role="alert" style="color:var(--status-error);margin-top:6px" hidden></p>
         </div>
@@ -272,10 +373,10 @@
         <div class="omni-card">
           <div class="batch-options-row">
             <select id="batch-type" aria-label="下载类型">
-              <option value="VIDEO_WITH_AUDIO">音画合流（图文自动 ZIP）</option>
+              <option value="VIDEO_WITH_AUDIO">视频（图文自动 ZIP）</option>
               <option value="VIDEO_ONLY">纯画面</option>
-              <option value="AUDIO_ONLY">提取音频</option>
-              <option value="GIF">动态图</option>
+              <option value="AUDIO_ONLY">音频</option>
+              <option value="GIF">GIF</option>
               <option value="COVER">封面</option>
               <option value="IMAGE">原图</option>
               <option value="IMAGE_ZIP">原图 ZIP</option>
@@ -292,15 +393,12 @@
             </label>
           </div>
 
-          <button class="btn btn-primary btn-lg btn-block" id="batch-start" type="button" style="margin-top:12px">
-            <i data-icon="bolt"></i>
-            <span>开始批量下载</span>
-          </button>
-
-          <div class="row-wrap" style="margin-top:8px">
+          <div class="row-wrap" style="margin-top:12px">
+            <button class="btn btn-primary" id="batch-start" type="button">
+              <i data-icon="bolt"></i>
+              <span>开始批量下载</span>
+            </button>
             <span class="caption" id="batch-summary"></span>
-            <span class="spacer"></span>
-            <button class="btn btn-text btn-sm" data-nav="tasks" type="button">查看任务</button>
           </div>
         </div>
 
@@ -327,24 +425,23 @@
       </div>
     </section>
 
-    <!-- S03 任务页 (TasksScreen) -->
+    <!-- 任务进度页 -->
     <section class="page" id="page-tasks" hidden aria-labelledby="tasks-title">
       <header class="android-page-head">
         <div class="android-page-head__titles">
-          <h1 class="android-page-head__title" id="tasks-title">下载管理</h1>
+          <h1 class="android-page-head__title" id="tasks-title">下载进度</h1>
           <p class="android-page-head__subtitle" id="tasks-subtitle">下载中 0</p>
         </div>
         <div class="android-page-head__actions">
-          <button class="icon-btn" id="btn-open-folder" title="打开文件夹" aria-label="打开文件夹" type="button">
+          <button class="btn btn-tonal btn-sm" id="btn-open-folder" type="button">
             <i data-icon="folder_open"></i>
+            <span>打开文件夹</span>
           </button>
-          <button class="icon-btn icon-btn--primary" id="btn-clear-history" title="清空记录" aria-label="清空记录" hidden type="button">
-            <i data-icon="delete_sweep"></i>
-          </button>
+          <button class="btn btn-tonal btn-sm" id="btn-clear-history" hidden type="button">清空记录</button>
         </div>
       </header>
 
-      <!-- Android 同款 3 段式滑动切换器 OmniSegmentedTabs -->
+      <!-- WinUI 3 SelectorBar 风格分段筛选器 -->
       <div class="omni-segmented" id="task-filter" role="tablist" aria-label="任务筛选" style="--seg-count:3;--seg-index:0">
         <div class="omni-segmented__indicator" aria-hidden="true"></div>
         <button class="omni-segmented__tab is-active" data-filter="all" data-seg-idx="0" role="tab" aria-selected="true">全部 (0)</button>
@@ -360,631 +457,9 @@
         <div class="omni-empty__desc" id="tasks-empty-desc">粘贴视频链接并解析，即可开始下载。</div>
       </div>
     </section>
-
-    <!-- S04 设置页 (SettingsScreen + SettingsNavigation 分层结构) -->
-    <section class="page" id="page-settings" hidden aria-labelledby="settings-toolbar-title">
-      <!-- 顶部工具栏 SettingsToolbar -->
-      <header class="settings-toolbar">
-        <button class="icon-btn" id="btn-settings-back" hidden title="返回" aria-label="返回" type="button">
-          <i data-icon="arrow_back"></i>
-        </button>
-        <h1 class="settings-toolbar__title" id="settings-toolbar-title">偏好设置</h1>
-        <!-- 一级页面右侧直接切换外观主题（对齐 Android SettingsScreen ROOT 右上角 SettingDropdown） -->
-        <div class="omni-dropdown" id="theme-dropdown-wrap">
-          <button class="omni-dropdown__trigger" id="theme-dropdown-btn" type="button" aria-haspopup="menu" aria-expanded="false">
-            <span id="theme-dropdown-label">跟随系统</span>
-            <i data-icon="arrow_drop_down"></i>
-          </button>
-        </div>
-      </header>
-
-      <!-- 一级菜单 (SettingsPage.ROOT) -->
-      <div id="settings-root-view">
-        <div class="omni-setting-row" style="padding:11px 8px">
-          <span class="omni-icon-box"><i data-icon="language"></i></span>
-          <div class="omni-setting-row__body">
-            <div class="omni-setting-row__title">语言 (Language)</div>
-          </div>
-          <div class="omni-dropdown" id="lang-dropdown-wrap">
-            <button class="omni-dropdown__trigger" id="lang-dropdown-btn" type="button" aria-haspopup="menu" aria-expanded="false">
-              <span id="lang-dropdown-label">简体中文</span>
-              <i data-icon="arrow_drop_down"></i>
-            </button>
-          </div>
-        </div>
-
-        <div id="settings-category-list">
-          <button class="settings-cat-row" data-cat="downloads" type="button">
-            <span class="settings-cat-row__icon"><i data-icon="folder"></i></span>
-            <span class="settings-cat-row__text">
-              <div class="settings-cat-row__title">下载与存储</div>
-              <div class="settings-cat-row__summary">保存目录、并发与自动化行为</div>
-            </span>
-            <span class="settings-cat-row__arrow"><i data-icon="chevron_right"></i></span>
-          </button>
-
-          <button class="settings-cat-row" data-cat="network" type="button">
-            <span class="settings-cat-row__icon"><i data-icon="public"></i></span>
-            <span class="settings-cat-row__text">
-              <div class="settings-cat-row__title">网络代理</div>
-              <div class="settings-cat-row__summary">HTTP 与 SOCKS 代理连接</div>
-            </span>
-            <span class="settings-cat-row__arrow"><i data-icon="chevron_right"></i></span>
-          </button>
-
-          <button class="settings-cat-row" data-cat="relay" type="button">
-            <span class="settings-cat-row__icon"><i data-icon="dns"></i></span>
-            <span class="settings-cat-row__text">
-              <div class="settings-cat-row__title">中转站</div>
-              <div class="settings-cat-row__summary">添加、管理和删除解析站点</div>
-            </span>
-            <span class="settings-cat-row__arrow"><i data-icon="chevron_right"></i></span>
-          </button>
-
-          <button class="settings-cat-row" data-cat="accounts" type="button">
-            <span class="settings-cat-row__icon"><i data-icon="account_circle"></i></span>
-            <span class="settings-cat-row__text">
-              <div class="settings-cat-row__title">账号</div>
-              <div class="settings-cat-row__summary">Cookie 与登录管理</div>
-            </span>
-            <span class="settings-cat-row__arrow"><i data-icon="chevron_right"></i></span>
-          </button>
-
-          <button class="settings-cat-row" data-cat="engine" type="button">
-            <span class="settings-cat-row__icon"><i data-icon="cloud_download"></i></span>
-            <span class="settings-cat-row__text">
-              <div class="settings-cat-row__title">下载引擎</div>
-              <div class="settings-cat-row__summary">运行状态与组件更新</div>
-            </span>
-            <span class="settings-cat-row__arrow"><i data-icon="chevron_right"></i></span>
-          </button>
-
-          <button class="settings-cat-row" data-cat="about" type="button">
-            <span class="settings-cat-row__icon"><i data-icon="info"></i></span>
-            <span class="settings-cat-row__text">
-              <div class="settings-cat-row__title">关于</div>
-              <div class="settings-cat-row__summary">应用版本与支持平台</div>
-            </span>
-            <span class="settings-cat-row__arrow"><i data-icon="chevron_right"></i></span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 二级子页：下载与存储 (DOWNLOADS) -->
-      <div class="settings-subpage" data-panel="downloads" hidden>
-        <div class="omni-section-header">
-          <div class="omni-section-header__text"><div class="omni-section-header__title">存储目录设置</div></div>
-        </div>
-        <div class="omni-card">
-          <div class="row" style="gap:12px">
-            <span class="omni-icon-box"><i data-icon="folder"></i></span>
-            <div style="flex:1;min-width:0">
-              <div class="truncate" id="setting-download-dir-preview" style="font-size:13.5px;font-weight:600;color:var(--primary)">默认目录</div>
-              <div class="caption">所有媒体文件将保存在此文件夹</div>
-            </div>
-          </div>
-          <div class="field" style="margin-top:12px">
-            <input class="input" id="setting-download-dir" type="text" spellcheck="false" placeholder="输入保存路径">
-          </div>
-          <div class="row-wrap" style="justify-content:flex-end;margin-top:10px">
-            <button class="btn btn-outline btn-sm" id="btn-open-download-dir" type="button">
-              <i data-icon="folder_open"></i>
-              <span>打开</span>
-            </button>
-            <button class="btn btn-primary btn-sm" id="btn-save-downloads" type="button">保存设置</button>
-          </div>
-        </div>
-
-        <div class="omni-section-header">
-          <div class="omni-section-header__text"><div class="omni-section-header__title">下载与系统行为</div></div>
-        </div>
-        <div class="omni-card" style="padding:4px 0">
-          <div class="omni-setting-row">
-            <span class="omni-icon-box"><i data-icon="downloading"></i></span>
-            <div class="omni-setting-row__body">
-              <div class="omni-setting-row__title">最大同时下载任务数</div>
-              <div class="omni-setting-row__desc">并发越高占用带宽越多</div>
-            </div>
-            <select id="setting-concurrent" style="width:auto;min-height:36px;padding:4px 28px 4px 10px">
-              <option value="1">1 个</option>
-              <option value="2">2 个</option>
-              <option value="3">3 个</option>
-              <option value="5">5 个</option>
-            </select>
-          </div>
-          <hr class="omni-divider omni-divider--indent">
-          <label class="omni-setting-row" style="cursor:pointer">
-            <span class="omni-icon-box"><i data-icon="file_save"></i></span>
-            <div class="omni-setting-row__body">
-              <div class="omni-setting-row__title">完成后自动调起浏览器下载</div>
-              <div class="omni-setting-row__desc">适合局域网内的手机或平板取回文件</div>
-            </div>
-            <span class="m3-switch">
-              <input type="checkbox" id="setting-auto-browser-download">
-              <span class="m3-switch__track"></span>
-            </span>
-          </label>
-          <hr class="omni-divider omni-divider--indent">
-          <label class="omni-setting-row" style="cursor:pointer">
-            <span class="omni-icon-box"><i data-icon="bolt"></i></span>
-            <div class="omni-setting-row__body">
-              <div class="omni-setting-row__title">开机自动运行网页服务</div>
-              <div class="omni-setting-row__desc">在后台静默启动，常驻系统托盘</div>
-            </div>
-            <span class="m3-switch">
-              <input type="checkbox" id="setting-autostart">
-              <span class="m3-switch__track"></span>
-            </span>
-          </label>
-          <hr class="omni-divider omni-divider--indent">
-          <label class="omni-setting-row" style="cursor:pointer">
-            <span class="omni-icon-box"><i data-icon="dark_mode"></i></span>
-            <div class="omni-setting-row__body">
-              <div class="omni-setting-row__title">纯黑背景 (AMOLED)</div>
-              <div class="omni-setting-row__desc">深色模式下使用纯黑底色降低功耗</div>
-            </div>
-            <span class="m3-switch">
-              <input type="checkbox" id="setting-amoled">
-              <span class="m3-switch__track"></span>
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <!-- 二级子页：网络代理 (NETWORK) -->
-      <div class="settings-subpage" data-panel="network" hidden>
-        <div class="omni-section-header">
-          <div class="omni-section-header__text">
-            <div class="omni-section-header__title">网络代理设置 (Proxy)</div>
-            <div class="omni-section-header__sub">支持 HTTP / HTTPS / SOCKS5 代理；留空时使用直连网络</div>
-          </div>
-        </div>
-        <div class="omni-card">
-          <input class="input" id="setting-proxy" type="text" placeholder="http://127.0.0.1:7890" spellcheck="false">
-          <div class="row-wrap" style="justify-content:flex-end;margin-top:10px">
-            <button class="btn btn-outline btn-sm" id="btn-clear-proxy" hidden type="button">清空代理</button>
-            <button class="btn btn-primary btn-sm" id="btn-save-proxy" type="button">保存并应用</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 二级子页：中转站 (RELAY) -->
-      <div class="settings-subpage" data-panel="relay" hidden>
-        <div class="omni-section-header">
-          <div class="omni-section-header__text">
-            <div class="omni-section-header__title" id="relay-header-title">第三方中转网站 (0)</div>
-            <div class="omni-section-header__sub">自定义添加备用解析站点，在首页中转解析时直接调用</div>
-          </div>
-          <button class="btn btn-primary btn-sm" id="btn-add-relay" type="button">
-            <i data-icon="add"></i>
-            <span>添加网址</span>
-          </button>
-        </div>
-        <div class="stack" id="relay-settings-list"></div>
-      </div>
-
-      <!-- 二级子页：账号 (ACCOUNTS) -->
-      <div class="settings-subpage" data-panel="accounts" hidden>
-        <div class="omni-section-header">
-          <div class="omni-section-header__text">
-            <div class="omni-section-header__title">平台会话</div>
-            <div class="omni-section-header__sub">导入 Netscape Cookies 文件，解析与下载共用同一会话；Cookie 仅保存在本机加密存储中。</div>
-          </div>
-        </div>
-        <div class="omni-card">
-          <div class="row" style="gap:12px">
-            <span class="omni-icon-box"><i data-icon="account_circle"></i></span>
-            <div style="flex:1;min-width:0">
-              <div class="caption">平台</div>
-              <div style="font-size:15px;font-weight:600" id="session-platform-label">YouTube</div>
-            </div>
-            <select id="session-platform" style="width:auto;min-height:38px" aria-label="选择平台">
-              <option value="YouTube">YouTube</option>
-              <option value="X (Twitter)">X (Twitter)</option>
-              <option value="小红书">小红书</option>
-              <option value="小黑盒">小黑盒</option>
-              <option value="Pixiv">Pixiv</option>
-              <option value="抖音">抖音</option>
-              <option value="哔哩哔哩">哔哩哔哩</option>
-              <option value="微博">微博</option>
-              <option value="Pinterest">Pinterest</option>
-              <option value="Instagram">Instagram</option>
-              <option value="Facebook">Facebook</option>
-              <option value="TikTok">TikTok</option>
-              <option value="快手">快手</option>
-            </select>
-          </div>
-
-          <label class="row" style="justify-content:space-between;margin-top:14px;cursor:pointer">
-            <div style="flex:1;min-width:0;padding-right:10px">
-              <div style="font-size:14px;font-weight:600">停用该平台 Cookie</div>
-              <div class="caption" id="session-policy-status">开启后新解析与新下载使用匿名请求，但仍保留已保存的会话</div>
-            </div>
-            <span class="m3-switch">
-              <input type="checkbox" id="session-disable-cookie">
-              <span class="m3-switch__track"></span>
-            </span>
-          </label>
-
-          <div class="row-wrap" style="margin-top:12px">
-            <span class="omni-pill" id="session-status-pill">未导入</span>
-            <span class="spacer"></span>
-            <button class="btn btn-primary btn-sm" id="btn-browser-login" type="button">浏览器登录</button>
-            <button class="btn btn-outline btn-sm" id="btn-save-browser-session" type="button">保存会话并关闭</button>
-            <button class="btn btn-outline btn-sm" id="btn-clear-session" type="button">清除会话</button>
-            <label class="btn btn-primary btn-sm batch-file-btn">
-              <span>导入 Cookies 文件</span>
-              <input type="file" id="session-file" accept=".txt,text/plain" aria-label="导入 Cookies 文件">
-            </label>
-          </div>
-          <p class="caption" id="browser-login-status" role="status">使用独立 Edge 窗口登录。Google 登录后请返回目标平台，再保存会话；已保存不等于账号已验证。</p>
-        </div>
-
-        <div class="omni-section-header" style="margin-top:6px">
-          <div class="omni-section-header__text">
-            <div class="omni-section-header__title">登录哔哩哔哩 (Cookie / SESSDATA)</div>
-          </div>
-        </div>
-        <div class="omni-card">
-          <div class="row" style="gap:12px">
-            <span class="omni-icon-box"><i data-icon="language"></i></span>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:15px;font-weight:500">账号登录与可用画质</div>
-              <div class="caption" id="bili-cookie-status" style="color:var(--success)" hidden>凭据已保存，实际画质取决于账号权益与内容</div>
-            </div>
-          </div>
-          <p class="caption" style="margin-top:8px">在电脑浏览器登录 bilibili.com 后按 F12，在 Application → Cookies 中复制 SESSDATA 粘贴到下方即可。</p>
-          <textarea class="textarea mono" id="setting-bili-cookie" rows="2" style="margin-top:10px" placeholder="粘贴 SESSDATA=xxx 或完整 Cookie (留空使用游客身份)"></textarea>
-          <div class="row-wrap" style="justify-content:flex-end;margin-top:10px">
-            <button class="btn btn-outline btn-sm" id="btn-clear-bili" hidden type="button">清空凭证</button>
-            <button class="btn btn-primary btn-sm" id="btn-save-bili" type="button">保存并应用</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 二级子页：下载引擎 (ENGINE) -->
-      <div class="settings-subpage" data-panel="engine" hidden>
-        <div class="omni-section-header">
-          <div class="omni-section-header__text"><div class="omni-section-header__title">核心引擎组件</div></div>
-        </div>
-        <div class="omni-card">
-          <div class="row" style="gap:12px">
-            <span class="omni-icon-box"><i data-icon="system_update_alt"></i></span>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:15px;font-weight:500">核心引擎状态</div>
-              <div class="caption">解析、下载与格式转换组件在本机运行</div>
-            </div>
-            <span class="omni-pill omni-pill--success" id="engine-ready-pill">正常运行</span>
-          </div>
-          <button class="btn btn-primary btn-block" id="btn-check-engine" type="button" style="margin-top:12px">
-            <i data-icon="refresh"></i>
-            <span>检查组件状态</span>
-          </button>
-        </div>
-
-        <div class="omni-card">
-          <div class="row" style="gap:12px">
-            <span class="omni-icon-box"><i data-icon="info"></i></span>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:15px;font-weight:500">组件版本</div>
-              <div class="caption" id="engine-status" style="color:var(--primary)">正在探测本机引擎环境...</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 二级子页：关于 (ABOUT) -->
-      <div class="settings-subpage" data-panel="about" hidden>
-        <div class="about-hero">
-          <div class="home-hero__badge-box" style="width:56px;height:56px;border-radius:16px">
-            <i data-icon="cloud_download" class="m-icon--xl" style="width:28px;height:28px"></i>
-          </div>
-          <div class="about-hero__title">OmniDownloader v1.7.60</div>
-          <div class="about-hero__sub">支持 哔哩哔哩、抖音、快手、小红书、YouTube、TikTok、X 等 10 大主流平台</div>
-        </div>
-
-        <div class="omni-card" style="padding:6px 16px">
-          <div class="about-info-row"><span>版本</span><span>v1.7.60</span></div>
-          <div class="about-info-row"><span>运行形态</span><span>Windows 网页版服务 (本机 58000)</span></div>
-          <div class="about-info-row"><span>开源协议</span><span>MIT License</span></div>
-        </div>
-
-        <button class="btn btn-tonal btn-block" id="btn-check-update" type="button">
-          <i data-icon="system_update_alt"></i>
-          <span>检查应用更新</span>
-        </button>
-        <a class="btn btn-primary btn-block" id="application-update-link" hidden target="_blank" rel="noopener noreferrer">下载更新</a>
-
-        <button class="btn btn-outline btn-block" id="btn-open-guide" type="button">
-          <i data-icon="help"></i>
-          <span>使用说明</span>
-        </button>
-
-        <a class="btn btn-outline btn-block" href="https://github.com/baishu136/OmniDownloader" target="_blank" rel="noopener noreferrer">
-          <div style="text-align:center;padding:4px 0">
-            <div style="font-weight:700">GitHub</div>
-            <div class="caption">github.com/baishu136/OmniDownloader</div>
-          </div>
-        </a>
-      </div>
-    </section>
   </main>
 </div>
 
-<!-- ================= FormatSelectorSheet (Android 同款解析配置抽屉) ================= -->
-<div class="sheet-overlay" id="format-sheet-overlay" hidden>
-  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-media-title">
-    <div class="sheet__handle-bar">
-      <div class="sheet__handle" aria-hidden="true"></div>
-      <button class="icon-btn icon-btn--sm sheet__close" data-close="format-sheet-overlay" aria-label="关闭" type="button">
-        <i data-icon="close"></i>
-      </button>
-    </div>
-
-    <div class="sheet__body">
-      <!-- 视频头部概览 -->
-      <div class="sheet-media-head">
-        <div class="sheet-media-thumb" id="sheet-thumb-box">
-          <img id="meta-thumb" alt="">
-          <button class="sheet-cover-save" id="btn-save-cover-direct" type="button" title="存入相册">
-            <i data-icon="image"></i>
-            <span>存入相册</span>
-          </button>
-        </div>
-        <div class="sheet-media-info">
-          <div class="sheet-media-title" id="sheet-media-title">视频标题</div>
-          <div class="sheet-media-tags">
-            <span class="sheet-tag" id="meta-site">平台</span>
-            <span class="sheet-tag sheet-tag--gif" id="meta-gif-badge" hidden>动态图 GIF</span>
-            <span class="caption" id="meta-duration"></span>
-            <span class="caption truncate" id="meta-author"></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="sheet-account-note" id="meta-access" hidden></div>
-
-      <!-- 多视频 / 合集模式切换 -->
-      <div id="collection-wrapper" hidden>
-        <div class="sheet-mode-switch">
-          <button class="sheet-mode-switch__btn is-active" id="btn-mode-single" type="button">
-            <i data-icon="videocam"></i>
-            <span>下载单集</span>
-          </button>
-          <button class="sheet-mode-switch__btn" id="btn-mode-collection" type="button">
-            <i data-icon="video_library"></i>
-            <span id="btn-mode-collection-label">下载合集</span>
-          </button>
-        </div>
-
-        <!-- 单集芯片横栏 -->
-        <div id="single-parts-panel">
-          <div class="caption" id="single-parts-prompt" style="color:var(--primary);font-weight:600;margin-top:10px">点击切换当前预览与下载的分P/分集:</div>
-          <div class="sheet-parts-row" id="single-parts-row"></div>
-        </div>
-
-        <!-- 合集多选列表 -->
-        <div id="collection-section" hidden>
-          <div class="sheet-episodes-head">
-            <span class="sheet-episodes-head__count" id="collection-count-badge">已选 0 / 0 集</span>
-            <div class="sheet-mini-actions">
-              <button class="sheet-mini-pill" id="btn-episodes-all" type="button">全选</button>
-              <button class="sheet-mini-pill" id="btn-episodes-invert" type="button">反选</button>
-              <button class="sheet-mini-pill sheet-mini-pill--muted" id="btn-episodes-none" type="button">取消全选</button>
-            </div>
-          </div>
-          <div class="sheet-episodes-box" id="episodes-list"></div>
-        </div>
-      </div>
-
-      <hr class="omni-divider" style="margin:14px 0">
-
-      <!-- 下载模式行 + 右侧保存封面 Switch -->
-      <div class="sheet-type-header">
-        <h3>下载模式</h3>
-        <label class="sheet-save-cover-toggle" id="save-cover-toggle-wrap">
-          <span>保存封面</span>
-          <span class="m3-switch m3-switch--compact">
-            <input type="checkbox" id="toggle-save-cover">
-            <span class="m3-switch__track"></span>
-          </span>
-        </label>
-      </div>
-
-      <div class="sheet-mode-grid" id="download-type-container">
-        <button class="mode-tab-chip is-selected" data-type="VIDEO_WITH_AUDIO" type="button">
-          <i data-icon="videocam"></i>
-          <span>音画合流</span>
-        </button>
-        <button class="mode-tab-chip" data-type="VIDEO_ONLY" type="button">
-          <i data-icon="volume_off"></i>
-          <span>纯画面</span>
-        </button>
-        <button class="mode-tab-chip" data-type="AUDIO_ONLY" type="button">
-          <i data-icon="audiotrack"></i>
-          <span>提取音频</span>
-        </button>
-        <button class="mode-tab-chip" data-type="GIF" type="button">
-          <i data-icon="gif"></i>
-          <span>动态图</span>
-        </button>
-      </div>
-
-      <!-- 质量提示与警告 -->
-      <p class="caption" id="sheet-quality-evidence" hidden style="margin-top:12px"></p>
-      <p class="caption" id="sheet-quality-warning" hidden style="margin-top:6px;color:var(--status-error)"></p>
-
-      <!-- 视频清晰度与策略 -->
-      <div id="resolution-section" style="margin-top:14px">
-        <div class="caption" id="resolution-hint">选择视频分辨率 (自动合成最佳声音)</div>
-        <div class="quality-policy-bar">
-          <select id="quality-policy" aria-label="画质策略">
-            <option value="BEST_AVAILABLE">最高源画质（含 4K/8K）</option>
-            <option value="EXACT_FORMAT">下方精确格式</option>
-            <option value="MAX_2160">严格上限 4K</option>
-            <option value="TARGET_4320">指定 8K 档位</option>
-            <option value="COMPATIBLE">兼容优先 H.264</option>
-            <option value="HDR">最高 HDR 源</option>
-            <option value="SDR">最高 SDR 源</option>
-            <option value="FPS60">至少 60fps</option>
-          </select>
-          <select id="quality-container" aria-label="容器">
-            <option value="auto">自动容器</option>
-            <option value="mp4">MP4</option>
-            <option value="mkv">MKV</option>
-          </select>
-          <label class="row" style="font-size:12px;cursor:pointer">
-            <input type="checkbox" id="quality-allow-lower">
-            <span>允许较低画质</span>
-          </label>
-        </div>
-        <div class="format-list" id="format-options-container"></div>
-      </div>
-
-      <!-- 音频编码格式 -->
-      <div id="audio-format-section" hidden style="margin-top:14px">
-        <div class="caption" style="margin-bottom:8px">选择导出的音频格式</div>
-        <div class="format-list" id="audio-options-container">
-          <button class="format-row-item is-selected" data-audio="mp3" type="button">
-            <input type="radio" name="audio-fmt" checked tabindex="-1">
-            <span>MP3 (通用兼容 · 320kbps)</span>
-          </button>
-          <button class="format-row-item" data-audio="m4a" type="button">
-            <input type="radio" name="audio-fmt" tabindex="-1">
-            <span>M4A (AAC 高音质 · 小体积)</span>
-          </button>
-          <button class="format-row-item" data-audio="flac" type="button">
-            <input type="radio" name="audio-fmt" tabindex="-1">
-            <span>FLAC (无损音质)</span>
-          </button>
-          <button class="format-row-item" data-audio="opus" type="button">
-            <input type="radio" name="audio-fmt" tabindex="-1">
-            <span>OPUS (高压缩效率)</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- GIF 动图说明 -->
-      <div id="gif-format-section" hidden style="margin-top:14px">
-        <div class="gif-explain-card">
-          <strong>高保真 GIF 动图转换</strong>
-          • 内置 FFmpeg 双 Pass 调色板引擎，还原细腻生动色彩与紧凑体积<br>
-          • 导出为标准 .gif 格式，无需播放器即可直接预览与转发<br>
-          • 如需保存原画视频文件，可随时切换回「音画合流」下载为 MP4
-        </div>
-      </div>
-    </div>
-
-    <!-- 吸底固定操作栏 Sticky Footer -->
-    <div class="sheet__footer">
-      <button class="btn btn-primary btn-lg btn-block" id="btn-submit-download" type="button">
-        <i data-icon="download"></i>
-        <span id="submit-download-label">开始下载</span>
-      </button>
-      <button class="btn btn-outline btn-block" id="btn-sheet-secondary" hidden type="button">
-        <i data-icon="video_library"></i>
-        <span id="sheet-secondary-label"></span>
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ================= 各类 AlertDialog ================= -->
-<!-- 使用说明弹窗 -->
-<div class="dialog-overlay" id="guide-modal" hidden>
-  <div class="dialog dialog--wide" role="dialog" aria-modal="true" aria-labelledby="guide-title">
-    <div class="dialog__header">
-      <div>
-        <div class="dialog__title" id="guide-title">使用说明</div>
-        <div class="dialog__subtitle">OmniDownloader 全平台多媒体下载利器</div>
-      </div>
-      <div class="row">
-        <div class="omni-segmented" id="guide-lang" style="--seg-count:4;--seg-index:0;width:210px;height:36px">
-          <div class="omni-segmented__indicator"></div>
-          <button class="omni-segmented__tab is-active" data-lang="zh-cn" data-seg-idx="0" type="button">简中</button>
-          <button class="omni-segmented__tab" data-lang="zh-tw" data-seg-idx="1" type="button">繁中</button>
-          <button class="omni-segmented__tab" data-lang="en" data-seg-idx="2" type="button">EN</button>
-          <button class="omni-segmented__tab" data-lang="ja" data-seg-idx="3" type="button">日本語</button>
-        </div>
-        <button class="icon-btn icon-btn--sm" data-close="guide-modal" aria-label="关闭" type="button"><i data-icon="close"></i></button>
-      </div>
-    </div>
-    <div class="dialog__body" data-no-i18n>
-      <div class="guide-body stack" data-guide="zh-cn">
-        <div class="guide-block">
-          <h4>极速上手三步法</h4>
-          <ol>
-            <li><strong>复制链接</strong>：在哔哩哔哩、抖音、快手、小红书、TikTok、YouTube 等平台复制分享口令或网页地址。</li>
-            <li><strong>一键解析</strong>：点击【粘贴剪贴板】或粘贴后点击【立即解析】。</li>
-            <li><strong>选择格式下载</strong>：在底部弹窗选择音画合流、纯画面、音频或动图，开始下载。</li>
-          </ol>
-        </div>
-        <div class="guide-block guide-warn">
-          <h4>解锁 B站 4K / 1080P60（SESSDATA）</h4>
-          <ol>
-            <li>在浏览器打开 bilibili.com 并登录账号；</li>
-            <li>按 F12，进入 Application → Cookies → https://www.bilibili.com；</li>
-            <li>找到 <code>SESSDATA</code> 并复制其值，在【设置 → 账号】中粘贴并保存。</li>
-          </ol>
-        </div>
-      </div>
-      <div class="guide-body stack" data-guide="zh-tw" hidden>
-        <div class="guide-block">
-          <h4>極速上手三步驟</h4>
-          <ol>
-            <li><strong>複製連結</strong>：於 Bilibili、抖音、快手、小紅書、TikTok、YouTube 等平台複製分享口令或網址。</li>
-            <li><strong>一鍵解析</strong>：點選【貼上剪貼簿】後點擊【立即解析】。</li>
-            <li><strong>選擇格式下載</strong>：選擇音畫合流、純畫面、音訊或動圖後下載。</li>
-          </ol>
-        </div>
-        <div class="guide-block guide-warn">
-          <h4>解鎖 B站 4K / 1080P60（SESSDATA）</h4>
-          <ol>
-            <li>開啟 bilibili.com 並登入帳號；</li>
-            <li>按 F12 → Application → Cookies → https://www.bilibili.com 複製 <code>SESSDATA</code> 貼到【設定 → 帳號】。</li>
-          </ol>
-        </div>
-      </div>
-      <div class="guide-body stack" data-guide="en" hidden>
-        <div class="guide-block">
-          <h4>Quick Start</h4>
-          <ol>
-            <li><strong>Copy the URL</strong> from Bilibili, Douyin, TikTok, YouTube, Xiaohongshu, Kuaishou or X.</li>
-            <li><strong>Analyze</strong>: click Paste Clipboard or paste a link and tap Analyze.</li>
-            <li><strong>Download</strong>: select Video, Mute, Audio, or GIF in the format sheet.</li>
-          </ol>
-        </div>
-        <div class="guide-block guide-warn">
-          <h4>Unlock Bilibili 4K / 1080P60</h4>
-          <ol>
-            <li>Log in to bilibili.com in your browser, open DevTools → Application → Cookies, copy <code>SESSDATA</code>, and paste it in Settings → Accounts.</li>
-          </ol>
-        </div>
-      </div>
-      <div class="guide-body stack" data-guide="ja" hidden>
-        <div class="guide-block">
-          <h4>クイックスタート</h4>
-          <ol>
-            <li><strong>URLをコピー</strong>：Bilibili、TikTok、YouTube、小紅書などから動画URLをコピーします。</li>
-            <li><strong>解析開始</strong>：リンクを貼り付けて【解析開始】を押します。</li>
-            <li><strong>ダウンロード</strong>：動画・映像のみ・音声・GIF を選んでダウンロードします。</li>
-          </ol>
-        </div>
-        <div class="guide-block guide-warn">
-          <h4>Bilibili 4K / 1080P60 解放</h4>
-          <ol>
-            <li>bilibili.com にログインし、F12 → Application → Cookies から <code>SESSDATA</code> をコピーして設定 → アカウントに貼り付けて保存します。</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-    <div class="dialog__footer">
-      <button class="btn btn-primary" data-close="guide-modal" type="button">关闭</button>
-    </div>
-  </div>
-</div>
-
-<!-- 错误详情弹窗 (Android HomeScreen / TaskErrorSection 对齐) -->
 <div class="dialog-overlay" id="error-detail-modal" hidden>
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="error-detail-title">
     <div class="dialog__header">
@@ -995,8 +470,8 @@
       <button class="icon-btn icon-btn--sm" data-close="error-detail-modal" aria-label="关闭" type="button"><i data-icon="close"></i></button>
     </div>
     <div class="dialog__body">
-      <pre class="mono" id="error-detail-text" style="white-space:pre-wrap;word-break:break-word;margin:0;padding:12px;border-radius:10px;background:var(--surface-variant-30);font-size:12px;max-height:240px;overflow:auto"></pre>
-      <div class="caption" id="error-detail-tip" style="color:var(--primary)">提示: 解析 YouTube / X 需配合科学上网；如已开启代理，可在设置中配置代理端口。</div>
+      <pre class="mono" id="error-detail-text" style="white-space:pre-wrap;word-break:break-word;margin:0;padding:12px;border-radius:8px;background:var(--surface-variant-30);font-size:12px;max-height:240px;overflow:auto"></pre>
+      <div class="caption" id="error-detail-tip" style="color:var(--primary)">提示: 解析 YouTube / X 需配合科学上网；如已开启代理，可在客户端设置中配置代理端口。</div>
     </div>
     <div class="dialog__footer">
       <button class="btn btn-text" id="btn-error-go-settings" hidden type="button">前往设置</button>
@@ -1006,74 +481,6 @@
   </div>
 </div>
 
-<!-- 中转兼容须知弹窗 -->
-<div class="dialog-overlay" id="relay-compat-modal" hidden>
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="relay-compat-title">
-    <div class="dialog__header">
-      <div class="dialog__title-row">
-        <span class="omni-icon-box" style="border-radius:50%"><i data-icon="security"></i></span>
-        <div>
-          <div class="dialog__title" id="relay-compat-title">第三方网页使用须知</div>
-        </div>
-      </div>
-    </div>
-    <div class="dialog__body">
-      <div class="guide-block">
-        <h4>服务性质</h4>
-        <p>备用中转功能仅提供第三方网页的快捷导航与直链下载支持，本应用未与任何第三方站点合作，不保证其长期可用性。</p>
-      </div>
-      <div class="guide-block">
-        <h4>兼容性与网页行为</h4>
-        <p>人机验证、广告跳转、临时失效或防盗链拦截均属于第三方网页行为，建议优先使用原生直连解析。</p>
-      </div>
-      <div class="guide-block">
-        <h4>安全与隐私</h4>
-        <p>请勿在第三方网页输入账号、密码或敏感信息，防范钓鱼风险。</p>
-      </div>
-    </div>
-    <div class="dialog__footer">
-      <button class="btn btn-text" data-close="relay-compat-modal" type="button">取消</button>
-      <button class="btn btn-primary" id="btn-relay-compat-confirm" type="button">我已知晓并继续</button>
-    </div>
-  </div>
-</div>
-
-<!-- 添加中转站弹窗 -->
-<div class="dialog-overlay" id="add-relay-modal" hidden>
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="add-relay-title">
-    <div class="dialog__header">
-      <div class="dialog__title-row">
-        <span class="dialog__icon"><i data-icon="add"></i></span>
-        <div class="dialog__title" id="add-relay-title">添加网址</div>
-      </div>
-      <button class="icon-btn icon-btn--sm" data-close="add-relay-modal" aria-label="关闭" type="button"><i data-icon="close"></i></button>
-    </div>
-    <div class="dialog__body">
-      <p class="caption">输入网址后会自动检索网站名称，也可手动修改。</p>
-      <div class="field">
-        <label class="field__label" for="input-site-url">网站网址</label>
-        <div class="row">
-          <input class="input" id="input-site-url" type="text" placeholder="https://...">
-          <button class="icon-btn icon-btn--primary" id="btn-fetch-title" title="重新获取名称" aria-label="重新获取名称" type="button">
-            <i data-icon="refresh"></i>
-          </button>
-        </div>
-        <span class="field__hint" id="fetch-title-status" hidden style="color:var(--primary)">正在检索网页名称...</span>
-      </div>
-      <div class="field">
-        <label class="field__label" for="input-site-name">网站名称</label>
-        <input class="input" id="input-site-name" type="text" placeholder="例如：备用解析工具">
-      </div>
-      <p class="caption" id="add-relay-error" style="color:var(--status-error)" hidden></p>
-    </div>
-    <div class="dialog__footer">
-      <button class="btn btn-text" data-close="add-relay-modal" type="button">取消</button>
-      <button class="btn btn-primary" id="btn-submit-relay" type="button">确认添加</button>
-    </div>
-  </div>
-</div>
-
-<!-- 通用确认弹窗（支持可选勾选删除本地文件） -->
 <div class="dialog-overlay" id="confirm-modal" hidden>
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
     <div class="dialog__header">
@@ -1093,26 +500,7 @@
   </div>
 </div>
 
-<!-- yt-dlp 支持平台目录搜索弹窗 -->
-<div class="dialog-overlay" id="platform-catalog" hidden>
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="platform-catalog-title">
-    <div class="dialog__header">
-      <div class="dialog__title" id="platform-catalog-title">yt-dlp 支持的平台</div>
-      <button class="icon-btn icon-btn--sm" data-close="platform-catalog" aria-label="关闭" type="button"><i data-icon="close"></i></button>
-    </div>
-    <div class="dialog__body">
-      <p class="caption">当前引擎提供的解析器。可用格式以链接的实际解析结果为准，部分平台需要登录或额外组件。</p>
-      <input class="input" id="extractor-search" type="search" placeholder="搜索解析器...">
-      <div id="extractor-rows" style="max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:4px" aria-live="polite"></div>
-    </div>
-    <div class="dialog__footer">
-      <button class="btn btn-text" data-close="platform-catalog" type="button">关闭</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
-
-<script type="module" src="/static/js/app.js"></script>
+<script type="module" src="/static/js/web-lite.js"></script>
 </body>
 </html>

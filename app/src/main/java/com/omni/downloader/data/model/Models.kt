@@ -8,10 +8,10 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 enum class DownloadType(val label: String, val description: String) {
-    VIDEO_WITH_AUDIO("音画合流", "下载完整高清视频，自动合并最佳音轨"),
-    VIDEO_ONLY("仅无音频画面", "仅下载纯画面视频（无声），适合剪辑或背景素材"),
-    AUDIO_ONLY("直接提取音频", "抽取最高保真音轨并转码为音频文件"),
-    GIF("动图 (GIF)", "智能识别或转换为高画质动图文件，免去播放器即开即看"),
+    VIDEO_WITH_AUDIO("视频", "下载完整高清视频，自动合并最佳音轨"),
+    VIDEO_ONLY("纯画面", "仅下载纯画面视频（无声），适合剪辑或背景素材"),
+    AUDIO_ONLY("音频", "抽取最高保真音轨并转码为音频文件"),
+    GIF("GIF", "智能识别或转换为高画质动图文件，免去播放器即开即看"),
     COVER("保存封面", "下载并保存当前视频的高清原图封面至系统相册"),
     IMAGE("原始图片", "保留平台图片原始格式与动画"),
     IMAGE_ZIP("图文归档", "按作品顺序保存所选原图至 ZIP")

@@ -84,4 +84,10 @@ class NetscapeCookiesTest {
         val rows = NetscapeCookies.parse("SID=abc; HSID=def", setOf("youtube.com"), now)
         assertTrue(rows.isEmpty())
     }
+
+    @Test
+    fun pinterestIsExcludedFromCookieLoginPlatforms() {
+        assertFalse("Pinterest" in SessionPlatforms.all)
+        assertTrue(SessionPlatforms.domainsFor("Pinterest").isEmpty())
+    }
 }

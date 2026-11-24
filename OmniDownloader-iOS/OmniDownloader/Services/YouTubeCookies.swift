@@ -83,7 +83,17 @@ final class YouTubeCookies: ObservableObject {
         count = 0
         YouTubeSources.clear()
     }
-    static func failure(_ message: String) -> NSError { NSError(domain: "YouTube", code: 1, userInfo: [NSLocalizedDescriptionKey: message]) }
+    static func failure(_ message: String) -> NSError {
+        let localized: String
+        if message.hasPrefix("["), let end = message.firstIndex(of: "]") {
+            let code = String(message[..<end])
+            let body = message[message.index(after: end)...].trimmingCharacters(in: .whitespaces)
+            localized = "\(code)] \(OmniLocalization.text(body))"
+        } else {
+            localized = OmniLocalization.text(message)
+        }
+        return NSError(domain: "YouTube", code: 1, userInfo: [NSLocalizedDescriptionKey: localized])
+    }
 }
 
 struct YouTubeCookieSection: View {
@@ -91,15 +101,23 @@ struct YouTubeCookieSection: View {
     @State private var choosing = false
     @State private var message = ""
     var body: some View {
-        Section(header: Text("YouTube Cookie"), footer: Text("从已登录 YouTube 的浏览器导出 Netscape cookies.txt。仅导入 YouTube 域的有效会话，保存在本机钥匙串；平台仍可能要求人工验证。")) {
-            Text(store.count > 0 ? "已导入 \(store.count) 项 Cookie" : "尚未导入")
-            Button(store.count > 0 ? "更新 cookies.txt" : "导入 cookies.txt") { choosing = true }
-            if store.count > 0 { Button("移除 YouTube Cookie", role: .destructive) { store.clear(); message = "会话已移除" } }
-            Link("官方 Cookie 导出说明", destination: URL(string: "https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies")!)
+        Section(
+            header: Text(OmniLocalization.text("YouTube Cookie")),
+            footer: Text(OmniLocalization.text("从已登录 YouTube 的浏览器导出 Netscape cookies.txt。仅导入 YouTube 域的有效会话，保存在本机钥匙串；平台仍可能要求人工验证。"))
+        ) {
+            Text(store.count > 0 ? OmniLocalization.fmt("已导入 %d 项 Cookie", store.count) : OmniLocalization.text("尚未导入"))
+            Button(OmniLocalization.text(store.count > 0 ? "更新 cookies.txt" : "导入 cookies.txt")) { choosing = true }
+            if store.count > 0 {
+                Button(OmniLocalization.text("移除 YouTube Cookie"), role: .destructive) {
+                    store.clear()
+                    message = OmniLocalization.text("会话已移除")
+                }
+            }
+            Link(OmniLocalization.text("官方 Cookie 导出说明"), destination: URL(string: "https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies")!)
             if !message.isEmpty { Text(message).font(.caption).foregroundStyle(OmniPalette.secondary) }
         }
         .fileImporter(isPresented: $choosing, allowedContentTypes: [.plainText, .text, .data]) { result in
-            do { try store.importFile(result.get()); message = "已加密保存。请重新解析原 YouTube 链接。" }
+            do { try store.importFile(result.get()); message = OmniLocalization.text("已加密保存。请重新解析原 YouTube 链接。") }
             catch { message = error.localizedDescription }
         }
     }

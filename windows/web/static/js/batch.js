@@ -56,16 +56,16 @@ function setMode(manual) {
   const ta = $('batch-text');
   if (ta) {
     ta.rows = manual ? 2 : 4;
-    ta.placeholder = manual ? '粘贴单条链接...' : '粘贴包含多个视频或图文链接的分享文本，每批最多 100 条...';
+    ta.placeholder = t(manual ? '粘贴单条链接...' : '粘贴包含多个视频或图文链接的分享文本，每批最多 100 条...');
   }
   const addBtn = $('batch-add');
-  if (addBtn) addBtn.textContent = manual ? '添加链接' : '识别并添加';
+  if (addBtn) addBtn.textContent = t(manual ? '添加链接' : '识别并添加');
 }
 
 function showError(msg) {
   const el = $('batch-error');
   if (!el) return;
-  el.textContent = msg || '';
+  el.textContent = msg ? t(msg) : '';
   el.hidden = !msg;
 }
 
@@ -87,7 +87,7 @@ function renderDraftLinks() {
     card.className = 'batch-link-card';
     card.innerHTML = `
       <div class="batch-link-card__body"><div class="batch-link-card__url">${escapeHtml(url)}</div></div>
-      <button class="btn btn-text btn-sm" type="button">移除</button>`;
+      <button class="btn btn-text btn-sm" type="button">${escapeHtml(t('移除'))}</button>`;
     card.querySelector('button').addEventListener('click', () => {
       state.draftLinks = state.draftLinks.filter((u) => u !== url);
       saveDraftStorage();
@@ -260,17 +260,17 @@ export function initBatch() {
           const completed = files.filter((task) => task.status === 'COMPLETED').length;
           const failed = files.filter((task) => task.status === 'FAILED').length;
           const meta = STATUS_MAP[row.status] || { label: row.status, pill: '' };
-          const progText = files.length ? `完成 ${completed}/${files.length}${failed ? ` · 失败 ${failed}` : ''}` : '';
+          const progText = files.length ? t('完成 %d/%d', completed, files.length) + (failed ? t(' · 失败 %d', failed) : '') : '';
 
           const itemEl = document.createElement('div');
           itemEl.className = 'batch-job-row';
           itemEl.innerHTML = `
             <div class="row" style="gap:8px;align-items:flex-start">
-              <span class="omni-pill ${meta.pill}">${escapeHtml(meta.label)}</span>
+              <span class="omni-pill ${meta.pill}">${escapeHtml(t(meta.label))}</span>
               <span style="flex:1;min-width:0;font-size:13px;word-break:break-all">${escapeHtml(row.url)}</span>
-              ${!isRunning && row.status === 'FAILED' ? '<button class="btn btn-text btn-sm" data-single type="button">单条解析</button>' : ''}
+              ${!isRunning && row.status === 'FAILED' ? `<button class="btn btn-text btn-sm" data-single type="button">${escapeHtml(t('单条解析'))}</button>` : ''}
             </div>
-            ${progText || row.note ? `<div class="caption" style="color:${row.status === 'FAILED' ? 'var(--status-error)' : 'var(--text-2)'}">${escapeHtml([progText, row.note].filter(Boolean).join(' · '))}</div>` : ''}`;
+            ${progText || row.note ? `<div class="caption" style="color:${row.status === 'FAILED' ? 'var(--status-error)' : 'var(--text-2)'}">${escapeHtml([progText, row.note ? t(row.note) : ''].filter(Boolean).join(' · '))}</div>` : ''}`;
 
           const singleBtn = itemEl.querySelector('[data-single]');
           if (singleBtn) {
@@ -289,7 +289,7 @@ export function initBatch() {
           const stopBtn = document.createElement('button');
           stopBtn.type = 'button';
           stopBtn.className = 'btn btn-tonal btn-sm';
-          stopBtn.textContent = '停止添加下载';
+          stopBtn.textContent = t('停止添加下载');
           stopBtn.onclick = async () => {
             stopBtn.disabled = true;
             try { await post(`/api/batches/${job.id}/cancel`); await refresh(); }
@@ -301,7 +301,7 @@ export function initBatch() {
           const retryBtn = document.createElement('button');
           retryBtn.type = 'button';
           retryBtn.className = 'btn btn-primary btn-sm';
-          retryBtn.innerHTML = `${iconSvg('refresh')}<span>重试失败或停止的链接</span>`;
+          retryBtn.innerHTML = `${iconSvg('refresh')}<span>${escapeHtml(t('重试失败或停止的链接'))}</span>`;
           retryBtn.onclick = async () => {
             retryBtn.disabled = true;
             try { await post(`/api/batches/${job.id}/retry`); await refresh(); }

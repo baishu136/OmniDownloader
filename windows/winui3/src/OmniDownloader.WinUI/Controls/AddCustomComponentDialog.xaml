@@ -1,0 +1,40 @@
+<ContentDialog
+    x:Class="OmniDownloader.WinUI.Controls.AddCustomComponentDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:locui="using:OmniDownloader.WinUI.Helpers"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    locui:Localized.Title="添加自定义组件"
+    locui:Localized.PrimaryButtonText="确认添加"
+    locui:Localized.CloseButtonText="取消"
+    DefaultButton="Primary"
+    PrimaryButtonClick="AddCustomComponentDialog_PrimaryButtonClick">
+
+    <StackPanel Spacing="12" MinWidth="280" HorizontalAlignment="Stretch">
+        <TextBox
+            x:Name="NameBox"
+            locui:Localized.Header="组件名称"
+            locui:Localized.PlaceholderText="例如：自定义解析脚本 / Aria2 引擎" />
+
+        <TextBox
+            x:Name="DescriptionBox"
+            locui:Localized.Header="组件说明"
+            locui:Localized.PlaceholderText="简要描述该组件用途、依赖关系或触发条件" />
+
+        <ComboBox
+            x:Name="KindCombo"
+            HorizontalAlignment="Stretch"
+            SelectedIndex="0"
+            locui:Localized.Header="扩展类型">
+            <ComboBoxItem locui:Localized.Content="外部解析器" Tag="extractor" />
+            <ComboBoxItem locui:Localized.Content="后处理插件" Tag="postprocessor" />
+            <ComboBoxItem locui:Localized.Content="外部扩展服务" Tag="service" />
+        </ComboBox>
+
+        <TextBox
+            x:Name="EntryPointBox"
+            locui:Localized.Header="接入入口或路径（可选）"
+            locui:Localized.PlaceholderText="例如：http://127.0.0.1:6800 或 C:\tools\plugin.exe" />
+
+        <InfoBar x:Name="ErrorBar" IsOpen="False" IsClosable="False" Severity="Error" />
+    </StackPanel>
+</ContentDialog>

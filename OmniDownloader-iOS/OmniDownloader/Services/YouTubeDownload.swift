@@ -87,6 +87,7 @@ enum YouTubeDownload {
             guard Double(abs(size.width * size.height)) >= Double(source.width * source.height) * 0.98 else { throw YouTubeCookies.failure("[QUALITY_UNAVAILABLE] 成品低于所选源画质") }
         }
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        try FileManager.default.createDirectory(at: docs, withIntermediateDirectories: true)
         let destination = docs.appendingPathComponent("YouTube-\(identifier)-\(UUID().uuidString).\(output.pathExtension)")
         try FileManager.default.copyItem(at: output, to: destination)
         progress(1)

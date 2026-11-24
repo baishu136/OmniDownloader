@@ -23,12 +23,12 @@ public enum AudioFormat: String, Codable, CaseIterable {
     
     public var label: String {
         switch self {
-        case .mp3: return "MP3 通用音频 (标准码率)"
-        case .m4a: return "M4A 极速直出 (无损原轨)"
-        case .flac: return "FLAC 无损音频 (高解析度)"
-        case .wav: return "WAV 无损音频 (广播级)"
-        case .aac: return "AAC 高压缩比"
-        case .opus: return "OPUS 音频"
+        case .mp3: return OmniLocalization.text("MP3 通用音频 (标准码率)")
+        case .m4a: return OmniLocalization.text("M4A 极速直出 (无损原轨)")
+        case .flac: return OmniLocalization.text("FLAC 无损音频 (高解析度)")
+        case .wav: return OmniLocalization.text("WAV 无损音频 (广播级)")
+        case .aac: return OmniLocalization.text("AAC 高压缩比")
+        case .opus: return OmniLocalization.text("OPUS 音频")
         }
     }
 }

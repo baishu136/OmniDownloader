@@ -317,7 +317,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         analysisJob = launchAnalysis launch@{
             var file: File? = null
             try {
-                file = File.createTempFile("browser-image-item-", ".json", getApplication<android.app.Application>().cacheDir)
+                file = com.omni.downloader.engine.SafeFiles.createTempFile(
+                    com.omni.downloader.engine.SafeFiles.ensureCacheDir(getApplication()),
+                    "browser-image-item-",
+                    ".json"
+                )
                 file.writeText(item)
                 val json = com.omni.downloader.engine.SharedPython.run(getApplication(), "images-state", url, "抖音", proxyUrl.value,
                     taskId = processId, extra = listOf("--state-file", file.path))

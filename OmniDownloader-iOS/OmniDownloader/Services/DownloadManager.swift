@@ -21,7 +21,7 @@ extension Notification.Name { static let omniAnalyzeURL=Notification.Name("omniA
         let legacy=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("omni_tasks.json")
         let source=FileManager.default.fileExists(atPath:storage.path) ? storage:legacy
         if let data=try? Data(contentsOf:source),let saved=try? JSONDecoder().decode([DownloadTask].self,from:data){
-            tasks=saved.map{task in var item=task;if [.pending,.analyzing,.downloading,.processing].contains(item.status){item.status = .paused;item.errorMessage="应用退出中断了任务，可继续或重新解析"};return item}
+            tasks=saved.map{task in var item=task;if [.pending,.analyzing,.downloading,.processing].contains(item.status){item.status = .paused;item.errorMessage=OmniLocalization.text("应用退出中断了任务，可继续或重新解析")};return item}
             if source==legacy{saveTasks(force:true)}
         }
     }
@@ -72,17 +72,17 @@ extension Notification.Name { static let omniAnalyzeURL=Notification.Name("omniA
                     do{
                         if [.image,.gif,.cover].contains(task.downloadType){try await MediaSaver.shared.saveImageToAlbum(fileUrl:output)}
                         else{try await MediaSaver.shared.saveVideoToAlbum(fileUrl:output)}
-                    }catch{self.update(task.id){$0.errorMessage="文件已保存，相册写入未完成：\(error.localizedDescription)"}}
+                    }catch{self.update(task.id){$0.errorMessage=OmniLocalization.fmt("文件已保存，相册写入未完成：%@", error.localizedDescription)}}
                 }
                 if task.saveCover==true,!task.thumbnailUrl.isEmpty{
                     guard !Task.isCancelled,self.generations[task.id]==generation else{return}
-                    let cover=DownloadTask(url:task.url,title:task.title+"_封面",thumbnailUrl:task.thumbnailUrl,downloadType:.cover,mediaId:task.mediaId)
+                    let cover=DownloadTask(url:task.url,title:task.title+"_"+OmniLocalization.text("封面"),thumbnailUrl:task.thumbnailUrl,downloadType:.cover,mediaId:task.mediaId)
                     self.addTask(cover)
                 }
             }catch{
                 guard self.generations[task.id]==generation else{return}
                 if Task.isCancelled || error is CancellationError{return}
-                let message=error.localizedDescription
+                let message=OmniPlatform.formatError(error)
                 if message.contains("FOREGROUND_REQUIRED"){foregroundPaused.insert(task.id);self.update(task.id){$0.status = .paused;$0.errorMessage=message};return}
                 let waiting=["AUTH_REQUIRED","CHALLENGE_REQUIRED","SOURCE_EXPIRED","BROWSER_ASSIST_REQUIRED","COOKIE_INVALID"].contains{message.contains($0)}
                 self.update(task.id){$0.status=waiting ? .waitingForAuth:.failed;$0.errorMessage=message;$0.eta=""}

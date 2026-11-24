@@ -96,7 +96,7 @@ enum NativeMP4Probe {
         }
         guard scope==PlatformSession.shared.generation(input.siteName) else{throw CancellationError()}
         metadata.availableVideoFormats=MediaQuality.sorted(formats)
-        if let best=metadata.availableVideoFormats.first{metadata.qualityEvidence="本次最高规格：\(best.resolutionLabel) · \(best.dimensionsVerified==true ? "尺寸已实测":"平台标注，下载后核对")"}
+        if let best=metadata.availableVideoFormats.first{metadata.qualityEvidence=OmniLocalization.fmt("本次最高规格：%@ · %@", best.resolutionLabel, OmniLocalization.text(best.dimensionsVerified==true ? "尺寸已实测":"平台标注，下载后核对"))}
         MediaSources.shared.remember(metadata);return metadata
     }
 }

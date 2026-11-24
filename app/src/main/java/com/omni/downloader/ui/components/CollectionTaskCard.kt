@@ -36,6 +36,7 @@ import com.omni.downloader.data.model.TaskStatus
 import com.omni.downloader.data.repository.TaskProgress
 import com.omni.downloader.ui.design.LocalTabActive
 import com.omni.downloader.ui.localization.AppStrings
+import com.omni.downloader.ui.localization.progressText
 import com.omni.downloader.ui.localization.LocalAppStrings
 import com.omni.downloader.ui.theme.ErrorRed
 import com.omni.downloader.ui.theme.SuccessGreen
@@ -501,7 +502,7 @@ private fun CollectionProgressSection(
     } else null
     val currentProgress = activeProgressState?.progress ?: (activeTask?.progress ?: 0f)
     val currentSpeed = activeProgressState?.speedText ?: (activeTask?.speedText ?: "")
-    val currentEta = activeProgressState?.etaText ?: (activeTask?.etaText ?: "")
+    val currentEta = LocalAppStrings.current.progressText(activeProgressState?.etaText ?: (activeTask?.etaText ?: ""))
 
     // Only the active episode changes per tick; sum the fixed portion once.
     val fixedProgress = remember(tasks, activeTask?.id) {

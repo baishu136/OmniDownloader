@@ -8,7 +8,7 @@ import zipfile
 from tools.prepare_runtime import prepare
 
 BASE = Path(__file__).resolve().parent
-VERSION = '1.7.60'
+VERSION = '1.7.65'
 
 
 def main():
@@ -40,7 +40,7 @@ def main():
         import shutil
         for document in ('runtime-lock.json', 'THIRD_PARTY_NOTICES.md', 'README.md'):
             if (BASE / document).is_file(): shutil.copy2(BASE / document, result / document)
-        guide = BASE.parent / 'docs' / 'WINDOWS_LOGIN_1.7.59.md'
+        guide = BASE.parent / 'docs' / 'UNIFIED_WINDOWS_1.7.65.md'
         if guide.is_file(): shutil.copy2(guide, result / '登录会话修复说明.md')
         x_guide = BASE.parent / 'docs' / 'WINDOWS_X_1.7.60.md'
         if x_guide.is_file(): shutil.copy2(x_guide, result / 'X解析修复说明.md')

@@ -80,8 +80,8 @@ public sealed partial class TaskGroupViewModel : ObservableObject
     public string CollectionProgressSummary { get => _collectionProgressSummary; private set => SetProperty(ref _collectionProgressSummary, value); }
     public double CollectionProgressValue { get => _collectionProgressValue; private set => SetProperty(ref _collectionProgressValue, value); }
     public string CollectionExpandText => IsExpanded
-        ? $"收起明细 (共 {Entry.Items.Count} 集)"
-        : $"展开分集明细 (共 {Entry.Items.Count} 集 · 已完成 {Entry.CompletedCount})";
+        ? AppServices.Current.Loc.T("收起明细 (共 %d 集)", Entry.Items.Count)
+        : AppServices.Current.Loc.T("展开分集明细 (共 %d 集 · 已完成 %d)", Entry.Items.Count, Entry.CompletedCount);
     public bool CollectionHasCompleted { get => _collectionHasCompleted; private set => SetProperty(ref _collectionHasCompleted, value); }
     public bool CollectionHasActive { get => _collectionHasActive; private set => SetProperty(ref _collectionHasActive, value); }
     public string CollectionPlayText { get => _collectionPlayText; private set => SetProperty(ref _collectionPlayText, value); }
@@ -102,7 +102,7 @@ public sealed partial class TaskGroupViewModel : ObservableObject
         IsSingle = !entry.IsCollection;
         var p = entry.PrimaryItem;
         Primary = p;
-        Title = string.IsNullOrWhiteSpace(entry.Title) ? "下载任务" : entry.Title;
+        Title = string.IsNullOrWhiteSpace(entry.Title) ? AppServices.Current.Loc.T("下载任务") : entry.Title;
 
         TypeBadge = AppServices.Current.Loc.T(OmniDomainLogic.TypeLabelKey(p.DownloadType));
         StatusBadge = AppServices.Current.Loc.T(OmniDomainLogic.StatusLabelKey(p.Status));
@@ -117,7 +117,7 @@ public sealed partial class TaskGroupViewModel : ObservableObject
             : $"{clamped:0}%{(string.IsNullOrWhiteSpace(p.SpeedText) ? "" : " · " + p.SpeedText)}";
         EtaSummary = string.IsNullOrWhiteSpace(p.EtaText)
             ? string.Empty
-            : AppServices.Current.Loc.T("剩余 %s", p.EtaText);
+            : AppServices.Current.Loc.T("剩余 %s", AppServices.Current.Loc.T(p.EtaText));
         FileSizeText = p.FileSizeText ?? string.Empty;
         ErrorText = string.IsNullOrWhiteSpace(p.ErrorMessage)
             ? string.Empty
@@ -128,7 +128,7 @@ public sealed partial class TaskGroupViewModel : ObservableObject
         PrimaryActionGlyph = OmniDomainLogic.TaskViewActionGlyph(p);
 
         CollectionBadge = AppServices.Current.Loc.T("合集 · %d 集", entry.Items.Count);
-        CollectionProgressSummary = $"总进度：已完成 {entry.CompletedCount}/{entry.Items.Count} 集 ({entry.OverallProgress:0}%)";
+        CollectionProgressSummary = AppServices.Current.Loc.T("总进度：已完成 %d/%d 集 (%d%%)", entry.CompletedCount, entry.Items.Count, (int)Math.Round(entry.OverallProgress));
         CollectionProgressValue = entry.OverallProgress;
         CollectionHasCompleted = entry.Items.Any(t => t.Status == "COMPLETED");
         CollectionHasActive = entry.Items.Any(t => t.IsActive);
@@ -208,9 +208,9 @@ public sealed partial class TaskEpisodeViewModel : ObservableObject
         DetailLine = task.Status switch
         {
             "DOWNLOADING" => $"{task.Progress:0}% {(string.IsNullOrWhiteSpace(task.SpeedText) ? "" : "· " + task.SpeedText)}",
-            "PROCESSING" => "正在合并",
-            "COMPLETED" => string.IsNullOrWhiteSpace(task.FileSizeText) ? "已完成" : task.FileSizeText,
-            "FAILED" => string.IsNullOrWhiteSpace(task.ErrorMessage) ? "失败" : task.ErrorMessage,
+            "PROCESSING" => AppServices.Current.Loc.T("正在合并"),
+            "COMPLETED" => string.IsNullOrWhiteSpace(task.FileSizeText) ? AppServices.Current.Loc.T("已完成") : task.FileSizeText,
+            "FAILED" => string.IsNullOrWhiteSpace(task.ErrorMessage) ? AppServices.Current.Loc.T("失败") : task.ErrorMessage,
             _ => badge
         };
         ActionText = AppServices.Current.Loc.T(OmniDomainLogic.TaskViewActionText(task));
@@ -266,6 +266,7 @@ public sealed partial class TasksViewModel : ObservableObject
             OnPropertyChanged(nameof(ActiveTabText));
             OnPropertyChanged(nameof(CompletedTabText));
             OnPropertyChanged(nameof(ActiveSubtitle));
+            OnPropertyChanged(nameof(EmptyTitle));
             RebuildVisible();
         };
     }
@@ -465,7 +466,7 @@ public sealed partial class TasksViewModel : ObservableObject
         var stack = new StackPanel { Spacing = 10 };
         stack.Children.Add(new TextBlock
         {
-            Text = $"确定删除任务「{task.Title}」？",
+            Text = _services.Loc.T("确定删除任务「%s」？", task.Title),
             TextWrapping = Microsoft.UI.Xaml.TextWrapping.WrapWholeWords
         });
         stack.Children.Add(checkBox);
@@ -505,14 +506,14 @@ public sealed partial class TasksViewModel : ObservableObject
         var stack = new StackPanel { Spacing = 10 };
         stack.Children.Add(new TextBlock
         {
-            Text = $"确定删除合集「{group.Title}」的全部 {group.Entry.Items.Count} 条任务记录？",
+            Text = _services.Loc.T("确定删除合集「%s」的全部 %d 条任务记录？", group.Title, group.Entry.Items.Count),
             TextWrapping = Microsoft.UI.Xaml.TextWrapping.WrapWholeWords
         });
         stack.Children.Add(checkBox);
 
         var dialog = new ContentDialog
         {
-            Title = "删除合集记录",
+            Title = _services.Loc.T("删除合集记录"),
             Content = stack,
             PrimaryButtonText = _services.Loc.T("删除"),
             CloseButtonText = _services.Loc.T("取消"),

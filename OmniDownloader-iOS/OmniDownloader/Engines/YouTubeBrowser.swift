@@ -41,20 +41,20 @@ struct YouTubeBrowserSheet: View {
     let onResolved: (VideoMetadata) -> Void
     @Environment(\.presentationMode) private var presentation
     @State private var metadata: VideoMetadata?
-    @State private var detail = "正在载入 YouTube 会话。请在页面中播放目标视频，选择所需清晰度。"
+    @State private var detail = OmniLocalization.text("正在载入 YouTube 会话。请在页面中播放目标视频，选择所需清晰度。")
     var body: some View {
         NavigationView {
             VStack(spacing: 10) {
                 Text(detail).font(.caption).padding(.horizontal)
-                YouTubeWebView(url: url, onMetadata: { value in metadata = value; detail = "已确认 \(value.availableVideoFormats.count) 个可下载的 MP4 格式。" }, onError: { metadata = nil; detail = $0 })
-                Text("本机解析需要页面实际取得完整 MP4/AAC 地址；直播、DRM、分段流及未取得的加密地址不作为下载成功。更高清画质可先在播放器中切换。")
+                YouTubeWebView(url: url, onMetadata: { value in metadata = value; detail = OmniLocalization.fmt("已确认 %d 个可下载的 MP4 格式。", value.availableVideoFormats.count) }, onError: { metadata = nil; detail = $0 })
+                Text(OmniLocalization.text("本机解析需要页面实际取得完整 MP4/AAC 地址；直播、DRM、分段流及未取得的加密地址不作为下载成功。更高清画质可先在播放器中切换。"))
                     .font(.caption2).foregroundStyle(OmniPalette.secondary).padding(.horizontal)
-                Button("使用已解析资源") { if let value = metadata { onResolved(value); presentation.wrappedValue.dismiss() } }
+                Button(OmniLocalization.text("使用已解析资源")) { if let value = metadata { onResolved(value); presentation.wrappedValue.dismiss() } }
                     .disabled(metadata == nil).buttonStyle(.borderedProminent).padding(.bottom, 8)
             }
             .background(OmniPalette.background).tint(OmniPalette.primary)
             .navigationTitle("YouTube").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("关闭") { presentation.wrappedValue.dismiss() } } }
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button(OmniLocalization.text("关闭")) { presentation.wrappedValue.dismiss() } } }
         }
         .navigationViewStyle(.stack)
     }
@@ -74,7 +74,7 @@ private struct YouTubeWebView: UIViewRepresentable {
         let web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = context.coordinator
         context.coordinator.web = web
-        guard let identifier = YouTubeSources.videoID(url), let target = URL(string: "https://m.youtube.com/watch?v=\(identifier)") else { onError("需要单个 YouTube 视频链接"); return web }
+        guard let identifier = YouTubeSources.videoID(url), let target = URL(string: "https://m.youtube.com/watch?v=\(identifier)") else { onError(OmniLocalization.text("需要单个 YouTube 视频链接")); return web }
         Task { @MainActor in
             do {
                 for cookie in try YouTubeCookies.shared.cookies() {
@@ -97,11 +97,11 @@ private struct YouTubeWebView: UIViewRepresentable {
         weak var web: WKWebView?
         private var sources: [String: YouTubeSource] = [:]
         init(parent: YouTubeWebView) { self.parent = parent }
-        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { parent.onError("网络加载失败，请检查 iPhone 网络或系统 VPN") }
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { parent.onError(OmniLocalization.text("网络加载失败，请检查 iPhone 网络或系统 VPN")) }
         func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             if action.targetFrame?.isMainFrame != false, let target = action.request.url, let host = target.host?.lowercased(),
                !(host == "youtube.com" || host.hasSuffix(".youtube.com") || host == "accounts.google.com") {
-                parent.onError("请保持在目标 YouTube 页面中解析")
+                parent.onError(OmniLocalization.text("请保持在目标 YouTube 页面中解析"))
                 decisionHandler(.cancel); return
             }
             decisionHandler(.allow)
@@ -112,10 +112,10 @@ private struct YouTubeWebView: UIViewRepresentable {
                   let expected = YouTubeSources.videoID(parent.url), let payload = message.body as? [String: Any] else { return }
             guard payload["videoId"] as? String == expected else {
                 sources.removeAll()
-                parent.onError("页面已切换，请返回最初请求的视频后重新解析")
+                parent.onError(OmniLocalization.text("页面已切换，请返回最初请求的视频后重新解析"))
                 return
             }
-            if let error = payload["error"] as? String { parent.onError(error == "LOGIN_REQUIRED" ? "YouTube 要求验证登录，请更新 Cookie 或在页面中完成人工验证" : "YouTube 当前未允许播放目标视频"); return }
+            if let error = payload["error"] as? String { parent.onError(OmniLocalization.text(error == "LOGIN_REQUIRED" ? "YouTube 要求验证登录，请更新 Cookie 或在页面中完成人工验证" : "YouTube 当前未允许播放目标视频")); return }
             guard let rows = payload["formats"] as? [[String: Any]], rows.count <= 100 else { return }
             for row in rows {
                 guard let itag = row["itag"] as? String, itag.range(of: "^\\d{1,5}$", options: .regularExpression) != nil,
@@ -146,10 +146,10 @@ private struct YouTubeWebView: UIViewRepresentable {
             guard !videos.isEmpty else { return }
             YouTubeSources.save(expected, .init(created: Date(), fingerprint: YouTubeCookies.shared.fingerprint, title: title, author: author, duration: duration, sources: sources))
             let options = videos.map { source in FormatOption(formatId: "yt:\(source.itag)", resolutionLabel: "\(source.height)p · \(source.width)×\(source.height)",
-                width: source.width, height: source.height, fps: source.fps, approximateSize: "\(source.bytes / 1_048_576) MB", note: source.hasAudio ? "音画合流" : "独立视频轨") }
-            let audio = sources.values.filter { $0.mime.hasPrefix("audio/") }.map { FormatOption(formatId: "yt:\($0.itag)", resolutionLabel: "AAC 音轨", ext: "m4a", isAudioOnly: true) }
+                width: source.width, height: source.height, fps: source.fps, approximateSize: "\(source.bytes / 1_048_576) MB", note: OmniLocalization.text(source.hasAudio ? "音画合流" : "独立视频轨")) }
+            let audio = sources.values.filter { $0.mime.hasPrefix("audio/") }.map { FormatOption(formatId: "yt:\($0.itag)", resolutionLabel: OmniLocalization.text("AAC 音轨"), ext: "m4a", isAudioOnly: true) }
             parent.onMetadata(VideoMetadata(url: "https://www.youtube.com/watch?v=\(expected)", title: title, author: author,
-                durationText: "\(Int(duration))秒", siteName: "YouTube", availableVideoFormats: options, availableAudioFormats: audio))
+                durationText: OmniLocalization.fmt("%d秒", Int(duration)), siteName: "YouTube", availableVideoFormats: options, availableAudioFormats: audio))
         }
     }
     private static let script = #"""

@@ -55,14 +55,14 @@ struct BatchEntry:Identifiable,Codable {
             try FileManager.default.createDirectory(at:file.deletingLastPathComponent(),withIntermediateDirectories:true)
             let data=try JSONEncoder().encode(Snapshot(draft:draft,rows:rows,mode:mode,audio:audioFormat,height:maxHeight,episodes:allEpisodes,cover:saveCover))
             try data.write(to:file,options:[.atomic,.completeFileProtectionUntilFirstUserAuthentication])
-        }catch{notice="批量草稿保存失败"}
+        }catch{notice=OmniLocalization.text("批量草稿保存失败")}
     }
     func prepare() {
         guard !running else{return}
         let urls=BatchInput.links(draft)
-        guard urls.count<=100 else{notice="单次最多 100 条链接，请拆分后导入";return}
+        guard urls.count<=100 else{notice=OmniLocalization.text("单次最多 100 条链接，请拆分后导入");return}
         let old=Dictionary(rows.map{($0.url,$0)},uniquingKeysWith:{first,_ in first})
-        rows=urls.map{old[$0] ?? BatchEntry(url:$0)};notice=urls.isEmpty ? "没有找到可用链接":"已整理 \(rows.count) 条链接";save()
+        rows=urls.map{old[$0] ?? BatchEntry(url:$0)};notice=urls.isEmpty ? OmniLocalization.text("没有找到可用链接"):OmniLocalization.fmt("已整理 %d 条链接", rows.count);save()
     }
     func clear(){guard !running else{return};draft="";rows=[];notice="";save()}
     func cancel(){epoch=UUID();operation?.cancel();operation=nil;running=false;for i in rows.indices where rows[i].state=="解析中"{rows[i].state="等待"};save()}
@@ -108,7 +108,7 @@ struct BatchEntry:Identifiable,Codable {
                 let formats=MediaQuality.sorted(value.availableVideoFormats.filter{!$0.isAudioOnly && (maxHeight==0 || ($0.width>0 && $0.height>0 && min($0.width,$0.height)<=maxHeight))})
                 let selected=kind == .audioOnly ? value.availableAudioFormats.first ?? formats.first:formats.first
                 guard selected != nil || kind == .cover || (kind == .gif && value.isGif) else{throw OmniPlatform.error("FORMAT_NOT_AVAILABLE","没有符合所选画质的媒体源")}
-                return DownloadTask(url:value.url,title:value.title,author:value.author,thumbnailUrl:value.thumbnailUrl,downloadType:kind,selectedResolution:selected?.resolutionLabel ?? "原始",audioFormat:audioFormat,collectionId:group,collectionTitle:metadata.title,episodeIndex:index+1,episodeTotal:values.count,selectedVideoFormatId:selected?.formatId,mediaId:value.mediaId,expectedDurationMs:value.expectedDurationMs,selectedWidth:selected?.width,selectedHeight:selected?.height,saveCover:saveCover,selectedFPS:selected?.fps,selectedDynamicRange:selected?.dynamicRange,selectedCodec:selected?.vcodec)
+                return DownloadTask(url:value.url,title:value.title,author:value.author,thumbnailUrl:value.thumbnailUrl,downloadType:kind,selectedResolution:selected?.resolutionLabel ?? OmniLocalization.text("原始"),audioFormat:audioFormat,collectionId:group,collectionTitle:metadata.title,episodeIndex:index+1,episodeTotal:values.count,selectedVideoFormatId:selected?.formatId,mediaId:value.mediaId,expectedDurationMs:value.expectedDurationMs,selectedWidth:selected?.width,selectedHeight:selected?.height,saveCover:saveCover,selectedFPS:selected?.fps,selectedDynamicRange:selected?.dynamicRange,selectedCodec:selected?.vcodec)
             }
             MediaSources.shared.remember(metadata);return output
         }

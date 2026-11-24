@@ -124,13 +124,16 @@ class ThemeAndPlatformMotionTest {
         }
         compose.mainClock.advanceTimeBy(100)
         val midway = compose.onNodeWithTag("home_platforms").fetchSemanticsNode().boundsInRoot.height
-        assertEquals(toggle, compose.onNodeWithTag("home_platforms_toggle").fetchSemanticsNode().boundsInRoot)
+        val expandingToggle = compose.onNodeWithTag("home_platforms_toggle").fetchSemanticsNode().boundsInRoot
+        assertTrue(expandingToggle.top > toggle.top)
         compose.mainClock.advanceTimeBy(500)
         val end = compose.onNodeWithTag("home_platforms").fetchSemanticsNode().boundsInRoot.height
         assertTrue(midway > before.height); assertTrue(midway < end)
         compose.onNodeWithText("Reddit").assertIsDisplayed()
         compose.onNodeWithTag("ytdlp_platforms_open").assertIsDisplayed()
-        assertEquals(toggle, compose.onNodeWithTag("home_platforms_toggle").fetchSemanticsNode().boundsInRoot)
+        val expandedToggle = compose.onNodeWithTag("home_platforms_toggle").fetchSemanticsNode().boundsInRoot
+        assertTrue(expandedToggle.top > toggle.top)
+        assertTrue(expandedToggle.right <= before.right + 1)
         assertEvenPlatformRows()
         compose.mainClock.autoAdvance = true
         compose.waitForIdle()

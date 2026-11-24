@@ -68,6 +68,7 @@ object FFmpegExecutor {
         videoFile: File,
         outputFile: File
     ): Result<Unit> = withContext(Dispatchers.IO) {
+        if (GifInspector.inspect(videoFile) != null) return@withContext gifToMp4(context, videoFile, outputFile)
         val ffmpeg = getFFmpegBinary(context)
             ?: return@withContext Result.failure(Exception("未能找到 FFmpeg 核心执行组件"))
 
@@ -118,23 +119,51 @@ object FFmpegExecutor {
         executeCommand(context, commands)
     }
 
-    /**
-     * 视频转换为 GIF 动图
-     */
+    /** Decode GIF frames and encode a real H.264 MP4; never just change the extension. */
+    suspend fun gifToMp4(context: Context, input: File, output: File): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            require(GifInspector.inspect(input) != null) { "[POSTPROCESS_FAILED] GIF 源文件无效" }
+            require(input.canonicalFile != output.canonicalFile) { "[POSTPROCESS_FAILED] 源与成品路径相同" }
+            val ffmpeg = getFFmpegBinary(context) ?: error("[ENGINE_UNAVAILABLE] FFmpeg")
+            executeCommand(context, listOf(ffmpeg.path, "-y", "-ignore_loop", "1", "-i", input.path,
+                "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2", "-vsync", "vfr", "-an", "-c:v", "libx264",
+                "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-f", "mp4", output.path)).getOrThrow()
+            val prefix = ByteArray(12)
+            val prefixSize = output.inputStream().use { it.read(prefix) }
+            check(prefixSize >= 8 && prefix.copyOfRange(4, 8).toString(Charsets.US_ASCII) == "ftyp") { "[POSTPROCESS_FAILED] MP4 容器无效" }
+            val probe = MediaVerifier.probeWithFallback(context, output)
+            check(probe != null && probe.width > 0 && probe.height > 0 && probe.durationMs > 0) { "[POSTPROCESS_FAILED] MP4 成品无法解码" }
+            Result.success(Unit)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (error: Exception) { if (input.canonicalFile != output.canonicalFile) output.delete(); Result.failure(error) }
+    }
+
+    /** 视频转换为 GIF 动图。 */
     suspend fun convertToGif(
         context: Context,
         inputFile: File,
         outputFile: File
     ): Result<Unit> = withContext(Dispatchers.IO) {
+        if (inputFile.canonicalFile == outputFile.canonicalFile && GifInspector.inspect(inputFile) == null) {
+            val temporary = SafeFiles.createTempFile(outputFile.parentFile ?: SafeFiles.ensureCacheDir(context), "gif-converted-", ".gif")
+            return@withContext try {
+                convertToGif(context, inputFile, temporary).getOrThrow()
+                SafeFiles.safeCopy(temporary, outputFile, overwrite = true)
+                Result.success(Unit)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (error: Exception) { Result.failure(error) }
+            finally { temporary.delete() }
+        }
         if (GifInspector.inspect(inputFile) != null) {
             MediaVerifier.verifyGif(inputFile)?.let { return@withContext Result.failure(Exception(it)) }
-            if (inputFile.canonicalFile != outputFile.canonicalFile) inputFile.copyTo(outputFile, overwrite = true)
+            if (inputFile.canonicalFile != outputFile.canonicalFile) SafeFiles.safeCopy(inputFile, outputFile, overwrite = true)
             return@withContext Result.success(Unit)
         }
         val ffmpeg = getFFmpegBinary(context)
             ?: return@withContext Result.failure(Exception("未能找到 FFmpeg 核心执行组件"))
+        SafeFiles.ensureDir(outputFile.parentFile)
         outputFile.delete()
-        val palette = File.createTempFile("omni-gif-palette-", ".png", context.cacheDir)
+        val palette = SafeFiles.createTempFile(SafeFiles.ensureCacheDir(context), "omni-gif-palette-", ".png")
         val scale = "fps=15,scale='min(480,iw)':-1:flags=lanczos"
         try {
             // A single split graph buffers the whole video until palettegen
@@ -179,7 +208,7 @@ object FFmpegExecutor {
             FFmpegRuntime.ensure(context)
 
             val pb = ProcessBuilder(commands)
-            pb.directory(context.cacheDir)
+            pb.directory(SafeFiles.ensureCacheDir(context))
             pb.redirectErrorStream(true)
 
             // 关键：注入动态库检索环境变量，防止 linker64 找不到 libav*.so 导致崩溃

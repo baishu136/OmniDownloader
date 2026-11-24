@@ -224,8 +224,9 @@ public sealed class DomainLogicAndApiTests
     public void BackendProcessManager_ChecksSemanticBackendVersionCompatibility()
     {
         Assert.False(BackendProcessManager.IsVersionAtLeast("1.7.51", BackendProcessManager.MinimumRequiredBackendVersion));
+        Assert.False(BackendProcessManager.IsVersionAtLeast("1.7.60", BackendProcessManager.MinimumRequiredBackendVersion));
         Assert.False(BackendProcessManager.IsVersionAtLeast(null, BackendProcessManager.MinimumRequiredBackendVersion));
-        Assert.True(BackendProcessManager.IsVersionAtLeast("1.7.59", BackendProcessManager.MinimumRequiredBackendVersion));
+        Assert.True(BackendProcessManager.IsVersionAtLeast("1.7.63", BackendProcessManager.MinimumRequiredBackendVersion));
         Assert.True(BackendProcessManager.IsVersionAtLeast("v1.8.0", BackendProcessManager.MinimumRequiredBackendVersion));
     }
 
@@ -320,13 +321,13 @@ public sealed class DomainLogicAndApiTests
             if (path == "/api/settings")
             {
                 return StubHttpMessageHandler.Json(HttpStatusCode.OK, """
-                    {"downloadDir":"C:\\Downloads","theme":"dark","version":"1.7.60"}
+                    {"downloadDir":"C:\\Downloads","theme":"dark","version":"1.7.63"}
                     """);
             }
             if (path == "/api/platforms")
             {
                 Interlocked.Increment(ref platformCalls);
-                return StubHttpMessageHandler.Json(HttpStatusCode.OK, """{"version":"1.7.60","extractors":[]}""");
+                return StubHttpMessageHandler.Json(HttpStatusCode.OK, """{"version":"1.7.63","extractors":[]}""");
             }
             return StubHttpMessageHandler.Json(HttpStatusCode.NotFound, "{}");
         });
@@ -338,7 +339,7 @@ public sealed class DomainLogicAndApiTests
         var ok = await mgr.EnsureConnectedAsync(client, "http://localhost:58000", autoStartIfOffline: false);
 
         Assert.True(ok);
-        Assert.Equal("1.7.60", mgr.ConnectedVersion);
+        Assert.Equal("1.7.63", mgr.ConnectedVersion);
         Assert.False(mgr.IsOutdatedBackend);
         Assert.Equal(0, platformCalls);
 
@@ -363,6 +364,230 @@ public sealed class DomainLogicAndApiTests
         finally
         {
             if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void FormatOption_And_GridSizing_ExposeTileResolutionFormatAndSize()
+    {
+        var h264 = new FormatOption
+        {
+            FormatId = "1",
+            Width = 480,
+            Height = 654,
+            Ext = "mp4",
+            VCodec = "avc1.64001F",
+            VideoBitrateKbps = 0,
+            ApproximateSize = ""
+        };
+        Assert.Equal("480×654", h264.TileResolutionText);
+        Assert.Equal("480p", h264.TileTierBadgeText);
+        Assert.Equal("MP4 · H.264", h264.TileFormatText);
+        Assert.Equal("自动体积", h264.TileSizeText);
+
+        var hdr4k = new FormatOption
+        {
+            FormatId = "2",
+            Width = 3840,
+            Height = 2160,
+            Fps = 60,
+            DynamicRange = "HDR",
+            Ext = "webm",
+            VCodec = "vp09.02.10",
+            ApproximateSize = "128.4 MB"
+        };
+        Assert.Equal("3840×2160", hdr4k.TileResolutionText);
+        Assert.Equal("4K", hdr4k.TileTierBadgeText);
+        Assert.Equal("WEBM · VP9 · 60fps · HDR", hdr4k.TileFormatText);
+        Assert.Equal("128.4 MB", hdr4k.TileSizeText);
+
+        Assert.Equal(4, OmniDomainLogic.ComputeFormatGridColumnsAndTileWidth(720).Columns);
+        Assert.Equal(3, OmniDomainLogic.ComputeFormatGridColumnsAndTileWidth(560).Columns);
+        Assert.Equal(2, OmniDomainLogic.ComputeFormatGridColumnsAndTileWidth(380).Columns);
+        Assert.Equal(1, OmniDomainLogic.ComputeFormatGridColumnsAndTileWidth(280).Columns);
+    }
+
+    [Fact]
+    public void ThemeAccentHelper_NormalizesComputesPaletteAndSelectsContrastText()
+    {
+        Assert.Equal("system", ThemeAccentHelper.NormalizeSetting(null));
+        Assert.Equal("system", ThemeAccentHelper.NormalizeSetting("auto"));
+        Assert.Equal("system", ThemeAccentHelper.NormalizeSetting("invalid-hex"));
+        Assert.Equal("#3B5BDB", ThemeAccentHelper.NormalizeSetting("3b5bdb"));
+        Assert.Equal("#FF0088", ThemeAccentHelper.NormalizeSetting("#AAFF0088"));
+
+        Assert.True(ThemeAccentHelper.TryParseHexRgb("#FACC15", out var brightYellow));
+        Assert.True(ThemeAccentHelper.ShouldUseDarkForeground(brightYellow));
+
+        Assert.True(ThemeAccentHelper.TryParseHexRgb("#1E293B", out var darkSlate));
+        Assert.False(ThemeAccentHelper.ShouldUseDarkForeground(darkSlate));
+
+        var palette = ThemeAccentHelper.ComputePalette(new RgbColor(59, 91, 219));
+        Assert.True(palette.Light2.R > palette.Base.R);
+        Assert.True(palette.Dark2.B < palette.Base.B);
+    }
+
+    [Fact]
+    public void ComponentCatalog_LocksRequiredAndSupportsOptionalPlusCustomPersistence()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "omni-comp-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            using (var svc = new LocalStateService(tempDir))
+            {
+                svc.Current.AccentColor = "#8B5CF6";
+                svc.Current.DisabledOptionalComponentIds.Add("deno-runtime");
+                svc.Current.CustomComponents.Add(new CustomComponentEntry
+                {
+                    Id = "custom-aria2",
+                    Name = "Aria2 下载扩展",
+                    Description = "高速多连接分片调度",
+                    Kind = "service",
+                    EntryPoint = "http://127.0.0.1:6800",
+                    Enabled = true
+                });
+                svc.Save();
+            }
+
+            using var reloaded = new LocalStateService(tempDir);
+            Assert.Equal("#8B5CF6", reloaded.Current.AccentColor);
+            var diag = new EngineDiagnostics
+            {
+                Python = "3.12.11",
+                YtDlp = "2026.10.26",
+                Ejs = "0.1.0",
+                FfmpegAvailable = true,
+                DenoAvailable = false
+            };
+
+            var items = ComponentCatalog.BuildItems(
+                reloaded.Current,
+                diag,
+                isBackendConnected: true,
+                serviceBaseUrl: "http://127.0.0.1:58000",
+                translate: s => s,
+                translateFormat: (tpl, args) => tpl.Replace("%s", args.FirstOrDefault()?.ToString() ?? string.Empty));
+
+            var core = items.Where(i => i.IsRequired).ToList();
+            Assert.Equal(4, core.Count);
+            Assert.All(core, item =>
+            {
+                Assert.True(item.IsEnabled);
+                Assert.False(item.CanToggle);
+            });
+
+            var deno = items.First(i => i.Id == "deno-runtime");
+            Assert.False(deno.IsRequired);
+            Assert.True(deno.CanToggle);
+            Assert.False(deno.IsEnabled);
+
+            var custom = items.First(i => i.Id == "custom-aria2");
+            Assert.True(custom.IsCustom);
+            Assert.True(custom.CanToggle);
+            Assert.True(custom.IsEnabled);
+            Assert.Contains("Aria2", custom.DisplayName);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void OnboardingAndClosePreferencesPersistAcrossRestarts()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "omni-onboard-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            using (var svc = new LocalStateService(tempDir))
+            {
+                Assert.True(svc.Current.ShowRecentTasksOnHome);
+                Assert.True(svc.Current.EnableWebService);
+                Assert.False(svc.Current.HasCompletedOnboarding);
+                Assert.True(svc.Current.FollowDefaultDownloadDir);
+
+                svc.Current.ShowRecentTasksOnHome = false;
+                svc.Current.EnableWebService = false;
+                svc.Current.HasCompletedOnboarding = true;
+                svc.Current.FollowDefaultDownloadDir = false;
+                svc.Current.VideoDownloadDir = @"C:\Media\Videos";
+                svc.Current.ImageDownloadDir = @"C:\Media\Images";
+                svc.Current.AudioDownloadDir = @"C:\Media\Audio";
+                svc.Current.AlwaysRememberCloseBehavior = true;
+                svc.Current.SavedCloseBehavior = "tray";
+                svc.Save();
+            }
+
+            using var reloaded = new LocalStateService(tempDir);
+            Assert.False(reloaded.Current.ShowRecentTasksOnHome);
+            Assert.False(reloaded.Current.EnableWebService);
+            Assert.True(reloaded.Current.HasCompletedOnboarding);
+            Assert.False(reloaded.Current.FollowDefaultDownloadDir);
+            Assert.Equal(@"C:\Media\Videos", reloaded.Current.VideoDownloadDir);
+            Assert.Equal(@"C:\Media\Images", reloaded.Current.ImageDownloadDir);
+            Assert.Equal(@"C:\Media\Audio", reloaded.Current.AudioDownloadDir);
+            Assert.True(reloaded.Current.AlwaysRememberCloseBehavior);
+            Assert.Equal("tray", reloaded.Current.SavedCloseBehavior);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData("zh-CN", true, "显示窗口", "拉起网页版", "退出程序")]
+    [InlineData("en", true, "Show window", "Launch web companion", "Exit")]
+    [InlineData("en", false, "Show window", null, "Exit")]
+    [InlineData("ja", false, "ウィンドウを表示", null, "終了")]
+    public void TrayMenuCatalog_HidesLaunchWebWhenWebServiceDisabled(
+        string language,
+        bool enableWebService,
+        string expectedShow,
+        string? expectedWeb,
+        string expectedExit)
+    {
+        var loc = new LocalizationService();
+        loc.SetLanguage(language);
+        var items = TrayMenuCatalog.BuildMenuItems(enableWebService, key => loc.T(key));
+
+        Assert.Equal(expectedShow, items.First(i => i.Action == TrayMenuAction.ShowWindow).Label);
+        Assert.Equal(expectedExit, items.First(i => i.Action == TrayMenuAction.ExitApp).Label);
+
+        var webItem = items.FirstOrDefault(i => i.Action == TrayMenuAction.LaunchWeb);
+        if (enableWebService)
+        {
+            Assert.NotNull(webItem);
+            Assert.Equal(expectedWeb, webItem!.Label);
+        }
+        else
+        {
+            Assert.Null(webItem);
+        }
+    }
+
+    [Fact]
+    public void LocalizationService_TranslatesAllWinUiLabelsAndPlatformsCleanlyInEnglish()
+    {
+        var loc = new LocalizationService();
+        loc.SetLanguage("en");
+        var keys = new[]
+        {
+            "外观与语言", "功能设置", "支持平台目录", "网络代理设置 (Proxy)",
+            "本地引擎连接配置", "应用与引擎更新检查",
+            "平台 Cookie 会话隔离仓库 (Windows DPAPI 加密)",
+            "登录哔哩哔哩 (Cookie / SESSDATA)",
+            "解锁 1080P60 / 4K 超清画质与大会员片源",
+            "就绪", "可用", "缺失", "浅色", "深色", "跟随系统",
+            "哔哩哔哩", "抖音", "快手", "小红书", "微博", "西瓜视频", "优酷", "爱奇艺", "虎牙", "小黑盒",
+            "在首页中展示最近任务", "是否关闭应用？", "始终保存选择", "显示窗口", "拉起网页版", "退出程序"
+        };
+
+        foreach (var k in keys)
+        {
+            var translated = loc.T(k);
+            Assert.False(string.IsNullOrWhiteSpace(translated), $"Missing translation for {k}");
+            Assert.DoesNotMatch("[\u4e00-\u9fff]", translated);
         }
     }
 

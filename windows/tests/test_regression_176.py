@@ -145,3 +145,27 @@ def test_browser_image_capture_requires_same_post_and_preserves_media_snapshot(t
     with pytest.raises(ValueError, match='MEDIA_ID_MISMATCH'):assist.images()
     store=core.session_store.sessions;store.set_enabled('抖音',False)
     with pytest.raises(ValueError, match='COOKIE_DISABLED'):assist.images()
+
+
+def test_storage_enoent_classification_and_windows_filename_sanitization(tmp_path):
+    import asyncio
+    from engine.ffmpeg_helper import FFmpegHelper
+    from engine.ytdlp_engine import clean_media_title
+
+    # 文件系统 ENOENT / WinError / 空间不足等路径故障应归类为 EXPORT_FAILED 而非 EXTRACTOR_CHANGED
+    assert code("FileNotFoundError: [Errno 2] No such file or directory: 'C:/missing/file.mp4'") == 'EXPORT_FAILED'
+    assert code("[WinError 3] 系统找不到指定的路径。") == 'EXPORT_FAILED'
+    assert code("open failed: ENOENT (No such file or directory)") == 'EXPORT_FAILED'
+
+    # 清洗文件名需拦截保留设备名、纯点号与控制字符
+    assert clean_media_title("CON") == '_CON'
+    assert clean_media_title("aux") == '_aux'
+    assert clean_media_title("...") == 'video'
+    assert clean_media_title("hello\x00world") == 'hello_world'
+
+    # GIF 直拷分支在输出父目录不存在时也应自动补建目录
+    gif_file = tmp_path / 'sample.gif'
+    gif_file.write_bytes(b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;')
+    nested_out = tmp_path / 'missing_parent' / 'out.gif'
+    assert asyncio.run(FFmpegHelper.convert_to_gif(str(gif_file), str(nested_out)))
+    assert nested_out.is_file()

@@ -5,6 +5,7 @@ import http.cookiejar
 import json
 import os
 from pathlib import Path
+import re
 import tempfile
 import threading
 import time
@@ -46,7 +47,7 @@ def file_lock(path, timeout=5):
 DOMAINS = {'YouTube': ('youtube.com',), 'X (Twitter)': ('x.com', 'twitter.com'),
            '小红书': ('xiaohongshu.com',), '小黑盒': ('xiaoheihe.cn', 'heybox.cn'),
            'Pixiv': ('pixiv.net',), '抖音': ('douyin.com',), '哔哩哔哩': ('bilibili.com',),
-           'Pinterest': ('pinterest.com',), 'Instagram': ('instagram.com',), 'Facebook': ('facebook.com',),
+           'Instagram': ('instagram.com',), 'Facebook': ('facebook.com',),
            'TikTok': ('tiktok.com',), '快手': ('kuaishou.com',), '微博': ('weibo.com', 'weibo.cn')}
 
 
@@ -172,6 +173,38 @@ class SessionStore:
             self._write(dest, protect(content.encode()))
             dest.with_suffix('.validation.bin').unlink(missing_ok=True)
         return self.status(platform)
+
+    def import_cookie_input(self, platform, raw_text, default_name='SESSDATA'):
+        """兼容粘贴 Netscape 文件内容、HTTP Cookie 请求头（含 Cookie: 前缀）或单个核心键值。"""
+        if platform not in DOMAINS:
+            raise ValueError('不支持的会话平台')
+        raw = str(raw_text or '').strip()
+        if not raw:
+            raise ValueError('Cookie 内容不能为空')
+        if raw.startswith('# Netscape') or ('\t' in raw and '\n' in raw):
+            return self.import_text(platform, raw)
+        if raw.lower().startswith('cookie:'):
+            raw = raw[7:].strip()
+        domain = '.' + DOMAINS[platform][0]
+        rows = []
+        if '=' in raw:
+            for chunk in re.split(r'[;\r\n]+', raw):
+                token = chunk.strip()
+                if not token or '=' not in token:
+                    continue
+                name, value = token.split('=', 1)
+                name, value = name.strip(), value.strip()
+                if not name or any(c in name + value for c in '\t\r\n\0'):
+                    raise ValueError('Cookie 键值包含无效字符')
+                rows.append(f'{domain}\tTRUE\t/\tTRUE\t0\t{name}\t{value}')
+        else:
+            token = raw.strip()
+            if any(c in token for c in '\t\r\n\0 ;'):
+                raise ValueError('Cookie 值包含无效空白或分隔符')
+            rows.append(f'{domain}\tTRUE\t/\tTRUE\t0\t{default_name}\t{token}')
+        if not rows:
+            raise ValueError('未识别到有效的 Cookie 键值对')
+        return self.import_text(platform, '# Netscape HTTP Cookie File\n' + '\n'.join(rows))
 
     def status(self, platform):
         with self.transaction():

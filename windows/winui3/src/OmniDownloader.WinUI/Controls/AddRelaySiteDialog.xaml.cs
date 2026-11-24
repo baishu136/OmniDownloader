@@ -60,7 +60,7 @@ public sealed partial class AddRelaySiteDialog : ContentDialog
         if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(name))
         {
             args.Cancel = true;
-            ErrorBar.Message = "请填写网站名称与有效网址";
+            ErrorBar.Message = _services.Loc.T("请填写网站名称与有效网址");
             ErrorBar.IsOpen = true;
             return;
         }

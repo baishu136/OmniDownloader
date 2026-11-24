@@ -45,6 +45,7 @@ import pystray
 from pystray import MenuItem as item
 import uvicorn
 
+import omni_server
 from omni_server import app
 from core.config import config
 
@@ -246,12 +247,19 @@ def open_folder(icon=None, item=None):
 
 
 def on_exit(icon, item, server_thread):
-    icon.stop()
+    if icon is not None:
+        try:
+            icon.stop()
+        except Exception:
+            pass
     from core.browser_login import browser_login
-    browser_login.shutdown()
+    try:
+        browser_login.shutdown()
+    except Exception:
+        pass
     if server_thread:
         server_thread.stop()
-        server_thread.join(timeout=5)
+        server_thread.join(timeout=0.45)
     # 确保子进程完全退出
     os._exit(0)
 
@@ -278,17 +286,32 @@ def main():
     port = int(os.environ.get("OMNI_PORT", "58000"))
     server_url = f"http://{host}:{port}"
     is_autostart = ("--autostart" in sys.argv or "--silent" in sys.argv)
+    no_tray = ("--no-tray" in sys.argv)
 
     # 1. 多实例防重检测：如果端口已经被占用，说明后台服务已在运行
     if is_port_in_use(port):
-        if not is_autostart:
+        if not is_autostart and not no_tray and getattr(config, "enable_web_service", True):
+            from engine.service_features import compatible_login_service, VERSION
+            compatible = False
+            try:
+                opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+                with opener.open(server_url + '/openapi.json', timeout=2) as response:
+                    compatible = compatible_login_service(json.loads(response.read(1024*1024)))
+            except Exception: pass
+            if not compatible:
+                if sys.platform == 'win32':
+                    ctypes.windll.user32.MessageBoxW(None,
+                        f'端口 {port} 上的服务尚未包含本次 Google 登录修复，或不是 OmniDownloader。\n请从旧版托盘正常退出后台服务，再启动 {VERSION}。\n未结束旧进程，原有下载和登录数据保持不变。',
+                        'OmniDownloader：请先退出旧版服务', 0x30)
+                return
             # 用户通过快捷方式启动：智能聚焦已有页面或拉起新页面
             smart_open_browser(force=False, host=host, port=port)
         # 已有实例常驻托盘守护，新进程无需重复创建托盘，安全彻底退出
         os._exit(0)
 
-    # 2. 服务未运行，启动本地后端服务
+    # 2. 服务未运行，启动本地后端服务（提前注册退出回调，避免启动竞态）
     server_thread = ServerThread(host, port)
+    omni_server.set_shutdown_handler(lambda: on_exit(None, None, server_thread))
     server_thread.start()
 
     # 等待服务就绪
@@ -297,8 +320,15 @@ def main():
             break
         time.sleep(0.1)
 
+    if no_tray:
+        # 由 WinUI 3 桌面端托管系统托盘与生命周期，不在 Python 层创建重复托盘
+        omni_server.set_shutdown_handler(lambda: on_exit(None, None, server_thread))
+        while server_thread.is_alive():
+            server_thread.join(0.5)
+        return
+
     # 3. 冷启动时的浏览器打开逻辑
-    if not is_autostart:
+    if not is_autostart and getattr(config, "enable_web_service", True):
         # 冷启动时可能用户的浏览器在上次会话中保留了该标签页
         # 给予短暂停顿以检测窗口或让已恢复标签页重连
         existing_found = False
@@ -313,20 +343,22 @@ def main():
 
     # 4. 创建系统托盘图标
     icon_image = generate_tray_icon()
-    menu = (
-        item(f'🌐 打开网页版 (http://127.0.0.1:{port})', lambda icon, item: smart_open_browser(force=False, host=host, port=port), default=True),
+    menu_items = []
+    if getattr(config, "enable_web_service", True):
+        menu_items.append(item(f'🌐 打开网页版 (http://127.0.0.1:{port})', lambda icon, item: smart_open_browser(force=False, host=host, port=port), default=True))
+    menu_items.extend([
         item('📂 打开下载文件夹', open_folder),
-        item('🚀 开机自启动', toggle_autostart, checked=get_autostart_state),
         pystray.Menu.SEPARATOR,
         item('❌ 退出后台服务', lambda icon, item: on_exit(icon, item, server_thread))
-    )
+    ])
 
     tray_icon = pystray.Icon(
         name="OmniDownloader",
         icon=icon_image,
         title="OmniDownloader - 后台下载服务运行中",
-        menu=menu
+        menu=tuple(menu_items)
     )
+    omni_server.set_shutdown_handler(lambda: on_exit(tray_icon, None, server_thread))
 
     tray_icon.run()
 

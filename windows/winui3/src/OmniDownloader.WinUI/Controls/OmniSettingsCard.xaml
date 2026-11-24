@@ -24,6 +24,9 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="{TemplateBinding CornerRadius}">
+                            <Border.BackgroundTransition>
+                                <BrushTransition Duration="0:0:0.14" />
+                            </Border.BackgroundTransition>
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup x:Name="CommonStates">
                                     <VisualState x:Name="Normal" />
@@ -46,7 +49,7 @@
                                     </VisualState>
                                     <VisualState x:Name="Disabled">
                                         <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="CardSurface" Storyboard.TargetProperty="Opacity" To="0.5" Duration="0" />
+                                            <DoubleAnimation Storyboard.TargetName="CardSurface" Storyboard.TargetProperty="Opacity" To="0.5" Duration="0:0:0.12" />
                                         </Storyboard>
                                     </VisualState>
                                 </VisualStateGroup>

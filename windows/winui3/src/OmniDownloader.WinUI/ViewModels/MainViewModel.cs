@@ -63,6 +63,12 @@ public sealed partial class MainViewModel : ObservableObject
 
     public event EventHandler<(string PageKey, string? SettingsCategory)>? NavigationRequested;
     public event EventHandler<(string Theme, bool PureBlack)>? ThemeAppearanceChanged;
+    public event EventHandler? OnboardingRequested;
+    public event EventHandler? WebServiceModeChanged;
+
+    public void RequestOnboarding() => OnboardingRequested?.Invoke(this, EventArgs.Empty);
+
+    public void NotifyWebServiceModeChanged() => WebServiceModeChanged?.Invoke(this, EventArgs.Empty);
 
     public MainViewModel(AppServices services)
     {
@@ -71,6 +77,17 @@ public sealed partial class MainViewModel : ObservableObject
         BatchVm = new BatchViewModel(services, this);
         TasksVm = new TasksViewModel(services, this);
         SettingsVm = new SettingsViewModel(services, this);
+        _backendStatusText = _services.Loc.T("正在连接本地核心引擎...");
+        _services.Loc.LanguageChanged += (_, _) =>
+        {
+            var note = _services.BackendManager.GetLocalizedStatusNote();
+            RunOnUi(() =>
+            {
+                BackendStatusText = !string.IsNullOrWhiteSpace(note)
+                    ? note
+                    : _services.Loc.T("正在连接本地核心引擎...");
+            });
+        };
     }
 
     public void AttachDispatcher(DispatcherQueue dispatcher) => _dispatcher = dispatcher;
@@ -197,7 +214,7 @@ public sealed partial class MainViewModel : ObservableObject
         RunOnUi(() =>
         {
             IsBackendConnected = ok;
-            BackendStatusText = _services.BackendManager.LastStatusNote;
+            BackendStatusText = _services.BackendManager.GetLocalizedStatusNote();
         });
 
         if (!ok)
@@ -209,8 +226,9 @@ public sealed partial class MainViewModel : ObservableObject
         if (_services.BackendManager.IsOutdatedBackend)
         {
             Notify(
-                $"当前连接的服务版本 (v{_services.BackendManager.ConnectedVersion}) 过低，缺少浏览器登录等 1.7.59+ 接口。请退出旧版服务或开启自动伴随启动。",
-                InfoBarSeverity.Warning);
+                "当前连接的服务版本 (v%s) 过低，缺少浏览器登录等 1.7.59+ 接口。请退出旧版服务或开启自动伴随启动。",
+                InfoBarSeverity.Warning,
+                _services.BackendManager.ConnectedVersion);
         }
 
         await RefreshAllFromBackendAsync().ConfigureAwait(false);
@@ -222,7 +240,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public async Task ReconnectBackendAsync()
     {
-        RunOnUi(() => BackendStatusText = "正在重新连接...");
+        RunOnUi(() => BackendStatusText = _services.Loc.T("正在重新连接..."));
         StopSseListener();
         await InitializeAsync();
         if (IsBackendConnected)
@@ -362,7 +380,7 @@ public sealed partial class MainViewModel : ObservableObject
                 RunOnUi(() =>
                 {
                     IsBackendConnected = false;
-                    BackendStatusText = "事件连接中断，正在重试...";
+                    BackendStatusText = Loc.T("事件连接中断，正在重试...");
                 });
             }
 

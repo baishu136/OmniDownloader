@@ -127,7 +127,14 @@ public sealed partial class BatchViewModel : ObservableObject
         {
             DraftLinks.Add(link);
         }
-        _services.Loc.LanguageChanged += (_, _) => OnPropertyChanged(nameof(DraftHeader));
+        _services.Loc.LanguageChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(DraftHeader));
+            if (_main.IsBackendConnected && Jobs.Count > 0)
+            {
+                _ = RefreshBatchesAsync();
+            }
+        };
     }
 
     private void SaveDraftLinks()
@@ -182,12 +189,12 @@ public sealed partial class BatchViewModel : ObservableObject
         var added = OmniDomainLogic.ExtractLinks(RawInputText, IsManualMode, DraftLinks);
         if (added.Count == 0 && DraftLinks.Count == 0)
         {
-            ValidationError = "未识别到有效链接（支持 http/https 链接或 BV 号）";
+            ValidationError = _services.Loc.T("未识别到有效链接（支持 http/https 链接或 BV 号）");
             return false;
         }
         if (DraftLinks.Count + added.Count > 100)
         {
-            ValidationError = "单批最多添加 100 条去重链接";
+            ValidationError = _services.Loc.T("单批最多添加 100 条去重链接");
             return false;
         }
 
@@ -211,8 +218,8 @@ public sealed partial class BatchViewModel : ObservableObject
     {
         var ok = await _services.Dialogs.ConfirmAsync(
             _services.Loc.T("清空输入"),
-            "确定清空已识别的待下载链接列表吗？",
-            "清空",
+            _services.Loc.T("确定清空已识别的待下载链接列表吗？"),
+            _services.Loc.T("清空"),
             _services.Loc.T("取消"),
             destructive: true);
         if (!ok) return;
@@ -229,7 +236,7 @@ public sealed partial class BatchViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(RawInputText) && !AddFromInputCore()) return;
         if (DraftLinks.Count == 0)
         {
-            ValidationError = "请先粘贴链接或导入 TXT 文件";
+            ValidationError = _services.Loc.T("请先粘贴链接或导入 TXT 文件");
             return;
         }
 

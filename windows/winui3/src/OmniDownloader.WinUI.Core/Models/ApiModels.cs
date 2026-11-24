@@ -134,6 +134,82 @@ public sealed class FormatOption
         }
     }
 
+    /// <summary>
+    /// 方格卡片顶部主分辨率文案（优先显示具体像素宽高）
+    /// </summary>
+    [JsonIgnore]
+    public string TileResolutionText => Width > 0 && Height > 0
+        ? $"{Width}×{Height}"
+        : (string.IsNullOrWhiteSpace(ResolutionLabel) ? "自动分辨率" : ResolutionLabel);
+
+    /// <summary>
+    /// 方格卡片右上角简洁清晰度档位标签（如 4K / 1080p / 480p）
+    /// </summary>
+    [JsonIgnore]
+    public string TileTierBadgeText
+    {
+        get
+        {
+            var edge = Width > 0 && Height > 0 ? Math.Min(Width, Height) : Math.Max(Width, Height);
+            if (edge <= 0) return string.Empty;
+            return edge switch
+            {
+                >= 4320 => "8K",
+                >= 3240 => "6K",
+                >= 2880 => "5K",
+                >= 2160 => "4K",
+                _ => $"{edge}p"
+            };
+        }
+    }
+
+    /// <summary>
+    /// 是否为高动态范围（HDR / HLG / Dolby Vision 等，排除 SDR）
+    /// </summary>
+    [JsonIgnore]
+    public bool IsHdr =>
+        (!string.IsNullOrWhiteSpace(DynamicRange) && !DynamicRange.Equals("SDR", StringComparison.OrdinalIgnoreCase)) ||
+        (!string.IsNullOrWhiteSpace(Note) && (
+            Note.Contains("HDR", StringComparison.OrdinalIgnoreCase) ||
+            Note.Contains("HLG", StringComparison.OrdinalIgnoreCase) ||
+            Note.Contains("Dolby", StringComparison.OrdinalIgnoreCase)));
+
+    /// <summary>
+    /// 方格卡片格式摘要（容器 + 编码 + 高帧率/HDR 标识）
+    /// </summary>
+    [JsonIgnore]
+    public string TileFormatText
+    {
+        get
+        {
+            var parts = new List<string> { string.IsNullOrWhiteSpace(Ext) ? "MP4" : Ext.ToUpperInvariant() };
+            var codecTag = FormatCodecTag(VCodec);
+            if (!string.IsNullOrEmpty(codecTag)) parts.Add(codecTag);
+            if (Fps >= 50) parts.Add($"{Fps}fps");
+            if (!string.IsNullOrWhiteSpace(DynamicRange) && !DynamicRange.Equals("SDR", StringComparison.OrdinalIgnoreCase))
+            {
+                parts.Add(DynamicRange.ToUpperInvariant());
+            }
+            return string.Join(" · ", parts);
+        }
+    }
+
+    /// <summary>
+    /// 方格卡片体积或码率摘要（缺省时显示自动体积）
+    /// </summary>
+    [JsonIgnore]
+    public string TileSizeText
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(ApproximateSize)) return ApproximateSize;
+            if (VideoBitrateKbps >= 1000) return $"{VideoBitrateKbps / 1000.0:0.0} Mbps";
+            if (VideoBitrateKbps > 0) return $"{VideoBitrateKbps:0} kbps";
+            if (!string.IsNullOrWhiteSpace(Note) && string.IsNullOrEmpty(FormatCodecTag(VCodec))) return Note;
+            return "自动体积";
+        }
+    }
+
     private static string FormatCodecTag(string? vcodec)
     {
         if (string.IsNullOrWhiteSpace(vcodec) || vcodec.Equals("none", StringComparison.OrdinalIgnoreCase)) return string.Empty;
@@ -517,6 +593,24 @@ public sealed class AppSettings
     [JsonPropertyName("downloadDir")]
     public string DownloadDir { get; set; } = string.Empty;
 
+    [JsonPropertyName("followDefaultDir")]
+    public bool FollowDefaultDir { get; set; } = true;
+
+    [JsonPropertyName("videoDownloadDir")]
+    public string VideoDownloadDir { get; set; } = string.Empty;
+
+    [JsonPropertyName("imageDownloadDir")]
+    public string ImageDownloadDir { get; set; } = string.Empty;
+
+    [JsonPropertyName("audioDownloadDir")]
+    public string AudioDownloadDir { get; set; } = string.Empty;
+
+    [JsonPropertyName("showRecentTasksOnHome")]
+    public bool ShowRecentTasksOnHome { get; set; } = true;
+
+    [JsonPropertyName("enableWebService")]
+    public bool EnableWebService { get; set; } = true;
+
     [JsonPropertyName("proxyUrl")]
     public string ProxyUrl { get; set; } = string.Empty;
 
@@ -531,6 +625,9 @@ public sealed class AppSettings
 
     [JsonPropertyName("theme")]
     public string Theme { get; set; } = "auto";
+
+    [JsonPropertyName("accentColor")]
+    public string AccentColor { get; set; } = "system";
 
     [JsonPropertyName("relaySites")]
     public List<RelaySite> RelaySites { get; set; } = new();
@@ -551,6 +648,30 @@ public sealed class UpdateSettingsRequest
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? DownloadDir { get; set; }
 
+    [JsonPropertyName("followDefaultDir")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? FollowDefaultDir { get; set; }
+
+    [JsonPropertyName("videoDownloadDir")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? VideoDownloadDir { get; set; }
+
+    [JsonPropertyName("imageDownloadDir")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ImageDownloadDir { get; set; }
+
+    [JsonPropertyName("audioDownloadDir")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AudioDownloadDir { get; set; }
+
+    [JsonPropertyName("showRecentTasksOnHome")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? ShowRecentTasksOnHome { get; set; }
+
+    [JsonPropertyName("enableWebService")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? EnableWebService { get; set; }
+
     [JsonPropertyName("proxyUrl")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ProxyUrl { get; set; }
@@ -566,6 +687,10 @@ public sealed class UpdateSettingsRequest
     [JsonPropertyName("theme")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Theme { get; set; }
+
+    [JsonPropertyName("accentColor")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AccentColor { get; set; }
 
     [JsonPropertyName("autoStart")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -618,6 +743,9 @@ public sealed class BrowserLoginStatus
 
     [JsonPropertyName("errorCode")]
     public string ErrorCode { get; set; } = string.Empty;
+
+    [JsonPropertyName("errorMessage")]
+    public string ErrorMessage { get; set; } = string.Empty;
 
     [JsonPropertyName("alreadySaved")]
     public bool AlreadySaved { get; set; }
@@ -919,10 +1047,10 @@ public static class OmniDomainLogic
 
     public static string TypeLabelKey(string? downloadType) => downloadType switch
     {
-        "VIDEO_WITH_AUDIO" => "完整",
-        "VIDEO_ONLY" => "纯画",
+        "VIDEO_WITH_AUDIO" => "视频",
+        "VIDEO_ONLY" => "纯画面",
         "AUDIO_ONLY" => "音频",
-        "GIF" => "动图",
+        "GIF" => "GIF",
         "COVER" => "封面",
         "IMAGE" => "原图",
         "IMAGE_ZIP" => "图集ZIP",
@@ -1026,5 +1154,22 @@ public static class OmniDomainLogic
         {
             return Array.Empty<string>();
         }
+    }
+
+    /// <summary>
+    /// 根据格式列表容器宽度自适应计算视频流方格列数与单卡宽度
+    /// </summary>
+    public static (int Columns, double TileWidth) ComputeFormatGridColumnsAndTileWidth(double availableWidth, double spacing = 8)
+    {
+        if (availableWidth <= 0) return (1, 220);
+        var columns = availableWidth switch
+        {
+            >= 660 => 4,
+            >= 490 => 3,
+            >= 330 => 2,
+            _ => 1
+        };
+        var raw = (availableWidth - spacing * (columns - 1)) / columns;
+        return (columns, Math.Max(140, Math.Floor(raw)));
     }
 }

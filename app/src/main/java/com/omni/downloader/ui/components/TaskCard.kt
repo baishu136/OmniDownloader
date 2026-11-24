@@ -72,6 +72,8 @@ import com.omni.downloader.data.repository.TaskProgress
 import com.omni.downloader.ui.design.LocalTabActive
 import com.omni.downloader.ui.design.OmniPillButton
 import com.omni.downloader.ui.localization.AppStrings
+import com.omni.downloader.ui.localization.localizeError
+import com.omni.downloader.ui.localization.progressText
 import com.omni.downloader.ui.localization.LocalAppStrings
 import com.omni.downloader.ui.theme.LocalStatusColors
 import kotlinx.coroutines.flow.StateFlow
@@ -340,6 +342,7 @@ private fun TaskErrorSection(errorMessage: String) {
     val strings = LocalAppStrings.current
     var showErrorDetailDialog by remember { mutableStateOf(false) }
     val statusColors = LocalStatusColors.current
+    val displayError = strings.localizeError(errorMessage)
 
     Row(
         modifier = Modifier
@@ -351,7 +354,7 @@ private fun TaskErrorSection(errorMessage: String) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = strings.errorPrefix.format(errorMessage),
+            text = strings.errorPrefix.format(displayError),
             style = MaterialTheme.typography.bodySmall,
             color = statusColors.error,
             maxLines = 2,
@@ -376,7 +379,7 @@ private fun TaskErrorSection(errorMessage: String) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     androidx.compose.foundation.text.selection.SelectionContainer {
                         Text(
-                            text = errorMessage,
+                            text = displayError,
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                         )
@@ -471,7 +474,7 @@ private fun TaskDownloadingProgressSection(
             )
             if (liveProgress.etaText.isNotEmpty()) {
                 Text(
-                    text = LocalAppStrings.current.remainingTime.format(liveProgress.etaText),
+                    text = LocalAppStrings.current.remainingTime.format(LocalAppStrings.current.progressText(liveProgress.etaText)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

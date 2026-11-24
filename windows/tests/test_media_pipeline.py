@@ -17,6 +17,62 @@ from engine.media_verifier import probe
 from engine.ytdlp_engine import YtDlpEngine
 
 
+def test_gif_conversion_uses_content_and_validates_frames(media_server, tmp_path):
+    from engine.ffmpeg_helper import FFmpegHelper
+    from engine.gif_media import inspect_gif, verify_gif
+    source = media_server[1] / 'fixture.mp4'
+    disguised = tmp_path / 'renamed.gif'
+    disguised.write_bytes(source.read_bytes())
+    assert inspect_gif(disguised) is None
+    with pytest.raises(RuntimeError, match='POSTPROCESS_FAILED'): verify_gif(disguised)
+    output = tmp_path / 'converted.gif'
+    assert asyncio.run(FFmpegHelper.convert_to_gif(str(disguised), str(output)))
+    verify_gif(output)
+    assert inspect_gif(output)['frames'] > 1
+    assert inspect_gif(output)['durationMs'] >= 800
+    assert output.read_bytes()[:6] in (b'GIF87a', b'GIF89a')
+    assert disguised.read_bytes() == source.read_bytes()
+    assert not asyncio.run(FFmpegHelper.convert_to_gif(str(disguised), str(disguised)))
+    copy = tmp_path / 'copy.gif'
+    assert asyncio.run(FFmpegHelper.convert_to_gif(str(output), str(copy)))
+    assert copy.read_bytes() == output.read_bytes()
+    copy.write_bytes(copy.read_bytes()[:-1])
+    assert inspect_gif(copy) is None
+
+
+def test_gif_cached_mp4_is_converted_before_export(media_server, monkeypatch, tmp_path):
+    import json
+    from engine.gif_media import verify_gif
+    task = DownloadTask(id='gif-cache-test', url=media_server[0], title='cached', downloadType=DownloadType.GIF)
+    work = tmp_path / 'work'; work.mkdir()
+    cached = work / 'old-result.mp4'; cached.write_bytes((media_server[1] / 'fixture.mp4').read_bytes())
+    (work / 'ready.json').write_text(json.dumps({'signature': YtDlpEngine.signature(task), 'file': cached.name}))
+    monkeypatch.setattr(YtDlpEngine, 'workspace', lambda _: work)
+    monkeypatch.setattr(config, 'download_dir', str(tmp_path / 'export'))
+    result = YtDlpEngine._download_sync(task, lambda *args: None, threading.Event())
+    assert Path(result).suffix == '.gif'
+    verify_gif(result)
+
+
+@pytest.mark.parametrize('kind', [DownloadType.VIDEO_WITH_AUDIO, DownloadType.VIDEO_ONLY])
+def test_gif_named_mp4_is_encoded_as_real_mp4_on_cached_export(tmp_path, monkeypatch, kind):
+    import json
+    from engine.gif_media import inspect_gif
+    source = Path(__file__).resolve().parents[2] / 'app/src/androidTest/assets/animated.gif'
+    task = DownloadTask(id='gif-to-video', url='https://example.test/animation', title='animation', downloadType=kind)
+    work = tmp_path / 'work'; work.mkdir()
+    cached = work / 'wrong-extension.mp4'; cached.write_bytes(source.read_bytes())
+    assert inspect_gif(cached)['frames'] == 2
+    (work / 'ready.json').write_text(json.dumps({'signature': YtDlpEngine.signature(task), 'file': cached.name}))
+    monkeypatch.setattr(YtDlpEngine, 'workspace', lambda _: work)
+    monkeypatch.setattr(config, 'download_dir', str(tmp_path / 'export'))
+    result = Path(YtDlpEngine._download_sync(task, lambda *args: None, threading.Event()))
+    assert result.suffix == '.mp4' and result.read_bytes()[4:8] == b'ftyp'
+    assert inspect_gif(result) is None
+    actual = probe(result)
+    assert actual['width'] == 16 and actual['height'] == 16 and actual['duration'] > 0
+
+
 @pytest.fixture
 def media_server(tmp_path):
     exe = get_ffmpeg_path()
@@ -151,3 +207,36 @@ def test_ugoira_variable_delays_and_odd_dimensions(tmp_path):
     actual = probe(output)
     assert (actual['width'], actual['height']) == (102, 100)
     assert abs(actual['duration'] - .700) < .05
+
+
+def test_stale_requested_formats_do_not_corrupt_single_format_download(media_server, monkeypatch):
+    """回归测试：残留的 requested_formats 不得导致单流下载拼接 URL 引发 404。"""
+    from engine.url_sniffer import UrlSniffer
+    url, directory = media_server
+    monkeypatch.setattr(config, 'download_dir', str(directory / 'stale-export'))
+    stale_video = url.replace('fixture.mp4', 'missing-video.m3u8')
+    stale_audio = url.replace('fixture.mp4', 'missing-audio.m3u8')
+    info = {
+        'id': 'x-stale-fixture',
+        'title': 'stale fixture',
+        'extractor': 'Twitter',
+        'duration': 1,
+        'format': 'hls-1+hls-audio',
+        'format_id': 'hls-1+hls-audio',
+        'ext': 'mp4',
+        'protocol': 'm3u8_native+m3u8_native',
+        'requested_formats': [
+            {'format_id': 'hls-1', 'url': stale_video, 'ext': 'mp4', 'protocol': 'm3u8_native', 'vcodec': 'avc1', 'acodec': 'none'},
+            {'format_id': 'hls-audio', 'url': stale_audio, 'ext': 'mp4', 'protocol': 'm3u8_native', 'vcodec': 'none', 'acodec': 'mp4a'},
+        ],
+        'formats': [
+            {'format_id': 'http-2176', 'url': url, 'ext': 'mp4', 'protocol': 'https', 'width': 320, 'height': 180, 'vcodec': None, 'acodec': None},
+            {'format_id': 'hls-1', 'url': stale_video, 'ext': 'mp4', 'protocol': 'm3u8_native', 'width': 320, 'height': 180, 'vcodec': 'avc1', 'acodec': 'none'},
+            {'format_id': 'hls-audio', 'url': stale_audio, 'ext': 'mp4', 'protocol': 'm3u8_native', 'vcodec': 'none', 'acodec': 'mp4a'},
+        ],
+    }
+    YtDlpEngine._cache[YtDlpEngine._key(url, UrlSniffer.identify_site(url))] = (time.monotonic(), info)
+    task = DownloadTask(id=uuid.uuid4().hex, url=url, title='stale requested formats', downloadType=DownloadType.VIDEO_WITH_AUDIO)
+    result = asyncio.run(YtDlpEngine.download(task, lambda *a: None, asyncio.Event()))
+    actual = probe(result)
+    assert (actual['width'], actual['height'], actual['audio']) == (320, 180, True)

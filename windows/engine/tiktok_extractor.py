@@ -21,8 +21,8 @@ MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/
 
 
 def sanitize_filename(name: str) -> str:
-    clean = re.sub(r'[\\/:*?"<>|]', "_", name).strip()
-    return clean[:100] if len(clean) > 100 else clean
+    from engine.ytdlp_engine import clean_media_title
+    return clean_media_title(name)
 
 
 class TikTokDirectExtractor:
@@ -89,9 +89,9 @@ class TikTokDirectExtractor:
     ) -> str:
         """流式下载 TikTok 视频"""
         clean_title = sanitize_filename(task.title)
-        download_dir = Path(config.download_dir)
+        download_dir = Path(config.resolve_download_dir(task.download_type))
         download_dir.mkdir(parents=True, exist_ok=True)
-        staging_dir = download_dir / ".staging"
+        staging_dir = Path(config.download_dir) / ".staging"
         staging_dir.mkdir(parents=True, exist_ok=True)
 
         video_url = task.selected_resolution if task.selected_resolution.startswith("http") else ""

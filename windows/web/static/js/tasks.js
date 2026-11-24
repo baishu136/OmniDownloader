@@ -83,7 +83,7 @@ function buildDisplayItems(tasks) {
         kind: 'collection',
         key: `col_${task.collectionId}`,
         collectionId: task.collectionId,
-        collectionTitle: task.collectionTitle || group[0].title || '合集下载',
+        collectionTitle: task.collectionTitle || group[0].title || t('合集下载'),
         tasks: group,
         members: group,
       };
@@ -106,13 +106,13 @@ function coverFallbackIcon(type) {
 function typeBadgeText(task) {
   const base = typeLabel(task.downloadType);
   if (task.downloadType === 'VIDEO_WITH_AUDIO' || task.downloadType === 'VIDEO_ONLY') {
-    const res = task.selectedResolution && task.selectedResolution !== 'best' ? task.selectedResolution : '最佳';
+    const res = task.selectedResolution && task.selectedResolution !== 'best' ? task.selectedResolution : t('最佳');
     return `${base}: ${res}`;
   }
   if (task.downloadType === 'AUDIO_ONLY') {
     return `${base}: ${(task.audioFormat || 'MP3').toUpperCase()}`;
   }
-  if (task.downloadType === 'GIF') return '动图: GIF';
+  if (task.downloadType === 'GIF') return t('动图: GIF');
   return base;
 }
 
@@ -177,16 +177,16 @@ function renderList(groups) {
     const descEl = $('tasks-empty-desc');
     if (state.filter === 'active') {
       if (iconBox) iconBox.innerHTML = iconSvg('download');
-      if (titleEl) titleEl.textContent = '暂无正在进行的下载任务';
-      if (descEl) descEl.textContent = '新加入的下载任务会在这里实时展示进度。';
+      if (titleEl) titleEl.textContent = t('暂无正在进行的下载任务');
+      if (descEl) descEl.textContent = t('新加入的下载任务会在这里实时展示进度。');
     } else if (state.filter === 'done') {
       if (iconBox) iconBox.innerHTML = iconSvg('check_circle');
-      if (titleEl) titleEl.textContent = '暂无已完成的下载记录';
-      if (descEl) descEl.textContent = '完成下载的媒体文件会集中保存在这里。';
+      if (titleEl) titleEl.textContent = t('暂无已完成的下载记录');
+      if (descEl) descEl.textContent = t('完成下载的媒体文件会集中保存在这里。');
     } else {
       if (iconBox) iconBox.innerHTML = iconSvg('inbox');
-      if (titleEl) titleEl.textContent = '暂无任何下载任务';
-      if (descEl) descEl.textContent = '粘贴视频链接并解析，即可开始下载。';
+      if (titleEl) titleEl.textContent = t('暂无任何下载任务');
+      if (descEl) descEl.textContent = t('粘贴视频链接并解析，即可开始下载。');
     }
     return;
   }
@@ -218,7 +218,7 @@ function buildSingleCard(task) {
         ${task.thumbnailUrl ? `<img src="${escapeHtml(task.thumbnailUrl)}" alt="" loading="lazy">` : ''}
       </div>
       <div class="task-card__info">
-        <div class="task-card__title" title="${escapeHtml(task.title || '')}">${escapeHtml(task.title || '下载任务')}</div>
+        <div data-no-i18n class="task-card__title" title="${escapeHtml(task.title || t('下载任务'))}">${escapeHtml(task.title || t('下载任务'))}</div>
         <div class="task-card__badges">
           <span class="omni-pill omni-pill--primary">${escapeHtml(typeBadgeText(task))}</span>
           <span class="omni-pill ${info.pill}">${escapeHtml(info.label)}</span>
@@ -231,12 +231,12 @@ function buildSingleCard(task) {
       <div class="omni-progress"><div class="omni-progress__bar ${info.progress}" style="width:${progress}%"></div></div>
       <div class="task-progress-meta">
         <span>${task.status === 'PROCESSING' ? escapeHtml(t('正在合并音画轨...')) : `${progress.toFixed(0)}%${task.speedText ? ' · ' + escapeHtml(task.speedText) : ''}`}</span>
-        <span>${task.etaText ? escapeHtml(t('剩余 %s', task.etaText)) : ''}</span>
+        <span>${task.etaText ? escapeHtml(t('剩余 %s', t(task.etaText))) : ''}</span>
       </div>
     </div>` : ''}
     ${isError ? `
     <div class="task-error-strip" role="button" tabindex="0">
-      <span class="task-error-strip__text">${escapeHtml(t('错误: %s', task.errorMessage))}</span>
+      <span class="task-error-strip__text">${escapeHtml(t('错误: %s', t(task.errorMessage)))}</span>
       <span class="task-error-strip__detail">${escapeHtml(t('查看详情'))}</span>
     </div>` : ''}
     <div class="task-card__actions"></div>`;
@@ -246,7 +246,7 @@ function buildSingleCard(task) {
 
   const errStrip = card.querySelector('.task-error-strip');
   if (errStrip) {
-    const openErr = () => showErrorDetailDialog({ title: '失败日志详情', message: task.errorMessage });
+    const openErr = () => showErrorDetailDialog({ title: t('失败日志详情'), message: t(task.errorMessage) });
     errStrip.addEventListener('click', openErr);
     errStrip.addEventListener('keydown', (e) => { if (e.key === 'Enter') openErr(); });
   }
@@ -267,8 +267,9 @@ function buildSingleCard(task) {
     saveLink.className = 'icon-btn';
     saveLink.href = `/api/tasks/${encodeURIComponent(task.id)}/download`;
     saveLink.setAttribute('download', '');
-    saveLink.title = '浏览器保存';
-    saveLink.setAttribute('aria-label', '浏览器保存');
+    const saveLabel = t('浏览器保存');
+    saveLink.title = saveLabel;
+    saveLink.setAttribute('aria-label', saveLabel);
     saveLink.innerHTML = iconSvg('download');
     actions.appendChild(saveLink);
 
@@ -302,11 +303,11 @@ function buildCollectionCard(col) {
   }
   const overallPct = total ? Math.min(Math.max(overallSum / total, 0), 100) : 0;
 
-  let statusText = '等待中';
+  let statusText = t('等待中');
   let statusPill = 'omni-pill--warning';
-  if (isAllDone) { statusText = '已完成'; statusPill = 'omni-pill--success'; }
+  if (isAllDone) { statusText = t('已完成'); statusPill = 'omni-pill--success'; }
   else if (isDownloading) { statusText = `${t('正在下载')} (${Math.min(completedCount + 1, total)}/${total})`; statusPill = 'omni-pill--primary'; }
-  else if (isPending) { statusText = '等待中'; statusPill = 'omni-pill--warning'; }
+  else if (isPending) { statusText = t('等待中'); statusPill = 'omni-pill--warning'; }
   else if (hasFailed) { statusText = failedCount > 0 ? t('%d 集失败', failedCount) : t('已取消'); statusPill = 'omni-pill--error'; }
 
   const coverUrl = tasks.find((t) => t.thumbnailUrl)?.thumbnailUrl || '';
@@ -326,10 +327,10 @@ function buildCollectionCard(col) {
         <span class="task-cover__count">${total}P</span>
       </div>
       <div class="task-card__info">
-        <div class="task-card__title" title="${escapeHtml(col.collectionTitle)}">${escapeHtml(col.collectionTitle)}</div>
+        <div data-no-i18n class="task-card__title" title="${escapeHtml(col.collectionTitle)}">${escapeHtml(col.collectionTitle)}</div>
         <div class="task-card__badges">
           <span class="omni-pill omni-pill--primary">${escapeHtml(t('合集 · %d 集', total))}</span>
-          <span class="omni-pill ${statusPill}">${escapeHtml(t(statusText))}</span>
+          <span class="omni-pill ${statusPill}">${escapeHtml(statusText)}</span>
         </div>
       </div>
     </div>
@@ -351,7 +352,7 @@ function buildCollectionCard(col) {
         <div class="omni-progress omni-progress--sm"><div class="omni-progress__bar" style="width:${activePct}%"></div></div>
         <div class="task-progress-meta">
           <span style="color:var(--primary);font-weight:600">${activePct.toFixed(0)}% · ${escapeHtml(activeTask.speedText || t('准备中'))}</span>
-          <span>${activeTask.etaText ? escapeHtml(t('剩余 %s', activeTask.etaText)) : ''}</span>
+          <span>${activeTask.etaText ? escapeHtml(t('剩余 %s', t(activeTask.etaText))) : ''}</span>
         </div>
       </div>` : ''}
     </div>
@@ -381,7 +382,7 @@ function buildCollectionCard(col) {
       const subPct = Math.min(Math.max(Number(sub.progress) || 0, 0), 100);
       row.innerHTML = `
         <span class="collection-episode-row__badge">P${sub.episodeIndex || 1}</span>
-        <span class="collection-episode-row__title" title="${escapeHtml(sub.title)}">${escapeHtml(sub.title)}</span>`;
+        <span data-no-i18n class="collection-episode-row__title" title="${escapeHtml(sub.title)}">${escapeHtml(sub.title)}</span>`;
 
       if (sub.status === 'COMPLETED') {
         const playBtn = makeIconBtn('播放', 'play_circle', () => {
@@ -405,7 +406,7 @@ function buildCollectionCard(col) {
       } else {
         const st = document.createElement('span');
         st.className = 'caption';
-        st.textContent = sub.status === 'CANCELLED' ? '已取消' : '等待中';
+        st.textContent = sub.status === 'CANCELLED' ? t('已取消') : t('等待中');
         row.appendChild(st);
       }
       epContainer.appendChild(row);
@@ -439,7 +440,7 @@ function makePillBtn(text, iconName, primary, handler) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = `btn btn-sm ${primary ? 'btn-primary' : 'btn-tonal'}`;
-  btn.innerHTML = `${iconSvg(iconName)}<span>${escapeHtml(text)}</span>`;
+  btn.innerHTML = `${iconSvg(iconName)}<span>${escapeHtml(t(text))}</span>`;
   btn.addEventListener('click', handler);
   return btn;
 }
@@ -448,8 +449,9 @@ function makeIconBtn(title, iconName, handler, danger = false) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = `icon-btn${danger ? ' icon-btn--danger' : ''}`;
-  btn.title = title;
-  btn.setAttribute('aria-label', title);
+  const label = t(title);
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
   btn.innerHTML = iconSvg(iconName);
   btn.addEventListener('click', handler);
   return btn;
@@ -505,7 +507,7 @@ async function deleteSingleTask(id, allowDeleteFile) {
 async function cancelCollection(col) {
   const ok = await confirmDialog({
     title: '取消合集下载',
-    message: `确定要终止该合集下所有正在下载与等待中的任务吗？`,
+    message: t('确定要终止该合集下所有正在下载与等待中的任务吗？'),
     confirmText: '终止并清理',
     danger: true,
   });
@@ -548,7 +550,7 @@ async function clearHistory() {
     if (!running.length) return;
     const ok = await confirmDialog({
       title: '终止未完成任务',
-      message: `确定要终止当前 ${running.length} 个未完成的下载任务吗？`,
+      message: t('确定要终止当前 %d 个未完成的下载任务吗？', running.length),
       confirmText: '终止并清理',
       danger: true,
     });
@@ -566,7 +568,7 @@ async function clearHistory() {
   }
   const ok = await confirmDialog({
     title: '清除下载记录',
-    message: `确定要清除所有已结束的任务记录吗？\n（共 ${finished.length} 条，本地已保存的视频文件不会被删除）`,
+    message: t('确定要清除所有已结束的任务记录吗？（共 %d 条，本地已保存的视频文件不会被删除）', finished.length),
     confirmText: '立即清除',
     danger: true,
   });
@@ -574,7 +576,7 @@ async function clearHistory() {
   try {
     await post('/api/tasks/clear');
     await fetchTasks();
-    toast(`已清空 ${finished.length} 条记录`);
+    toast(t('已清空 %d 条记录', finished.length));
   } catch (e) {
     toast(e.message || '清空失败', 'error');
   }
@@ -602,7 +604,7 @@ function initSSE() {
       if (updated.status === 'COMPLETED' && previous && previous.status !== 'COMPLETED') {
         const auto = localStorage.getItem('omni_auto_browser_download') !== 'false';
         if (auto) {
-          toast(`任务已完成，正在调起浏览器保存：${updated.title}`);
+          toast(t('任务已完成，正在调起浏览器保存：%s', updated.title));
           triggerBrowserDownload(updated.id);
         }
       }

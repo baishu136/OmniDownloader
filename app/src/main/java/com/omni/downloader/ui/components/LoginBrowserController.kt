@@ -7,7 +7,9 @@ import android.os.Message
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -38,6 +40,7 @@ internal class LoginBrowserController(
     private var unregisterGoogle:()->Unit={}
     private val work = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var proxyLease: WebViewProxyLease? = null
+    private var recoveryAttempts = 0
     var desktop = desktop
         private set
     val root: WebView = newWebView()
@@ -96,6 +99,34 @@ internal class LoginBrowserController(
                 if (disposed) return
                 identity.onPageFinished(); onProgress(100); onPageFinished()
                 if (documentStartScript != null && view != null && identities.containsKey(view) && !captureScripts.containsKey(view)) view.evaluateJavascript(documentStartScript, null)
+                if (view == active && !url.isNullOrBlank()) {
+                    view.evaluateJavascript(RAW_JSON_PROBE_SCRIPT) { raw ->
+                        if (disposed) return@evaluateJavascript
+                        val text = parseJsStringResult(raw)
+                        val fallback = LoginPageRecovery.jsonPayloadFallbackUrl(platform, url, text, recoveryAttempts)
+                        if (fallback != null) {
+                            recoveryAttempts++
+                            view.loadUrl(fallback)
+                        }
+                    }
+                }
+            }
+            override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, errorResponse: WebResourceResponse?) {
+                if (disposed || request?.isForMainFrame != true || view == null) return
+                val statusCode = errorResponse?.statusCode ?: return
+                val failedUrl = request.url?.toString().orEmpty()
+                val fallback = LoginPageRecovery.httpErrorFallbackUrl(platform, failedUrl, statusCode, recoveryAttempts)
+                if (fallback != null) {
+                    recoveryAttempts++
+                    view.post { if (!disposed) view.loadUrl(fallback) }
+                } else {
+                    onNotice("HTTP $statusCode")
+                }
+            }
+            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                if (disposed || request?.isForMainFrame != true) return
+                val desc = error?.description?.toString().orEmpty()
+                if (desc.isNotBlank()) onNotice(desc)
             }
         }
         webChromeClient = object : WebChromeClient() {
@@ -132,11 +163,13 @@ internal class LoginBrowserController(
         reloadStart()
     }
     fun reloadStart() {
+        recoveryAttempts = 0
         navigate(startUrl)
     }
     fun navigate(url:String) {
         if (disposed) return
         if(!BrowserIdentity.permitsNavigation(url))return
+        recoveryAttempts = 0
         identities.keys.filter { it != root }.toList().forEach(::closeWindow)
         root.stopLoading()
         identities[root]?.apply(desktop)
@@ -155,5 +188,14 @@ internal class LoginBrowserController(
         }
         identities.clear()
         captureScripts.clear()
+    }
+
+    private companion object {
+        const val RAW_JSON_PROBE_SCRIPT = "(function(){try{if(!document.body)return '';var t=(document.body.innerText||'').trim();if(t.length>0&&t.length<=1024&&t[0]==='{'&&!document.querySelector('form,input,video,main'))return t;}catch(e){}return '';})()"
+
+        fun parseJsStringResult(raw: String?): String {
+            if (raw.isNullOrBlank() || raw == "null") return ""
+            return runCatching { org.json.JSONTokener(raw).nextValue() as? String ?: raw }.getOrDefault(raw)
+        }
     }
 }

@@ -1,0 +1,5066 @@
+{
+  " + 封面": {
+    "zh-CN": " + 封面",
+    "zh-TW": " + 封面",
+    "en": " + Cover",
+    "ja": " + カバー"
+  },
+  " · 失败 %d": {
+    "zh-CN": " · 失败 %d",
+    "zh-TW": " · 失敗 %d",
+    "en": " · Failed %d",
+    "ja": "・失敗 %d"
+  },
+  "%@ 浏览器": {
+    "zh-CN": "%@ 浏览器",
+    "zh-TW": "%@ 瀏覽器",
+    "en": "%@ Browser",
+    "ja": "%@ ブラウザ"
+  },
+  "%@ 登录": {
+    "zh-CN": "%@ 登录",
+    "zh-TW": "%@ 登入",
+    "en": "%@ Sign In",
+    "ja": "%@ ログイン"
+  },
+  "%d 个任务": {
+    "zh-CN": "%d 个任务",
+    "zh-TW": "%d 個任務",
+    "en": "%d tasks",
+    "ja": "%d 件のタスク"
+  },
+  "%d秒": {
+    "zh-CN": "%d秒",
+    "zh-TW": "%d 秒",
+    "en": "%ds",
+    "ja": "%d秒"
+  },
+  "%s - 封面": {
+    "zh-CN": "%s - 封面",
+    "zh-TW": "%s - 封面",
+    "en": "%s - Cover",
+    "ja": "%s - カバー"
+  },
+  "1. 在首页粘贴主流视频或图文分享文本，按回车或点击「立即解析」，即可选择 4K/8K 清晰度、纯音频或无水印图文；\n2. 对需要网页登录后验证的内容（小黑盒/抖音/快手），可展开「浏览器辅助提取」启用内置 WebView2 辅助窗读取；\n3. 批量下载支持粘贴最多 100 条去重链接或原生导入 TXT 文件，自动排队提交；\n4. 本 WinUI 3 客户端自动共享 %LOCALAPPDATA%\\OmniDownloader 配置、Cookie 与下载记录，且可直接连接已在 58000 端口运行的核心服务，或自动静默伴随启动本地引擎。": {
+    "zh-CN": "1. 在首页粘贴主流视频或图文分享文本，按回车或点击「立即解析」，即可选择 4K/8K 清晰度、纯音频或无水印图文；\n2. 对需要网页登录后验证的内容（小黑盒/抖音/快手），可展开「浏览器辅助提取」启用内置 WebView2 辅助窗读取；\n3. 批量下载支持粘贴最多 100 条去重链接或原生导入 TXT 文件，自动排队提交；\n4. 本 WinUI 3 客户端自动共享 %LOCALAPPDATA%\\OmniDownloader 配置、Cookie 与下载记录，且可直接连接已在 58000 端口运行的核心服务，或自动静默伴随启动本地引擎。",
+    "zh-TW": "1. 在首頁貼上主流影片或圖文分享文字，按 Enter 或點擊「立即解析」，即可選擇 4K/8K 畫質、純音訊或無浮水印圖文；\n2. 對於需要網頁登入後驗證的內容（小黑盒／抖音／快手），可展開「瀏覽器輔助擷取」啟用內建 WebView2 輔助視窗讀取；\n3. 批次下載支援貼上最多 100 條去重連結或原生匯入 TXT 檔案，自動排隊送出；\n4. 本 WinUI 3 用戶端自動共用 %LOCALAPPDATA%\\OmniDownloader 設定、Cookie 與下載紀錄，並可直接連線已在 58000 連接埠執行的核心服務，或自動靜默伴隨啟動本機引擎。",
+    "en": "1. Paste any supported video or image share text on Home and press Enter or Analyze Now to choose up to 4K/8K quality, audio, or watermark-free originals.\n2. For content requiring web sign-in verification (Heybox / Douyin / Kuaishou), expand Browser Assist to capture via the built-in WebView2 helper.\n3. Batch Download supports pasting up to 100 deduplicated links or importing a .txt file for automatic queued submission.\n4. This WinUI 3 client shares %LOCALAPPDATA%\\OmniDownloader settings, cookies, and task history automatically, connecting to a running service on port 58000 or launching the local engine silently.",
+    "ja": "1. ホームに動画または画像の共有テキストを貼り付け、Enter または「今すぐ解析」を押すと、4K/8K 画質、音声のみ、透かしなし画像を選択できます。\n2. Web ログイン確認が必要なコンテンツ（小黒盒／抖音／快手）は、「ブラウザ補助抽出」を展開して内蔵 WebView2 ウィンドウから取得できます。\n3. 一括ダウンロードは最大 100 件の重複除去済みリンクの貼り付けや TXT ファイルの読み込みに対応し、自動でキューに追加します。\n4. この WinUI 3 クライアントは %LOCALAPPDATA%\\OmniDownloader の設定・Cookie・履歴を自動共有し、ポート 58000 の既存サービスへ接続するかローカルエンジンを自動起動します。"
+  },
+  "1. 点击“内置网页一键登录”可直接在应用内扫码/短信登录哔哩哔哩并自动提取保存；\n2. 如需手动获取，请在电脑浏览器中登录 bilibili.com 后按 F12，在 Application -> Cookies -> https://www.bilibili.com 中复制 SESSDATA 的 Value 粘贴保存。\n\n可用画质取决于账号权益、内容和平台接口。": {
+    "zh-CN": "1. 点击“内置网页一键登录”可直接在应用内扫码/短信登录哔哩哔哩并自动提取保存；\n2. 如需手动获取，请在电脑浏览器中登录 bilibili.com 后按 F12，在 Application -> Cookies -> https://www.bilibili.com 中复制 SESSDATA 的 Value 粘贴保存。\n\n可用画质取决于账号权益、内容和平台接口。",
+    "zh-TW": "1. 點擊「內建網頁一鍵登入」可直接在應用程式內掃碼或簡訊登入嗶哩嗶哩並自動擷取儲存；\n2. 如需手動取得，請在電腦瀏覽器登入 bilibili.com 後按 F12，於 Application -> Cookies -> https://www.bilibili.com 複製 SESSDATA 的 Value 貼上儲存。\n\n可用畫質取決於帳號權益、內容與平台介面。",
+    "en": "1. Click Built-in Web Sign-In to log in to Bilibili via QR/SMS inside the app and capture cookies automatically.\n2. To retrieve it manually, sign in to bilibili.com in a desktop browser, press F12 -> Application -> Cookies -> https://www.bilibili.com, copy the SESSDATA value, and paste it here.\n\nAvailable quality depends on account entitlements, content restrictions, and platform endpoints.",
+    "ja": "1. 「内蔵ブラウザでログイン」をクリックすると、アプリ内で QR コードまたは SMS 認証によりビリビリへログインし、Cookie を自動保存できます。\n2. 手動で取得する場合は、PC ブラウザで bilibili.com にログインして F12 を押し、Application -> Cookies -> https://www.bilibili.com から SESSDATA の Value をコピーして貼り付けてください。\n\n利用可能な画質はアカウント権限・コンテンツ・プラットフォーム API に依存します。"
+  },
+  "AAC 音轨": {
+    "zh-CN": "AAC 音轨",
+    "zh-TW": "AAC 音軌",
+    "en": "AAC Audio Track",
+    "ja": "AAC 音声トラック"
+  },
+  "AAC 高压缩比": {
+    "zh-CN": "AAC 高压缩比",
+    "zh-TW": "AAC（高效率壓縮）",
+    "en": "AAC (efficient compression)",
+    "ja": "AAC（高効率圧縮）"
+  },
+  "B站凭据已通过内置网页自动保存，可重新解析验证超清画质": {
+    "zh-CN": "B站凭据已通过内置网页自动保存，可重新解析验证超清画质",
+    "zh-TW": "B站憑證已透過內建網頁自動保存，可重新解析驗證超清畫質",
+    "en": "Bilibili credentials saved from in-app browser; re-analyze to unlock high quality",
+    "ja": "内蔵ブラウザから Bilibili 認証情報を自動保存しました。再解析して高画質をご確認ください"
+  },
+  "B站动态 %@": {
+    "zh-CN": "B站动态 %@",
+    "zh-TW": "B站動態 %@",
+    "en": "Bilibili Dynamic %@",
+    "ja": "ビリビリ投稿 %@"
+  },
+  "B站接口未返回可用内容": {
+    "zh-CN": "B站接口未返回可用内容",
+    "zh-TW": "B站介面未傳回可用內容",
+    "en": "Bilibili API returned no usable content",
+    "ja": "ビリビリ API から有効なコンテンツが返されませんでした"
+  },
+  "B站数据不完整": {
+    "zh-CN": "B站数据不完整",
+    "zh-TW": "B站資料不完整",
+    "en": "Incomplete Bilibili data",
+    "ja": "ビリビリのデータが不完全です"
+  },
+  "B站没有返回目标视频 ID": {
+    "zh-CN": "B站没有返回目标视频 ID",
+    "zh-TW": "B站未傳回目標影片 ID",
+    "en": "Bilibili did not return the target video ID",
+    "ja": "ビリビリが対象動画 ID を返しませんでした"
+  },
+  "B站账号安全登录": {
+    "zh-CN": "B站账号安全登录",
+    "zh-TW": "B站賬號安全登錄",
+    "en": "Bilibili account sign-in",
+    "ja": "Bilibili アカウントにログイン"
+  },
+  "Cookie 属性不合法": {
+    "zh-CN": "Cookie 属性不合法",
+    "zh-TW": "Cookie 屬性無效",
+    "en": "Invalid cookie attributes",
+    "ja": "Cookie 属性が不正です"
+  },
+  "Cookie 文件不能超过 1MB": {
+    "zh-CN": "Cookie 文件不能超过 1MB",
+    "zh-TW": "Cookie 檔案不可超過 1MB",
+    "en": "Cookie file must not exceed 1 MB",
+    "ja": "Cookie ファイルは 1MB 以下にしてください"
+  },
+  "Cookie 文件需为 Netscape 七列格式": {
+    "zh-CN": "Cookie 文件需为 Netscape 七列格式",
+    "zh-TW": "Cookie 檔案必須為 Netscape 七欄格式",
+    "en": "Cookie file must use the 7-column Netscape format",
+    "ja": "Cookie ファイルは Netscape 7列形式である必要があります"
+  },
+  "Cookies 文件不得超过 1MB": {
+    "zh-CN": "Cookies 文件不得超过 1MB",
+    "zh-TW": "Cookies 文件不得超過 1MB",
+    "en": "Cookie files must not exceed 1 MB",
+    "ja": "Cookie ファイルは 1 MB 以下にしてください"
+  },
+  "Ctrl+V 粘贴链接 · Enter 立即解析 · 双击标签页关闭": {
+    "zh-CN": "Ctrl+V 粘贴链接 · Enter 立即解析 · 双击标签页关闭",
+    "zh-TW": "Ctrl+V 貼上連結 · Enter 立即解析 · 雙擊分頁關閉",
+    "en": "Ctrl+V to paste · Enter to analyze · Double-click tab to close",
+    "ja": "Ctrl+V で貼り付け · Enter で解析 · タブをダブルクリックで閉じる"
+  },
+  "Esc 退出": {
+    "zh-CN": "Esc 退出",
+    "zh-TW": "Esc 退出",
+    "en": "Esc to exit",
+    "ja": "Esc で終了"
+  },
+  "FLAC (无损音质)": {
+    "zh-CN": "FLAC (无损音质)",
+    "zh-TW": "FLAC (無損音質)",
+    "en": "FLAC (lossless)",
+    "ja": "FLAC（可逆圧縮）"
+  },
+  "FLAC · 无损高保真音频": {
+    "zh-CN": "FLAC · 无损高保真音频",
+    "zh-TW": "FLAC · 無損高保真音訊",
+    "en": "FLAC · Lossless audio",
+    "ja": "FLAC · 可逆圧縮音声"
+  },
+  "FLAC 无损音频 (高解析度)": {
+    "zh-CN": "FLAC 无损音频 (高解析度)",
+    "zh-TW": "FLAC（無損音訊）",
+    "en": "FLAC (lossless audio)",
+    "ja": "FLAC（可逆圧縮音声）"
+  },
+  "GIF": {
+    "zh-CN": "GIF",
+    "zh-TW": "GIF",
+    "en": "GIF",
+    "ja": "GIF"
+  },
+  "GIF 文件无法解码": {
+    "zh-CN": "GIF 文件无法解码",
+    "zh-TW": "GIF 檔案無法解碼",
+    "en": "Cannot decode GIF file",
+    "ja": "GIF ファイルをデコードできません"
+  },
+  "HLS 分段数量不合法": {
+    "zh-CN": "HLS 分段数量不合法",
+    "zh-TW": "HLS 分段數量無效",
+    "en": "Invalid HLS segment count",
+    "ja": "HLS セグメント数が不正です"
+  },
+  "HLS 区间无效": {
+    "zh-CN": "HLS 区间无效",
+    "zh-TW": "HLS 區間無效",
+    "en": "Invalid HLS byte range",
+    "ja": "HLS バイト範囲が無効です"
+  },
+  "HLS 区间溢出": {
+    "zh-CN": "HLS 区间溢出",
+    "zh-TW": "HLS 區間溢位",
+    "en": "HLS byte range overflow",
+    "ja": "HLS バイト範囲がオーバーフローしています"
+  },
+  "HLS 密钥格式无效": {
+    "zh-CN": "HLS 密钥格式无效",
+    "zh-TW": "HLS 金鑰格式無效",
+    "en": "Invalid HLS key format",
+    "ja": "HLS キー形式が無効です"
+  },
+  "HLS 缺少初始化片段": {
+    "zh-CN": "HLS 缺少初始化片段",
+    "zh-TW": "HLS 缺少初始化片段",
+    "en": "HLS initialization segment missing",
+    "ja": "HLS 初期化セグメントが見つかりません"
+  },
+  "HLS 缺少密钥地址": {
+    "zh-CN": "HLS 缺少密钥地址",
+    "zh-TW": "HLS 缺少金鑰網址",
+    "en": "HLS key URL missing",
+    "ja": "HLS キー URL が見つかりません"
+  },
+  "HLS 资源地址无效": {
+    "zh-CN": "HLS 资源地址无效",
+    "zh-TW": "HLS 資源網址無效",
+    "en": "Invalid HLS resource URL",
+    "ja": "HLS リソース URL が無効です"
+  },
+  "HTTP / HTTPS 与 SOCKS5 代理连接": {
+    "zh-CN": "HTTP / HTTPS 与 SOCKS5 代理连接",
+    "zh-TW": "HTTP / HTTPS 與 SOCKS5 代理連接",
+    "en": "HTTP / HTTPS and SOCKS5 proxy connections",
+    "ja": "HTTP・HTTPS・SOCKS5 プロキシ接続"
+  },
+  "HTTP、HTTPS 与 SOCKS5；应用内代理需要 iOS 17 及以上。留空使用系统网络设置。": {
+    "zh-CN": "HTTP、HTTPS 与 SOCKS5；应用内代理需要 iOS 17 及以上。留空使用系统网络设置。",
+    "zh-TW": "HTTP、HTTPS 與 SOCKS5；應用內代理需要 iOS 17 及以上。留空使用系統網絡設置。",
+    "en": "HTTP, HTTPS and SOCKS5; in-app proxy requires iOS 17 or later. Leave blank for system settings.",
+    "ja": "HTTP・HTTPS・SOCKS5 に対応。アプリ内プロキシは iOS 17 以降が必要です。空欄ではシステム設定を使用します。"
+  },
+  "M4A (AAC 高音质 · 小体积)": {
+    "zh-CN": "M4A (AAC 高音质 · 小体积)",
+    "zh-TW": "M4A (AAC 高音質 · 小體積)",
+    "en": "M4A (AAC quality · smaller files)",
+    "ja": "M4A（AAC 高音質・小さいサイズ）"
+  },
+  "M4A · AAC 高效保真流": {
+    "zh-CN": "M4A · AAC 高效保真流",
+    "zh-TW": "M4A · AAC 高效保真流",
+    "en": "M4A · Efficient AAC audio",
+    "ja": "M4A · 高効率 AAC 音声"
+  },
+  "M4A 极速直出 (无损原轨)": {
+    "zh-CN": "M4A 极速直出 (无损原轨)",
+    "zh-TW": "M4A（AAC 音訊）",
+    "en": "M4A (AAC audio)",
+    "ja": "M4A（AAC 音声）"
+  },
+  "MKV 容器": {
+    "zh-CN": "MKV 容器",
+    "zh-TW": "MKV 容器",
+    "en": "MKV container",
+    "ja": "MKV コンテナー"
+  },
+  "MP3 (通用兼容 · 320kbps)": {
+    "zh-CN": "MP3 (通用兼容 · 320kbps)",
+    "zh-TW": "MP3 (通用兼容 · 320kbps)",
+    "en": "MP3 (compatible · 320 kbps)",
+    "ja": "MP3（汎用 · 320 kbps）"
+  },
+  "MP3 · 高兼容性通用有损 (320kbps)": {
+    "zh-CN": "MP3 · 高兼容性通用有损 (320kbps)",
+    "zh-TW": "MP3 · 高兼容性通用有損 (320kbps)",
+    "en": "MP3 · Compatible lossy audio (320 kbps)",
+    "ja": "MP3 · 汎用非可逆圧縮（320 kbps）"
+  },
+  "MP3 通用音频 (标准码率)": {
+    "zh-CN": "MP3 通用音频 (标准码率)",
+    "zh-TW": "MP3 通用音訊（標準位元率）",
+    "en": "MP3 (standard bitrate)",
+    "ja": "MP3（標準ビットレート）"
+  },
+  "MP4 容器": {
+    "zh-CN": "MP4 容器",
+    "zh-TW": "MP4 容器",
+    "en": "MP4 container",
+    "ja": "MP4 コンテナー"
+  },
+  "MP4 容器无效": {
+    "zh-CN": "MP4 容器无效",
+    "zh-TW": "MP4 容器無效",
+    "en": "Invalid MP4 container",
+    "ja": "MP4 コンテナが無効です"
+  },
+  "MP4 成品无效": {
+    "zh-CN": "MP4 成品无效",
+    "zh-TW": "MP4 成品無效",
+    "en": "Invalid MP4 output",
+    "ja": "出力された MP4 ファイルが無効です"
+  },
+  "OPUS (高压缩效率)": {
+    "zh-CN": "OPUS (高压缩效率)",
+    "zh-TW": "OPUS (高壓縮效率)",
+    "en": "OPUS (efficient compression)",
+    "ja": "OPUS（高効率圧縮）"
+  },
+  "OPUS · 高压缩效率新锐音频": {
+    "zh-CN": "OPUS · 高压缩效率新锐音频",
+    "zh-TW": "OPUS · 高壓縮效率新銳音訊",
+    "en": "OPUS · Efficient audio compression",
+    "ja": "OPUS · 高効率音声圧縮"
+  },
+  "OPUS 音频": {
+    "zh-CN": "OPUS 音频",
+    "zh-TW": "OPUS 音訊",
+    "en": "OPUS audio",
+    "ja": "OPUS 音声"
+  },
+  "OmniDownloader · 内置浏览器辅助提取": {
+    "zh-CN": "OmniDownloader · 内置浏览器辅助提取",
+    "zh-TW": "OmniDownloader · 內置瀏覽器輔助提取",
+    "en": "OmniDownloader · Browser assist",
+    "ja": "OmniDownloader · ブラウザー補助"
+  },
+  "OmniDownloader · 图片查看": {
+    "zh-CN": "OmniDownloader · 图片查看",
+    "zh-TW": "OmniDownloader · 圖片查看",
+    "en": "OmniDownloader · Image viewer",
+    "ja": "OmniDownloader · 画像ビューアー"
+  },
+  "OmniDownloader · 媒体播放": {
+    "zh-CN": "OmniDownloader · 媒体播放",
+    "zh-TW": "OmniDownloader · 媒體播放",
+    "en": "OmniDownloader · Media player",
+    "ja": "OmniDownloader · メディアプレーヤー"
+  },
+  "OmniDownloader · 登录哔哩哔哩": {
+    "zh-CN": "OmniDownloader · 登录哔哩哔哩",
+    "zh-TW": "OmniDownloader · 登入嗶哩嗶哩",
+    "en": "OmniDownloader · Sign in to Bilibili",
+    "ja": "OmniDownloader · Bilibili ログイン"
+  },
+  "Python %s · yt-dlp %s · EJS %s · FFmpeg %s · JS 运行时 %s": {
+    "zh-CN": "Python %s · yt-dlp %s · EJS %s · FFmpeg %s · JS 运行时 %s",
+    "zh-TW": "Python %s · yt-dlp %s · EJS %s · FFmpeg %s · JS 執行期 %s",
+    "en": "Python %s · yt-dlp %s · EJS %s · FFmpeg %s · JS Runtime %s",
+    "ja": "Python %s · yt-dlp %s · EJS %s · FFmpeg %s · JS ランタイム %s"
+  },
+  "Space 播放/暂停 · Alt+←/→ 切换剧集 · Esc 关闭": {
+    "zh-CN": "Space 播放/暂停 · Alt+←/→ 切换剧集 · Esc 关闭",
+    "zh-TW": "Space 播放/暫停 · Alt+←/→ 切換劇集 · Esc 關閉",
+    "en": "Space Play/Pause · Alt+←/→ Switch episode · Esc Close",
+    "ja": "Space 再生/一時停止 · Alt+←/→ 話数切替 · Esc で閉じる"
+  },
+  "Space 播放/暂停 · ←/→ 快退进 5 秒 · Ctrl+←/→ 切换剧集 · T 置顶 · 双击/F 全屏": {
+    "zh-CN": "Space 播放/暂停 · ←/→ 快退进 5 秒 · Ctrl+←/→ 切换剧集 · T 置顶 · 双击/F 全屏",
+    "zh-TW": "Space 播放/暫停 · ←/→ 快退進 5 秒 · Ctrl+←/→ 切換劇集 · T 置頂 · 雙擊/F 全螢幕",
+    "en": "Space Play/Pause · ←/→ Seek 5s · Ctrl+←/→ Switch episode · T Pin · Double-click/F Fullscreen",
+    "ja": "Space 再生/一時停止 · ←/→ 5秒シーク · Ctrl+←/→ 話数切替 · T 最前面 · ダブルクリック/F 全画面"
+  },
+  "TXT 最大 1 MiB": {
+    "zh-CN": "TXT 最大 1 MiB",
+    "zh-TW": "TXT 最大 1 MiB",
+    "en": "TXT max 1 MiB",
+    "ja": "TXT 上限 1 MiB"
+  },
+  "Ugoira 帧信息不完整": {
+    "zh-CN": "Ugoira 帧信息不完整",
+    "zh-TW": "Ugoira 影格資訊不完整",
+    "en": "Incomplete Ugoira frame metadata",
+    "ja": "Ugoira のフレーム情報が不完全です"
+  },
+  "WAV 无损音频 (广播级)": {
+    "zh-CN": "WAV 无损音频 (广播级)",
+    "zh-TW": "WAV（無損音訊）",
+    "en": "WAV (lossless audio)",
+    "ja": "WAV（可逆圧縮音声）"
+  },
+  "WebM 容器": {
+    "zh-CN": "WebM 容器",
+    "zh-TW": "WebM 容器",
+    "en": "WebM container",
+    "ja": "WebM コンテナー"
+  },
+  "Windows 原生桌面端 (WinUI 3 + Windows App SDK 1.6) · 连接本地 FastAPI 核心引擎": {
+    "zh-CN": "Windows 原生桌面端 (WinUI 3 + Windows App SDK 1.6) · 连接本地 FastAPI 核心引擎",
+    "zh-TW": "Windows 原生桌面端 (WinUI 3 + Windows App SDK 1.6) · 連接本地 FastAPI 核心引擎",
+    "en": "Windows desktop client (WinUI 3 + Windows App SDK 1.6) · Local FastAPI engine",
+    "ja": "Windows デスクトップ版（WinUI 3 + Windows App SDK 1.6）・ローカル FastAPI エンジン"
+  },
+  "X 公共媒体请求失败": {
+    "zh-CN": "X 公共媒体请求失败",
+    "zh-TW": "X 公開媒體請求失敗",
+    "en": "X public media request failed",
+    "ja": "X 公開メディアのリクエストに失敗しました"
+  },
+  "X 返回了其他帖子": {
+    "zh-CN": "X 返回了其他帖子",
+    "zh-TW": "X 傳回了其他貼文",
+    "en": "X returned a different post",
+    "ja": "X から別の投稿が返されました"
+  },
+  "YouTube 当前未允许播放目标视频": {
+    "zh-CN": "YouTube 当前未允许播放目标视频",
+    "zh-TW": "YouTube 目前未允許播放目標影片",
+    "en": "YouTube currently disallows playback for this video",
+    "ja": "YouTube は現在この動画の再生を許可していません"
+  },
+  "YouTube 要求验证登录，请更新 Cookie 或在页面中完成人工验证": {
+    "zh-CN": "YouTube 要求验证登录，请更新 Cookie 或在页面中完成人工验证",
+    "zh-TW": "YouTube 要求驗證登入，請更新 Cookie 或於頁面完成人工驗證",
+    "en": "YouTube requires sign-in verification; update cookies or verify in the page",
+    "ja": "YouTube でログイン確認が必要です。Cookie を更新するかページ内で認証を完了してください"
+  },
+  "YouTube 视频 ID 无效": {
+    "zh-CN": "YouTube 视频 ID 无效",
+    "zh-TW": "YouTube 影片 ID 無效",
+    "en": "Invalid YouTube video ID",
+    "ja": "YouTube 動画 ID が無効です"
+  },
+  "YouTube 需要在首页验证播放器；不会把未知媒体加入下载队列": {
+    "zh-CN": "YouTube 需要在首页验证播放器；不会把未知媒体加入下载队列",
+    "zh-TW": "YouTube 需於首頁驗證播放器；未知媒體不會加入下載佇列",
+    "en": "YouTube requires player verification on Home; unknown media will not be queued",
+    "ja": "YouTube はホーム画面でプレーヤー検証が必要です。未確認のメディアはキューに追加されません"
+  },
+  "ZIP CRC 校验失败": {
+    "zh-CN": "ZIP CRC 校验失败",
+    "zh-TW": "ZIP CRC 校驗失敗",
+    "en": "ZIP CRC checksum failed",
+    "ja": "ZIP の CRC 検証に失敗しました"
+  },
+  "ZIP 内容不完整": {
+    "zh-CN": "ZIP 内容不完整",
+    "zh-TW": "ZIP 內容不完整",
+    "en": "Incomplete ZIP contents",
+    "ja": "ZIP の内容が不完全です"
+  },
+  "ZIP 包含不安全路径或加密内容": {
+    "zh-CN": "ZIP 包含不安全路径或加密内容",
+    "zh-TW": "ZIP 包含不安全路徑或加密內容",
+    "en": "ZIP contains unsafe paths or encrypted entries",
+    "ja": "ZIP に安全でないパスまたは暗号化エントリが含まれています"
+  },
+  "ZIP 数据不完整": {
+    "zh-CN": "ZIP 数据不完整",
+    "zh-TW": "ZIP 資料不完整",
+    "en": "Incomplete ZIP data",
+    "ja": "ZIP データが不完全です"
+  },
+  "ZIP 文件数量不合法": {
+    "zh-CN": "ZIP 文件数量不合法",
+    "zh-TW": "ZIP 檔案數量無效",
+    "en": "Invalid ZIP entry count",
+    "ja": "ZIP ファイル数が不正です"
+  },
+  "ZIP 目录损坏": {
+    "zh-CN": "ZIP 目录损坏",
+    "zh-TW": "ZIP 目錄損壞",
+    "en": "Corrupted ZIP central directory",
+    "ja": "ZIP ディレクトリが破損しています"
+  },
+  "ZIP 超过当前归档上限": {
+    "zh-CN": "ZIP 超过当前归档上限",
+    "zh-TW": "ZIP 超過目前封存上限",
+    "en": "ZIP exceeds current archive limit",
+    "ja": "ZIP が現在のアーカイブ上限を超えています"
+  },
+  "iOS YouTube 当前支持 MP4、仅画面和 M4A 音频": {
+    "zh-CN": "iOS YouTube 当前支持 MP4、仅画面和 M4A 音频",
+    "zh-TW": "iOS YouTube 目前支援 MP4、純畫面與 M4A 音訊",
+    "en": "YouTube on iOS supports MP4, video-only, and M4A audio",
+    "ja": "iOS 版 YouTube は現在 MP4・映像のみ・M4A 音声に対応しています"
+  },
+  "iOS YouTube 音频请选择 M4A": {
+    "zh-CN": "iOS YouTube 音频请选择 M4A",
+    "zh-TW": "iOS YouTube 音訊請選擇 M4A",
+    "en": "Please choose M4A for YouTube audio on iOS",
+    "ja": "iOS 版 YouTube の音声には M4A を選択してください"
+  },
+  "iOS 使用原生与网页引擎；部分平台需要在浏览器验证，实际能力以解析结果为准。": {
+    "zh-CN": "iOS 使用原生与网页引擎；部分平台需要在浏览器验证，实际能力以解析结果为准。",
+    "zh-TW": "iOS 使用原生與網頁引擎；部分平臺需要在瀏覽器驗證，實際能力以解析結果為準。",
+    "en": "iOS uses native and web engines. Some platforms require browser verification; availability depends on analysis results.",
+    "ja": "iOS はネイティブと Web エンジンを使用します。一部サイトではブラウザー認証が必要です。利用可否は解析結果によります。"
+  },
+  "yt-dlp 完整解析器引擎": {
+    "zh-CN": "yt-dlp 完整解析器引擎",
+    "zh-TW": "yt-dlp 完整解析器引擎",
+    "en": "yt-dlp extractor engine",
+    "ja": "yt-dlp 抽出エンジン"
+  },
+  "yt-dlp 平台名录": {
+    "zh-CN": "yt-dlp 平台名录",
+    "zh-TW": "yt-dlp 平臺名錄",
+    "en": "yt-dlp platform catalog",
+    "ja": "yt-dlp サイト一覧"
+  },
+  "yt-dlp 支持的平台（参考名录）": {
+    "zh-CN": "yt-dlp 支持的平台（参考名录）",
+    "zh-TW": "yt-dlp 支持的平臺（參考名錄）",
+    "en": "yt-dlp platforms (reference)",
+    "ja": "yt-dlp 対応サイト（参考一覧）"
+  },
+  "• 内置 FFmpeg 双 Pass 调色板引擎，还原细腻生动色彩与紧凑体积": {
+    "zh-CN": "• 内置 FFmpeg 双 Pass 调色板引擎，还原细腻生动色彩与紧凑体积",
+    "zh-TW": "• 內置 FFmpeg 雙 Pass 調色板引擎，還原細膩生動色彩與緊湊體積",
+    "en": "• Built-in two-pass FFmpeg palette conversion for color quality and compact files",
+    "ja": "• 内蔵 FFmpeg の 2 パスパレット変換で色品質とサイズを調整"
+  },
+  "• 如需保存原画视频文件，可随时切换回「视频」下载为 MP4": {
+    "zh-CN": "• 如需保存原画视频文件，可随时切换回「视频」下载为 MP4",
+    "zh-TW": "• 如需保存原畫視頻文件，可隨時切換回「視頻」下載為 MP4",
+    "en": "• Switch to Video to save the source as MP4",
+    "ja": "• 元の動画を MP4 で保存するには「動画」に切り替えてください"
+  },
+  "• 导出为标准 .gif 格式，无需播放器即可直接预览与转发": {
+    "zh-CN": "• 导出为标准 .gif 格式，无需播放器即可直接预览与转发",
+    "zh-TW": "• 導出為標準 .gif 格式，無需播放器即可直接預覽與轉發",
+    "en": "• Export a standard .gif file for direct preview and sharing",
+    "ja": "• 標準 .gif ファイルを出力し、そのまま表示・共有できます"
+  },
+  "←/→ 切换 · 双击/滚轮缩放 · Esc 关闭": {
+    "zh-CN": "←/→ 切换 · 双击/滚轮缩放 · Esc 关闭",
+    "zh-TW": "←/→ 切換 · 雙擊/滾輪縮放 · Esc 關閉",
+    "en": "←/→ Navigate · Double-click/wheel to zoom · Esc Close",
+    "ja": "←/→ 切り替え・ダブルクリック/ホイールで拡大縮小・Esc 閉じる"
+  },
+  "✓ 已登录 B 站账户": {
+    "zh-CN": "✓ 已登录 B 站账户",
+    "zh-TW": "✓ 已登錄 B 站賬戶",
+    "en": "✓ Signed in to Bilibili",
+    "ja": "✓ Bilibili にログイン済み"
+  },
+  "一键安全网页登录": {
+    "zh-CN": "一键安全网页登录",
+    "zh-TW": "一鍵安全網頁登錄",
+    "en": "Open browser sign-in",
+    "ja": "ブラウザーログインを開く"
+  },
+  "上一集": {
+    "zh-CN": "上一集",
+    "zh-TW": "上一集",
+    "en": "Previous episode",
+    "ja": "前のエピソード"
+  },
+  "上一集 (Ctrl+Left)": {
+    "zh-CN": "上一集 (Ctrl+Left)",
+    "zh-TW": "上一集 (Ctrl+Left)",
+    "en": "Previous episode (Ctrl+Left)",
+    "ja": "前のエピソード（Ctrl+Left）"
+  },
+  "下一集": {
+    "zh-CN": "下一集",
+    "zh-TW": "下一集",
+    "en": "Next episode",
+    "ja": "次のエピソード"
+  },
+  "下一集 (Ctrl+Right)": {
+    "zh-CN": "下一集 (Ctrl+Right)",
+    "zh-TW": "下一集 (Ctrl+Right)",
+    "en": "Next episode (Ctrl+Right)",
+    "ja": "次のエピソード（Ctrl+Right）"
+  },
+  "下载": {
+    "zh-CN": "下载",
+    "zh-TW": "下載",
+    "en": "Download",
+    "ja": "ダウンロード"
+  },
+  "下载、批量下载和任务进度与客户端共用同一服务。关闭客户端后网页下载继续运行。": {
+    "zh-CN": "下载、批量下载和任务进度与客户端共用同一服务。关闭客户端后网页下载继续运行。",
+    "zh-TW": "下載、批量下載和任務進度與客戶端共用同一服務。關閉客戶端后網頁下載繼續運行。",
+    "en": "Single and batch downloads share the client service and progress. Browser downloads continue after closing the client.",
+    "ja": "単一・一括ダウンロードはクライアントとサービス・進捗を共有します。クライアントを閉じても Web のダウンロードは継続します。"
+  },
+  "下载中": {
+    "zh-CN": "下载中",
+    "zh-TW": "下載中",
+    "en": "Downloading",
+    "ja": "ダウンロード中"
+  },
+  "下载中 (0)": {
+    "zh-CN": "下载中 (0)",
+    "zh-TW": "下載中 (0)",
+    "en": "Downloading (0)",
+    "ja": "ダウンロード中（0）"
+  },
+  "下载中 0": {
+    "zh-CN": "下载中 0",
+    "zh-TW": "下載中 0",
+    "en": "Downloading 0",
+    "ja": "ダウンロード中 0"
+  },
+  "下载保存": {
+    "zh-CN": "下载保存",
+    "zh-TW": "下載儲存",
+    "en": "Save Download",
+    "ja": "ダウンロード保存"
+  },
+  "下载保存目录": {
+    "zh-CN": "下载保存目录",
+    "zh-TW": "下載保存目錄",
+    "en": "Download folder",
+    "ja": "ダウンロード先"
+  },
+  "下载全部 (%d个视频)": {
+    "zh-CN": "下载全部 (%d个视频)",
+    "zh-TW": "下載全部 (%d個視頻)",
+    "en": "Download all (%d videos)",
+    "ja": "すべてダウンロード（動画 %d 本）"
+  },
+  "下载全部分 P / 多媒体": {
+    "zh-CN": "下载全部分 P / 多媒体",
+    "zh-TW": "下載全部分 P / 多媒體",
+    "en": "Download all parts / media",
+    "ja": "全パート・メディアをダウンロード"
+  },
+  "下载动图": {
+    "zh-CN": "下载动图",
+    "zh-TW": "下載動圖",
+    "en": "Download GIF",
+    "ja": "GIF をダウンロード"
+  },
+  "下载合集 (%d)": {
+    "zh-CN": "下载合集 (%d)",
+    "zh-TW": "下載合集 (%d)",
+    "en": "Download collection (%d)",
+    "ja": "コレクションをダウンロード（%d）"
+  },
+  "下载失败": {
+    "zh-CN": "下载失败",
+    "zh-TW": "下載失敗",
+    "en": "Download failed",
+    "ja": "ダウンロード失敗"
+  },
+  "下载完成": {
+    "zh-CN": "下载完成",
+    "zh-TW": "下載完成",
+    "en": "Download completed",
+    "ja": "ダウンロード完了"
+  },
+  "下载并合成完成的视频或提取的音频封面将自动存入系统相册专属的“OmniDownloader”相簿。": {
+    "zh-CN": "下载并合成完成的视频或提取的音频封面将自动存入系统相册专属的“OmniDownloader”相簿。",
+    "zh-TW": "下載并合成完成的視頻或提取的音訊封面將自動存入系統相冊專屬的“OmniDownloader”相簿。",
+    "en": "Completed videos and extracted audio covers are saved to the OmniDownloader album in Photos.",
+    "ja": "完成した動画と抽出音声のカバーを写真の OmniDownloader アルバムに保存します。"
+  },
+  "下载引擎与组件": {
+    "zh-CN": "下载引擎与组件",
+    "zh-TW": "下載引擎與組件",
+    "en": "Download engine and components",
+    "ja": "ダウンロードエンジンと構成要素"
+  },
+  "下载所选动图 (%d 个)": {
+    "zh-CN": "下载所选动图 (%d 个)",
+    "zh-TW": "下載所選動圖 (%d 個)",
+    "en": "Download selected GIFs (%d)",
+    "ja": "選択した GIF をダウンロード（%d 件）"
+  },
+  "下载所选合集 (%d 集 · %s)": {
+    "zh-CN": "下载所选合集 (%d 集 · %s)",
+    "zh-TW": "下載所選合集 (%d 集 · %s)",
+    "en": "Download selected episodes (%d · %s)",
+    "ja": "選択したエピソードをダウンロード（%d 話・%s）"
+  },
+  "下载所选音频 (%d 首 · %s)": {
+    "zh-CN": "下载所选音频 (%d 首 · %s)",
+    "zh-TW": "下載所選音訊 (%d 首 · %s)",
+    "en": "Download selected audio (%d tracks · %s)",
+    "ja": "選択した音声をダウンロード（%d 件・%s）"
+  },
+  "下载方式": {
+    "zh-CN": "下载方式",
+    "zh-TW": "下載方式",
+    "en": "Download mode",
+    "ja": "ダウンロード方法"
+  },
+  "下载更新包": {
+    "zh-CN": "下载更新包",
+    "zh-TW": "下載更新包",
+    "en": "Download update",
+    "ja": "更新をダウンロード"
+  },
+  "下载最新": {
+    "zh-CN": "下载最新",
+    "zh-TW": "下載最新",
+    "en": "Download latest",
+    "ja": "最新版をダウンロード"
+  },
+  "下载模式": {
+    "zh-CN": "下载模式",
+    "zh-TW": "下載模式",
+    "en": "Download type",
+    "ja": "ダウンロード形式"
+  },
+  "下载类型": {
+    "zh-CN": "下载类型",
+    "zh-TW": "下載類型",
+    "en": "Download type",
+    "ja": "ダウンロード形式"
+  },
+  "下载进度": {
+    "zh-CN": "下载进度",
+    "zh-TW": "下載進度",
+    "en": "Download progress",
+    "ja": "ダウンロード状況"
+  },
+  "下载选项": {
+    "zh-CN": "下载选项",
+    "zh-TW": "下載選項",
+    "en": "Download options",
+    "ja": "ダウンロード設定"
+  },
+  "不是完整 ZIP": {
+    "zh-CN": "不是完整 ZIP",
+    "zh-TW": "非完整 ZIP 檔案",
+    "en": "Not a complete ZIP archive",
+    "ja": "完全な ZIP ファイルではありません"
+  },
+  "不是有效 HLS 清单": {
+    "zh-CN": "不是有效 HLS 清单",
+    "zh-TW": "非有效 HLS 清單",
+    "en": "Not a valid HLS playlist",
+    "ja": "有効な HLS プレイリストではありません"
+  },
+  "严格上限 1080p": {
+    "zh-CN": "严格上限 1080p",
+    "zh-TW": "嚴格上限 1080p",
+    "en": "Maximum 1080p",
+    "ja": "上限 1080p"
+  },
+  "临时缓存已成功清理": {
+    "zh-CN": "临时缓存已成功清理",
+    "zh-TW": "臨時緩存已成功清理",
+    "en": "Temporary cache cleared",
+    "ja": "一時キャッシュを消去しました"
+  },
+  "主导航": {
+    "zh-CN": "主导航",
+    "zh-TW": "主導航",
+    "en": "Main navigation",
+    "ja": "メインナビゲーション"
+  },
+  "主流直连与深度适配平台 (%d)": {
+    "zh-CN": "主流直连与深度适配平台 (%d)",
+    "zh-TW": "主流直連與深度適配平台 (%d)",
+    "en": "Direct & Deeply Integrated Platforms (%d)",
+    "ja": "主要対応プラットフォーム (%d)"
+  },
+  "主流直连与深度适配平台 (22)": {
+    "zh-CN": "主流直连与深度适配平台 (22)",
+    "zh-TW": "主流直連與深度適配平臺 (22)",
+    "en": "Integrated platforms (22)",
+    "ja": "連携プラットフォーム（22）"
+  },
+  "主题模式": {
+    "zh-CN": "主题模式",
+    "zh-TW": "主題模式",
+    "en": "Theme",
+    "ja": "テーマ"
+  },
+  "事件连接中断，正在重试...": {
+    "zh-CN": "事件连接中断，正在重试...",
+    "zh-TW": "事件連線中斷，正在重試...",
+    "en": "Event stream disconnected, retrying...",
+    "ja": "イベント接続が中断されました。再試行中..."
+  },
+  "仅展示前 300 项（共 %d 项），请输入关键词缩小范围": {
+    "zh-CN": "仅展示前 300 项（共 %d 项），请输入关键词缩小范围",
+    "zh-TW": "僅顯示前 300 項（共 %d 項），請輸入關鍵字縮小範圍",
+    "en": "Showing top 300 of %d results; enter keywords to narrow down",
+    "ja": "上位 300 件のみ表示中（全 %d 件）。キーワードで絞り込んでください"
+  },
+  "仅当前": {
+    "zh-CN": "仅当前",
+    "zh-TW": "僅當前",
+    "en": "Current item only",
+    "ja": "現在の項目のみ"
+  },
+  "仅画面成品仍含音轨": {
+    "zh-CN": "仅画面成品仍含音轨",
+    "zh-TW": "純畫面成品仍含音軌",
+    "en": "Video-only output still contains audio track",
+    "ja": "映像のみの出力に音声トラックが残っています"
+  },
+  "仅视频": {
+    "zh-CN": "仅视频",
+    "zh-TW": "僅視頻",
+    "en": "Video only",
+    "ja": "映像のみ"
+  },
+  "仅连接已有服务": {
+    "zh-CN": "仅连接已有服务",
+    "zh-TW": "僅連接已有服務",
+    "en": "Connect to an existing service only",
+    "ja": "既存のサービスにのみ接続"
+  },
+  "从已登录 YouTube 的浏览器导出 Netscape cookies.txt。仅导入 YouTube 域的有效会话，保存在本机钥匙串；平台仍可能要求人工验证。": {
+    "zh-CN": "从已登录 YouTube 的浏览器导出 Netscape cookies.txt。仅导入 YouTube 域的有效会话，保存在本机钥匙串；平台仍可能要求人工验证。",
+    "zh-TW": "從已登錄 YouTube 的瀏覽器導出 Netscape cookies.txt。僅導入 YouTube 域的有效會話，保存在本機鑰匙串；平臺仍可能要求人工驗證。",
+    "en": "Export Netscape cookies.txt from a browser signed in to YouTube. Valid YouTube-domain sessions stay in the local Keychain. Manual verification may still be required.",
+    "ja": "YouTube にログイン済みのブラウザーから Netscape cookies.txt を書き出してください。YouTube ドメインの有効なセッションのみをキーチェーンに保存します。手動認証が必要な場合があります。"
+  },
+  "代理服务器地址": {
+    "zh-CN": "代理服务器地址",
+    "zh-TW": "代理服務器地址",
+    "en": "Proxy server address",
+    "ja": "プロキシサーバーのアドレス"
+  },
+  "代理设置已保存，请重新解析原链接": {
+    "zh-CN": "代理设置已保存，请重新解析原链接",
+    "zh-TW": "代理設置已保存，請重新解析原鏈接",
+    "en": "Proxy saved; analyze the original link again",
+    "ja": "プロキシを保存しました。元のリンクを再解析してください"
+  },
+  "代理需为带端口的 HTTP、HTTPS 或 SOCKS5 地址": {
+    "zh-CN": "代理需为带端口的 HTTP、HTTPS 或 SOCKS5 地址",
+    "zh-TW": "代理必須為帶連接埠的 HTTP、HTTPS 或 SOCKS5 位址",
+    "en": "Proxy must be an HTTP, HTTPS, or SOCKS5 URL with a port",
+    "ja": "プロキシはポート付きの HTTP / HTTPS / SOCKS5 URL で指定してください"
+  },
+  "任务 ID 不合法": {
+    "zh-CN": "任务 ID 不合法",
+    "zh-TW": "任務 ID 無效",
+    "en": "Invalid task ID",
+    "ja": "タスク ID が無効です"
+  },
+  "任务已完成，正在调起浏览器保存：%s": {
+    "zh-CN": "任务已完成，正在调起浏览器保存：%s",
+    "zh-TW": "任務已完成，正在開啟瀏覽器儲存：%s",
+    "en": "Task completed; saving in browser: %s",
+    "ja": "タスクが完了しました。ブラウザーで保存します：%s"
+  },
+  "任务操作": {
+    "zh-CN": "任务操作",
+    "zh-TW": "任務操作",
+    "en": "Task actions",
+    "ja": "タスク操作"
+  },
+  "任务筛选": {
+    "zh-CN": "任务筛选",
+    "zh-TW": "任務篩選",
+    "en": "Task filter",
+    "ja": "タスクの絞り込み"
+  },
+  "会话及受控登录浏览器状态已清除，可重新打开登录窗口或导入 Cookie 文件。": {
+    "zh-CN": "会话及受控登录浏览器状态已清除，可重新打开登录窗口或导入 Cookie 文件。",
+    "zh-TW": "工作階段及受控登入瀏覽器狀態已清除，可重新開啟登入視窗或匯入 Cookie 檔案。",
+    "en": "Session and isolated login browser state cleared. Reopen the sign-in window or import a cookie file.",
+    "ja": "セッションおよび専用ログインブラウザの状態を消去しました。ログインウィンドウを開き直すか Cookie を読み込んでください。"
+  },
+  "会话已保存，请重新解析原链接": {
+    "zh-CN": "会话已保存，请重新解析原链接",
+    "zh-TW": "會話已保存，請重新解析原鏈接",
+    "en": "Session saved; analyze the original link again",
+    "ja": "セッションを保存しました。元のリンクを再解析してください"
+  },
+  "会话已变化，请重新打开登录页": {
+    "zh-CN": "会话已变化，请重新打开登录页",
+    "zh-TW": "工作階段已變更，請重新開啟登入頁",
+    "en": "Session changed; please reopen the sign-in page",
+    "ja": "セッションが変更されました。ログインページを開き直してください"
+  },
+  "会话已移除": {
+    "zh-CN": "会话已移除",
+    "zh-TW": "工作階段已移除",
+    "en": "Session removed",
+    "ja": "セッションを削除しました"
+  },
+  "会话或媒体地址已变化，请重新在 YouTube 页面解析原视频": {
+    "zh-CN": "会话或媒体地址已变化，请重新在 YouTube 页面解析原视频",
+    "zh-TW": "工作階段或媒體網址已變更，請重新於 YouTube 頁面解析原影片",
+    "en": "Session or media URL changed; re-analyze the original video on YouTube",
+    "ja": "セッションまたはメディア URL が変更されました。YouTube ページで元動画を再解析してください"
+  },
+  "伴随服务启动后提前退出 (Code %d)": {
+    "zh-CN": "伴随服务启动后提前退出 (Code %d)",
+    "zh-TW": "伴隨服務啟動後提早結束 (Code %d)",
+    "en": "Companion backend exited prematurely (Code %d)",
+    "ja": "付随エンジンが起動後に終了しました (Code %d)"
+  },
+  "使用已导入会话": {
+    "zh-CN": "使用已导入会话",
+    "zh-TW": "使用已導入會話",
+    "en": "Use imported session",
+    "ja": "読み込んだセッションを使用"
+  },
+  "使用已解析资源": {
+    "zh-CN": "使用已解析资源",
+    "zh-TW": "使用已解析資源",
+    "en": "Use analyzed source",
+    "ja": "解析済みソースを使用"
+  },
+  "使用独立 Edge 窗口登录。Google 登录后请返回目标平台，再点击「保存会话并关闭」；已保存不等于账号已验证。": {
+    "zh-CN": "使用独立 Edge 窗口登录。Google 登录后请返回目标平台，再点击「保存会话并关闭」；已保存不等于账号已验证。",
+    "zh-TW": "使用獨立 Edge 視窗登入。Google 登入後請返回目標平台，再點擊「儲存工作階段並關閉」；已儲存不代表帳號已驗證。",
+    "en": "Sign in with an isolated Edge window. After Google login, return to the platform and click Save Session & Close (saved != verified).",
+    "ja": "専用の Edge ウィンドウでログインします。Google ログイン後は元のサイトに戻ってから「セッションを保存して閉じる」を押してください（保存済み＝認証保証ではありません）。"
+  },
+  "例如: http://127.0.0.1:7890": {
+    "zh-CN": "例如: http://127.0.0.1:7890",
+    "zh-TW": "例如: http://127.0.0.1:7890",
+    "en": "Example: http://127.0.0.1:7890",
+    "ja": "例：http://127.0.0.1:7890"
+  },
+  "例如: https://example.com": {
+    "zh-CN": "例如: https://example.com",
+    "zh-TW": "例如: https://example.com",
+    "en": "Example: https://example.com",
+    "ja": "例：https://example.com"
+  },
+  "保存B站凭证": {
+    "zh-CN": "保存B站凭证",
+    "zh-TW": "保存B站憑證",
+    "en": "Save Bilibili credentials",
+    "ja": "Bilibili 認証情報を保存"
+  },
+  "保存会话并关闭": {
+    "zh-CN": "保存会话并关闭",
+    "zh-TW": "保存會話并關閉",
+    "en": "Save session and close",
+    "ja": "セッションを保存して閉じる"
+  },
+  "保存原图（逐张图片）": {
+    "zh-CN": "保存原图（逐张图片）",
+    "zh-TW": "保存原圖（逐張圖片）",
+    "en": "Save originals individually",
+    "ja": "元画像を個別に保存"
+  },
+  "保存失败": {
+    "zh-CN": "保存失败",
+    "zh-TW": "保存失敗",
+    "en": "Save failed",
+    "ja": "保存失敗"
+  },
+  "保存封面失败": {
+    "zh-CN": "保存封面失败",
+    "zh-TW": "保存封面失敗",
+    "en": "Could not save cover",
+    "ja": "カバーを保存できませんでした"
+  },
+  "保存已播放媒体": {
+    "zh-CN": "保存已播放媒体",
+    "zh-TW": "保存已播放媒體",
+    "en": "Save played media",
+    "ja": "再生済みメディアを保存"
+  },
+  "保存此原图": {
+    "zh-CN": "保存此原图",
+    "zh-TW": "保存此原圖",
+    "en": "Save this original",
+    "ja": "この元画像を保存"
+  },
+  "保存此图": {
+    "zh-CN": "保存此图",
+    "zh-TW": "保存此圖",
+    "en": "Save this image",
+    "ja": "この画像を保存"
+  },
+  "保存登录状态": {
+    "zh-CN": "保存登录状态",
+    "zh-TW": "儲存登入狀態",
+    "en": "Save Sign-In Session",
+    "ja": "ログイン状態を保存"
+  },
+  "保存目录": {
+    "zh-CN": "保存目录",
+    "zh-TW": "保存目錄",
+    "en": "Save folder",
+    "ja": "保存先フォルダー"
+  },
+  "保存目录与并发任务数": {
+    "zh-CN": "保存目录与并发任务数",
+    "zh-TW": "保存目錄與并發任務數",
+    "en": "Save folder and concurrent downloads",
+    "ja": "保存先と同時ダウンロード数"
+  },
+  "保存目录已更新": {
+    "zh-CN": "保存目录已更新",
+    "zh-TW": "保存目錄已更新",
+    "en": "Save folder updated",
+    "ja": "保存先を更新しました"
+  },
+  "保存目录无法访问，已保留成品；请重新选择目录后重试": {
+    "zh-CN": "保存目录无法访问，已保留成品；请重新选择目录后重试",
+    "zh-TW": "儲存目錄無法存取，已保留成品；請重新選擇目錄後重試",
+    "en": "Save folder inaccessible; output kept—choose another folder and retry",
+    "ja": "保存先フォルダにアクセスできません。出力ファイルは保持されたため、フォルダを再選択してください"
+  },
+  "保存路径": {
+    "zh-CN": "保存路径",
+    "zh-TW": "保存路徑",
+    "en": "Save path",
+    "ja": "保存先"
+  },
+  "保存连接设置并重连": {
+    "zh-CN": "保存连接设置并重连",
+    "zh-TW": "保存連接設置并重連",
+    "en": "Save connection and reconnect",
+    "ja": "接続設定を保存して再接続"
+  },
+  "保存选中原图": {
+    "zh-CN": "保存选中原图",
+    "zh-TW": "保存選中原圖",
+    "en": "Save selected originals",
+    "ja": "選択した元画像を保存"
+  },
+  "修改保存路径": {
+    "zh-CN": "修改保存路径",
+    "zh-TW": "修改保存路徑",
+    "en": "Change save path",
+    "ja": "保存先を変更"
+  },
+  "停止添加": {
+    "zh-CN": "停止添加",
+    "zh-TW": "停止新增",
+    "en": "Stop Adding",
+    "ja": "追加を停止"
+  },
+  "充电内容需要验证对应账号权益": {
+    "zh-CN": "充电内容需要验证对应账号权益",
+    "zh-TW": "充電內容需要驗證對應帳號權益",
+    "en": "Creator-funded content requires verifying account access",
+    "ja": "特典コンテンツには対応するアカウント権限の確認が必要です"
+  },
+  "全不选": {
+    "zh-CN": "全不选",
+    "zh-TW": "全不選",
+    "en": "Deselect all",
+    "ja": "すべて解除"
+  },
+  "全屏切换 (F / F11)": {
+    "zh-CN": "全屏切换 (F / F11)",
+    "zh-TW": "全屏切換 (F / F11)",
+    "en": "Toggle fullscreen (F / F11)",
+    "ja": "全画面切り替え（F / F11）"
+  },
+  "全网高清原画 · 原生直连极速下载": {
+    "zh-CN": "全网高清原画 · 原生直连极速下载",
+    "zh-TW": "全網高清原畫 · 原生直連極速下載",
+    "en": "High-quality media · Direct native downloads",
+    "ja": "高画質メディア・ネイティブ直接ダウンロード"
+  },
+  "全部 (0)": {
+    "zh-CN": "全部 (0)",
+    "zh-TW": "全部 (0)",
+    "en": "All (0)",
+    "ja": "すべて（0）"
+  },
+  "全部下载 (%d 集)": {
+    "zh-CN": "全部下载 (%d 集)",
+    "zh-TW": "全部下載 (%d 集)",
+    "en": "Download all (%d episodes)",
+    "ja": "すべてダウンロード（%d 話）"
+  },
+  "全部暂停": {
+    "zh-CN": "全部暂停",
+    "zh-TW": "全部暫停",
+    "en": "Pause all",
+    "ja": "すべて一時停止"
+  },
+  "全部继续": {
+    "zh-CN": "全部继续",
+    "zh-TW": "全部繼續",
+    "en": "Resume all",
+    "ja": "すべて再開"
+  },
+  "共 %d 个解析器": {
+    "zh-CN": "共 %d 个解析器",
+    "zh-TW": "共 %d 個解析器",
+    "en": "%d extractors total",
+    "ja": "計 %d 個のエクストラクタ"
+  },
+  "共 %d 张": {
+    "zh-CN": "共 %d 张",
+    "zh-TW": "共 %d 張",
+    "en": "%d images",
+    "ja": "%d 枚"
+  },
+  "共匹配 %d 个解析器，当前展示前 300 项（输入关键词缩小范围）": {
+    "zh-CN": "共匹配 %d 个解析器，当前展示前 300 项（输入关键词缩小范围）",
+    "zh-TW": "共符合 %d 個解析器，目前顯示前 300 項（輸入關鍵字縮小範圍）",
+    "en": "Matched %d extractors; showing top 300 (enter keywords to filter)",
+    "ja": "%d 件一致 · 先頭 300 件を表示中（キーワードで絞り込み可能）"
+  },
+  "关于 OmniDownloader": {
+    "zh-CN": "关于 OmniDownloader",
+    "zh-TW": "關于 OmniDownloader",
+    "en": "About OmniDownloader",
+    "ja": "OmniDownloader について"
+  },
+  "关闭停用开关时，新解析与新下载可使用该平台已保存的 Cookie": {
+    "zh-CN": "关闭停用开关时，新解析与新下载可使用该平台已保存的 Cookie",
+    "zh-TW": "關閉停用開關時，新解析與新下載可使用該平台已儲存的 Cookie",
+    "en": "When re-enabled, new analyses and downloads will use saved cookies for this platform",
+    "ja": "無効化を解除すると、新規解析とダウンロードで保存済み Cookie が使われます"
+  },
+  "关闭全部标签": {
+    "zh-CN": "关闭全部标签",
+    "zh-TW": "關閉全部分頁",
+    "en": "Close all tabs",
+    "ja": "すべてのタブを閉じる"
+  },
+  "关闭标签页": {
+    "zh-CN": "关闭标签页",
+    "zh-TW": "關閉分頁",
+    "en": "Close tab",
+    "ja": "タブを閉じる"
+  },
+  "内置哔哩哔哩登录（扫码 / 短信 / 密码登录后自动保存）": {
+    "zh-CN": "内置哔哩哔哩登录（扫码 / 短信 / 密码登录后自动保存）",
+    "zh-TW": "內建嗶哩嗶哩登入（掃碼 / 簡訊 / 密碼登入後自動保存）",
+    "en": "In-app Bilibili sign-in (auto-saves after QR / SMS / password login)",
+    "ja": "Bilibili 内蔵ログイン（QR・SMS・パスワードログイン後に自動保存）"
+  },
+  "内置媒体引擎": {
+    "zh-CN": "内置媒体引擎",
+    "zh-TW": "內建媒體引擎",
+    "en": "Built-in media engine",
+    "ja": "内蔵メディアエンジン"
+  },
+  "内置播放器暂不支持此编码或读取中断 (%s)，可使用系统默认播放器打开。": {
+    "zh-CN": "内置播放器暂不支持此编码或读取中断 (%s)，可使用系统默认播放器打开。",
+    "zh-TW": "內建播放器暫不支援此編碼或讀取中斷 (%s)，可使用系統預設播放器開啟。",
+    "en": "The built-in player cannot decode this stream or read was interrupted (%s); try opening in the system player.",
+    "ja": "内蔵プレーヤーはこのコーデック未対応か読み込みが中断されました (%s)。システムプレーヤーで開いてみてください。"
+  },
+  "内置网页一键登录": {
+    "zh-CN": "内置网页一键登录",
+    "zh-TW": "內建網頁一鍵登入",
+    "en": "In-app browser sign-in",
+    "ja": "内蔵ブラウザでログイン"
+  },
+  "准备下载...": {
+    "zh-CN": "准备下载...",
+    "zh-TW": "準備下載...",
+    "en": "Preparing download...",
+    "ja": "ダウンロード準備中...",
+    "progress": true
+  },
+  "凭据已保存，实际画质取决于账号权益与内容": {
+    "zh-CN": "凭据已保存，实际画质取决于账号权益与内容",
+    "zh-TW": "憑據已保存，實際畫質取決于賬號權益與內容",
+    "en": "Credentials saved; quality depends on account access and content",
+    "ja": "認証情報を保存しました。画質はアカウント権限とコンテンツによって異なります"
+  },
+  "凭据已过期，请重新登录": {
+    "zh-CN": "凭据已过期，请重新登录",
+    "zh-TW": "憑證已過期，請重新登入",
+    "en": "Credentials expired; please sign in again",
+    "ja": "認証情報の有効期限が切れました。再ログインしてください"
+  },
+  "凭据无法读取，请重新导入": {
+    "zh-CN": "凭据无法读取，请重新导入",
+    "zh-TW": "憑證無法讀取，請重新匯入",
+    "en": "Cannot read credentials; please re-import",
+    "ja": "認証情報を読み取れません。再度読み込んでください"
+  },
+  "分享页没有提供目标视频详情，需要自动加载原页面": {
+    "zh-CN": "分享页没有提供目标视频详情，需要自动加载原页面",
+    "zh-TW": "分享頁未提供目標影片詳情，需自動載入原頁面",
+    "en": "Share page omitted video details; loading original page automatically",
+    "ja": "共有ページに動画詳細がないため、元ページの自動読み込みが必要です"
+  },
+  "切换为合集多选下载 (%d 集)": {
+    "zh-CN": "切换为合集多选下载 (%d 集)",
+    "zh-TW": "切換為合集多選下載 (%d 集)",
+    "en": "Select collection episodes (%d)",
+    "ja": "コレクションのエピソードを選択（%d 話）"
+  },
+  "切换分P：": {
+    "zh-CN": "切换分P：",
+    "zh-TW": "切換分P：",
+    "en": "Select part:",
+    "ja": "パートを選択："
+  },
+  "切换到批量队列": {
+    "zh-CN": "切换到批量队列",
+    "zh-TW": "切換至批次佇列",
+    "en": "Switch to Batch Queue",
+    "ja": "一括キューへ切替"
+  },
+  "切换到浅色": {
+    "zh-CN": "切换到浅色",
+    "zh-TW": "切換到淺色",
+    "en": "Switch to light theme",
+    "ja": "ライトテーマに切り替え"
+  },
+  "切换到深色": {
+    "zh-CN": "切换到深色",
+    "zh-TW": "切換到深色",
+    "en": "Switch to dark theme",
+    "ja": "ダークテーマに切り替え"
+  },
+  "切换子视频：": {
+    "zh-CN": "切换子视频：",
+    "zh-TW": "切換子視頻：",
+    "en": "Select video:",
+    "ja": "動画を選択："
+  },
+  "切换账号": {
+    "zh-CN": "切换账号",
+    "zh-TW": "切換帳號",
+    "en": "Switch account",
+    "ja": "アカウント切替"
+  },
+  "列表": {
+    "zh-CN": "列表",
+    "zh-TW": "列表",
+    "en": "List",
+    "ja": "一覧"
+  },
+  "创建专属相簿失败": {
+    "zh-CN": "创建专属相簿失败",
+    "zh-TW": "建立專屬相簿失敗",
+    "en": "Failed to create dedicated photo album",
+    "ja": "専用アルバムの作成に失敗しました"
+  },
+  "创建任务失败": {
+    "zh-CN": "创建任务失败",
+    "zh-TW": "創建任務失敗",
+    "en": "Could not create task",
+    "ja": "タスクを作成できませんでした"
+  },
+  "初始化 WebView2 运行时失败，请确认本机已安装 Microsoft Edge WebView2：%s": {
+    "zh-CN": "初始化 WebView2 运行时失败，请确认本机已安装 Microsoft Edge WebView2：%s",
+    "zh-TW": "初始化 WebView2 執行階段失敗，請確認本機已安裝 Microsoft Edge WebView2：%s",
+    "en": "Failed to initialize WebView2 runtime; ensure Microsoft Edge WebView2 is installed: %s",
+    "ja": "WebView2 ランタイムの初期化に失敗しました。Microsoft Edge WebView2 がインストールされているか確認してください: %s"
+  },
+  "删除任务": {
+    "zh-CN": "删除任务",
+    "zh-TW": "刪除任務",
+    "en": "Delete task",
+    "ja": "タスクを削除"
+  },
+  "删除合集记录": {
+    "zh-CN": "删除合集记录",
+    "zh-TW": "刪除合輯紀錄",
+    "en": "Delete Collection Record",
+    "ja": "合集履歴を削除"
+  },
+  "删除失败": {
+    "zh-CN": "删除失败",
+    "zh-TW": "刪除失敗",
+    "en": "Delete failed",
+    "ja": "削除失敗"
+  },
+  "刷新同一媒体地址（仅一次）": {
+    "zh-CN": "刷新同一媒体地址（仅一次）",
+    "zh-TW": "更新同一媒體網址（僅一次）",
+    "en": "Refreshing this media URL (once)",
+    "ja": "同じメディア URL を更新中（1 回のみ）",
+    "progress": true
+  },
+  "刷新页面": {
+    "zh-CN": "刷新页面",
+    "zh-TW": "刷新頁面",
+    "en": "Reload page",
+    "ja": "ページを再読み込み"
+  },
+  "前往": {
+    "zh-CN": "前往",
+    "zh-TW": "前往",
+    "en": "Go",
+    "ja": "移動"
+  },
+  "前往修复设置": {
+    "zh-CN": "前往修复设置",
+    "zh-TW": "前往修復設置",
+    "en": "Open relevant settings",
+    "ja": "関連設定を開く"
+  },
+  "前往账号设置": {
+    "zh-CN": "前往账号设置",
+    "zh-TW": "前往帳號設定",
+    "en": "Go to Account Settings",
+    "ja": "アカウント設定へ"
+  },
+  "功能设置": {
+    "zh-CN": "功能设置",
+    "zh-TW": "功能設置",
+    "en": "Features",
+    "ja": "機能設定"
+  },
+  "加载登录页面中...": {
+    "zh-CN": "加载登录页面中...",
+    "zh-TW": "正在載入登入頁面...",
+    "en": "Loading sign-in page...",
+    "ja": "ログインページを読み込み中..."
+  },
+  "动图": {
+    "zh-CN": "GIF",
+    "zh-TW": "GIF",
+    "en": "GIF",
+    "ja": "GIF"
+  },
+  "动图: GIF": {
+    "zh-CN": "动图: GIF",
+    "zh-TW": "動圖: GIF",
+    "en": "Animation: GIF",
+    "ja": "GIF アニメーション"
+  },
+  "动图封面": {
+    "zh-CN": "动图封面",
+    "zh-TW": "動圖封面",
+    "en": "Animation Cover",
+    "ja": "アニメカバー"
+  },
+  "动态图": {
+    "zh-CN": "GIF",
+    "zh-TW": "GIF",
+    "en": "GIF",
+    "ja": "GIF"
+  },
+  "动态图 (GIF)": {
+    "zh-CN": "GIF",
+    "zh-TW": "GIF",
+    "en": "GIF",
+    "ja": "GIF"
+  },
+  "动态图 GIF": {
+    "zh-CN": "GIF",
+    "zh-TW": "GIF",
+    "en": "GIF",
+    "ja": "GIF"
+  },
+  "动态图转换": {
+    "zh-CN": "动态图转换",
+    "zh-TW": "動態圖轉換",
+    "en": "GIF conversion",
+    "ja": "GIF 変換"
+  },
+  "匹配主流平台 (%d)": {
+    "zh-CN": "匹配主流平台 (%d)",
+    "zh-TW": "符合主流平台 (%d)",
+    "en": "Matched Popular Platforms (%d)",
+    "ja": "一致した主要サイト (%d)"
+  },
+  "单击切换 · 双击关闭": {
+    "zh-CN": "单击切换 · 双击关闭",
+    "zh-TW": "單擊切換 · 雙擊關閉",
+    "en": "Click to switch · Double-click to close",
+    "ja": "クリックで切替 · ダブルクリックで閉じる"
+  },
+  "单张图片过大或为空": {
+    "zh-CN": "单张图片过大或为空",
+    "zh-TW": "單張圖片過大或為空",
+    "en": "Image is empty or exceeds size limit",
+    "ja": "画像が空または大きすぎます"
+  },
+  "单批最多添加 100 条去重链接": {
+    "zh-CN": "单批最多添加 100 条去重链接",
+    "zh-TW": "單批最多新增 100 條去重連結",
+    "en": "At most 100 unique links per batch",
+    "ja": "1回に追加できる重複なしリンクは最大 100 件です"
+  },
+  "单条下载": {
+    "zh-CN": "单条下载",
+    "zh-TW": "單條下載",
+    "en": "Single download",
+    "ja": "単一ダウンロード"
+  },
+  "单条链接最多 100 个媒体，请在首页选择范围": {
+    "zh-CN": "单条链接最多 100 个媒体，请在首页选择范围",
+    "zh-TW": "單條連結最多 100 個媒體，請於首頁選擇範圍",
+    "en": "Up to 100 items per link; select a range on Home",
+    "ja": "1リンクあたり最大 100 件まで。ホームで範囲を選択してください"
+  },
+  "单次最多 100 条链接，请拆分后导入": {
+    "zh-CN": "单次最多 100 条链接，请拆分后导入",
+    "zh-TW": "單次最多 100 條連結，請拆分後匯入",
+    "en": "Maximum 100 links at once; split and import in batches",
+    "ja": "一度に 100 件までです。分割して読み込んでください"
+  },
+  "单独保存封面": {
+    "zh-CN": "单独保存封面",
+    "zh-TW": "單獨保存封面",
+    "en": "Save cover only",
+    "ja": "カバーのみ保存"
+  },
+  "单集独立预览": {
+    "zh-CN": "单集独立预览",
+    "zh-TW": "單集獨立預覽",
+    "en": "Single episode",
+    "ja": "単話プレビュー"
+  },
+  "压缩包中未检测到可预览的图片文件": {
+    "zh-CN": "压缩包中未检测到可预览的图片文件",
+    "zh-TW": "壓縮包中未檢測到可預覽的圖片文件",
+    "en": "No previewable images found in the archive",
+    "ja": "アーカイブに表示可能な画像がありません"
+  },
+  "压缩包内未找到可直接预览的图片文件，正在改用系统打开": {
+    "zh-CN": "压缩包内未找到可直接预览的图片文件，正在改用系统打开",
+    "zh-TW": "壓縮檔內未找到可直接預覽的圖片檔案，正在改用系統開啟",
+    "en": "No previewable image found inside the archive; opening with system viewer",
+    "ja": "アーカイブ内にプレビュー可能な画像がないためシステムアプリで開きます"
+  },
+  "原分集已不可定位，请重新解析": {
+    "zh-CN": "原分集已不可定位，请重新解析",
+    "zh-TW": "原分集已無法定位，請重新解析",
+    "en": "Original episode could not be located; please re-analyze",
+    "ja": "元のエピソードを特定できません。再解析してください"
+  },
+  "原动画已不可定位，请重新解析": {
+    "zh-CN": "原动画已不可定位，请重新解析",
+    "zh-TW": "原動畫已無法定位，請重新解析",
+    "en": "Original animation could not be located; please re-analyze",
+    "ja": "元のアニメーションを特定できません。再解析してください"
+  },
+  "原图 ZIP": {
+    "zh-CN": "原图 ZIP",
+    "zh-TW": "原圖 ZIP",
+    "en": "Original images ZIP",
+    "ja": "元画像 ZIP"
+  },
+  "原始": {
+    "zh-CN": "原始",
+    "zh-TW": "原始",
+    "en": "Original",
+    "ja": "オリジナル"
+  },
+  "原始像素大小 (1)": {
+    "zh-CN": "原始像素大小 (1)",
+    "zh-TW": "原始像素大小 (1)",
+    "en": "Actual size (1)",
+    "ja": "実際のサイズ（1）"
+  },
+  "原始帧动画": {
+    "zh-CN": "原始帧动画",
+    "zh-TW": "原始影格動畫",
+    "en": "Original Frame Animation",
+    "ja": "オリジナルフレームアニメ"
+  },
+  "原媒体已不可定位，请重新解析": {
+    "zh-CN": "原媒体已不可定位，请重新解析",
+    "zh-TW": "原媒體已無法定位，請重新解析",
+    "en": "Original media could not be located; please re-analyze",
+    "ja": "元のメディアを特定できません。再解析してください"
+  },
+  "原封面已不可定位": {
+    "zh-CN": "原封面已不可定位",
+    "zh-TW": "原封面已無法定位",
+    "en": "Original cover could not be located",
+    "ja": "元のカバー画像を特定できません"
+  },
+  "发现 %@。IPA 需按发布说明签名安装。": {
+    "zh-CN": "发现 %@。IPA 需按发布说明签名安装。",
+    "zh-TW": "發現 %@。IPA 需依發布說明簽名安裝。",
+    "en": "Found %@. Sign and install the IPA per release instructions.",
+    "ja": "%@ が見つかりました。IPA はリリース手順に従い署名してインストールしてください。"
+  },
+  "发现 iOS 更新": {
+    "zh-CN": "发现 iOS 更新",
+    "zh-TW": "發現 iOS 更新",
+    "en": "iOS Update Available",
+    "ja": "iOS のアップデートがあります"
+  },
+  "发现新版 Web %s": {
+    "zh-CN": "发现新版 Web %s",
+    "zh-TW": "發現新版 Web %s",
+    "en": "New Web Version %s Found",
+    "ja": "新しい Web 版 %s が利用可能"
+  },
+  "发现新版本 v%s（当前 v%s）": {
+    "zh-CN": "发现新版本 v%s（当前 v%s）",
+    "zh-TW": "發現新版本 v%s（目前 v%s）",
+    "en": "New Version v%s Available (Current v%s)",
+    "ja": "新バージョン v%s（現在 v%s）"
+  },
+  "发生意外异常: %s": {
+    "zh-CN": "发生意外异常: %s",
+    "zh-TW": "發生非預期例外: %s",
+    "en": "Unexpected error: %s",
+    "ja": "予期しないエラー: %s"
+  },
+  "发生未知错误": {
+    "zh-CN": "发生未知错误",
+    "zh-TW": "發生未知錯誤",
+    "en": "An unknown error occurred",
+    "ja": "不明なエラーが発生しました"
+  },
+  "取消未完成集": {
+    "zh-CN": "取消未完成集",
+    "zh-TW": "取消未完成集",
+    "en": "Cancel unfinished episodes",
+    "ja": "未完了のエピソードをキャンセル"
+  },
+  "取消静音": {
+    "zh-CN": "取消静音",
+    "zh-TW": "取消靜音",
+    "en": "Unmuted",
+    "ja": "ミュート解除"
+  },
+  "受保护内容不能导出": {
+    "zh-CN": "受保护内容不能导出",
+    "zh-TW": "受保護內容無法匯出",
+    "en": "Protected content cannot be exported",
+    "ja": "保護されたコンテンツは書き出せません"
+  },
+  "只删除记录": {
+    "zh-CN": "只删除记录",
+    "zh-TW": "只刪除記錄",
+    "en": "Remove record only",
+    "ja": "記録のみ削除"
+  },
+  "可选视频流（点击选择清晰度、格式与体积）": {
+    "zh-CN": "可选视频流（点击选择清晰度、格式与体积）",
+    "zh-TW": "可選視頻流（點擊選擇清晰度、格式與體積）",
+    "en": "Available streams (select quality, format and size)",
+    "ja": "利用可能なストリーム（画質・形式・サイズを選択）"
+  },
+  "合集下载": {
+    "zh-CN": "合集下载",
+    "zh-TW": "合輯下載",
+    "en": "Collection Download",
+    "ja": "コレクションダウンロード"
+  },
+  "合集选项": {
+    "zh-CN": "合集选项",
+    "zh-TW": "合集選項",
+    "en": "Collection options",
+    "ja": "コレクション設定"
+  },
+  "同时保存封面": {
+    "zh-CN": "同时保存封面",
+    "zh-TW": "同時保存封面",
+    "en": "Save cover too",
+    "ja": "カバーも保存"
+  },
+  "同时删除文件": {
+    "zh-CN": "同时删除文件",
+    "zh-TW": "同時刪除文件",
+    "en": "Also delete files",
+    "ja": "ファイルも削除"
+  },
+  "后台运行共享下载服务，开机不自动打开网页或客户端": {
+    "zh-CN": "后台运行共享下载服务，开机不自动打开网页或客户端",
+    "zh-TW": "后臺運行共享下載服務，開機不自動打開網頁或客戶端",
+    "en": "Run the shared service in the background without opening the browser or client on startup",
+    "ja": "起動時にブラウザーやクライアントを開かず、共有サービスをバックグラウンドで実行"
+  },
+  "启动伴随 Python 服务失败 (%s)": {
+    "zh-CN": "启动伴随 Python 服务失败 (%s)",
+    "zh-TW": "啟動伴隨 Python 服務失敗 (%s)",
+    "en": "Failed to start companion Python service (%s)",
+    "ja": "付随 Python サービスの起動に失敗しました (%s)"
+  },
+  "启动内置服务程序失败 (%s)": {
+    "zh-CN": "启动内置服务程序失败 (%s)",
+    "zh-TW": "啟動內建服務程式失敗 (%s)",
+    "en": "Failed to start built-in service (%s)",
+    "ja": "内蔵サーバーの起動に失敗しました (%s)"
+  },
+  "响应不是完整 MP4/AAC 容器": {
+    "zh-CN": "响应不是完整 MP4/AAC 容器",
+    "zh-TW": "回應並非完整 MP4/AAC 容器",
+    "en": "Response is not a valid MP4/AAC container",
+    "ja": "応答が完全な MP4/AAC コンテナではありません"
+  },
+  "响应长度不符，拒绝保存片段或错误页": {
+    "zh-CN": "响应长度不符，拒绝保存片段或错误页",
+    "zh-TW": "回應長度不符，拒絕儲存片段或錯誤頁",
+    "en": "Response length mismatch; partial or error page rejected",
+    "ja": "応答サイズが一致しないため不完全データを拒否しました"
+  },
+  "哔哩哔哩账号登录 (Cookie / SESSDATA)": {
+    "zh-CN": "哔哩哔哩账号登录 (Cookie / SESSDATA)",
+    "zh-TW": "嗶哩嗶哩賬號登錄 (Cookie / SESSDATA)",
+    "en": "Bilibili sign-in (Cookie / SESSDATA)",
+    "ja": "Bilibili ログイン（Cookie / SESSDATA）"
+  },
+  "图文 ZIP": {
+    "zh-CN": "图文 ZIP",
+    "zh-TW": "圖文 ZIP",
+    "en": "Image-post ZIP",
+    "ja": "画像投稿 ZIP"
+  },
+  "图文下载": {
+    "zh-CN": "图文下载",
+    "zh-TW": "圖文下載",
+    "en": "Image-post downloads",
+    "ja": "画像投稿のダウンロード"
+  },
+  "图文作品": {
+    "zh-CN": "图文作品",
+    "zh-TW": "圖文作品",
+    "en": "Image Post",
+    "ja": "画像投稿"
+  },
+  "图片": {
+    "zh-CN": "图片",
+    "zh-TW": "圖片",
+    "en": "Images",
+    "ja": "画像"
+  },
+  "图片 %d": {
+    "zh-CN": "图片 %d",
+    "zh-TW": "圖片 %d",
+    "en": "Image %d",
+    "ja": "画像 %d"
+  },
+  "图片无法解码": {
+    "zh-CN": "图片无法解码",
+    "zh-TW": "圖片無法解碼",
+    "en": "Cannot decode image",
+    "ja": "画像をデコードできません"
+  },
+  "图片暂不可预览": {
+    "zh-CN": "图片暂不可预览",
+    "zh-TW": "圖片暫不可預覽",
+    "en": "Image preview unavailable",
+    "ja": "画像をプレビューできません"
+  },
+  "图片暂时无法加载，请重试或下载原图。": {
+    "zh-CN": "图片暂时无法加载，请重试或下载原图。",
+    "zh-TW": "圖片暫時無法載入，請重試或下載原圖。",
+    "en": "Failed to load image; retry or download the original file.",
+    "ja": "画像を読み込めません。再試行するか元画像を保存してください。"
+  },
+  "图片查看": {
+    "zh-CN": "图片查看",
+    "zh-TW": "圖片查看",
+    "en": "Image viewer",
+    "ja": "画像ビューアー"
+  },
+  "图片源已过期，请重新解析原图文": {
+    "zh-CN": "图片源已过期，请重新解析原图文",
+    "zh-TW": "圖片網址已過期，請重新解析原圖文",
+    "en": "Image source expired; re-analyze the post",
+    "ja": "画像ソースの期限切れです。元の投稿を再解析してください"
+  },
+  "图片预览": {
+    "zh-CN": "图片预览",
+    "zh-TW": "圖片預覽",
+    "en": "Image Preview",
+    "ja": "画像プレビュー"
+  },
+  "图集导出 ZIP": {
+    "zh-CN": "图集导出 ZIP",
+    "zh-TW": "圖集導出 ZIP",
+    "en": "Export image collection ZIP",
+    "ja": "画像集を ZIP で書き出す"
+  },
+  "图集浏览": {
+    "zh-CN": "图集浏览",
+    "zh-TW": "圖集瀏覽",
+    "en": "Gallery Viewer",
+    "ja": "ギャラリー表示"
+  },
+  "在官方网站登录后点击保存登录状态。": {
+    "zh-CN": "在官方网站登录后点击保存登录状态。",
+    "zh-TW": "於官方網站登入後點擊儲存登入狀態。",
+    "en": "Sign in on the official site, then tap Save Sign-In Session.",
+    "ja": "公式サイトでログイン後、「ログイン状態を保存」をタップしてください。"
+  },
+  "在文件App中查看": {
+    "zh-CN": "在文件App中查看",
+    "zh-TW": "在文件App中查看",
+    "en": "Show in Files",
+    "ja": "ファイルで表示"
+  },
+  "在电脑中定位文件": {
+    "zh-CN": "在电脑中定位文件",
+    "zh-TW": "在電腦中定位文件",
+    "en": "Show file on computer",
+    "ja": "パソコンでファイルの場所を表示"
+  },
+  "在首页解析视频后即可开始下载": {
+    "zh-CN": "在首页解析视频后即可开始下载",
+    "zh-TW": "在首頁解析視頻后即可開始下載",
+    "en": "Analyze a video on the home page to download",
+    "ja": "ホームで動画を解析するとダウンロードできます"
+  },
+  "在首页验证此链接": {
+    "zh-CN": "在首页验证此链接",
+    "zh-TW": "在首頁驗證此鏈接",
+    "en": "Verify this link on the home page",
+    "ja": "ホームでリンクを認証"
+  },
+  "基于 SwiftUI + AVFoundation 纯原生构建，原生支持 Bilibili DASH 硬件极速混流。": {
+    "zh-CN": "基于 SwiftUI + AVFoundation 纯原生构建，原生支持 Bilibili DASH 硬件极速混流。",
+    "zh-TW": "基于 SwiftUI + AVFoundation 純原生構建，原生支持 Bilibili DASH 硬件極速混流。",
+    "en": "Built with SwiftUI and AVFoundation, with native Bilibili DASH merging.",
+    "ja": "SwiftUI と AVFoundation を使用し、Bilibili DASH のネイティブ結合に対応します。"
+  },
+  "处理中": {
+    "zh-CN": "处理中",
+    "zh-TW": "處理中",
+    "en": "Processing",
+    "ja": "処理中"
+  },
+  "备用站点": {
+    "zh-CN": "备用站点",
+    "zh-TW": "備用網站",
+    "en": "Mirror Site",
+    "ja": "予備サイト"
+  },
+  "备用网站": {
+    "zh-CN": "备用网站",
+    "zh-TW": "備用網站",
+    "en": "Fallback Site",
+    "ja": "予備サイト"
+  },
+  "复制": {
+    "zh-CN": "复制",
+    "zh-TW": "復制",
+    "en": "Copy",
+    "ja": "コピー"
+  },
+  "复制全部": {
+    "zh-CN": "复制全部",
+    "zh-TW": "復制全部",
+    "en": "Copy all",
+    "ja": "すべてコピー"
+  },
+  "复制失败，请手动选中复制": {
+    "zh-CN": "复制失败，请手动选中复制",
+    "zh-TW": "複製失敗，請手動選取複製",
+    "en": "Copy failed; please select and copy manually",
+    "ja": "コピーに失敗しました。手動で選択してコピーしてください"
+  },
+  "复制封面链接": {
+    "zh-CN": "复制封面链接",
+    "zh-TW": "複製封面連結",
+    "en": "Copy Cover URL",
+    "ja": "カバー URL をコピー"
+  },
+  "复制标题": {
+    "zh-CN": "复制标题",
+    "zh-TW": "複製標題",
+    "en": "Copy Title",
+    "ja": "タイトルをコピー"
+  },
+  "如何获取 SESSDATA？": {
+    "zh-CN": "如何获取 SESSDATA？",
+    "zh-TW": "如何獲取 SESSDATA？",
+    "en": "How to get SESSDATA?",
+    "ja": "SESSDATA の取得方法"
+  },
+  "如何获取哔哩哔哩 SESSDATA": {
+    "zh-CN": "如何获取哔哩哔哩 SESSDATA",
+    "zh-TW": "如何取得嗶哩嗶哩 SESSDATA",
+    "en": "How to Get Bilibili SESSDATA",
+    "ja": "ビリビリ SESSDATA の取得方法"
+  },
+  "媒体下载不完整，请重试": {
+    "zh-CN": "媒体下载不完整，请重试",
+    "zh-TW": "媒體下載不完整，請重試",
+    "en": "Incomplete media download; please retry",
+    "ja": "メディアのダウンロードが不完全です。再試行してください"
+  },
+  "媒体区间不完整": {
+    "zh-CN": "媒体区间不完整",
+    "zh-TW": "媒體區間不完整",
+    "en": "Incomplete media byte range",
+    "ja": "メディア範囲が不完全です"
+  },
+  "媒体地址无效，请重新解析": {
+    "zh-CN": "媒体地址无效，请重新解析",
+    "zh-TW": "媒體網址無效，請重新解析",
+    "en": "Invalid media URL; please re-analyze",
+    "ja": "メディア URL が無効です。再解析してください"
+  },
+  "媒体处理已暂停，回到应用后继续": {
+    "zh-CN": "媒体处理已暂停，回到应用后继续",
+    "zh-TW": "媒體處理已暫停，回到應用程式後繼續",
+    "en": "Media processing paused; return to the app to resume",
+    "ja": "処理が一時停止されました。アプリに戻ると再開します"
+  },
+  "媒体处理未完成，请重新选择可用源或重试": {
+    "zh-CN": "媒体处理未完成，请重新选择可用源或重试",
+    "zh-TW": "媒體處理未完成，請重新選擇可用來源或重試",
+    "en": "Processing incomplete; select an available source or retry",
+    "ja": "処理が完了しませんでした。利用可能なソースを再選択するか再試行してください"
+  },
+  "媒体播放": {
+    "zh-CN": "媒体播放",
+    "zh-TW": "媒體播放",
+    "en": "Media playback",
+    "ja": "メディア再生"
+  },
+  "媒体暂存文件不完整": {
+    "zh-CN": "媒体暂存文件不完整",
+    "zh-TW": "媒體暫存檔不完整",
+    "en": "Incomplete temporary media file",
+    "ja": "一時メディアファイルが不完全です"
+  },
+  "媒体源已失效或会话已改变，请重新解析": {
+    "zh-CN": "媒体源已失效或会话已改变，请重新解析",
+    "zh-TW": "媒體來源已失效或工作階段已變更，請重新解析",
+    "en": "Media source expired or session changed; please re-analyze",
+    "ja": "メディアソースが失効したかセッションが変更されました。再解析してください"
+  },
+  "媒体源已过期或账号/网络已变化，请重新解析原链接": {
+    "zh-CN": "媒体源已过期或账号/网络已变化，请重新解析原链接",
+    "zh-TW": "媒體來源已過期或帳號／網路已變更，請重新解析原連結",
+    "en": "Media source expired or account/network changed; re-analyze original link",
+    "ja": "ソースの期限切れかアカウント/ネットワークが変更されました。再解析してください"
+  },
+  "媒体组件随应用版本更新；不会下载并执行外部程序。": {
+    "zh-CN": "媒体组件随应用版本更新；不会下载并执行外部程序。",
+    "zh-TW": "媒體組件隨應用版本更新；不會下載并執行外部程序。",
+    "en": "Media components update with the app; external programs are never downloaded or executed.",
+    "ja": "メディア部品はアプリと一緒に更新され、外部プログラムはダウンロード・実行しません。"
+  },
+  "媒体链接": {
+    "zh-CN": "媒体链接",
+    "zh-TW": "媒體鏈接",
+    "en": "Media link",
+    "ja": "メディアリンク"
+  },
+  "完成 %d/%d": {
+    "zh-CN": "完成 %d/%d",
+    "zh-TW": "完成 %d/%d",
+    "en": "Completed %d/%d",
+    "ja": "%d/%d 完了"
+  },
+  "完成下载的媒体文件会集中保存在这里。": {
+    "zh-CN": "完成下载的媒体文件会集中保存在这里。",
+    "zh-TW": "完成下載的媒體檔案會集中儲存在這裡。",
+    "en": "Completed downloads are stored in this folder.",
+    "ja": "完了したメディアファイルはこのフォルダに保存されます。"
+  },
+  "官方 Cookie 导出说明": {
+    "zh-CN": "官方 Cookie 导出说明",
+    "zh-TW": "官方 Cookie 匯出說明",
+    "en": "Official Cookie Export Guide",
+    "ja": "公式 Cookie エクスポートガイド"
+  },
+  "定位": {
+    "zh-CN": "定位",
+    "zh-TW": "定位",
+    "en": "Locate",
+    "ja": "場所を表示"
+  },
+  "定位文件": {
+    "zh-CN": "定位文件",
+    "zh-TW": "定位文件",
+    "en": "Locate file",
+    "ja": "ファイルの場所を表示"
+  },
+  "容器": {
+    "zh-CN": "容器",
+    "zh-TW": "容器",
+    "en": "Container",
+    "ja": "コンテナー"
+  },
+  "导入 Netscape cookies.txt": {
+    "zh-CN": "导入 Netscape cookies.txt",
+    "zh-TW": "導入 Netscape cookies.txt",
+    "en": "Import Netscape cookies.txt",
+    "ja": "Netscape cookies.txt を読み込む"
+  },
+  "导入 cookies.txt": {
+    "zh-CN": "导入 cookies.txt",
+    "zh-TW": "匯入 cookies.txt",
+    "en": "Import cookies.txt",
+    "ja": "cookies.txt を読み込む"
+  },
+  "导出失败，已保留校验通过的成品，重试时无需重新下载": {
+    "zh-CN": "导出失败，已保留校验通过的成品，重试时无需重新下载",
+    "zh-TW": "匯出失敗，已保留驗證通過的成品，重試時無需重新下載",
+    "en": "Export failed; verified file retained so retrying will skip re-download",
+    "ja": "書き出しに失敗しましたが検証済みファイルは保持されています（再試行時の再DL不要）"
+  },
+  "封装容器": {
+    "zh-CN": "封装容器",
+    "zh-TW": "封裝容器",
+    "en": "Container",
+    "ja": "コンテナー"
+  },
+  "封面预览": {
+    "zh-CN": "封面预览",
+    "zh-TW": "封面預覽",
+    "en": "Cover Preview",
+    "ja": "カバープレビュー"
+  },
+  "将使用本地 FFmpeg 自动生成调色板并导出高质量动图 GIF 文件。": {
+    "zh-CN": "将使用本地 FFmpeg 自动生成调色板并导出高质量动图 GIF 文件。",
+    "zh-TW": "將使用本地 FFmpeg 自動生成調色板并導出高質量動圖 GIF 文件。",
+    "en": "Local FFmpeg creates a palette and exports an actual GIF file.",
+    "ja": "ローカル FFmpeg でパレットを生成して GIF ファイルを出力します。"
+  },
+  "将按上方画质策略自动选择最佳可用源": {
+    "zh-CN": "将按上方画质策略自动选择最佳可用源",
+    "zh-TW": "將依上方畫質策略自動選取最佳可用來源",
+    "en": "Best available source will be chosen by the quality policy above",
+    "ja": "上の画質ポリシーに基づき最適なソースを自動選択します"
+  },
+  "将自动选择最佳可用源": {
+    "zh-CN": "将自动选择最佳可用源",
+    "zh-TW": "將自動選取最佳可用來源",
+    "en": "Best available source will be chosen automatically",
+    "ja": "最適なソースを自動選択します"
+  },
+  "尚未发现可保存的已播放 HTTP/HTTPS 视频源；blob/MSE 流或未开始播放的视频不适用。": {
+    "zh-CN": "尚未发现可保存的已播放 HTTP/HTTPS 视频源；blob/MSE 流或未开始播放的视频不适用。",
+    "zh-TW": "尚未發現可儲存的已播放 HTTP/HTTPS 影片來源；blob/MSE 串流或未開始播放的影片不適用。",
+    "en": "No playable HTTP/HTTPS video stream detected yet; blob/MSE streams or unplayed videos are excluded.",
+    "ja": "保存可能な HTTP/HTTPS 動画ストリームがまだ検出されていません（blob/MSE や未再生動画は対象外）。"
+  },
+  "尚未导入": {
+    "zh-CN": "尚未导入",
+    "zh-TW": "尚未匯入",
+    "en": "Not imported",
+    "ja": "未インポート"
+  },
+  "尚未导入会话": {
+    "zh-CN": "尚未导入会话",
+    "zh-TW": "尚未導入會話",
+    "en": "No session imported",
+    "ja": "セッション未読み込み"
+  },
+  "尚未检测到有效的 SESSDATA 登录凭据，请先在下方网页完成登录": {
+    "zh-CN": "尚未检测到有效的 SESSDATA 登录凭据，请先在下方网页完成登录",
+    "zh-TW": "尚未偵測到有效的 SESSDATA 登入憑證，請先在下方網頁完成登入",
+    "en": "No valid SESSDATA credential detected yet; complete sign-in below first",
+    "ja": "有効な SESSDATA が見つかりません。下のページでログインを完了してください"
+  },
+  "尚未确认目标图文 ID": {
+    "zh-CN": "尚未确认目标图文 ID",
+    "zh-TW": "尚未確認目標圖文 ID",
+    "en": "Target post ID not confirmed yet",
+    "ja": "対象投稿 ID を特定できていません"
+  },
+  "尺寸已实测": {
+    "zh-CN": "尺寸已实测",
+    "zh-TW": "尺寸已實測",
+    "en": "Dimensions verified",
+    "ja": "サイズ実測済み"
+  },
+  "尺寸未知": {
+    "zh-CN": "尺寸未知",
+    "zh-TW": "尺寸未知",
+    "en": "Unknown dimensions",
+    "ja": "サイズ不明"
+  },
+  "展开分集明细 (共 %d 集 · 已完成 %d)": {
+    "zh-CN": "展开分集明细 (共 %d 集 · 已完成 %d)",
+    "zh-TW": "展開分集明細 (共 %d 集 · 已完成 %d)",
+    "en": "Show Episodes (%d total · %d done)",
+    "ja": "エピソード詳細を表示 (全 %d 件 · 完了 %d)"
+  },
+  "展开平台": {
+    "zh-CN": "展开平台",
+    "zh-TW": "展開平台",
+    "en": "Expand Platforms",
+    "ja": "プラットフォームを展開"
+  },
+  "展开或收起导航栏": {
+    "zh-CN": "展开或收起导航栏",
+    "zh-TW": "展開或收合導覽列",
+    "en": "Toggle navigation",
+    "ja": "ナビゲーションを切り替え"
+  },
+  "展开或收起支持平台": {
+    "zh-CN": "展开或收起支持平台",
+    "zh-TW": "展開或收合支援平台",
+    "en": "Expand or collapse supported platforms",
+    "ja": "対応プラットフォームを開閉"
+  },
+  "已从网页提取 %d 张图片": {
+    "zh-CN": "已从网页提取 %d 张图片",
+    "zh-TW": "已從網頁擷取 %d 張圖片",
+    "en": "Extracted %d images from page",
+    "ja": "ページから %d 枚の画像を抽出しました"
+  },
+  "已保存": {
+    "zh-CN": "已保存",
+    "zh-TW": "已保存",
+    "en": "Saved",
+    "ja": "保存済み"
+  },
+  "已保存 %d 项 Cookie 并关闭登录窗口；请重新解析验证账号": {
+    "zh-CN": "已保存 %d 项 Cookie 并关闭登录窗口；请重新解析验证账号",
+    "zh-TW": "已儲存 %d 項 Cookie 並關閉登入視窗；請重新解析驗證帳號",
+    "en": "Saved %d cookies and closed login window; re-analyze to verify",
+    "ja": "%d 件の Cookie を保存してウィンドウを閉じました。再解析して確認してください"
+  },
+  "已保存 %d 项 Cookie 并关闭登录窗口；请重新解析验证账号。": {
+    "zh-CN": "已保存 %d 项 Cookie 并关闭登录窗口；请重新解析验证账号。",
+    "zh-TW": "已儲存 %d 項 Cookie 並關閉登入視窗；請重新解析驗證帳號。",
+    "en": "Saved %d cookies and closed login window; re-analyze to verify.",
+    "ja": "%d 件の Cookie を保存してウィンドウを閉じました。再解析して確認してください。"
+  },
+  "已保存目标平台 Cookie（%d 项），登录窗口已关闭；未验证账号权益，请重新解析。": {
+    "zh-CN": "已保存目标平台 Cookie（%d 项），登录窗口已关闭；未验证账号权益，请重新解析。",
+    "zh-TW": "已儲存目標平台 Cookie（%d 項），登入視窗已關閉；未驗證帳號權益，請重新解析。",
+    "en": "Saved platform cookies (%d) and closed window; entitlements unverified, please re-analyze.",
+    "ja": "対象サイトの Cookie（%d 件）を保存しウィンドウを閉じました。アカウント権限は未確認のため再解析してください。"
+  },
+  "已保存目标平台 Cookie（%d 项）；未验证账号权益，请返回重新解析原链接。": {
+    "zh-CN": "已保存目标平台 Cookie（%d 项）；未验证账号权益，请返回重新解析原链接。",
+    "zh-TW": "已儲存目標平台 Cookie（%d 項）；未驗證帳號權益，請返回重新解析原連結。",
+    "en": "Saved platform cookies (%d); entitlements unverified, return and re-analyze.",
+    "ja": "対象サイトの Cookie（%d 件）を保存しました。アカウント権限未確認のため元リンクを再解析してください。"
+  },
+  "已保存至系统《照片》相册": {
+    "zh-CN": "已保存至系统《照片》相册",
+    "zh-TW": "已保存至系統《照片》相冊",
+    "en": "Saved to Photos",
+    "ja": "写真に保存しました"
+  },
+  "已保存（未验证账号 · %d 项）": {
+    "zh-CN": "已保存（未验证账号 · %d 项）",
+    "zh-TW": "已儲存（未驗證帳號 · %d 項）",
+    "en": "Saved (Unverified · %d)",
+    "ja": "保存済み（未検証 · %d 件）"
+  },
+  "已保存（未验证账号）": {
+    "zh-CN": "已保存（未验证账号）",
+    "zh-TW": "已儲存（未驗證帳號）",
+    "en": "Saved (Unverified)",
+    "ja": "保存済み（未検証）"
+  },
+  "已保留当前可用源；更高画质尚未确认，本次结果不代表上传原片。": {
+    "zh-CN": "已保留当前可用源；更高画质尚未确认，本次结果不代表上传原片。",
+    "zh-TW": "已保留目前可用來源；更高畫質尚未確認，本次結果不代表上傳原片。",
+    "en": "Kept available source; higher quality unverified and may not be original upload.",
+    "ja": "現在の利用可能ソースを保持しました。高画質未確認のためアップロード原画とは限りません。"
+  },
+  "已停止添加下载": {
+    "zh-CN": "已停止添加下载",
+    "zh-TW": "已停止新增下載",
+    "en": "Stopped adding batch tasks",
+    "ja": "一括追加を停止しました"
+  },
+  "已停用：新解析与新下载使用匿名请求，已保存会话仍保留": {
+    "zh-CN": "已停用：新解析与新下载使用匿名请求，已保存会话仍保留",
+    "zh-TW": "已停用：新解析與新下載使用匿名請求，已儲存工作階段仍保留",
+    "en": "Disabled: new requests stay anonymous; saved session retained",
+    "ja": "無効：新規解析・DL は匿名となり、保存済みセッションは保持されます"
+  },
+  "已加入 %d 个下载任务": {
+    "zh-CN": "已加入 %d 个下载任务",
+    "zh-TW": "已加入 %d 個下載任務",
+    "en": "Added %d download tasks",
+    "ja": "ダウンロードタスクを %d 件追加しました"
+  },
+  "已加入原图下载任务": {
+    "zh-CN": "已加入原图下载任务",
+    "zh-TW": "已加入原圖下載任務",
+    "en": "Added original image download task",
+    "ja": "元画像ダウンロードタスクに追加しました"
+  },
+  "已加密保存。请重新解析原 YouTube 链接。": {
+    "zh-CN": "已加密保存。请重新解析原 YouTube 链接。",
+    "zh-TW": "已加密儲存。請重新解析原 YouTube 連結。",
+    "en": "Encrypted and saved. Re-analyze the YouTube link.",
+    "ja": "暗号化して保存しました。元の YouTube リンクを再解析してください。"
+  },
+  "已取消置顶": {
+    "zh-CN": "已取消置顶",
+    "zh-TW": "已取消置頂",
+    "en": "Unpinned",
+    "ja": "最前面の固定を解除しました"
+  },
+  "已合并同一作品的网页源与原生源，下载后核对实际尺寸。": {
+    "zh-CN": "已合并同一作品的网页源与原生源，下载后核对实际尺寸。",
+    "zh-TW": "已合併同一作品的網頁來源與原生來源，下載後核對實際尺寸。",
+    "en": "Merged web & native sources for the same post; actual dimensions verified after download.",
+    "ja": "Web とネイティブソースを統合しました。ダウンロード後に実サイズを確認します。"
+  },
+  "已启动本地伴随引擎 (%s)": {
+    "zh-CN": "已启动本地伴随引擎 (%s)",
+    "zh-TW": "已啟動本機伴隨引擎 (%s)",
+    "en": "Local companion engine started (%s)",
+    "ja": "ローカル付随エンジン起動済み (%s)"
+  },
+  "已完成 (0)": {
+    "zh-CN": "已完成 (0)",
+    "zh-TW": "已完成 (0)",
+    "en": "Completed (0)",
+    "ja": "完了（0）"
+  },
+  "已导入 %d 项 Cookie": {
+    "zh-CN": "已导入 %d 项 Cookie",
+    "zh-TW": "已匯入 %d 項 Cookie",
+    "en": "Imported %d cookies",
+    "ja": "%d 件の Cookie を読み込み済み"
+  },
+  "已成功存入系统《照片》相册": {
+    "zh-CN": "已成功存入系统《照片》相册",
+    "zh-TW": "已成功存入系統《照片》相冊",
+    "en": "Saved to Photos successfully",
+    "ja": "写真への保存が完了しました"
+  },
+  "已播放媒体": {
+    "zh-CN": "已播放媒体",
+    "zh-TW": "已播放媒體",
+    "en": "Played Media",
+    "ja": "再生中のメディア"
+  },
+  "已整理 %d 条链接": {
+    "zh-CN": "已整理 %d 条链接",
+    "zh-TW": "已整理 %d 條連結",
+    "en": "Organized %d links",
+    "ja": "%d 件のリンクを整理済み"
+  },
+  "已暂停": {
+    "zh-CN": "已暂停",
+    "zh-TW": "已暫停",
+    "en": "Paused",
+    "ja": "一時停止中"
+  },
+  "已清空 %d 条记录": {
+    "zh-CN": "已清空 %d 条记录",
+    "zh-TW": "已清空 %d 條記錄",
+    "en": "Cleared %d records",
+    "ja": "%d 件の記録を消去しました"
+  },
+  "已清空内置网页缓存，请重新登录哔哩哔哩账号": {
+    "zh-CN": "已清空内置网页缓存，请重新登录哔哩哔哩账号",
+    "zh-TW": "已清空內建網頁快取，請重新登入嗶哩嗶哩帳號",
+    "en": "Cleared in-app browser cache; sign in to Bilibili again",
+    "ja": "内蔵ブラウザのキャッシュを消去しました。再度ログインしてください"
+  },
+  "已确认 %d 个可下载的 MP4 格式。": {
+    "zh-CN": "已确认 %d 个可下载的 MP4 格式。",
+    "zh-TW": "已確認 %d 個可下載的 MP4 格式。",
+    "en": "Confirmed %d downloadable MP4 formats.",
+    "ja": "ダウンロード可能な MP4 形式を %d 件確認しました。"
+  },
+  "已置顶窗口": {
+    "zh-CN": "已置顶窗口",
+    "zh-TW": "已置頂視窗",
+    "en": "Pinned on top",
+    "ja": "最前面に固定しました"
+  },
+  "已自动检查当前可访问源；更高画质尚未确认，本次结果不代表上传原片。": {
+    "zh-CN": "已自动检查当前可访问源；更高画质尚未确认，本次结果不代表上传原片。",
+    "zh-TW": "已自動檢查目前可存取來源；更高畫質尚未確認，本次結果不代表上傳原片。",
+    "en": "Checked accessible streams; higher quality unverified.",
+    "ja": "アクセス可能なソースを確認済みです。高画質は未確認のため原画とは限りません。"
+  },
+  "已解析媒体": {
+    "zh-CN": "已解析媒体",
+    "zh-TW": "已解析媒體",
+    "en": "Analyzed Media",
+    "ja": "解析済みメディア"
+  },
+  "已解析媒体标签页": {
+    "zh-CN": "已解析媒体标签页",
+    "zh-TW": "已解析媒體分頁",
+    "en": "Parsed Media Tabs",
+    "ja": "解析済みメディアタブ"
+  },
+  "已读取播放源，请在主窗口确认加入下载队列。": {
+    "zh-CN": "已读取播放源，请在主窗口确认加入下载队列。",
+    "zh-TW": "已讀取播放來源，請於主視窗確認加入下載佇列。",
+    "en": "Captured stream source; confirm adding to queue in the main window.",
+    "ja": "再生ソースを取得しました。メインウィンドウでキュー追加を確認してください。"
+  },
+  "已跳过 %d 项分区 Cookie。": {
+    "zh-CN": "已跳过 %d 项分区 Cookie。",
+    "zh-TW": "已略過 %d 項分區 Cookie。",
+    "en": "Skipped %d partitioned cookies.",
+    "ja": "パーティション Cookie を %d 件スキップしました。"
+  },
+  "已跳过 %d 项分区 Cookie；部分登录能力可能仅在浏览器中可用。": {
+    "zh-CN": "已跳过 %d 项分区 Cookie；部分登录能力可能仅在浏览器中可用。",
+    "zh-TW": "已略過 %d 項分區 Cookie；部分登入能力可能僅在瀏覽器中可用。",
+    "en": "Skipped %d partitioned cookies; some login features may stay browser-only.",
+    "ja": "パーティション Cookie を %d 件スキップしました（一部機能はブラウザ限定の場合があります）。"
+  },
+  "已连接旧版服务 v%s (缺少 1.7.63+ 普通浏览器登录修复)": {
+    "zh-CN": "已连接旧版服务 v%s (缺少 1.7.63+ 普通浏览器登录修复)",
+    "zh-TW": "已連線舊版服務 v%s (缺少 1.7.63+ 一般瀏覽器登入修復)",
+    "en": "Connected to legacy server v%s (missing 1.7.63+ browser login fixes)",
+    "ja": "旧サービス v%s に接続中（1.7.63+ ブラウザログイン修正なし）"
+  },
+  "已连接本机运行服务 (%s)": {
+    "zh-CN": "已连接本机运行服务 (%s)",
+    "zh-TW": "已連線本機執行服務 (%s)",
+    "en": "Connected to local service (%s)",
+    "ja": "ローカルサービス接続中 (%s)"
+  },
+  "已选 0 / 0 集": {
+    "zh-CN": "已选 0 / 0 集",
+    "zh-TW": "已選 0 / 0 集",
+    "en": "Selected 0 / 0 episodes",
+    "ja": "0 / 0 話を選択"
+  },
+  "已选 0 张": {
+    "zh-CN": "已选 0 张",
+    "zh-TW": "已選 0 張",
+    "en": "0 images selected",
+    "ja": "0 枚を選択"
+  },
+  "已选择": {
+    "zh-CN": "已选择",
+    "zh-TW": "已選擇",
+    "en": "Selected",
+    "ja": "選択済み"
+  },
+  "已静音": {
+    "zh-CN": "已静音",
+    "zh-TW": "已靜音",
+    "en": "Muted",
+    "ja": "ミュート"
+  },
+  "帧": {
+    "zh-CN": "帧",
+    "zh-TW": "幀",
+    "en": "frames",
+    "ja": "フレーム"
+  },
+  "帧 ZIP": {
+    "zh-CN": "帧 ZIP",
+    "zh-TW": "幀 ZIP",
+    "en": "Frames ZIP",
+    "ja": "フレーム ZIP"
+  },
+  "帧 ZIP 使用了不支持的压缩方式": {
+    "zh-CN": "帧 ZIP 使用了不支持的压缩方式",
+    "zh-TW": "影格 ZIP 使用了不支援的壓縮方式",
+    "en": "Frame ZIP uses an unsupported compression method",
+    "ja": "フレーム ZIP は未対応の圧縮方式を使用しています"
+  },
+  "帧归档大小或数量不合法": {
+    "zh-CN": "帧归档大小或数量不合法",
+    "zh-TW": "影格封存大小或數量無效",
+    "en": "Invalid frame archive size or count",
+    "ja": "フレームアーカイブのサイズまたは数が不正です"
+  },
+  "帧归档异常": {
+    "zh-CN": "帧归档异常",
+    "zh-TW": "影格封存異常",
+    "en": "Frame archive error",
+    "ja": "フレームアーカイブエラー"
+  },
+  "帧归档数量过多": {
+    "zh-CN": "帧归档数量过多",
+    "zh-TW": "影格封存數量過多",
+    "en": "Too many frames in archive",
+    "ja": "アーカイブ内のフレーム数が多すぎます"
+  },
+  "帧文件格式异常": {
+    "zh-CN": "帧文件格式异常",
+    "zh-TW": "影格檔案格式異常",
+    "en": "Malformed frame entry",
+    "ja": "フレームファイル形式が不正です"
+  },
+  "帧解压失败": {
+    "zh-CN": "帧解压失败",
+    "zh-TW": "影格解壓縮失敗",
+    "en": "Failed to extract frames",
+    "ja": "フレームの展開に失敗しました"
+  },
+  "平台 Cookie 会话隔离仓库 (Windows DPAPI 加密)": {
+    "zh-CN": "平台 Cookie 会话隔离仓库 (Windows DPAPI 加密)",
+    "zh-TW": "平臺 Cookie 會話隔離倉庫 (Windows DPAPI 加密)",
+    "en": "Isolated platform cookies (Windows DPAPI encrypted)",
+    "ja": "サイト別 Cookie 保管庫（Windows DPAPI 暗号化）"
+  },
+  "平台仅返回试看内容，未取得完整视频": {
+    "zh-CN": "平台仅返回试看内容，未取得完整视频",
+    "zh-TW": "平台僅傳回試看內容，未取得完整影片",
+    "en": "Platform returned only a preview instead of the full video",
+    "ja": "プレビューのみ返され、本編動画を取得できませんでした"
+  },
+  "平台响应不是有效数据": {
+    "zh-CN": "平台响应不是有效数据",
+    "zh-TW": "平台回應並非有效資料",
+    "en": "Platform response is not valid data",
+    "ja": "プラットフォーム応答が有効なデータではありません"
+  },
+  "平台图片": {
+    "zh-CN": "平台图片",
+    "zh-TW": "平臺圖片",
+    "en": "Platform image",
+    "ja": "サイトの画像"
+  },
+  "平台数据过大": {
+    "zh-CN": "平台数据过大",
+    "zh-TW": "平台資料過大",
+    "en": "Platform payload too large",
+    "ja": "プラットフォームのデータが大きすぎます"
+  },
+  "平台暂未确认目标帖子": {
+    "zh-CN": "平台暂未确认目标帖子",
+    "zh-TW": "平台暫未確認目標貼文",
+    "en": "Platform has not confirmed target post yet",
+    "ja": "プラットフォーム側で対象投稿を特定できませんでした"
+  },
+  "平台标注，下载后核对": {
+    "zh-CN": "平台标注，下载后核对",
+    "zh-TW": "平台標註，下載後核對",
+    "en": "Listed by platform; verify after download",
+    "ja": "プラットフォーム表記 · DL後に実測"
+  },
+  "平台要求%@，请在内置浏览器完成。": {
+    "zh-CN": "平台要求%@，请在内置浏览器完成。",
+    "zh-TW": "平台要求%@，請於內建瀏覽器完成。",
+    "en": "Platform requires %@; complete it in the built-in browser.",
+    "ja": "プラットフォームが%@を要求しています。内蔵ブラウザで完了してください。"
+  },
+  "平台需要执行网页脚本，正在准备本机页面提取": {
+    "zh-CN": "平台需要执行网页脚本，正在准备本机页面提取",
+    "zh-TW": "平台需要執行網頁指令碼，正在準備本機頁面擷取",
+    "en": "Page script execution required; preparing on-device extraction",
+    "ja": "Web スクリプト実行が必要なためローカルページ抽出を準備中"
+  },
+  "并发越高占用网络带宽越多（建议 2~5）": {
+    "zh-CN": "并发越高占用网络带宽越多（建议 2~5）",
+    "zh-TW": "并發越高占用網絡帶寬越多（建議 2~5）",
+    "en": "More concurrent tasks use more bandwidth (2–5 recommended)",
+    "ja": "同時実行数が多いほど帯域を使用します（推奨 2～5）"
+  },
+  "应用与引擎更新检查": {
+    "zh-CN": "应用与引擎更新检查",
+    "zh-TW": "應用與引擎更新檢查",
+    "en": "App and engine updates",
+    "ja": "アプリとエンジンの更新"
+  },
+  "应用内代理需要 iOS 17 或更新版本；当前系统可使用系统代理或 VPN": {
+    "zh-CN": "应用内代理需要 iOS 17 或更新版本；当前系统可使用系统代理或 VPN",
+    "zh-TW": "應用程式內代理需要 iOS 17 或更新版本；目前系統可使用系統代理或 VPN",
+    "en": "In-app proxy requires iOS 17+; use system proxy or VPN on this OS",
+    "ja": "アプリ内プロキシは iOS 17 以降が必要です。システムプロキシや VPN をご利用ください"
+  },
+  "应用形态、支持平台目录与数据兼容性说明": {
+    "zh-CN": "应用形态、支持平台目录与数据兼容性说明",
+    "zh-TW": "應用形態、支持平臺目錄與數據兼容性說明",
+    "en": "App details, platform catalog and data compatibility",
+    "ja": "アプリ情報・サイト一覧・データ互換性"
+  },
+  "应用退出中断了任务，可继续或重新解析": {
+    "zh-CN": "应用退出中断了任务，可继续或重新解析",
+    "zh-TW": "應用程式結束中斷了任務，可繼續或重新解析",
+    "en": "Task interrupted on app exit; resume or re-analyze",
+    "ja": "アプリ終了により中断されました。再開または再解析してください"
+  },
+  "开启": {
+    "zh-CN": "开启",
+    "zh-TW": "開啟",
+    "en": "On",
+    "ja": "オン"
+  },
+  "张图片": {
+    "zh-CN": "张图片",
+    "zh-TW": "張圖片",
+    "en": "images",
+    "ja": "枚の画像"
+  },
+  "强制匿名请求（仍保留原凭证）": {
+    "zh-CN": "强制匿名请求（仍保留原凭证）",
+    "zh-TW": "強制匿名請求（仍保留原憑證）",
+    "en": "Use anonymous requests (keep saved credentials)",
+    "ja": "匿名リクエストを使用（保存済み認証情報は保持）"
+  },
+  "归档缺少目标帧": {
+    "zh-CN": "归档缺少目标帧",
+    "zh-TW": "封存檔缺少目標影格",
+    "en": "Archive missing expected frame files",
+    "ja": "アーカイブに必要なフレームが含まれていません"
+  },
+  "当前为未登录游客状态 (最高限制 480P)": {
+    "zh-CN": "当前为未登录游客状态 (最高限制 480P)",
+    "zh-TW": "當前為未登錄游客狀態 (最高限制 480P)",
+    "en": "Signed out (up to 480p)",
+    "ja": "未ログイン（上限 480p）"
+  },
+  "当前后端版本未提供该接口（HTTP 404）": {
+    "zh-CN": "当前后端版本未提供该接口（HTTP 404）",
+    "zh-TW": "目前後端版本未提供此介面（HTTP 404）",
+    "en": "Current backend version does not expose this endpoint (HTTP 404)",
+    "ja": "現在のバックエンドはこの API に未対応です（HTTP 404）"
+  },
+  "当前已是最新引擎版本 (v%s)": {
+    "zh-CN": "当前已是最新引擎版本 (v%s)",
+    "zh-TW": "目前已是最新引擎版本 (v%s)",
+    "en": "Engine is up to date (v%s)",
+    "ja": "最新エンジンバージョンです (v%s)"
+  },
+  "当前格式暂不支持浏览器内嵌解码，可点击右上角下载或在系统播放器中打开。": {
+    "zh-CN": "当前格式暂不支持浏览器内嵌解码，可点击右上角下载或在系统播放器中打开。",
+    "zh-TW": "目前格式暫不支援瀏覽器內嵌解碼，可點擊右上角下載或在系統播放器中開啟。",
+    "en": "This format cannot be decoded inline; click Download or open in the system player.",
+    "ja": "この形式はブラウザ内蔵再生に未対応です。右上からダウンロードするかシステムプレーヤーで開いてください。"
+  },
+  "当前没有更新的 iOS 安装包": {
+    "zh-CN": "当前没有更新的 iOS 安装包",
+    "zh-TW": "目前沒有更新的 iOS 安裝包",
+    "en": "No newer iOS release available",
+    "ja": "新しい iOS パッケージはありません"
+  },
+  "当前账号没有满足所选尺寸、帧率、HDR 与编码要求的真实视频流": {
+    "zh-CN": "当前账号没有满足所选尺寸、帧率、HDR 与编码要求的真实视频流",
+    "zh-TW": "目前帳號沒有符合所選尺寸、影格率、HDR 與編碼要求的真實影片串流",
+    "en": "No stream meets selected resolution, FPS, HDR, and codec requirements for this account",
+    "ja": "選択した解像度・FPS・HDR・コーデック条件を満たすストリームが現在のアカウントにありません"
+  },
+  "当前连接的后端服务版本 (v%s) 低于 1.7.63，尚未包含普通浏览器登录修复。请退出旧版 Web 托盘服务，并点击下方按钮重连最新版核心引擎。": {
+    "zh-CN": "当前连接的后端服务版本 (v%s) 低于 1.7.63，尚未包含普通浏览器登录修复。请退出旧版 Web 托盘服务，并点击下方按钮重连最新版核心引擎。",
+    "zh-TW": "目前連線的後端服務版本 (v%s) 低於 1.7.63，尚未包含一般瀏覽器登入修復。請結束舊版 Web 匣服務，並點擊下方按鈕重新連線最新版核心引擎。",
+    "en": "Connected backend v%s is older than 1.7.63 and lacks browser login fixes. Exit the old Web tray service and reconnect below.",
+    "ja": "接続中のサービス (v%s) は 1.7.63 未満でブラウザログイン修正がありません。旧トレイ版を終了し下のボタンで再接続してください。"
+  },
+  "当前连接的服务版本 (v%s) 过低，缺少浏览器登录等 1.7.59+ 接口。请退出旧版服务或开启自动伴随启动。": {
+    "zh-CN": "当前连接的服务版本 (v%s) 过低，缺少浏览器登录等 1.7.59+ 接口。请退出旧版服务或开启自动伴随启动。",
+    "zh-TW": "目前連線的服務版本 (v%s) 過低，缺少瀏覽器登入等 1.7.59+ 介面。請結束舊版服務或開啟自動伴隨啟動。",
+    "en": "Connected backend v%s is too old (missing 1.7.59+ browser login APIs). Exit the older service or enable auto-start.",
+    "ja": "接続中のサービス (v%s) が古いため 1.7.59+ API に未対応です。旧サービスを終了するか自動起動を有効にしてください。"
+  },
+  "当前连接的本地后台服务未提供会话捕获接口（版本低于 1.7.63）。请退出旧版服务并重连最新版核心。": {
+    "zh-CN": "当前连接的本地后台服务未提供会话捕获接口（版本低于 1.7.63）。请退出旧版服务并重连最新版核心。",
+    "zh-TW": "目前連線的本機背景服務未提供工作階段擷取介面（版本低於 1.7.63）。請結束舊版服務並重連最新版核心。",
+    "en": "Local backend lacks session capture API (<1.7.63). Exit old server and reconnect to latest engine.",
+    "ja": "ローカルサービスがセッション保存 API に未対応です（1.7.63 未満）。旧版を終了し最新版へ再接続してください。"
+  },
+  "当前连接的本地后台服务未提供浏览器登录接口（可能仍在运行旧版 1.7.51 服务）。请退出旧版托盘服务或升级后点击顶部刷新重连。": {
+    "zh-CN": "当前连接的本地后台服务未提供浏览器登录接口（可能仍在运行旧版 1.7.51 服务）。请退出旧版托盘服务或升级后点击顶部刷新重连。",
+    "zh-TW": "目前連線的本機背景服務未提供瀏覽器登入介面（可能仍在執行舊版 1.7.51 服務）。請結束舊版匣服務或升級後點擊頂部重新整理重連。",
+    "en": "Local backend lacks browser login APIs (legacy <=1.7.51 may still be running). Exit old tray service and refresh to reconnect.",
+    "ja": "ローカルサービスがブラウザログイン API に未対応です（旧版が稼働中の可能性）。旧版を終了し更新ボタンで再接続してください。"
+  },
+  "当前页面未检测到尺寸不小于 320×320 的公开 HTTPS 图片。": {
+    "zh-CN": "当前页面未检测到尺寸不小于 320×320 的公开 HTTPS 图片。",
+    "zh-TW": "目前頁面未偵測到尺寸不小於 320×320 的公開 HTTPS 圖片。",
+    "en": "No public HTTPS images >= 320×320 detected on this page.",
+    "ja": "ページ内に 320×320 以上の公開 HTTPS 画像が検出されませんでした。"
+  },
+  "待下载链接 (0)": {
+    "zh-CN": "待下载链接 (0)",
+    "zh-TW": "待下載鏈接 (0)",
+    "en": "Queued links (0)",
+    "ja": "待機リンク（0）"
+  },
+  "微博暂未确认目标作品，请验证登录后重试": {
+    "zh-CN": "微博暂未确认目标作品，请验证登录后重试",
+    "zh-TW": "微博暫未確認目標作品，請驗證登入後重試",
+    "en": "Weibo post unconfirmed; sign in to verify and retry",
+    "ja": "Weibo の投稿を確認できません。ログインして再試行してください"
+  },
+  "微博未提供可用媒体，请验证登录或重试": {
+    "zh-CN": "微博未提供可用媒体，请验证登录或重试",
+    "zh-TW": "微博未提供可用媒體，請驗證登入或重試",
+    "en": "Weibo returned no playable media; verify login or retry",
+    "ja": "Weibo から有効なメディアが返されませんでした"
+  },
+  "微博未返回有效数据": {
+    "zh-CN": "微博未返回有效数据",
+    "zh-TW": "微博未傳回有效資料",
+    "en": "Weibo returned invalid data",
+    "ja": "Weibo から有効なデータが返されませんでした"
+  },
+  "微博没有返回目标作品": {
+    "zh-CN": "微博没有返回目标作品",
+    "zh-TW": "微博未傳回目標作品",
+    "en": "Weibo did not return the target post",
+    "ja": "Weibo が対象の投稿を返しませんでした"
+  },
+  "微博短链或视频页需要浏览器验证": {
+    "zh-CN": "微博短链或视频页需要浏览器验证",
+    "zh-TW": "微博短鏈或影片頁需要瀏覽器驗證",
+    "en": "Weibo short links or video pages require browser verification",
+    "ja": "Weibo の短縮URLまたは動画ページにはブラウザ認証が必要です"
+  },
+  "总进度：已完成 %d/%d 集 (%d%%)": {
+    "zh-CN": "总进度：已完成 %d/%d 集 (%d%%)",
+    "zh-TW": "總進度：已完成 %d/%d 集 (%d%%)",
+    "en": "Progress: %d/%d episodes completed (%d%%)",
+    "ja": "進捗：%d/%d 話完了（%d%%）"
+  },
+  "您即将访问用户自行添加的第三方网站。第三方网站可能包含广告或受限于防盗链机制；点击继续后将自动复制当前待解析链接。": {
+    "zh-CN": "您即将访问用户自行添加的第三方网站。第三方网站可能包含广告或受限于防盗链机制；点击继续后将自动复制当前待解析链接。",
+    "zh-TW": "您即將造訪使用者自行新增的第三方網站。第三方網站可能包含廣告或受限於防盜鏈機制；點擊繼續後將自動複製目前待解析連結。",
+    "en": "You are opening a user-added third-party site which may contain ads or hotlink protections. Clicking Continue copies the current URL automatically.",
+    "ja": "ユーザー追加のサードパーティサイトを開きます。広告やホットリンク制限が含まれる場合があります。「続行」で現在のリンクを自動コピーします。"
+  },
+  "成功": {
+    "zh-CN": "成功",
+    "zh-TW": "成功",
+    "en": "Success",
+    "ja": "成功"
+  },
+  "成品不是有效视频": {
+    "zh-CN": "成品不是有效视频",
+    "zh-TW": "成品非有效影片",
+    "en": "Output is not a valid video",
+    "ja": "出力ファイルが有効な動画ではありません"
+  },
+  "成品为空": {
+    "zh-CN": "成品为空",
+    "zh-TW": "成品為空",
+    "en": "Output file is empty",
+    "ja": "出力ファイルが空です"
+  },
+  "成品低于所选清晰度": {
+    "zh-CN": "成品低于所选清晰度",
+    "zh-TW": "成品低於所選畫質",
+    "en": "Output quality is below selected resolution",
+    "ja": "出力解像度が選択した画質を下回っています"
+  },
+  "成品低于所选源画质": {
+    "zh-CN": "成品低于所选源画质",
+    "zh-TW": "成品低於所選來源畫質",
+    "en": "Output quality is below selected source",
+    "ja": "出力品質が選択したソース画質を下回っています"
+  },
+  "成品尺寸低于所选源": {
+    "zh-CN": "成品尺寸低于所选源",
+    "zh-TW": "成品尺寸低於所選來源",
+    "en": "Output dimensions are smaller than selected source",
+    "ja": "出力サイズが選択したソースを下回っています"
+  },
+  "成品时长与目标不符": {
+    "zh-CN": "成品时长与目标不符",
+    "zh-TW": "成品時長與目標不符",
+    "en": "Output duration mismatches target",
+    "ja": "出力時間が対象動画と一致しません"
+  },
+  "成品时长与目标视频不符": {
+    "zh-CN": "成品时长与目标视频不符",
+    "zh-TW": "成品時長與目標影片不符",
+    "en": "Output duration mismatches target video",
+    "ja": "出力時間が元の動画と一致しません"
+  },
+  "成品没有音轨": {
+    "zh-CN": "成品没有音轨",
+    "zh-TW": "成品沒有音軌",
+    "en": "Output has no audio track",
+    "ja": "出力に音声トラックがありません"
+  },
+  "成品缺少视频轨": {
+    "zh-CN": "成品缺少视频轨",
+    "zh-TW": "成品缺少視訊軌",
+    "en": "Output is missing a video track",
+    "ja": "出力に映像トラックがありません"
+  },
+  "成品缺少音轨": {
+    "zh-CN": "成品缺少音轨",
+    "zh-TW": "成品缺少音軌",
+    "en": "Output is missing an audio track",
+    "ja": "出力に音声トラックがありません"
+  },
+  "我已登录，立即读取": {
+    "zh-CN": "我已登录，立即读取",
+    "zh-TW": "我已登入，立即讀取",
+    "en": "I have signed in",
+    "ja": "ログイン完了・今すぐ取得"
+  },
+  "我知道了": {
+    "zh-CN": "我知道了",
+    "zh-TW": "我知道了",
+    "en": "Got It",
+    "ja": "了解"
+  },
+  "所选文件大小超过限制 (%d KB)": {
+    "zh-CN": "所选文件大小超过限制 (%d KB)",
+    "zh-TW": "所選檔案大小超過限制 (%d KB)",
+    "en": "Selected file exceeds %d KB limit",
+    "ja": "ファイルサイズが上限 (%d KB) を超えています"
+  },
+  "所选规格已不可用，请重新解析": {
+    "zh-CN": "所选规格已不可用，请重新解析",
+    "zh-TW": "所選規格已無法使用，請重新解析",
+    "en": "Selected format is no longer available; please re-analyze",
+    "ja": "選択した仕様は利用できなくなりました。再解析してください"
+  },
+  "打开内置浏览器验证": {
+    "zh-CN": "打开内置浏览器验证",
+    "zh-TW": "打開內置瀏覽器驗證",
+    "en": "Verify in built-in browser",
+    "ja": "内蔵ブラウザーで認証"
+  },
+  "打开目录": {
+    "zh-CN": "打开目录",
+    "zh-TW": "打開目錄",
+    "en": "Open folder",
+    "ja": "フォルダーを開く"
+  },
+  "打开网页版": {
+    "zh-CN": "打开网页版",
+    "zh-TW": "打開網頁版",
+    "en": "Open browser companion",
+    "ja": "Web 版を開く"
+  },
+  "打开辅助浏览器": {
+    "zh-CN": "打开辅助浏览器",
+    "zh-TW": "打開輔助瀏覽器",
+    "en": "Open assist browser",
+    "ja": "補助ブラウザーを開く"
+  },
+  "批量下载 %d 个动图": {
+    "zh-CN": "批量下载 %d 个动图",
+    "zh-TW": "批量下載 %d 個動圖",
+    "en": "Download %d GIFs",
+    "ja": "GIF を %d 件ダウンロード"
+  },
+  "批量下载 %d 个视频 (%@)": {
+    "zh-CN": "批量下载 %d 个视频 (%@)",
+    "zh-TW": "批量下載 %d 個視頻 (%@)",
+    "en": "Download %d videos (%@)",
+    "ja": "動画を %d 本ダウンロード（%@）"
+  },
+  "批量下载 %d 个音频 (%@)": {
+    "zh-CN": "批量下载 %d 个音频 (%@)",
+    "zh-TW": "批量下載 %d 個音訊 (%@)",
+    "en": "Download %d audio files (%@)",
+    "ja": "音声を %d 件ダウンロード（%@）"
+  },
+  "批量下载全部分集 (%d集)": {
+    "zh-CN": "批量下载全部分集 (%d集)",
+    "zh-TW": "批量下載全部分集 (%d集)",
+    "en": "Download all episodes (%d)",
+    "ja": "全エピソードをダウンロード（%d 話）"
+  },
+  "批量下载合集": {
+    "zh-CN": "批量下载合集",
+    "zh-TW": "批量下載合集",
+    "en": "Download collection",
+    "ja": "コレクションをダウンロード"
+  },
+  "批量导出模式": {
+    "zh-CN": "批量导出模式",
+    "zh-TW": "批量導出模式",
+    "en": "Batch output type",
+    "ja": "一括出力形式"
+  },
+  "批量草稿保存失败": {
+    "zh-CN": "批量草稿保存失败",
+    "zh-TW": "批次草稿儲存失敗",
+    "en": "Failed to save batch draft",
+    "ja": "一括下書きの保存に失敗しました"
+  },
+  "批量链接": {
+    "zh-CN": "批量链接",
+    "zh-TW": "批量鏈接",
+    "en": "Batch links",
+    "ja": "一括リンク"
+  },
+  "抖音分享页没有停留在目标作品": {
+    "zh-CN": "抖音分享页没有停留在目标作品",
+    "zh-TW": "抖音分享頁未停留在目標作品",
+    "en": "Douyin share page navigated away from target post",
+    "ja": "抖音共有ページが対象投稿から移動しました"
+  },
+  "抖音返回了其他作品": {
+    "zh-CN": "抖音返回了其他作品",
+    "zh-TW": "抖音傳回了其他作品",
+    "en": "Douyin returned a different post",
+    "ja": "抖音が別の投稿を返しました"
+  },
+  "指定格式未取得完整资源，请重新播放并解析": {
+    "zh-CN": "指定格式未取得完整资源，请重新播放并解析",
+    "zh-TW": "指定格式未取得完整資源，請重新播放並解析",
+    "en": "Complete resource missing for selected format; play and re-analyze",
+    "ja": "選択した形式の完全なリソースを取得できませんでした。再生して再解析してください"
+  },
+  "探测引擎组件状态": {
+    "zh-CN": "探测引擎组件状态",
+    "zh-TW": "探測引擎組件狀態",
+    "en": "Check engine components",
+    "ja": "構成要素を確認"
+  },
+  "提交下载失败": {
+    "zh-CN": "提交下载失败",
+    "zh-TW": "送出下載失敗",
+    "en": "Failed to submit download",
+    "ja": "ダウンロード送信に失敗しました"
+  },
+  "提取已打开图文": {
+    "zh-CN": "提取已打开图文",
+    "zh-TW": "提取已打開圖文",
+    "en": "Read opened image post",
+    "ja": "開いている画像投稿を取得"
+  },
+  "提取音频": {
+    "zh-CN": "音频",
+    "zh-TW": "音訊",
+    "en": "Audio",
+    "ja": "音声"
+  },
+  "提取页面图文": {
+    "zh-CN": "提取页面图文",
+    "zh-TW": "提取頁面圖文",
+    "en": "Read page images",
+    "ja": "ページの画像を取得"
+  },
+  "提取页面图文失败: %s": {
+    "zh-CN": "提取页面图文失败: %s",
+    "zh-TW": "擷取頁面圖文失敗: %s",
+    "en": "Failed to extract page images: %s",
+    "ja": "ページ画像の抽出に失敗しました: %s"
+  },
+  "提示": {
+    "zh-CN": "提示",
+    "zh-TW": "提示",
+    "en": "Notice",
+    "ja": "お知らせ"
+  },
+  "提示: 解析 YouTube / X 需配合科学上网；如已开启代理，可在客户端设置中配置代理端口。": {
+    "zh-CN": "提示: 解析 YouTube / X 需配合科学上网；如已开启代理，可在客户端设置中配置代理端口。",
+    "zh-TW": "提示: 解析 YouTube / X 需配合網路代理；若已開啟代理，可在用戶端設定中配置代理連接埠。",
+    "en": "Tip: YouTube / X may require a proxy; configure your proxy port in the desktop client settings.",
+    "ja": "ヒント: YouTube / X の解析にはプロキシが必要な場合があります。クライアント設定でプロキシを構成できます。"
+  },
+  "播放视频或点击上方「深度搜索」主动挖掘隐藏媒体": {
+    "zh-CN": "播放视频或点击上方「深度搜索」主动挖掘隐藏媒体",
+    "zh-TW": "播放視頻或點擊上方「深度搜索」主動挖掘隱藏媒體",
+    "en": "Play media or select Deep search to find streams",
+    "ja": "メディアを再生するか「詳細検索」でストリームを検出してください"
+  },
+  "支持 HTTP / HTTPS / SOCKS5 代理（如 http://127.0.0.1:7890 或 socks5://127.0.0.1:7891）；留空即直连网络。": {
+    "zh-CN": "支持 HTTP / HTTPS / SOCKS5 代理（如 http://127.0.0.1:7890 或 socks5://127.0.0.1:7891）；留空即直连网络。",
+    "zh-TW": "支持 HTTP / HTTPS / SOCKS5 代理（如 http://127.0.0.1:7890 或 socks5://127.0.0.1:7891）；留空即直連網絡。",
+    "en": "Supports HTTP / HTTPS / SOCKS5 proxies. Leave blank for a direct connection.",
+    "ja": "HTTP・HTTPS・SOCKS5 プロキシに対応します。空欄で直接接続します。"
+  },
+  "支持哔哩哔哩、抖音、快手、小红书、微博、YouTube、X (Twitter)、Pixiv 等多平台音视频与图文原图解析": {
+    "zh-CN": "支持哔哩哔哩、抖音、快手、小红书、微博、YouTube、X (Twitter)、Pixiv 等多平台音视频与图文原图解析",
+    "zh-TW": "支援嗶哩嗶哩、抖音、快手、小紅書、微博、YouTube、X (Twitter)、Pixiv 等多平台影音與圖文原圖解析",
+    "en": "Supports video, audio, and original image extraction across Bilibili, Douyin, Kuaishou, Xiaohongshu, Weibo, YouTube, X, Pixiv, and more",
+    "ja": "ビリビリ・抖音・快手・小紅書・Weibo・YouTube・X・Pixiv などの動画・音声・元画像抽出に対応"
+  },
+  "支持平台": {
+    "zh-CN": "支持平台",
+    "zh-TW": "支持平臺",
+    "en": "Supported platforms",
+    "ja": "対応サイト"
+  },
+  "支持平台与解析器目录 (yt-dlp)": {
+    "zh-CN": "支持平台与解析器目录 (yt-dlp)",
+    "zh-TW": "支持平臺與解析器目錄 (yt-dlp)",
+    "en": "Platforms and extractors (yt-dlp)",
+    "ja": "サイトと抽出器（yt-dlp）"
+  },
+  "支持平台目录": {
+    "zh-CN": "支持平台目录",
+    "zh-TW": "支持平臺目錄",
+    "en": "Platform catalog",
+    "ja": "対応サイト一覧"
+  },
+  "支持的媒体平台": {
+    "zh-CN": "支持的媒体平台",
+    "zh-TW": "支持的媒體平臺",
+    "en": "Supported media platforms",
+    "ja": "対応メディアサイト"
+  },
+  "支持简中、繁中、English 与日本語即时切换": {
+    "zh-CN": "支持简中、繁中、English 与日本語即时切换",
+    "zh-TW": "支持簡中、繁中、English 與日本語即時切換",
+    "en": "Switch instantly between Simplified Chinese, Traditional Chinese, English and Japanese",
+    "ja": "簡体字・繁体字・英語・日本語を即座に切り替え"
+  },
+  "支持粘贴含多个分享链接的文本，自动去重识别并排队提交": {
+    "zh-CN": "支持粘贴含多个分享链接的文本，自动去重识别并排队提交",
+    "zh-TW": "支援貼上含多個分享連結的文字，自動去重識別並排隊提交",
+    "en": "Paste text with multiple links to deduplicate, recognize, and queue them automatically",
+    "ja": "複数のリンクを含むテキストを貼り付けて、重複を除外しながら自動認識・一括追加します"
+  },
+  "收起分集详情": {
+    "zh-CN": "收起分集详情",
+    "zh-TW": "收起分集詳情",
+    "en": "Collapse episode details",
+    "ja": "エピソード詳細を閉じる"
+  },
+  "收起平台": {
+    "zh-CN": "收起平台",
+    "zh-TW": "收合平台",
+    "en": "Collapse Platforms",
+    "ja": "プラットフォームを閉じる"
+  },
+  "收起明细 (共 %d 集)": {
+    "zh-CN": "收起明细 (共 %d 集)",
+    "zh-TW": "收合明細 (共 %d 集)",
+    "en": "Hide Episodes (%d total)",
+    "ja": "エピソードを折りたたむ (全 %d 件)"
+  },
+  "放大 (+)": {
+    "zh-CN": "放大 (+)",
+    "zh-TW": "放大 (+)",
+    "en": "Zoom in (+)",
+    "ja": "拡大（+）"
+  },
+  "文件 → OmniDownloader → Downloads": {
+    "zh-CN": "文件 → OmniDownloader → Downloads",
+    "zh-TW": "檔案 → OmniDownloader → Downloads",
+    "en": "Files → OmniDownloader → Downloads",
+    "ja": "ファイル → OmniDownloader → Downloads"
+  },
+  "文件不存在或路径无效": {
+    "zh-CN": "文件不存在或路径无效",
+    "zh-TW": "檔案不存在或路徑無效",
+    "en": "File missing or invalid path",
+    "ja": "ファイルが存在しないかパスが無効です"
+  },
+  "文件先保存到目录；相册权限不足时仍保留文件。": {
+    "zh-CN": "文件先保存到目录；相册权限不足时仍保留文件。",
+    "zh-TW": "文件先保存到目錄；相冊權限不足時仍保留文件。",
+    "en": "Files are saved to the folder first and kept if Photos access is unavailable.",
+    "ja": "まずフォルダーに保存します。写真へのアクセス権がなくてもファイルは保持されます。"
+  },
+  "文件已保存，相册写入未完成：%@": {
+    "zh-CN": "文件已保存，相册写入未完成：%@",
+    "zh-TW": "檔案已儲存，相簿寫入未完成：%@",
+    "en": "Saved file, but Photos export failed: %@",
+    "ja": "ファイルは保存されましたが写真への書き出しに失敗しました：%@"
+  },
+  "文件或保存目录不可用，请检查存储空间或重新选择目录": {
+    "zh-CN": "文件或保存目录不可用，请检查存储空间或重新选择目录",
+    "zh-TW": "檔案或儲存目錄無法使用，請檢查儲存空間或重新選擇目錄",
+    "en": "File or folder unavailable; check free space or pick another folder",
+    "ja": "ファイルまたは保存先が利用できません。空き容量を確認するか保存先を再選択してください"
+  },
+  "新加入的下载任务会在这里实时展示进度。": {
+    "zh-CN": "新加入的下载任务会在这里实时展示进度。",
+    "zh-TW": "新加入的下載任務會在這裡即時顯示進度。",
+    "en": "Newly added download tasks appear here with live progress.",
+    "ja": "追加されたダウンロードタスクの進捗がここにリアルタイム表示されます。"
+  },
+  "新建解析": {
+    "zh-CN": "新建解析",
+    "zh-TW": "新增解析",
+    "en": "New Parse",
+    "ja": "新規解析"
+  },
+  "新窗口打开": {
+    "zh-CN": "新窗口打开",
+    "zh-TW": "於新視窗開啟",
+    "en": "Open in New Tab",
+    "ja": "新しいタブで開く"
+  },
+  "无法创建 ZIP 目标文件": {
+    "zh-CN": "无法创建 ZIP 目标文件",
+    "zh-TW": "無法建立 ZIP 目標檔案",
+    "en": "Cannot create destination ZIP file",
+    "ja": "ZIP 出力ファイルを作成できません"
+  },
+  "无法安全保存会话": {
+    "zh-CN": "无法安全保存会话",
+    "zh-TW": "無法安全儲存工作階段",
+    "en": "Cannot store session securely",
+    "ja": "セッションを安全に保存できません"
+  },
+  "无法打开内置登录窗口": {
+    "zh-CN": "无法打开内置登录窗口",
+    "zh-TW": "無法開啟內建登入視窗",
+    "en": "Cannot open built-in sign-in window",
+    "ja": "内蔵ログインウィンドウを開けません"
+  },
+  "无法打开原生媒体窗口: %s": {
+    "zh-CN": "无法打开原生媒体窗口: %s",
+    "zh-TW": "無法開啟原生媒體視窗: %s",
+    "en": "Failed to open native media window: %s",
+    "ja": "ネイティブメディアウィンドウを開けません: %s"
+  },
+  "无法打开媒体源：%s": {
+    "zh-CN": "无法打开媒体源：%s",
+    "zh-TW": "無法開啟媒體來源：%s",
+    "en": "Cannot open media source: %s",
+    "ja": "メディアソースを開けません：%s"
+  },
+  "无法更新会话": {
+    "zh-CN": "无法更新会话",
+    "zh-TW": "無法更新工作階段",
+    "en": "Cannot update session",
+    "ja": "セッションを更新できません"
+  },
+  "无法访问保存目录": {
+    "zh-CN": "无法访问保存目录",
+    "zh-TW": "無法存取儲存目錄",
+    "en": "Cannot access save directory",
+    "ja": "保存先フォルダにアクセスできません"
+  },
+  "无法读取成品媒体信息": {
+    "zh-CN": "无法读取成品媒体信息",
+    "zh-TW": "無法讀取成品媒體資訊",
+    "en": "Cannot read output media metadata",
+    "ja": "出力メディア情報を読み取れません"
+  },
+  "无法读取本机会话": {
+    "zh-CN": "无法读取本机会话",
+    "zh-TW": "無法讀取本機工作階段",
+    "en": "Cannot read local session",
+    "ja": "ローカルセッションを読み取れません"
+  },
+  "无法连接到本地服务，请确认 OmniDownloader 正在运行。": {
+    "zh-CN": "无法连接到本地服务，请确认 OmniDownloader 正在运行。",
+    "zh-TW": "無法連線至本機服務，請確認 OmniDownloader 正在執行。",
+    "en": "Cannot reach local service; verify OmniDownloader is running.",
+    "ja": "ローカルサービスに接続できません。OmniDownloader が起動中か確認してください。"
+  },
+  "旧版共享服务 v%s 正在运行，请从托盘正常退出后重连新版": {
+    "zh-CN": "旧版共享服务 v%s 正在运行，请从托盘正常退出后重连新版",
+    "zh-TW": "舊版共用服務 v%s 正在執行，請從系統匣正常結束後重連新版",
+    "en": "Legacy shared service v%s is running; quit it from tray and reconnect",
+    "ja": "旧共有サービス v%s が稼働中です。トレイから終了後に再接続してください"
+  },
+  "显示名称": {
+    "zh-CN": "显示名称",
+    "zh-TW": "顯示名稱",
+    "en": "Display name",
+    "ja": "表示名"
+  },
+  "暂停": {
+    "zh-CN": "暂停",
+    "zh-TW": "暫停",
+    "en": "Pause",
+    "ja": "一時停止"
+  },
+  "暂无下载任务": {
+    "zh-CN": "暂无下载任务",
+    "zh-TW": "暫無下載任務",
+    "en": "No download tasks",
+    "ja": "ダウンロードタスクはありません"
+  },
+  "暂无封面可预览": {
+    "zh-CN": "暂无封面可预览",
+    "zh-TW": "暫無封面可預覽",
+    "en": "No cover available to preview",
+    "ja": "プレビューできるカバーがありません"
+  },
+  "暂无已完成的任务": {
+    "zh-CN": "暂无已完成的任务",
+    "zh-TW": "暫無已完成的任務",
+    "en": "No completed tasks",
+    "ja": "完了したタスクはありません"
+  },
+  "暂无正在下载的任务": {
+    "zh-CN": "暂无正在下载的任务",
+    "zh-TW": "暫無正在下載的任務",
+    "en": "No active downloads",
+    "ja": "実行中のダウンロードはありません"
+  },
+  "暂时无法连接 GitHub Releases 检查更新，请检查网络或代理": {
+    "zh-CN": "暂时无法连接 GitHub Releases 检查更新，请检查网络或代理",
+    "zh-TW": "暫時無法連線 GitHub Releases 檢查更新，請檢查網路或代理",
+    "en": "Unable to check GitHub Releases for updates; check network or proxy",
+    "ja": "GitHub Releases へ接続できません。ネットワークやプロキシを確認してください"
+  },
+  "暂未嗅探到媒体流": {
+    "zh-CN": "暂未嗅探到媒体流",
+    "zh-TW": "暫未嗅探到媒體流",
+    "en": "No media streams detected",
+    "ja": "メディアストリーム未検出"
+  },
+  "暂未添加任何第三方解析中转站点，点击上方按钮即可添加常用站点（可自动读取网页标题）。": {
+    "zh-CN": "暂未添加任何第三方解析中转站点，点击上方按钮即可添加常用站点（可自动读取网页标题）。",
+    "zh-TW": "暫未添加任何第三方解析中轉站點，點擊上方按鈕即可添加常用站點（可自動讀取網頁標題）。",
+    "en": "No third-party relays yet. Add a site above; its page title can be detected automatically.",
+    "ja": "外部解析中継サイトはありません。上のボタンから追加できます。ページのタイトルは自動取得できます。"
+  },
+  "暂未配置中转站": {
+    "zh-CN": "暂未配置中转站",
+    "zh-TW": "暫未配置中轉站",
+    "en": "No relay configured",
+    "ja": "中継サイト未設定"
+  },
+  "更多画质 / 浏览器验证": {
+    "zh-CN": "更多画质 / 浏览器验证",
+    "zh-TW": "更多畫質 / 瀏覽器驗證",
+    "en": "More quality options / browser verification",
+    "ja": "その他の画質・ブラウザー認証"
+  },
+  "更新 cookies.txt": {
+    "zh-CN": "更新 cookies.txt",
+    "zh-TW": "更新 cookies.txt",
+    "en": "Update cookies.txt",
+    "ja": "cookies.txt を更新"
+  },
+  "更新检查失败，请检查网络后重试": {
+    "zh-CN": "更新检查失败，请检查网络后重试",
+    "zh-TW": "更新檢查失敗，請檢查網路後重試",
+    "en": "Update check failed; check network and retry",
+    "ja": "アップデート確認に失敗しました。通信を確認して再試行してください"
+  },
+  "最佳": {
+    "zh-CN": "最佳",
+    "zh-TW": "最佳",
+    "en": "Best",
+    "ja": "最高画質"
+  },
+  "最高可用": {
+    "zh-CN": "最高可用",
+    "zh-TW": "最高可用",
+    "en": "Best available",
+    "ja": "利用可能な最高画質"
+  },
+  "最高源画质": {
+    "zh-CN": "最高源画质",
+    "zh-TW": "最高源畫質",
+    "en": "Best source",
+    "ja": "最高画質"
+  },
+  "服务器未正确返回所需的媒体区间": {
+    "zh-CN": "服务器未正确返回所需的媒体区间",
+    "zh-TW": "伺服器未正確傳回所需的媒體區間",
+    "en": "Server failed to return the requested media byte range",
+    "ja": "サーバーから要求したメディア範囲が返されませんでした"
+  },
+  "服务器没有返回可解码图片": {
+    "zh-CN": "服务器没有返回可解码图片",
+    "zh-TW": "伺服器沒有傳回可解碼圖片",
+    "en": "Server returned no decodable image",
+    "ja": "デコード可能な画像がサーバーから返されませんでした"
+  },
+  "未取得目标原图，可打开内置浏览器完成验证后继续": {
+    "zh-CN": "未取得目标原图，可打开内置浏览器完成验证后继续",
+    "zh-TW": "未取得目標原圖，可開啟內建瀏覽器完成驗證後繼續",
+    "en": "Target image not captured; open built-in browser to verify",
+    "ja": "元画像を取得できませんでした。内蔵ブラウザで認証を完了してください"
+  },
+  "未命名媒体": {
+    "zh-CN": "未命名媒体",
+    "zh-TW": "未命名媒體",
+    "en": "Untitled Media",
+    "ja": "無題のメディア"
+  },
+  "未在本机找到 omni_server.py 或配套服务程序": {
+    "zh-CN": "未在本机找到 omni_server.py 或配套服务程序",
+    "zh-TW": "未於本機找到 omni_server.py 或配套服務程式",
+    "en": "Could not locate omni_server.py or companion backend locally",
+    "ja": "ローカル環境に omni_server.py またはサービスが見つかりません"
+  },
+  "未找到可播放的已完成媒体": {
+    "zh-CN": "未找到可播放的已完成媒体",
+    "zh-TW": "未找到可播放的已完成媒體",
+    "en": "No playable completed media found",
+    "ja": "再生可能な完了済みメディアがありません"
+  },
+  "未探测": {
+    "zh-CN": "未探测",
+    "zh-TW": "未偵測",
+    "en": "Not Probed",
+    "ja": "未確認"
+  },
+  "未检测到本地服务时自动伴随启动核心引擎": {
+    "zh-CN": "未检测到本地服务时自动伴随启动核心引擎",
+    "zh-TW": "未檢測到本地服務時自動伴隨啟動核心引擎",
+    "en": "Start the engine when no local service is running",
+    "ja": "ローカルサービスがない場合にエンジンを起動"
+  },
+  "未检测到运行中的本地服务": {
+    "zh-CN": "未检测到运行中的本地服务",
+    "zh-TW": "未偵測到執行中的本機服務",
+    "en": "No running local service detected",
+    "ja": "起動中のローカルサービスが見つかりません"
+  },
+  "未知": {
+    "zh-CN": "未知",
+    "zh-TW": "未知",
+    "en": "Unknown",
+    "ja": "不明"
+  },
+  "未知平台": {
+    "zh-CN": "未知平台",
+    "zh-TW": "未知平台",
+    "en": "Unknown platform",
+    "ja": "不明なプラットフォーム"
+  },
+  "未能导出有效 B站 Cookie，请刷新后重试": {
+    "zh-CN": "未能导出有效 B站 Cookie，请刷新后重试",
+    "zh-TW": "未能匯出有效 B站 Cookie，請重新整理後重試",
+    "en": "Could not export valid Bilibili cookies; reload and try again",
+    "ja": "有効な Bilibili Cookie を出力できませんでした。再読み込みしてください"
+  },
+  "未能拉起伴随 Python 服务进程": {
+    "zh-CN": "未能拉起伴随 Python 服务进程",
+    "zh-TW": "未能啟動伴隨 Python 服務處理程序",
+    "en": "Failed to spawn companion Python backend process",
+    "ja": "付随 Python サービスプロセスの起動に失敗しました"
+  },
+  "未识别到有效链接（支持 http/https 链接或 BV 号）": {
+    "zh-CN": "未识别到有效链接（支持 http/https 链接或 BV 号）",
+    "zh-TW": "未辨識到有效連結（支援 http/https 連結或 BV 號）",
+    "en": "No valid link detected (supports http/https URLs or BV IDs)",
+    "ja": "有効なリンクが検出されませんでした（http/https または BV 番号に対応）"
+  },
+  "未返回可用 Ugoira 帧": {
+    "zh-CN": "未返回可用 Ugoira 帧",
+    "zh-TW": "未傳回可用 Ugoira 影格",
+    "en": "No valid Ugoira frames returned",
+    "ja": "有効な Ugoira フレームが返されませんでした"
+  },
+  "未返回目标动态，请检查登录状态": {
+    "zh-CN": "未返回目标动态，请检查登录状态",
+    "zh-TW": "未傳回目標動態，請檢查登入狀態",
+    "en": "Target dynamic post not returned; check login state",
+    "ja": "対象の投稿が返されませんでした。ログイン状態を確認してください"
+  },
+  "本地图片": {
+    "zh-CN": "本地图片",
+    "zh-TW": "本機圖片",
+    "en": "Local Image",
+    "ja": "ローカル画像"
+  },
+  "本地引擎连接配置": {
+    "zh-CN": "本地引擎连接配置",
+    "zh-TW": "本地引擎連接配置",
+    "en": "Local engine connection",
+    "ja": "ローカルエンジン接続"
+  },
+  "本地服务未连接": {
+    "zh-CN": "本地服务未连接",
+    "zh-TW": "本機服務未連線",
+    "en": "Local service offline",
+    "ja": "ローカルサービス未接続"
+  },
+  "本地核心服务连接、yt-dlp/FFmpeg 运行状态与版本更新": {
+    "zh-CN": "本地核心服务连接、yt-dlp/FFmpeg 运行状态与版本更新",
+    "zh-TW": "本地核心服務連接、yt-dlp/FFmpeg 運行狀態與版本更新",
+    "en": "Local service connection, yt-dlp/FFmpeg status and updates",
+    "ja": "ローカルサービス接続・yt-dlp/FFmpeg の状態と更新"
+  },
+  "本地音频文件": {
+    "zh-CN": "本地音频文件",
+    "zh-TW": "本機音訊檔案",
+    "en": "Local audio file",
+    "ja": "ローカル音声ファイル"
+  },
+  "本机离线导出需要完整点播清单，暂不接收直播或多层嵌套清单": {
+    "zh-CN": "本机离线导出需要完整点播清单，暂不接收直播或多层嵌套清单",
+    "zh-TW": "本機離線匯出需要完整點播清單，暫不接收直播或多層巢狀清單",
+    "en": "Offline export requires a complete VOD playlist; live or nested playlists are unsupported",
+    "ja": "オフライン書き出しには完全な VOD リストが必要です（ライブ・ネスト形式未対応）"
+  },
+  "本机解析需要页面实际取得完整 MP4/AAC 地址；直播、DRM、分段流及未取得的加密地址不作为下载成功。更高清画质可先在播放器中切换。": {
+    "zh-CN": "本机解析需要页面实际取得完整 MP4/AAC 地址；直播、DRM、分段流及未取得的加密地址不作为下载成功。更高清画质可先在播放器中切换。",
+    "zh-TW": "本機解析需要頁面實際取得完整 MP4/AAC 地址；直播、DRM、分段流及未取得的加密地址不作為下載成功。更高清畫質可先在播放器中切換。",
+    "en": "Analysis requires a complete MP4/AAC source from the page. Live, DRM, partial or unresolved encrypted streams are not complete downloads. Select higher quality in the player first.",
+    "ja": "ページから完全な MP4/AAC ソースを取得する必要があります。ライブ・DRM・分割・未解決の暗号化ストリームを成功として扱いません。高画質は先にプレーヤーで選択してください。"
+  },
+  "本次最高规格：%@ · %@": {
+    "zh-CN": "本次最高规格：%@ · %@",
+    "zh-TW": "本次最高規格：%@ · %@",
+    "en": "Highest Spec Found: %@ · %@",
+    "ja": "今回取得の最高仕様：%@ · %@"
+  },
+  "本站 Cookie 已禁用，浏览器辅助需要先开启本站 Cookie": {
+    "zh-CN": "本站 Cookie 已禁用，浏览器辅助需要先开启本站 Cookie",
+    "zh-TW": "本站 Cookie 已停用，瀏覽器輔助需先開啟本站 Cookie",
+    "en": "Cookies disabled for this site; enable them first for browser assist",
+    "ja": "このサイトの Cookie は無効です。ブラウザ補助には Cookie の有効化が必要です"
+  },
+  "查看 iOS 更新": {
+    "zh-CN": "查看 iOS 更新",
+    "zh-TW": "查看 iOS 更新",
+    "en": "Check iOS Updates",
+    "ja": "iOS アップデートを確認"
+  },
+  "查看分集详情 (已完成 %d/%d)": {
+    "zh-CN": "查看分集详情 (已完成 %d/%d)",
+    "zh-TW": "查看分集詳情 (已完成 %d/%d)",
+    "en": "Episode details (%d/%d completed)",
+    "ja": "エピソード詳細（%d/%d 完了）"
+  },
+  "查看图片": {
+    "zh-CN": "查看图片",
+    "zh-TW": "查看圖片",
+    "en": "View image",
+    "ja": "画像を表示"
+  },
+  "查看完整 1600+ 支持解析器与搜索过滤": {
+    "zh-CN": "查看完整 1600+ 支持解析器与搜索过滤",
+    "zh-TW": "查看完整 1600+ 支持解析器與搜索過濾",
+    "en": "Search the full catalog of 1600+ extractors",
+    "ja": "1600 以上の抽出器の一覧を表示・検索"
+  },
+  "查看封面": {
+    "zh-CN": "查看封面",
+    "zh-TW": "檢視封面",
+    "en": "Preview Cover",
+    "ja": "カバー表示"
+  },
+  "查看首图": {
+    "zh-CN": "查看首图",
+    "zh-TW": "檢視首圖",
+    "en": "View First Image",
+    "ja": "1枚目を表示"
+  },
+  "核心下载引擎运行状态": {
+    "zh-CN": "核心下载引擎运行状态",
+    "zh-TW": "核心下載引擎運行狀態",
+    "en": "Engine status",
+    "ja": "エンジンの状態"
+  },
+  "核验原作品并下载原图…": {
+    "zh-CN": "核验原作品并下载原图…",
+    "zh-TW": "核驗原作品並下載原圖…",
+    "en": "Verifying the post and downloading originals…",
+    "ja": "投稿を確認して元画像をダウンロード中…",
+    "progress": true
+  },
+  "检测到 HLS/M3U8 分片流，正在拉取分片并合成 MP4...": {
+    "zh-CN": "检测到 HLS/M3U8 分片流，正在拉取分片并合成 MP4...",
+    "zh-TW": "偵測到 HLS/M3U8，正在下載分段並合成 MP4...",
+    "en": "Downloading HLS/M3U8 segments and creating MP4...",
+    "ja": "HLS/M3U8 のセグメントを取得して MP4 を作成中...",
+    "progress": true
+  },
+  "检测到剪贴板链接": {
+    "zh-CN": "检测到剪贴板链接",
+    "zh-TW": "檢測到剪貼板鏈接",
+    "en": "Link found in clipboard",
+    "ja": "クリップボードにリンクがあります"
+  },
+  "检测到旧版后台服务": {
+    "zh-CN": "检测到旧版后台服务",
+    "zh-TW": "檢測到舊版后臺服務",
+    "en": "Older service detected",
+    "ja": "古いサービスを検出"
+  },
+  "正在下载 (第%d/%d集)：%@": {
+    "zh-CN": "正在下载 (第%d/%d集)：%@",
+    "zh-TW": "正在下載 (第%d/%d集)：%@",
+    "en": "Downloading (%d/%d): %@",
+    "ja": "ダウンロード中（%d/%d）：%@"
+  },
+  "正在下载 Ugoira 帧包...": {
+    "zh-CN": "正在下载 Ugoira 帧包...",
+    "zh-TW": "正在下載 Ugoira 影格包...",
+    "en": "Downloading Ugoira frames...",
+    "ja": "Ugoira フレームをダウンロード中...",
+    "progress": true
+  },
+  "正在下载分段媒体…": {
+    "zh-CN": "正在下载分段媒体…",
+    "zh-TW": "正在下載分段媒體…",
+    "en": "Downloading media segments…",
+    "ja": "メディアセグメントをダウンロード中…",
+    "progress": true
+  },
+  "正在下载原始帧…": {
+    "zh-CN": "正在下载原始帧…",
+    "zh-TW": "正在下載原始影格…",
+    "en": "Downloading original frames…",
+    "ja": "元のフレームをダウンロード中…",
+    "progress": true
+  },
+  "正在下载媒体…": {
+    "zh-CN": "正在下载媒体…",
+    "zh-TW": "正在下載媒體…",
+    "en": "Downloading media…",
+    "ja": "メディアをダウンロード中…",
+    "progress": true
+  },
+  "正在下载封面…": {
+    "zh-CN": "正在下载封面…",
+    "zh-TW": "正在下載封面…",
+    "en": "Downloading cover…",
+    "ja": "カバーをダウンロード中…",
+    "progress": true
+  },
+  "正在下载封面图片...": {
+    "zh-CN": "正在下载封面图片...",
+    "zh-TW": "正在下載封面圖片...",
+    "en": "Downloading cover image...",
+    "ja": "カバー画像をダウンロード中...",
+    "progress": true
+  },
+  "正在下载音轨…": {
+    "zh-CN": "正在下载音轨…",
+    "zh-TW": "正在下載音軌…",
+    "en": "Downloading audio track…",
+    "ja": "音声トラックをダウンロード中…",
+    "progress": true
+  },
+  "正在保存到媒体库...": {
+    "zh-CN": "正在保存到媒体库...",
+    "zh-TW": "正在儲存到媒體庫...",
+    "en": "Saving to media library...",
+    "ja": "メディアライブラリに保存中...",
+    "progress": true
+  },
+  "正在保存原图": {
+    "zh-CN": "正在保存原图",
+    "zh-TW": "正在儲存原圖",
+    "en": "Saving originals",
+    "ja": "元画像を保存中",
+    "progress": true
+  },
+  "正在保存图片...": {
+    "zh-CN": "正在保存图片...",
+    "zh-TW": "正在儲存圖片...",
+    "en": "Saving images...",
+    "ja": "画像を保存中...",
+    "progress": true
+  },
+  "正在保存封面...": {
+    "zh-CN": "正在保存封面...",
+    "zh-TW": "正在儲存封面...",
+    "en": "Saving cover...",
+    "ja": "カバーを保存中...",
+    "progress": true
+  },
+  "正在准备 Ugoira...": {
+    "zh-CN": "正在准备 Ugoira...",
+    "zh-TW": "正在準備 Ugoira...",
+    "en": "Preparing Ugoira...",
+    "ja": "Ugoira を準備中...",
+    "progress": true
+  },
+  "正在准备普通 Edge 登录窗口…": {
+    "zh-CN": "正在准备普通 Edge 登录窗口…",
+    "zh-TW": "正在準備一般 Edge 登入視窗…",
+    "en": "Preparing clean Edge sign-in window…",
+    "ja": "専用 Edge ログインウィンドウを準備中…"
+  },
+  "正在切换同画质视频源…": {
+    "zh-CN": "正在切换同画质视频源…",
+    "zh-TW": "正在切換相同畫質的視頻來源…",
+    "en": "Switching to an equivalent quality source…",
+    "ja": "同等画質のソースに切り替え中…",
+    "progress": true
+  },
+  "正在刷新目标作品的视频地址…": {
+    "zh-CN": "正在刷新目标作品的视频地址…",
+    "zh-TW": "正在更新目標作品的視頻網址…",
+    "en": "Refreshing the source URL…",
+    "ja": "ソース URL を更新中…",
+    "progress": true
+  },
+  "正在加载哔哩哔哩登录页...": {
+    "zh-CN": "正在加载哔哩哔哩登录页...",
+    "zh-TW": "正在載入嗶哩嗶哩登入頁...",
+    "en": "Loading Bilibili sign-in page...",
+    "ja": "Bilibili ログインページを読み込み中..."
+  },
+  "正在启动引擎环境检查与初始化...": {
+    "zh-CN": "正在启动引擎环境检查与初始化...",
+    "zh-TW": "正在檢查並初始化引擎...",
+    "en": "Checking and initializing the engine...",
+    "ja": "エンジンを確認して初期化中...",
+    "progress": true
+  },
+  "正在处理媒体…": {
+    "zh-CN": "正在处理媒体…",
+    "zh-TW": "正在處理媒體…",
+    "en": "Processing media…",
+    "ja": "メディアを処理中…",
+    "progress": true
+  },
+  "正在处理并保存媒体...": {
+    "zh-CN": "正在处理并保存媒体...",
+    "zh-TW": "正在處理並儲存媒體...",
+    "en": "Processing and saving media...",
+    "ja": "メディアを処理して保存中...",
+    "progress": true
+  },
+  "正在存入系统相册...": {
+    "zh-CN": "正在存入系统相册...",
+    "zh-TW": "正在存入系統相冊...",
+    "en": "Saving to Photos...",
+    "ja": "写真に保存中..."
+  },
+  "正在导出": {
+    "zh-CN": "正在导出",
+    "zh-TW": "正在匯出",
+    "en": "Exporting",
+    "ja": "書き出し中",
+    "progress": true
+  },
+  "正在导出成品…": {
+    "zh-CN": "正在导出成品…",
+    "zh-TW": "正在匯出成品…",
+    "en": "Exporting output…",
+    "ja": "出力ファイルを書き出し中…",
+    "progress": true
+  },
+  "正在打开普通 Edge 登录窗口…": {
+    "zh-CN": "正在打开普通 Edge 登录窗口…",
+    "zh-TW": "正在開啟一般 Edge 登入視窗…",
+    "en": "Opening clean Edge sign-in window…",
+    "ja": "専用 Edge ログインウィンドウを開いています…"
+  },
+  "正在打开普通 Edge 登录窗口。Google 登录后请返回目标平台，再点击保存会话并关闭。": {
+    "zh-CN": "正在打开普通 Edge 登录窗口。Google 登录后请返回目标平台，再点击保存会话并关闭。",
+    "zh-TW": "正在開啟一般 Edge 登入視窗。Google 登入後請返回目標平台，再點擊儲存工作階段並關閉。",
+    "en": "Opening Edge sign-in window. After Google login, return to the platform and click Save Session & Close.",
+    "ja": "専用 Edge ログインウィンドウを開いています。Google ログイン後は元サイトに戻り「セッションを保存して閉じる」を押してください。"
+  },
+  "正在抽取音频并转码...": {
+    "zh-CN": "正在抽取音频并转码...",
+    "zh-TW": "正在擷取音訊並轉碼...",
+    "en": "Extracting and converting audio...",
+    "ja": "音声を抽出して変換中...",
+    "progress": true
+  },
+  "正在探测本机引擎环境...": {
+    "zh-CN": "正在探测本机引擎环境...",
+    "zh-TW": "正在偵測本機引擎環境...",
+    "en": "Probing local engine environment...",
+    "ja": "ローカルエンジン環境を確認中..."
+  },
+  "正在提前解析…": {
+    "zh-CN": "正在提前解析…",
+    "zh-TW": "正在預先解析…",
+    "en": "Pre-analyzing…",
+    "ja": "事前解析中…",
+    "progress": true
+  },
+  "正在提取并转码音频...": {
+    "zh-CN": "正在提取并转码音频...",
+    "zh-TW": "正在擷取並轉碼音訊...",
+    "en": "Extracting and converting audio...",
+    "ja": "音声を抽出して変換中...",
+    "progress": true
+  },
+  "正在无损合并音视频...": {
+    "zh-CN": "正在无损合并音视频...",
+    "zh-TW": "正在無損合并音視頻...",
+    "en": "Merging video and audio losslessly...",
+    "ja": "映像と音声を無劣化で結合中..."
+  },
+  "正在极速下载直链...": {
+    "zh-CN": "正在极速下载直链...",
+    "zh-TW": "正在下載直接連結...",
+    "en": "Downloading direct media...",
+    "ja": "直接メディアをダウンロード中...",
+    "progress": true
+  },
+  "正在校验并解压帧资源...": {
+    "zh-CN": "正在校验并解压帧资源...",
+    "zh-TW": "正在校驗並解壓影格...",
+    "en": "Verifying and extracting frames...",
+    "ja": "フレームを確認して展開中...",
+    "progress": true
+  },
+  "正在核对视频尺寸…": {
+    "zh-CN": "正在核对视频尺寸…",
+    "zh-TW": "正在核對視頻尺寸…",
+    "en": "Checking video dimensions…",
+    "ja": "動画サイズを確認中…",
+    "progress": true
+  },
+  "正在检查更新...": {
+    "zh-CN": "正在检查更新...",
+    "zh-TW": "正在檢查更新...",
+    "en": "Checking for updates...",
+    "ja": "アップデートを確認中..."
+  },
+  "正在检查组件…": {
+    "zh-CN": "正在检查组件…",
+    "zh-TW": "正在檢查組件…",
+    "en": "Checking components…",
+    "ja": "構成要素を確認中…"
+  },
+  "正在检索名称...": {
+    "zh-CN": "正在检索名称...",
+    "zh-TW": "正在檢索名稱...",
+    "en": "Fetching title...",
+    "ja": "タイトルを取得中..."
+  },
+  "正在正常关闭专用登录窗口并保存会话，请勿同时重开。若浏览器提示确认，请先处理提示。": {
+    "zh-CN": "正在正常关闭专用登录窗口并保存会话，请勿同时重开。若浏览器提示确认，请先处理提示。",
+    "zh-TW": "正在正常關閉專用登入視窗並儲存工作階段，請勿同時重開。若瀏覽器提示確認，請先處理提示。",
+    "en": "Closing login window cleanly and saving session; do not reopen concurrently. Confirm any browser prompt first.",
+    "ja": "ログインウィンドウを終了しセッションを保存中です。同時に開き直さないでください。"
+  },
+  "正在正常关闭专用窗口并保存会话，请勿同时重开。": {
+    "zh-CN": "正在正常关闭专用窗口并保存会话，请勿同时重开。",
+    "zh-TW": "正在正常關閉專用視窗並儲存工作階段，請勿同時重開。",
+    "en": "Closing dedicated window and saving session; do not reopen concurrently.",
+    "ja": "専用ウィンドウを閉じてセッションを保存中。同時に開き直さないでください。"
+  },
+  "正在消除视频音频...": {
+    "zh-CN": "正在消除视频音频...",
+    "zh-TW": "正在移除視頻音軌...",
+    "en": "Removing audio track...",
+    "ja": "音声トラックを除去中...",
+    "progress": true
+  },
+  "正在深度探测音视频流信息...": {
+    "zh-CN": "正在深度探测音视频流信息...",
+    "zh-TW": "正在深度探測音視頻流信息...",
+    "en": "Inspecting media streams...",
+    "ja": "メディアストリームを詳細解析中..."
+  },
+  "正在渲染生成 GIF...": {
+    "zh-CN": "正在渲染生成 GIF...",
+    "zh-TW": "正在生成 GIF...",
+    "en": "Rendering GIF...",
+    "ja": "GIF を生成中...",
+    "progress": true
+  },
+  "正在渲染生成动图 GIF...": {
+    "zh-CN": "正在渲染生成动图 GIF...",
+    "zh-TW": "正在生成 GIF...",
+    "en": "Rendering GIF...",
+    "ja": "GIF を生成中...",
+    "progress": true
+  },
+  "正在编码 Ugoira GIF...": {
+    "zh-CN": "正在编码 Ugoira GIF...",
+    "zh-TW": "正在編碼 Ugoira GIF...",
+    "en": "Encoding Ugoira GIF...",
+    "ja": "Ugoira GIF をエンコード中...",
+    "progress": true
+  },
+  "正在编码 Ugoira MP4...": {
+    "zh-CN": "正在编码 Ugoira MP4...",
+    "zh-TW": "正在編碼 Ugoira MP4...",
+    "en": "Encoding Ugoira MP4...",
+    "ja": "Ugoira MP4 をエンコード中...",
+    "progress": true
+  },
+  "正在自动加载目标图文…": {
+    "zh-CN": "正在自动加载目标图文…",
+    "zh-TW": "正在自動加載目標圖文…",
+    "en": "Loading image post…",
+    "ja": "画像投稿を読み込み中…"
+  },
+  "正在自动补全画质…": {
+    "zh-CN": "正在自动补全画质…",
+    "zh-TW": "正在自動補全畫質…",
+    "en": "Resolving quality options…",
+    "ja": "画質候補を取得中…",
+    "progress": true
+  },
+  "正在获取高清封面...": {
+    "zh-CN": "正在获取高清封面...",
+    "zh-TW": "正在取得高畫質封面...",
+    "en": "Fetching the cover...",
+    "ja": "カバーを取得中...",
+    "progress": true
+  },
+  "正在获取高清直链...": {
+    "zh-CN": "正在获取高清直链...",
+    "zh-TW": "正在取得高畫質直接連結...",
+    "en": "Fetching high-quality source...",
+    "ja": "高画質ソースを取得中...",
+    "progress": true
+  },
+  "正在补全可用画质，可先选择下载。": {
+    "zh-CN": "正在补全可用画质，可先选择下载。",
+    "zh-TW": "正在取得可用畫質，可先選擇下載。",
+    "en": "Finding quality options; you can choose a download now.",
+    "ja": "画質候補を取得中です。先にダウンロードを選択できます。",
+    "progress": true
+  },
+  "正在解析": {
+    "zh-CN": "正在解析",
+    "zh-TW": "正在解析",
+    "en": "Analyzing",
+    "ja": "解析中",
+    "progress": true
+  },
+  "正在解析中...": {
+    "zh-CN": "正在解析中...",
+    "zh-TW": "正在解析中...",
+    "en": "Analyzing...",
+    "ja": "解析中..."
+  },
+  "正在解析，已加入的任务会继续下载": {
+    "zh-CN": "正在解析，已加入的任务会继续下载",
+    "zh-TW": "正在解析，已加入的任務會繼續下載",
+    "en": "Analyzing; queued tasks continue downloading",
+    "ja": "解析中です。追加済みタスクのダウンロードは継続します"
+  },
+  "正在读取原图…": {
+    "zh-CN": "正在读取原图…",
+    "zh-TW": "正在讀取原圖…",
+    "en": "Reading original image…",
+    "ja": "元画像を読み込み中…"
+  },
+  "正在读取批次记录，请稍后重试": {
+    "zh-CN": "正在读取批次记录，请稍后重试",
+    "zh-TW": "正在讀取批次記錄，請稍後重試",
+    "en": "Reading batch history; try again shortly",
+    "ja": "一括履歴を読み込み中です。しばらくして再試行してください",
+    "progress": true
+  },
+  "正在读取本地视频": {
+    "zh-CN": "正在读取本地视频",
+    "zh-TW": "正在讀取本機視頻",
+    "en": "Reading local video",
+    "ja": "ローカル動画を読み込み中",
+    "progress": true
+  },
+  "正在读取草稿与批次记录": {
+    "zh-CN": "正在读取草稿与批次记录",
+    "zh-TW": "正在讀取草稿與批次記錄",
+    "en": "Reading drafts and batch history",
+    "ja": "下書きと一括履歴を読み込み中",
+    "progress": true
+  },
+  "正在读取视频信息…": {
+    "zh-CN": "正在读取视频信息…",
+    "zh-TW": "正在讀取視頻信息…",
+    "en": "Reading video information…",
+    "ja": "動画情報を読み込み中…",
+    "progress": true
+  },
+  "正在转换 GIF": {
+    "zh-CN": "正在转换 GIF",
+    "zh-TW": "正在轉換 GIF",
+    "en": "Converting GIF",
+    "ja": "GIF を変換中",
+    "progress": true
+  },
+  "正在转换 GIF…": {
+    "zh-CN": "正在转换 GIF…",
+    "zh-TW": "正在轉換 GIF…",
+    "en": "Converting GIF…",
+    "ja": "GIF を変換中…",
+    "progress": true
+  },
+  "正在转换为 GIF 动图 (FFmpeg)...": {
+    "zh-CN": "正在转换为 GIF 动图 (FFmpeg)...",
+    "zh-TW": "正在轉換為 GIF（FFmpeg）...",
+    "en": "Converting to GIF (FFmpeg)...",
+    "ja": "GIF に変換中（FFmpeg）...",
+    "progress": true
+  },
+  "正在载入 YouTube 会话。请在页面中播放目标视频，选择所需清晰度。": {
+    "zh-CN": "正在载入 YouTube 会话。请在页面中播放目标视频，选择所需清晰度。",
+    "zh-TW": "正在載入 YouTube 工作階段。請於頁面播放目標影片並選擇所需畫質。",
+    "en": "Loading YouTube session. Play the video in the page and pick your quality.",
+    "ja": "YouTube セッションを読み込み中。ページ内で動画を再生し画質を選択してください。"
+  },
+  "正在连接本地核心引擎...": {
+    "zh-CN": "正在连接本地核心引擎...",
+    "zh-TW": "正在連線本機核心引擎...",
+    "en": "Connecting to local core engine...",
+    "ja": "ローカルコアエンジンに接続中..."
+  },
+  "正在重新连接...": {
+    "zh-CN": "正在重新连接...",
+    "zh-TW": "正在重新連線...",
+    "en": "Reconnecting...",
+    "ja": "再接続中..."
+  },
+  "正在音画无损合成 (FFmpeg)...": {
+    "zh-CN": "正在音画无损合成 (FFmpeg)...",
+    "zh-TW": "正在無損合併影音（FFmpeg）...",
+    "en": "Merging video and audio (FFmpeg)...",
+    "ja": "映像と音声を無劣化で結合中（FFmpeg）...",
+    "progress": true
+  },
+  "没有动画帧": {
+    "zh-CN": "没有动画帧",
+    "zh-TW": "沒有動畫影格",
+    "en": "No animation frames",
+    "ja": "アニメーションフレームがありません"
+  },
+  "没有取得真实视频流，请检查登录状态与观看权限": {
+    "zh-CN": "没有取得真实视频流，请检查登录状态与观看权限",
+    "zh-TW": "未取得真實影片串流，請檢查登入狀態與觀看權限",
+    "en": "No valid video streams retrieved; check sign-in status and permissions",
+    "ja": "動画ストリームを取得できませんでした。ログイン状態と視聴権限を確認してください"
+  },
+  "没有取得该 Pixiv 作品，请检查登录状态和访问权限": {
+    "zh-CN": "没有取得该 Pixiv 作品，请检查登录状态和访问权限",
+    "zh-TW": "未取得該 Pixiv 作品，請檢查登入狀態與存取權限",
+    "en": "Could not fetch Pixiv artwork; check sign-in and access",
+    "ja": "この Pixiv 作品を取得できませんでした。ログインと閲覧権限を確認してください"
+  },
+  "没有可导出的成品": {
+    "zh-CN": "没有可导出的成品",
+    "zh-TW": "沒有可匯出的成品",
+    "en": "No output file available to export",
+    "ja": "書き出し可能なファイルがありません"
+  },
+  "没有可用图片": {
+    "zh-CN": "没有可用图片",
+    "zh-TW": "沒有可用圖片",
+    "en": "No images available",
+    "ja": "利用可能な画像がありません"
+  },
+  "没有找到可用链接": {
+    "zh-CN": "没有找到可用链接",
+    "zh-TW": "未找到可用連結",
+    "en": "No usable links found",
+    "ja": "有効なリンクが見つかりませんでした"
+  },
+  "没有有效的网络响应": {
+    "zh-CN": "没有有效的网络响应",
+    "zh-TW": "沒有有效的網路回應",
+    "en": "No valid network response",
+    "ja": "有効なネットワーク応答がありません"
+  },
+  "没有有效视频轨": {
+    "zh-CN": "没有有效视频轨",
+    "zh-TW": "沒有有效視訊軌",
+    "en": "No valid video track found",
+    "ja": "有効な映像トラックがありません"
+  },
+  "没有生成成品": {
+    "zh-CN": "没有生成成品",
+    "zh-TW": "沒有產生成品",
+    "en": "No output file generated",
+    "ja": "出力ファイルが生成されませんでした"
+  },
+  "没有符合所选画质的媒体源": {
+    "zh-CN": "没有符合所选画质的媒体源",
+    "zh-TW": "沒有符合所選畫質的媒體來源",
+    "en": "No media source matches selected quality",
+    "ja": "選択した画質に合うメディアソースがありません"
+  },
+  "没有该平台的有效 Cookie": {
+    "zh-CN": "没有该平台的有效 Cookie",
+    "zh-TW": "沒有該平台的有效 Cookie",
+    "en": "No valid cookies found for this platform",
+    "ja": "このプラットフォーム用の有効な Cookie がありません"
+  },
+  "浅色外观": {
+    "zh-CN": "浅色外观",
+    "zh-TW": "淺色外觀",
+    "en": "Light mode",
+    "ja": "ライトモード"
+  },
+  "浏览器一键登录、导入 Netscape Cookies 或哔哩哔哩 SESSDATA": {
+    "zh-CN": "浏览器一键登录、导入 Netscape Cookies 或哔哩哔哩 SESSDATA",
+    "zh-TW": "瀏覽器一鍵登錄、導入 Netscape Cookies 或嗶哩嗶哩 SESSDATA",
+    "en": "Browser sign-in, Netscape cookies or Bilibili SESSDATA import",
+    "ja": "ブラウザーログイン・Netscape Cookie・Bilibili SESSDATA 読み込み"
+  },
+  "浏览器登录": {
+    "zh-CN": "浏览器登录",
+    "zh-TW": "瀏覽器登錄",
+    "en": "Browser sign-in",
+    "ja": "ブラウザーでログイン"
+  },
+  "浏览器登录状态": {
+    "zh-CN": "浏览器登录状态",
+    "zh-TW": "瀏覽器登錄狀態",
+    "en": "Browser sign-in status",
+    "ja": "ブラウザーのログイン状態"
+  },
+  "浏览文件夹...": {
+    "zh-CN": "浏览文件夹...",
+    "zh-TW": "瀏覽文件夾...",
+    "en": "Browse folders...",
+    "ja": "フォルダーを参照..."
+  },
+  "深度搜索": {
+    "zh-CN": "深度搜索",
+    "zh-TW": "深度搜索",
+    "en": "Deep search",
+    "ja": "詳細検索"
+  },
+  "深色外观": {
+    "zh-CN": "深色外观",
+    "zh-TW": "深色外觀",
+    "en": "Dark mode",
+    "ja": "ダークモード"
+  },
+  "深色模式下使用纯黑底层以增强对比度": {
+    "zh-CN": "深色模式下使用纯黑底层以增强对比度",
+    "zh-TW": "深色模式下使用純黑底層以增強對比度",
+    "en": "Use a pure black background in dark mode",
+    "ja": "ダークモードで黒背景を使用"
+  },
+  "添加、管理和删除第三方解析辅助站点": {
+    "zh-CN": "添加、管理和删除第三方解析辅助站点",
+    "zh-TW": "添加、管理和刪除第三方解析輔助站點",
+    "en": "Add, manage and remove third-party relay sites",
+    "ja": "外部解析補助サイトを追加・管理・削除"
+  },
+  "添加中转网站": {
+    "zh-CN": "添加中转网站",
+    "zh-TW": "添加中轉網站",
+    "en": "Add relay site",
+    "ja": "中継サイトを追加"
+  },
+  "添加后可在首页便捷调用备用中转服务提取直链。": {
+    "zh-CN": "添加后可在首页便捷调用备用中转服务提取直链。",
+    "zh-TW": "添加后可在首頁便捷調用備用中轉服務提取直鏈。",
+    "en": "Added relays are available from the home page to extract direct links.",
+    "ja": "追加した中継サイトはホームから利用して直接リンクを抽出できます。"
+  },
+  "添加备用中转网站": {
+    "zh-CN": "添加备用中转网站",
+    "zh-TW": "添加備用中轉網站",
+    "en": "Add fallback relay",
+    "ja": "予備の中継サイトを追加"
+  },
+  "添加第三方解析中转网站": {
+    "zh-CN": "添加第三方解析中转网站",
+    "zh-TW": "添加第三方解析中轉網站",
+    "en": "Add third-party relay site",
+    "ja": "外部解析中継サイトを追加"
+  },
+  "清理临时缓存文件": {
+    "zh-CN": "清理临时缓存文件",
+    "zh-TW": "清理臨時緩存文件",
+    "en": "Clear temporary cache",
+    "ja": "一時キャッシュを消去"
+  },
+  "清理缓存": {
+    "zh-CN": "清理缓存",
+    "zh-TW": "清理緩存",
+    "en": "Clear cache",
+    "ja": "キャッシュを消去"
+  },
+  "清空": {
+    "zh-CN": "清空",
+    "zh-TW": "清空",
+    "en": "Clear",
+    "ja": "消去"
+  },
+  "清空下载记录": {
+    "zh-CN": "清空下载记录",
+    "zh-TW": "清空下載記錄",
+    "en": "Clear download history",
+    "ja": "ダウンロード履歴を消去"
+  },
+  "清空已完成": {
+    "zh-CN": "清空已完成",
+    "zh-TW": "清空已完成",
+    "en": "Clear completed",
+    "ja": "完了済みを消去"
+  },
+  "清空已完成记录": {
+    "zh-CN": "清空已完成记录",
+    "zh-TW": "清空已完成記錄",
+    "en": "Clear completed history",
+    "ja": "完了履歴を消去"
+  },
+  "清空已完成记录会保留已下载的文件": {
+    "zh-CN": "清空已完成记录会保留已下载的文件",
+    "zh-TW": "清空已完成記錄會保留已下載的文件",
+    "en": "Clearing completed history keeps downloaded files",
+    "ja": "完了履歴を消去してもダウンロード済みファイルは保持します"
+  },
+  "清空所有记录": {
+    "zh-CN": "清空所有记录",
+    "zh-TW": "清空所有記錄",
+    "en": "Clear all history",
+    "ja": "すべての履歴を消去"
+  },
+  "清空确认": {
+    "zh-CN": "清空确认",
+    "zh-TW": "清空確認",
+    "en": "Confirm clearing",
+    "ja": "消去の確認"
+  },
+  "清空记录会保留已下载的文件": {
+    "zh-CN": "清空记录会保留已下载的文件",
+    "zh-TW": "清空記錄會保留已下載的文件",
+    "en": "Clearing history keeps downloaded files",
+    "ja": "履歴を消去してもダウンロード済みファイルは保持します"
+  },
+  "清除所选平台的登录状态？": {
+    "zh-CN": "清除所选平台的登录状态？",
+    "zh-TW": "清除所選平臺的登錄狀態？",
+    "en": "Clear the selected platform session?",
+    "ja": "選択したサイトのログイン状態を消去しますか？"
+  },
+  "清除此平台会话": {
+    "zh-CN": "清除此平台会话",
+    "zh-TW": "清除此平臺會話",
+    "en": "Clear platform session",
+    "ja": "サイトのセッションを消去"
+  },
+  "温馨小贴士": {
+    "zh-CN": "温馨小贴士",
+    "zh-TW": "溫馨小貼士",
+    "en": "Tips",
+    "ja": "ヒント"
+  },
+  "源与输出路径相同": {
+    "zh-CN": "源与输出路径相同",
+    "zh-TW": "來源與輸出路徑相同",
+    "en": "Source and destination paths are identical",
+    "ja": "入力と出力のパスが同じです"
+  },
+  "源视频（尺寸未知）": {
+    "zh-CN": "源视频（尺寸未知）",
+    "zh-TW": "來源影片（尺寸未知）",
+    "en": "Source Video (Unknown Size)",
+    "ja": "ソース動画（サイズ不明）"
+  },
+  "点击下方按钮探测运行环境": {
+    "zh-CN": "点击下方按钮探测运行环境",
+    "zh-TW": "點擊下方按鈕偵測執行環境",
+    "en": "Click below to probe local runtime",
+    "ja": "下のボタンで実行環境を確認"
+  },
+  "点击复制作者名称": {
+    "zh-CN": "点击复制作者名称",
+    "zh-TW": "點擊複製作者名稱",
+    "en": "Click to copy author name",
+    "ja": "クリックで作者名をコピー"
+  },
+  "点击复制源链接或 ID": {
+    "zh-CN": "点击复制源链接或 ID",
+    "zh-TW": "點擊複製來源連結或 ID",
+    "en": "Click to copy URL or media ID",
+    "ja": "クリックでソース URL または ID をコピー"
+  },
+  "点击或双击复制标题": {
+    "zh-CN": "点击或双击复制标题",
+    "zh-TW": "點擊或雙擊複製標題",
+    "en": "Click or double-click to copy title",
+    "ja": "クリックまたはダブルクリックでタイトルをコピー"
+  },
+  "点击重置为适应窗口 (0)": {
+    "zh-CN": "点击重置为适应窗口 (0)",
+    "zh-TW": "點擊重置為適應窗口 (0)",
+    "en": "Reset to fit window (0)",
+    "ja": "ウィンドウに合わせる（0）"
+  },
+  "点击预览高清封面": {
+    "zh-CN": "点击预览高清封面",
+    "zh-TW": "點擊預覽高畫質封面",
+    "en": "Click to preview cover image",
+    "ja": "クリックでカバー画像をプレビュー"
+  },
+  "用系统看图打开": {
+    "zh-CN": "用系统看图打开",
+    "zh-TW": "用系統看圖打開",
+    "en": "Open in system image viewer",
+    "ja": "システムの画像ビューアーで開く"
+  },
+  "用系统默认播放器打开": {
+    "zh-CN": "用系统默认播放器打开",
+    "zh-TW": "用系統默認播放器打開",
+    "en": "Open in default player",
+    "ja": "既定のプレーヤーで開く"
+  },
+  "用系统默认看图程序打开": {
+    "zh-CN": "用系统默认看图程序打开",
+    "zh-TW": "用系統默認看圖程序打開",
+    "en": "Open in default image viewer",
+    "ja": "既定の画像ビューアーで開く"
+  },
+  "用系统默认程序播放": {
+    "zh-CN": "用系统默认程序播放",
+    "zh-TW": "用系統默認程序播放",
+    "en": "Play in default app",
+    "ja": "既定のアプリで再生"
+  },
+  "画质上限": {
+    "zh-CN": "画质上限",
+    "zh-TW": "畫質上限",
+    "en": "Max Quality",
+    "ja": "画質上限"
+  },
+  "画质策略": {
+    "zh-CN": "画质策略",
+    "zh-TW": "畫質策略",
+    "en": "Quality policy",
+    "ja": "画質設定"
+  },
+  "界面语言": {
+    "zh-CN": "界面语言",
+    "zh-TW": "界面語言",
+    "en": "Interface language",
+    "ja": "表示言語"
+  },
+  "留空可点击右侧自动识别网页标题": {
+    "zh-CN": "留空可点击右侧自动识别网页标题",
+    "zh-TW": "留空可點擊右側自動識別網頁標題",
+    "en": "Leave blank to detect the page title with the button on the right",
+    "ja": "空欄にすると右のボタンでページのタイトルを取得できます"
+  },
+  "番剧列表没有目标分集": {
+    "zh-CN": "番剧列表没有目标分集",
+    "zh-TW": "番劇清單沒有目標分集",
+    "en": "Target episode not found in bangumi list",
+    "ja": "番組一覧に対象エピソードがありません"
+  },
+  "登录": {
+    "zh-CN": "登录",
+    "zh-TW": "登入",
+    "en": "Sign In",
+    "ja": "ログイン"
+  },
+  "登录后免费解锁 B 站 1080P 高清、1080P60 帧及 4K 超清画质。未登录状态官方最高限制 480P。": {
+    "zh-CN": "登录后免费解锁 B 站 1080P 高清、1080P60 帧及 4K 超清画质。未登录状态官方最高限制 480P。",
+    "zh-TW": "登錄后免費解鎖 B 站 1080P 高清、1080P60 幀及 4K 超清畫質。未登錄狀態官方最高限制 480P。",
+    "en": "Bilibili quality depends on sign-in and account access. Signed-out access is limited to 480p; higher tiers may be available after sign-in.",
+    "ja": "Bilibili の画質はログイン状態と権限によって異なります。未ログインは上限 480p で、ログイン後に高画質を取得できる場合があります。"
+  },
+  "登录捕获未完成（%s），原有凭据已保留。": {
+    "zh-CN": "登录捕获未完成（%s），原有凭据已保留。",
+    "zh-TW": "登入擷取未完成（%s），原有憑證已保留。",
+    "en": "Sign-in capture incomplete (%s); existing credentials preserved.",
+    "ja": "ログイン取得が完了しませんでした（%s）。既存の認証情報は保持されます。"
+  },
+  "登录捕获未完成（%s），原有凭据已保留。请关闭旧登录窗口后重试。": {
+    "zh-CN": "登录捕获未完成（%s），原有凭据已保留。请关闭旧登录窗口后重试。",
+    "zh-TW": "登入擷取未完成（%s），原有憑證已保留。請關閉舊登入視窗後重試。",
+    "en": "Sign-in capture incomplete (%s); existing credentials preserved. Close old window and retry.",
+    "ja": "ログイン取得が完了しませんでした（%s）。既存ウィンドウを閉じて再試行してください。"
+  },
+  "登录窗口已关闭。可以重新打开继续登录，或导入 Cookie 文件。": {
+    "zh-CN": "登录窗口已关闭。可以重新打开继续登录，或导入 Cookie 文件。",
+    "zh-TW": "登入視窗已關閉。可重新開啟繼續登入，或匯入 Cookie 檔案。",
+    "en": "Login window closed. Reopen to continue signing in or import cookies.",
+    "ja": "ログインウィンドウを閉じました。再度開くか Cookie ファイルを読み込んでください。"
+  },
+  "登录窗口已关闭，仍可点击「保存会话并关闭」读取已保存的浏览器会话。": {
+    "zh-CN": "登录窗口已关闭，仍可点击「保存会话并关闭」读取已保存的浏览器会话。",
+    "zh-TW": "登入視窗已關閉，仍可點擊「儲存工作階段並關閉」讀取已儲存的瀏覽器工作階段。",
+    "en": "Login window closed; you can still click Save Session & Close to read saved session data.",
+    "ja": "ウィンドウは閉じられましたが、「セッションを保存して閉じる」で保存済みデータを読み込めます。"
+  },
+  "目标 X 帖子没有可导出的媒体": {
+    "zh-CN": "目标 X 帖子没有可导出的媒体",
+    "zh-TW": "目標 X 貼文沒有可匯出的媒體",
+    "en": "Target X post contains no exportable media",
+    "ja": "対象の X 投稿に書き出し可能なメディアがありません"
+  },
+  "目标不是可导出的图文": {
+    "zh-CN": "目标不是可导出的图文",
+    "zh-TW": "目標並非可匯出的圖文",
+    "en": "Target is not an exportable image post",
+    "ja": "対象は書き出し可能な画像投稿ではありません"
+  },
+  "目标不是图文": {
+    "zh-CN": "目标不是图文",
+    "zh-TW": "目標並非圖文",
+    "en": "Target is not an image post",
+    "ja": "対象は画像投稿ではありません"
+  },
+  "目标为图文，请选择自动识别或图文 ZIP": {
+    "zh-CN": "目标为图文，请选择自动识别或图文 ZIP",
+    "zh-TW": "目標為圖文，請選擇自動辨識或圖文 ZIP",
+    "en": "Target is an image post; choose Auto or Image ZIP",
+    "ja": "対象は画像投稿です。「自動判別」または「画像 ZIP」を選択してください"
+  },
+  "目标作品没有可用播放源": {
+    "zh-CN": "目标作品没有可用播放源",
+    "zh-TW": "目標作品沒有可用播放來源",
+    "en": "Target post has no playable stream",
+    "ja": "対象作品に利用可能な再生ソースがありません"
+  },
+  "目标作品没有可访问的图片": {
+    "zh-CN": "目标作品没有可访问的图片",
+    "zh-TW": "目標作品沒有可存取的圖片",
+    "en": "Target post contains no accessible images",
+    "ja": "対象作品にアクセス可能な画像がありません"
+  },
+  "目标画质不可用时允许自动降级": {
+    "zh-CN": "目标画质不可用时允许自动降级",
+    "zh-TW": "目標畫質不可用時允許自動降級",
+    "en": "Allow lower quality if the target is unavailable",
+    "ja": "指定画質が利用できない場合は低画質を許可"
+  },
+  "目标视频没有可定位分集": {
+    "zh-CN": "目标视频没有可定位分集",
+    "zh-TW": "目標影片沒有可定位分集",
+    "en": "No target episode found in video",
+    "ja": "対象動画に該当エピソードがありません"
+  },
+  "直接下载": {
+    "zh-CN": "直接下载",
+    "zh-TW": "直接下載",
+    "en": "Download directly",
+    "ja": "直接ダウンロード"
+  },
+  "确定": {
+    "zh-CN": "确定",
+    "zh-TW": "確定",
+    "en": "OK",
+    "ja": "OK"
+  },
+  "确定删除任务「%s」？": {
+    "zh-CN": "确定删除任务「%s」？",
+    "zh-TW": "確定刪除任務「%s」？",
+    "en": "Delete task \"%s\"?",
+    "ja": "タスク「%s」を削除しますか？"
+  },
+  "确定删除合集「%s」的全部 %d 条任务记录？": {
+    "zh-CN": "确定删除合集「%s」的全部 %d 条任务记录？",
+    "zh-TW": "確定刪除合輯「%s」的全部 %d 筆任務紀錄？",
+    "en": "Delete all %d task records in collection \"%s\"?",
+    "ja": "コレクション「%s」の全 %d 件のタスク履歴を削除しますか？"
+  },
+  "确定清空已识别的待下载链接列表吗？": {
+    "zh-CN": "确定清空已识别的待下载链接列表吗？",
+    "zh-TW": "確定清空已辨識的待下載連結清單嗎？",
+    "en": "Clear the prepared download link queue?",
+    "ja": "抽出済みのダウンロードリンク一覧を消去しますか？"
+  },
+  "确定清除「%s」的 Cookie 和独立登录浏览器状态吗？操作后需要重新登录。": {
+    "zh-CN": "确定清除「%s」的 Cookie 和独立登录浏览器状态吗？操作后需要重新登录。",
+    "zh-TW": "確定清除「%s」的 Cookie 與獨立登入瀏覽器狀態嗎？操作後需要重新登入。",
+    "en": "Clear cookies and isolated browser session for \"%s\"? You will need to sign in again.",
+    "ja": "「%s」の Cookie と専用ブラウザのログイン状態を消去しますか？再ログインが必要になります。"
+  },
+  "确定要清空所有已下载完成的历史记录吗？（相册中的视频不会被删除）": {
+    "zh-CN": "确定要清空所有已下载完成的历史记录吗？（相册中的视频不会被删除）",
+    "zh-TW": "確定要清空所有已下載完成的歷史記錄嗎？（相冊中的視頻不會被刪除）",
+    "en": "Clear all completed history? Videos in Photos will be kept.",
+    "ja": "完了履歴をすべて消去しますか？写真アプリの動画は削除されません。"
+  },
+  "确定要清除所有已结束的任务记录吗？（共 %d 条，本地已保存的视频文件不会被删除）": {
+    "zh-CN": "确定要清除所有已结束的任务记录吗？（共 %d 条，本地已保存的视频文件不会被删除）",
+    "zh-TW": "確定要清除所有已結束的任務記錄嗎？（共 %d 條，本機影片不會刪除）",
+    "en": "Clear all finished tasks (%d records)? Saved files will be kept.",
+    "ja": "終了済みタスク %d 件の記録を消去しますか？保存済みファイルは保持します。"
+  },
+  "确定要终止当前 %d 个未完成的下载任务吗？": {
+    "zh-CN": "确定要终止当前 %d 个未完成的下载任务吗？",
+    "zh-TW": "確定要終止目前 %d 個未完成的下載任務嗎？",
+    "en": "Cancel the %d unfinished downloads?",
+    "ja": "未完了のダウンロード %d 件をキャンセルしますか？"
+  },
+  "确定要终止该合集下所有正在下载与等待中的任务吗？": {
+    "zh-CN": "确定要终止该合集下所有正在下载与等待中的任务吗？",
+    "zh-TW": "確定要終止此合集所有下載與等待中的任務嗎？",
+    "en": "Cancel all active and queued tasks in this collection?",
+    "ja": "このコレクションの実行中・待機中のタスクをすべてキャンセルしますか？"
+  },
+  "确认": {
+    "zh-CN": "确认",
+    "zh-TW": "確認",
+    "en": "Confirm",
+    "ja": "確認"
+  },
+  "确认操作": {
+    "zh-CN": "确认操作",
+    "zh-TW": "確認操作",
+    "en": "Confirm action",
+    "ja": "操作を確認"
+  },
+  "禁用后新请求不使用会话，已保存会话继续保留。登录状态保存在本机钥匙串。": {
+    "zh-CN": "禁用后新请求不使用会话，已保存会话继续保留。登录状态保存在本机钥匙串。",
+    "zh-TW": "禁用后新請求不使用會話，已保存會話繼續保留。登錄狀態保存在本機鑰匙串。",
+    "en": "Disable sessions for new requests while keeping credentials in the local Keychain.",
+    "ja": "新しいリクエストでセッションを使用しません。認証情報はローカルキーチェーンに保持します。"
+  },
+  "移除 YouTube Cookie": {
+    "zh-CN": "移除 YouTube Cookie",
+    "zh-TW": "移除 YouTube Cookie",
+    "en": "Remove YouTube cookies",
+    "ja": "YouTube Cookie を削除"
+  },
+  "窗口已关闭，仍可点击保存读取已落盘的会话。": {
+    "zh-CN": "窗口已关闭，仍可点击保存读取已落盘的会话。",
+    "zh-TW": "視窗已關閉，仍可點擊儲存讀取已寫入磁碟的工作階段。",
+    "en": "Window closed; you can still click Save to read stored session.",
+    "ja": "ウィンドウを閉じました。保存ボタンで保存済みセッションを読み込めます。"
+  },
+  "窗口置顶 (T)": {
+    "zh-CN": "窗口置顶 (T)",
+    "zh-TW": "視窗置頂 (T)",
+    "en": "Always on top (T)",
+    "ja": "常に手前に表示 (T)"
+  },
+  "第 %d 张": {
+    "zh-CN": "第 %d 张",
+    "zh-TW": "第 %d 張",
+    "en": "#%d",
+    "ja": "%d 枚目"
+  },
+  "第 %d 张图片": {
+    "zh-CN": "第 %d 张图片",
+    "zh-TW": "第 %d 張圖片",
+    "en": "Image %d",
+    "ja": "画像 %d"
+  },
+  "第 %d 集": {
+    "zh-CN": "第 %d 集",
+    "zh-TW": "第 %d 集",
+    "en": "Episode %d",
+    "ja": "第 %d 話"
+  },
+  "第%d集": {
+    "zh-CN": "第%d集",
+    "zh-TW": "第%d集",
+    "en": "Episode %d",
+    "ja": "第 %d 話"
+  },
+  "第三方组件与许可证": {
+    "zh-CN": "第三方组件与许可证",
+    "zh-TW": "第三方組件與許可證",
+    "en": "Third-party components and licenses",
+    "ja": "外部コンポーネントとライセンス"
+  },
+  "第三方解析中转站点": {
+    "zh-CN": "第三方解析中转站点",
+    "zh-TW": "第三方解析中轉站點",
+    "en": "Third-party relay sites",
+    "ja": "外部解析中継サイト"
+  },
+  "等待下载": {
+    "zh-CN": "等待下载",
+    "zh-TW": "等待下載",
+    "en": "Waiting to download",
+    "ja": "ダウンロード待機"
+  },
+  "等待伴随引擎就绪超时": {
+    "zh-CN": "等待伴随引擎就绪超时",
+    "zh-TW": "等待伴隨引擎就緒逾時",
+    "en": "Timed out waiting for companion engine",
+    "ja": "付随エンジンの起動待機がタイムアウトしました"
+  },
+  "等待平台验证…": {
+    "zh-CN": "等待平台验证…",
+    "zh-TW": "等待平臺驗證…",
+    "en": "Waiting for platform verification…",
+    "ja": "サイトの認証待ち…"
+  },
+  "等待验证": {
+    "zh-CN": "等待验证",
+    "zh-TW": "等待驗證",
+    "en": "Awaiting verification",
+    "ja": "認証待ち"
+  },
+  "筛选主流平台或搜索 yt-dlp 解析器（如 哔哩哔哩, youtube, twitch）...": {
+    "zh-CN": "筛选主流平台或搜索 yt-dlp 解析器（如 哔哩哔哩, youtube, twitch）...",
+    "zh-TW": "篩選主流平臺或搜索 yt-dlp 解析器（如 嗶哩嗶哩, youtube, twitch）...",
+    "en": "Filter platforms or search yt-dlp extractors (Bilibili, YouTube, Twitch)...",
+    "ja": "サイトや yt-dlp 抽出器を検索（Bilibili、YouTube、Twitch など）..."
+  },
+  "管理中转站": {
+    "zh-CN": "管理中转站",
+    "zh-TW": "管理中轉站",
+    "en": "Manage relay sites",
+    "ja": "中継サイトを管理"
+  },
+  "粘贴 SESSDATA=xxx 或完整 Cookie 字符串": {
+    "zh-CN": "粘贴 SESSDATA=xxx 或完整 Cookie 字符串",
+    "zh-TW": "粘貼 SESSDATA=xxx 或完整 Cookie 字符串",
+    "en": "Paste SESSDATA=xxx or the full cookie string",
+    "ja": "SESSDATA=xxx または Cookie 全体を貼り付け"
+  },
+  "粘贴包含多个视频或图文链接的分享文本（自动提取 http 链接 / BV 号），每批最多 100 条...": {
+    "zh-CN": "粘贴包含多个视频或图文链接的分享文本（自动提取 http 链接 / BV 号），每批最多 100 条...",
+    "zh-TW": "粘貼包含多個視頻或圖文鏈接的分享文本（自動提取 http 鏈接 / BV 號），每批最多 100 條...",
+    "en": "Paste shared text; HTTP links and BV IDs are extracted, up to 100 per batch...",
+    "ja": "共有テキストから HTTP リンク・BV 番号を抽出します（最大 100 件）..."
+  },
+  "粘贴图文链接或分享文本…": {
+    "zh-CN": "粘贴图文链接或分享文本…",
+    "zh-TW": "粘貼圖文鏈接或分享文本…",
+    "en": "Paste an image-post link or shared text…",
+    "ja": "画像投稿リンクや共有テキストを貼り付け…"
+  },
+  "粘贴多条链接或导入 TXT，按顺序解析后加入现有下载队列。单次最多 100 条。": {
+    "zh-CN": "粘贴多条链接或导入 TXT，按顺序解析后加入现有下载队列。单次最多 100 条。",
+    "zh-TW": "粘貼多條鏈接或導入 TXT，按順序解析后加入現有下載隊列。單次最多 100 條。",
+    "en": "Paste links or import TXT. Up to 100 links are analyzed in order and added to the download queue.",
+    "ja": "リンクを貼り付けるか TXT を読み込みます。最大 100 件を順番に解析してキューに追加します。"
+  },
+  "粘贴或清除": {
+    "zh-CN": "粘贴或清除",
+    "zh-TW": "粘貼或清除",
+    "en": "Paste or clear",
+    "ja": "貼り付け・消去"
+  },
+  "粘贴或输入视频/合集链接 (支持 B站/抖音/快手/小红书等)...": {
+    "zh-CN": "粘贴或输入视频/合集链接 (支持 B站/抖音/快手/小红书等)...",
+    "zh-TW": "粘貼或輸入視頻/合集鏈接 (支持 B站/抖音/快手/小紅書等)...",
+    "en": "Paste a video or collection link (Bilibili, Douyin, Kuaishou, Xiaohongshu...)...",
+    "ja": "動画・コレクションのリンクを入力（Bilibili、Douyin、Kuaishou、小紅書など）..."
+  },
+  "粘贴视频链接并解析，即可开始下载。": {
+    "zh-CN": "粘贴视频链接并解析，即可开始下载。",
+    "zh-TW": "粘貼視頻鏈接并解析，即可開始下載。",
+    "en": "Paste and analyze a video link to download.",
+    "ja": "動画リンクを貼り付けて解析するとダウンロードできます。"
+  },
+  "粘贴视频链接或分享文本…": {
+    "zh-CN": "粘贴视频链接或分享文本…",
+    "zh-TW": "粘貼視頻鏈接或分享文本…",
+    "en": "Paste a video link or shared text…",
+    "ja": "動画リンクや共有テキストを貼り付け…"
+  },
+  "粘贴解析": {
+    "zh-CN": "粘贴解析",
+    "zh-TW": "粘貼解析",
+    "en": "Paste and analyze",
+    "ja": "貼り付けて解析"
+  },
+  "粘贴链接或分享文本": {
+    "zh-CN": "粘贴链接或分享文本",
+    "zh-TW": "粘貼鏈接或分享文本",
+    "en": "Paste a link or shared text",
+    "ja": "リンクや共有テキストを貼り付け"
+  },
+  "精简网页版": {
+    "zh-CN": "精简网页版",
+    "zh-TW": "精簡網頁版",
+    "en": "Browser companion",
+    "ja": "シンプル Web 版"
+  },
+  "系统播放": {
+    "zh-CN": "系统播放",
+    "zh-TW": "系統播放",
+    "en": "System player",
+    "ja": "システムプレーヤー"
+  },
+  "系统无法导出当前编码": {
+    "zh-CN": "系统无法导出当前编码",
+    "zh-TW": "系統無法匯出目前編碼",
+    "en": "System cannot export current codec",
+    "ja": "システムが現在のコーデックを書き出せません"
+  },
+  "系统未能完成仅画面导出": {
+    "zh-CN": "系统未能完成仅画面导出",
+    "zh-TW": "系統未能完成純畫面匯出",
+    "en": "System failed to export video-only track",
+    "ja": "システムが映像のみの書き出しを完了できませんでした"
+  },
+  "纯画": {
+    "zh-CN": "纯画面",
+    "zh-TW": "純畫面",
+    "en": "Video only",
+    "ja": "映像のみ"
+  },
+  "纯画面": {
+    "zh-CN": "纯画面",
+    "zh-TW": "純畫面",
+    "en": "Video only",
+    "ja": "映像のみ"
+  },
+  "纯画面成品仍包含音轨": {
+    "zh-CN": "纯画面成品仍包含音轨",
+    "zh-TW": "純畫面成品仍包含音軌",
+    "en": "Video-only output still contains audio",
+    "ja": "映像のみの出力に音声が残っています"
+  },
+  "纯画面模式：自动去除音轨导出静音视频": {
+    "zh-CN": "纯画面模式：自动去除音轨导出静音视频",
+    "zh-TW": "純畫面模式：自動移除音軌並匯出靜音影片",
+    "en": "Video-only mode: remove audio and export silent video",
+    "ja": "映像のみ：音声を除去して無音動画を書き出します"
+  },
+  "继续": {
+    "zh-CN": "继续",
+    "zh-TW": "繼續",
+    "en": "Resume",
+    "ja": "再開"
+  },
+  "继续播放": {
+    "zh-CN": "继续播放",
+    "zh-TW": "繼續播放",
+    "en": "Playing",
+    "ja": "再生中"
+  },
+  "继续未完成任务": {
+    "zh-CN": "继续未完成任务",
+    "zh-TW": "繼續未完成任務",
+    "en": "Resume unfinished tasks",
+    "ja": "未完了タスクを再開"
+  },
+  "缓存": {
+    "zh-CN": "缓存",
+    "zh-TW": "緩存",
+    "en": "Cache",
+    "ja": "キャッシュ"
+  },
+  "缓存已清理": {
+    "zh-CN": "缓存已清理",
+    "zh-TW": "緩存已清理",
+    "en": "Cache cleared",
+    "ja": "キャッシュを消去しました"
+  },
+  "缩小 (-)": {
+    "zh-CN": "缩小 (-)",
+    "zh-TW": "縮小 (-)",
+    "en": "Zoom out (-)",
+    "ja": "縮小（-）"
+  },
+  "网站地址": {
+    "zh-CN": "网站地址",
+    "zh-TW": "網站地址",
+    "en": "Site URL",
+    "ja": "サイト URL"
+  },
+  "网络加载失败，请检查 iPhone 网络或系统 VPN": {
+    "zh-CN": "网络加载失败，请检查 iPhone 网络或系统 VPN",
+    "zh-TW": "網路載入失敗，請檢查 iPhone 網路或系統 VPN",
+    "en": "Network load failed; check iPhone network or system VPN",
+    "ja": "ネットワーク読み込みに失敗しました。iPhone の通信や VPN を確認してください"
+  },
+  "网络媒体": {
+    "zh-CN": "网络媒体",
+    "zh-TW": "網路媒體",
+    "en": "Web Media",
+    "ja": "Web メディア"
+  },
+  "网络连接失败": {
+    "zh-CN": "网络连接失败",
+    "zh-TW": "網路連線失敗",
+    "en": "Network Connection Failed",
+    "ja": "ネットワーク接続エラー"
+  },
+  "网页图文": {
+    "zh-CN": "网页图文",
+    "zh-TW": "網頁圖文",
+    "en": "Web Images",
+    "ja": "Web 画像"
+  },
+  "网页捕获": {
+    "zh-CN": "网页捕获",
+    "zh-TW": "網頁擷取",
+    "en": "Web Capture",
+    "ja": "Web キャプチャ"
+  },
+  "网页数据与目标作品不一致": {
+    "zh-CN": "网页数据与目标作品不一致",
+    "zh-TW": "網頁資料與目標作品不一致",
+    "en": "Web payload mismatches target post",
+    "ja": "ページデータが対象作品と一致しません"
+  },
+  "网页服务随 Windows 启动": {
+    "zh-CN": "网页服务随 Windows 启动",
+    "zh-TW": "網頁服務隨 Windows 啟動",
+    "en": "Start web service with Windows",
+    "ja": "Windows 起動時に Web サービスを開始"
+  },
+  "网页登录": {
+    "zh-CN": "网页登录",
+    "zh-TW": "網頁登錄",
+    "en": "Web sign-in",
+    "ja": "Web ログイン"
+  },
+  "自动伴随启动": {
+    "zh-CN": "自动伴随启动",
+    "zh-TW": "自動伴隨啟動",
+    "en": "Start companion automatically",
+    "ja": "自動起動"
+  },
+  "自动体积": {
+    "zh-CN": "自动体积",
+    "zh-TW": "自動體積",
+    "en": "Estimated size unavailable",
+    "ja": "サイズ自動"
+  },
+  "自动保存到相册": {
+    "zh-CN": "自动保存到相册",
+    "zh-TW": "自動保存到相冊",
+    "en": "Save to Photos automatically",
+    "ja": "写真に自動保存"
+  },
+  "自动分辨率": {
+    "zh-CN": "自动分辨率",
+    "zh-TW": "自動解析度",
+    "en": "Automatic resolution",
+    "ja": "自動解像度"
+  },
+  "自动切换安全通道重试中...": {
+    "zh-CN": "自动切换安全通道重试中...",
+    "zh-TW": "正在切換安全通道並重試...",
+    "en": "Retrying through the alternate secure connection...",
+    "ja": "別の安全な接続で再試行中...",
+    "progress": true
+  },
+  "自动存入系统《照片》相册": {
+    "zh-CN": "自动存入系统《照片》相册",
+    "zh-TW": "自動存入系統《照片》相冊",
+    "en": "Save to Photos automatically",
+    "ja": "写真に自動保存"
+  },
+  "自动提取未取得目标视频，可打开内置浏览器完成验证后继续": {
+    "zh-CN": "自动提取未取得目标视频，可打开内置浏览器完成验证后继续",
+    "zh-TW": "自動擷取未取得目標影片，可開啟內建瀏覽器完成驗證後繼續",
+    "en": "Auto-extraction missed target video; open built-in browser to verify",
+    "ja": "自動抽出に失敗しました。内蔵ブラウザで認証を完了してください"
+  },
+  "自动检查应用更新": {
+    "zh-CN": "自动检查应用更新",
+    "zh-TW": "自動檢查應用更新",
+    "en": "Check app updates automatically",
+    "ja": "アプリの更新を自動確認"
+  },
+  "自动识别": {
+    "zh-CN": "自动识别",
+    "zh-TW": "自動識別",
+    "en": "Detect automatically",
+    "ja": "自動認識"
+  },
+  "自动跟随 Windows 10/11 系统深浅色与系统强调色": {
+    "zh-CN": "自动跟随 Windows 10/11 系统深浅色与系统强调色",
+    "zh-TW": "自動跟隨 Windows 10/11 系統深淺色與系統強調色",
+    "en": "Follow Windows 10/11 theme and accent color",
+    "ja": "Windows 10/11 のテーマとアクセントカラーを使用"
+  },
+  "自适应最高画质 (推荐)": {
+    "zh-CN": "自适应最高画质 (推荐)",
+    "zh-TW": "自適應最高畫質 (推薦)",
+    "en": "Best available quality (recommended)",
+    "ja": "利用可能な最高画質（推奨）"
+  },
+  "获取标题": {
+    "zh-CN": "获取标题",
+    "zh-TW": "獲取標題",
+    "en": "Fetch title",
+    "ja": "タイトルを取得"
+  },
+  "视频": {
+    "zh-CN": "视频",
+    "zh-TW": "視頻",
+    "en": "Video",
+    "ja": "動画"
+  },
+  "视频 %d": {
+    "zh-CN": "视频 %d",
+    "zh-TW": "視頻 %d",
+    "en": "Video %d",
+    "ja": "動画 %d"
+  },
+  "视频标题": {
+    "zh-CN": "视频标题",
+    "zh-TW": "視頻標題",
+    "en": "Video title",
+    "ja": "動画タイトル"
+  },
+  "视频模式：自动匹配并无损合并最佳音轨": {
+    "zh-CN": "视频模式：自动匹配并无损合并最佳音轨",
+    "zh-TW": "視頻模式：自動選擇並無損合併最佳音軌",
+    "en": "Video mode: select and merge the best available audio",
+    "ja": "動画：利用可能な最高音声を選択して無劣化で結合します"
+  },
+  "视频（图文自动 ZIP）": {
+    "zh-CN": "视频（图文自动 ZIP）",
+    "zh-TW": "視頻（圖文自動 ZIP）",
+    "en": "Video (image posts as ZIP)",
+    "ja": "動画（画像投稿は ZIP）"
+  },
+  "解析": {
+    "zh-CN": "解析",
+    "zh-TW": "解析",
+    "en": "Analyze",
+    "ja": "解析"
+  },
+  "解析中": {
+    "zh-CN": "解析中",
+    "zh-TW": "解析中",
+    "en": "Analyzing",
+    "ja": "解析中"
+  },
+  "解析剪切板": {
+    "zh-CN": "解析剪切板",
+    "zh-TW": "解析剪貼簿",
+    "en": "Analyze Clipboard",
+    "ja": "クリップボードを解析"
+  },
+  "解析工作台": {
+    "zh-CN": "解析工作台",
+    "zh-TW": "解析工作台",
+    "en": "Workbench",
+    "ja": "ワークベンチ"
+  },
+  "解锁 1080P60 / 4K 超清画质与大会员片源": {
+    "zh-CN": "解锁 1080P60 / 4K 超清画质与大会员片源",
+    "zh-TW": "解鎖 1080P60 / 4K 超清畫質與大會員片源",
+    "en": "Account access to 1080p60 / 4K and premium sources",
+    "ja": "アカウント権限による 1080p60・4K・会員限定ソース"
+  },
+  "该内容受保护，不能导出": {
+    "zh-CN": "该内容受保护，不能导出",
+    "zh-TW": "該內容受保護，無法匯出",
+    "en": "Content is protected and cannot be exported",
+    "ja": "保護されたコンテンツのため書き出せません"
+  },
+  "该帖子没有可导出的原图": {
+    "zh-CN": "该帖子没有可导出的原图",
+    "zh-TW": "該貼文沒有可匯出的原圖",
+    "en": "Post contains no exportable original images",
+    "ja": "この投稿に書き出し可能な元画像がありません"
+  },
+  "该微博没有可导出的图片": {
+    "zh-CN": "该微博没有可导出的图片",
+    "zh-TW": "該微博沒有可匯出的圖片",
+    "en": "Weibo post contains no exportable images",
+    "ja": "この Weibo 投稿に書き出し可能な画像がありません"
+  },
+  "请使用 UTF-8 或 UTF-16 文本": {
+    "zh-CN": "请使用 UTF-8 或 UTF-16 文本",
+    "zh-TW": "請使用 UTF-8 或 UTF-16 文字",
+    "en": "Please use UTF-8 or UTF-16 text",
+    "ja": "UTF-8 または UTF-16 テキストを使用してください"
+  },
+  "请保持在目标 YouTube 页面中解析": {
+    "zh-CN": "请保持在目标 YouTube 页面中解析",
+    "zh-TW": "請保持在目標 YouTube 頁面中解析",
+    "en": "Please stay on the target YouTube page",
+    "ja": "対象の YouTube ページに留まったまま解析してください"
+  },
+  "请保持在目标作品页面": {
+    "zh-CN": "请保持在目标作品页面",
+    "zh-TW": "請保持在目標作品頁面",
+    "en": "Please stay on the target post page",
+    "ja": "対象の投稿ページに留まってください"
+  },
+  "请先粘贴链接或导入 TXT 文件": {
+    "zh-CN": "请先粘贴链接或导入 TXT 文件",
+    "zh-TW": "請先貼上連結或匯入 TXT 檔案",
+    "en": "Paste links or import a TXT file first",
+    "ja": "先にリンクを貼り付けるか TXT ファイルを読み込んでください"
+  },
+  "请勾选至少一个分集": {
+    "zh-CN": "请勾选至少一个分集",
+    "zh-TW": "請勾選至少一個分集",
+    "en": "Select at least one episode",
+    "ja": "エピソードを 1 件以上選択してください"
+  },
+  "请在 iPhone【设置】中允许 OmniDownloader 访问您的《照片》以保存媒体文件": {
+    "zh-CN": "请在 iPhone【设置】中允许 OmniDownloader 访问您的《照片》以保存媒体文件",
+    "zh-TW": "請於 iPhone【設定】允許 OmniDownloader 存取您的「照片」以儲存媒體檔案",
+    "en": "Allow OmniDownloader access to Photos in iPhone Settings to save media",
+    "ja": "メディアを保存するには iPhone の「設定」で写真へのアクセスを許可してください"
+  },
+  "请在「设置 → 账号」中导入会话或 Cookie 后重试。": {
+    "zh-CN": "请在「设置 → 账号」中导入会话或 Cookie 后重试。",
+    "zh-TW": "請於「設定 → 帳號」匯入工作階段或 Cookie 後重試。",
+    "en": "Import a session or cookies in Settings -> Accounts and retry.",
+    "ja": "「設定 → アカウント」でセッションまたは Cookie を読み込んで再試行してください。"
+  },
+  "请在下方网页完成登录后播放目标视频或浏览图文内容，再点击右上角读取按钮导入下载（仅限非加密直链媒体）。": {
+    "zh-CN": "请在下方网页完成登录后播放目标视频或浏览图文内容，再点击右上角读取按钮导入下载（仅限非加密直链媒体）。",
+    "zh-TW": "請在下方網頁完成登錄后播放目標視頻或瀏覽圖文內容，再點擊右上角讀取按鈕導入下載（僅限非加密直鏈媒體）。",
+    "en": "Sign in below, play the video or open the image post, then use Read to import accessible unencrypted direct media.",
+    "ja": "下のページでログインして動画を再生するか画像投稿を開き、「読み取り」で暗号化されていない直接メディアを取得してください。"
+  },
+  "请在下载与存储中重新选择保存目录": {
+    "zh-CN": "请在下载与存储中重新选择保存目录",
+    "zh-TW": "請於下載與儲存中重新選擇儲存目錄",
+    "en": "Re-select a save folder under Downloads & Storage",
+    "ja": "ダウンロードと保存先でフォルダを選択し直してください"
+  },
+  "请在普通 Edge 窗口中手动登录；此阶段不启用自动化。Google 登录后返回目标平台，再点击「保存会话并关闭」。": {
+    "zh-CN": "请在普通 Edge 窗口中手动登录；此阶段不启用自动化。Google 登录后返回目标平台，再点击「保存会话并关闭」。",
+    "zh-TW": "請於一般 Edge 視窗手動登入；此階段不啟用自動化。Google 登入後返回目標平台，再點擊「儲存工作階段並關閉」。",
+    "en": "Sign in manually inside the Edge window (automation disabled). After Google login, return to the platform and click Save Session & Close.",
+    "ja": "通常の Edge ウィンドウで手動ログインしてください。Google ログイン後は元のサイトに戻って「セッションを保存して閉じる」を押してください。"
+  },
+  "请在桌面客户端的「设置 → 账号」完成登录或导入会话，然后重试。": {
+    "zh-CN": "请在桌面客户端的「设置 → 账号」完成登录或导入会话，然后重试。",
+    "zh-TW": "請於桌面用戶端的「設定 → 帳號」完成登入或匯入工作階段，然後重試。",
+    "en": "Sign in or import cookies via Settings -> Accounts in the desktop client, then retry.",
+    "ja": "デスクトップクライアントの「設定 → アカウント」でログインまたはインポート後に再試行してください。"
+  },
+  "请在网页播放并取得 AAC 音轨，或选择仅画面": {
+    "zh-CN": "请在网页播放并取得 AAC 音轨，或选择仅画面",
+    "zh-TW": "請於網頁播放並取得 AAC 音軌，或選擇純畫面",
+    "en": "Play on page to capture AAC audio, or choose Video Only",
+    "ja": "ページ上で再生して AAC 音声を取得するか、「映像のみ」を選択してください"
+  },
+  "请填写网站名称与有效网址": {
+    "zh-CN": "请填写网站名称与有效网址",
+    "zh-TW": "請填寫網站名稱與有效網址",
+    "en": "Please enter a site name and valid URL",
+    "ja": "サイト名と有効な URL を入力してください"
+  },
+  "请完成哔哩哔哩登录，检测到 SESSDATA 后将自动保存凭据": {
+    "zh-CN": "请完成哔哩哔哩登录，检测到 SESSDATA 后将自动保存凭据",
+    "zh-TW": "請完成嗶哩嗶哩登入，偵測到 SESSDATA 後將自動保存憑證",
+    "en": "Sign in to Bilibili below; credentials save automatically once SESSDATA is detected",
+    "ja": "下で Bilibili にログインすると SESSDATA を検出して自動保存します"
+  },
+  "请完成平台验证；目标作品就绪后自动继续提取。": {
+    "zh-CN": "请完成平台验证；目标作品就绪后自动继续提取。",
+    "zh-TW": "請完成平台驗證；目標作品就緒後自動繼續擷取。",
+    "en": "Complete platform verification; extraction resumes automatically once ready.",
+    "ja": "プラットフォーム認証を完了してください。準備完了後に抽出を自動で続行します。"
+  },
+  "请完整填写网站名称与网址。": {
+    "zh-CN": "请完整填写网站名称与网址。",
+    "zh-TW": "請完整填寫網站名稱與網址。",
+    "en": "Please enter both site name and URL.",
+    "ja": "サイト名と URL を両方入力してください。"
+  },
+  "请检查网络或代理设置后重试。": {
+    "zh-CN": "请检查网络或代理设置后重试。",
+    "zh-TW": "請檢查網路或代理設定後重試。",
+    "en": "Check your network or proxy settings and retry.",
+    "ja": "ネットワークやプロキシ設定を確認して再試行してください。"
+  },
+  "请检查网络；代理设置可在桌面客户端中调整，然后重试。": {
+    "zh-CN": "请检查网络；代理设置可在桌面客户端中调整，然后重试。",
+    "zh-TW": "請檢查網路；代理設定可於桌面用戶端中調整，然後重試。",
+    "en": "Check your connection; proxy settings can be adjusted in the desktop client.",
+    "ja": "接続を確認してください。プロキシ設定はデスクトップクライアント側で変更できます。"
+  },
+  "请求失败 (%d)": {
+    "zh-CN": "请求失败 (%d)",
+    "zh-TW": "請求失敗 (%d)",
+    "en": "Request Failed (%d)",
+    "ja": "リクエスト失敗 (%d)"
+  },
+  "请求失败（HTTP %d）": {
+    "zh-CN": "请求失败（HTTP %d）",
+    "zh-TW": "請求失敗（HTTP %d）",
+    "en": "Request Failed (HTTP %d)",
+    "ja": "リクエスト失敗（HTTP %d）"
+  },
+  "请确认链接来自受支持的平台，或尝试复制完整的分享文本。": {
+    "zh-CN": "请确认链接来自受支持的平台，或尝试复制完整的分享文本。",
+    "zh-TW": "請確認連結來自受支援的平台，或嘗試複製完整的分享文字。",
+    "en": "Confirm the link is from a supported platform or paste the full share text.",
+    "ja": "対応プラットフォームのリンクか確認するか、共有テキスト全文を貼り付けてみてください。"
+  },
+  "请稍后重试。": {
+    "zh-CN": "请稍后重试。",
+    "zh-TW": "請稍後重試。",
+    "en": "Please try again later.",
+    "ja": "しばらくしてから再試行してください。"
+  },
+  "请至少勾选一个视频": {
+    "zh-CN": "请至少勾选一个视频",
+    "zh-TW": "請至少勾選一個視頻",
+    "en": "Select at least one video",
+    "ja": "動画を 1 件以上選択してください"
+  },
+  "请输入有效链接": {
+    "zh-CN": "请输入有效链接",
+    "zh-TW": "請輸入有效鏈接",
+    "en": "Enter a valid link",
+    "ja": "有効なリンクを入力してください"
+  },
+  "请重新选择目标图片": {
+    "zh-CN": "请重新选择目标图片",
+    "zh-TW": "請重新選擇目標圖片",
+    "en": "Please re-select the target image",
+    "ja": "対象の画像を選び直してください"
+  },
+  "读取图集压缩包失败: %s": {
+    "zh-CN": "读取图集压缩包失败: %s",
+    "zh-TW": "讀取圖集壓縮檔失敗: %s",
+    "en": "Failed to read image archive: %s",
+    "ja": "画像アーカイブの読み込みに失敗: %s"
+  },
+  "读取已播放媒体失败: %s": {
+    "zh-CN": "读取已播放媒体失败: %s",
+    "zh-TW": "讀取已播放媒體失敗: %s",
+    "en": "Failed to read played media: %s",
+    "ja": "再生メディアの取得に失敗: %s"
+  },
+  "读取已播放视频": {
+    "zh-CN": "读取已播放视频",
+    "zh-TW": "讀取已播放視頻",
+    "en": "Read played video",
+    "ja": "再生済み動画を読み取る"
+  },
+  "账号与 Cookie 会话": {
+    "zh-CN": "账号与 Cookie 会话",
+    "zh-TW": "賬號與 Cookie 會話",
+    "en": "Accounts and cookie sessions",
+    "ja": "アカウントと Cookie セッション"
+  },
+  "账号或网络已改变，请重新解析": {
+    "zh-CN": "账号或网络已改变，请重新解析",
+    "zh-TW": "帳號或網路已變更，請重新解析",
+    "en": "Account or network changed; please re-analyze",
+    "ja": "アカウントまたはネットワークが変更されました。再解析してください"
+  },
+  "资源请求被拒绝，请重新在原页面解析": {
+    "zh-CN": "资源请求被拒绝，请重新在原页面解析",
+    "zh-TW": "資源請求遭拒絕，請重新於原頁面解析",
+    "en": "Media request rejected; re-analyze on the original page",
+    "ja": "リソース要求が拒否されました。元のページで再解析してください"
+  },
+  "转发动态请使用原始动态链接": {
+    "zh-CN": "转发动态请使用原始动态链接",
+    "zh-TW": "轉發動態請使用原始動態連結",
+    "en": "For reposts, use the original dynamic post URL",
+    "ja": "共有・引用投稿ではなく元の投稿リンクを使用してください"
+  },
+  "输入保存路径...": {
+    "zh-CN": "输入保存路径...",
+    "zh-TW": "輸入保存路徑...",
+    "en": "Enter a save path...",
+    "ja": "保存先を入力..."
+  },
+  "输入或粘贴视频/图文链接、BV/av/ep/ss 号或分享文本...": {
+    "zh-CN": "输入或粘贴视频/图文链接、BV/av/ep/ss 号或分享文本...",
+    "zh-TW": "輸入或貼上影片/圖文連結、BV/av/ep/ss 號或分享文字...",
+    "en": "Paste video/image link, BV/av/ep/ss ID, or share text...",
+    "ja": "動画・画像リンク、BV/av/ep/ss 番号、共有テキストを入力または貼り付け..."
+  },
+  "输入目标网页地址并按回车前往...": {
+    "zh-CN": "输入目标网页地址并按回车前往...",
+    "zh-TW": "輸入目標網頁地址并按回車前往...",
+    "en": "Enter a page URL and press Enter...",
+    "ja": "ページの URL を入力して Enter を押してください..."
+  },
+  "返回偏好设置": {
+    "zh-CN": "返回偏好设置",
+    "zh-TW": "返回偏好設置",
+    "en": "Back to preferences",
+    "ja": "設定に戻る"
+  },
+  "这是图文作品，请使用图文页": {
+    "zh-CN": "这是图文作品，请使用图文页",
+    "zh-TW": "這是圖文作品，請使用圖文頁",
+    "en": "This is an image post; use the images route",
+    "ja": "画像投稿のため画像ページをご利用ください"
+  },
+  "这是随版本附带的 yt-dlp 解析器参考名录。iOS 使用原生与 WebKit 引擎，未内置 yt-dlp；名录中的站点不代表本机已验证支持。受登录、DRM 或签名限制的媒体可能无法下载。": {
+    "zh-CN": "这是随版本附带的 yt-dlp 解析器参考名录。iOS 使用原生与 WebKit 引擎，未内置 yt-dlp；名录中的站点不代表本机已验证支持。受登录、DRM 或签名限制的媒体可能无法下载。",
+    "zh-TW": "這是隨版本附帶的 yt-dlp 解析器參考名錄。iOS 使用原生與 WebKit 引擎，未內置 yt-dlp；名錄中的站點不代表本機已驗證支持。受登錄、DRM 或簽名限制的媒體可能無法下載。",
+    "en": "This bundled catalog is a yt-dlp reference. iOS uses native and WebKit engines, not yt-dlp. Listed sites are not all verified on this device; login, DRM or signatures may restrict downloads.",
+    "ja": "同梱の yt-dlp 参考一覧です。iOS は yt-dlp ではなくネイティブ・WebKit エンジンを使用します。一覧のすべてのサイトを本機で検証したわけではありません。ログイン・DRM・署名の制限により保存できない場合があります。"
+  },
+  "进入全屏": {
+    "zh-CN": "进入全屏",
+    "zh-TW": "進入全螢幕",
+    "en": "Fullscreen",
+    "ja": "全画面"
+  },
+  "进行中": {
+    "zh-CN": "进行中",
+    "zh-TW": "進行中",
+    "en": "Active",
+    "ja": "実行中"
+  },
+  "退出全屏": {
+    "zh-CN": "退出全屏",
+    "zh-TW": "退出全螢幕",
+    "en": "Exit fullscreen",
+    "ja": "全画面を終了"
+  },
+  "退出登录": {
+    "zh-CN": "退出登录",
+    "zh-TW": "退出登錄",
+    "en": "Sign out",
+    "ja": "ログアウト"
+  },
+  "适应": {
+    "zh-CN": "适应",
+    "zh-TW": "適應",
+    "en": "Fit",
+    "ja": "ウィンドウに合わせる"
+  },
+  "适应 (%d%%)": {
+    "zh-CN": "适应 (%d%%)",
+    "zh-TW": "適應 (%d%%)",
+    "en": "Fit (%d%%)",
+    "ja": "合わせる (%d%%)"
+  },
+  "选择保存目录": {
+    "zh-CN": "选择保存目录",
+    "zh-TW": "選擇保存目錄",
+    "en": "Choose save folder",
+    "ja": "保存先を選択"
+  },
+  "选择图片": {
+    "zh-CN": "选择图片",
+    "zh-TW": "選擇圖片",
+    "en": "Choose images",
+    "ja": "画像を選択"
+  },
+  "选择提取的音频格式": {
+    "zh-CN": "选择提取的音频格式",
+    "zh-TW": "選擇提取的音訊格式",
+    "en": "Choose extracted audio format",
+    "ja": "抽出する音声形式を選択"
+  },
+  "选择目标平台": {
+    "zh-CN": "选择目标平台",
+    "zh-TW": "選擇目標平臺",
+    "en": "Choose platform",
+    "ja": "対象サイトを選択"
+  },
+  "选择第 %d 张": {
+    "zh-CN": "选择第 %d 张",
+    "zh-TW": "選擇第 %d 張",
+    "en": "Select image %d",
+    "ja": "画像 %d を選択"
+  },
+  "选择视频画面分辨率 (无声音)": {
+    "zh-CN": "选择视频画面分辨率 (无声音)",
+    "zh-TW": "選擇視頻畫面分辨率 (無聲音)",
+    "en": "Select video resolution (no audio)",
+    "ja": "映像の解像度を選択（音声なし）"
+  },
+  "选择音频格式 (无损原轨或通用格式)": {
+    "zh-CN": "选择音频格式 (无损原轨或通用格式)",
+    "zh-TW": "選擇音訊格式 (無損原軌或通用格式)",
+    "en": "Choose audio format (original lossless or compatible)",
+    "ja": "音声形式を選択（元の音声または汎用形式）"
+  },
+  "通用媒体": {
+    "zh-CN": "通用媒体",
+    "zh-TW": "通用媒體",
+    "en": "Generic Media",
+    "ja": "汎用メディア"
+  },
+  "部分为平台可用清晰度资源": {
+    "zh-CN": "部分为平台可用清晰度资源",
+    "zh-TW": "部分為平臺可用清晰度資源",
+    "en": "Some items use the quality available from the platform",
+    "ja": "一部の画像はサイトが提供する画質です"
+  },
+  "部分高画质/会员或风控资源需在「设置 → 账号」完成登录后解析。": {
+    "zh-CN": "部分高画质/会员或风控资源需在「设置 → 账号」完成登录后解析。",
+    "zh-TW": "部分高畫質／會員或風控資源需於「設定 → 帳號」完成登入後解析。",
+    "en": "High-quality, member, or risk-controlled media requires signing in under Settings -> Accounts.",
+    "ja": "高画質・会員限定・認証制限コンテンツには「設定 → アカウント」でのログインが必要です。"
+  },
+  "重新检查": {
+    "zh-CN": "重新检查",
+    "zh-TW": "重新檢查",
+    "en": "Check again",
+    "ja": "再確認"
+  },
+  "重新连接本地核心引擎": {
+    "zh-CN": "重新连接本地核心引擎",
+    "zh-TW": "重新連接本地核心引擎",
+    "en": "Reconnect local engine",
+    "ja": "ローカルエンジンに再接続"
+  },
+  "重试任务": {
+    "zh-CN": "重试任务",
+    "zh-TW": "重試任務",
+    "en": "Retry task",
+    "ja": "タスクを再試行"
+  },
+  "重连最新版核心": {
+    "zh-CN": "重连最新版核心",
+    "zh-TW": "重連最新版核心",
+    "en": "Reconnect updated engine",
+    "ja": "更新したエンジンに再接続"
+  },
+  "针对需要网页验证或登录才能播放的内容（如小黑盒、抖音、快手），可在内置或辅助窗口验证播放后读取直链或图文。": {
+    "zh-CN": "针对需要网页验证或登录才能播放的内容（如小黑盒、抖音、快手），可在内置或辅助窗口验证播放后读取直链或图文。",
+    "zh-TW": "針對需要網頁驗證或登錄才能播放的內容（如小黑盒、抖音、快手），可在內置或輔助窗口驗證播放后讀取直鏈或圖文。",
+    "en": "For content requiring browser verification or sign-in, verify playback in the assist browser, then read available direct links or images.",
+    "ja": "ブラウザー認証やログインが必要なコンテンツは、補助ブラウザーで再生を確認してから直接リンクや画像を取得できます。"
+  },
+  "链接不合法": {
+    "zh-CN": "链接不合法",
+    "zh-TW": "連結無效",
+    "en": "Invalid URL",
+    "ja": "無効なリンクです"
+  },
+  "需要 1MB 以内的 UTF-8 Netscape Cookie 文件": {
+    "zh-CN": "需要 1MB 以内的 UTF-8 Netscape Cookie 文件",
+    "zh-TW": "需要 1MB 以內的 UTF-8 Netscape Cookie 檔案",
+    "en": "Requires a UTF-8 Netscape cookie file under 1 MB",
+    "ja": "1MB 以内の UTF-8 Netscape Cookie ファイルが必要です"
+  },
+  "需要 B站 BV、av、ep 或 ss 内容链接": {
+    "zh-CN": "需要 B站 BV、av、ep 或 ss 内容链接",
+    "zh-TW": "需要 B站 BV、av、ep 或 ss 內容連結",
+    "en": "Requires a Bilibili BV, av, ep, or ss URL",
+    "ja": "ビリビリの BV / av / ep / ss リンクが必要です"
+  },
+  "需要单个 YouTube 视频链接": {
+    "zh-CN": "需要单个 YouTube 视频链接",
+    "zh-TW": "需要單個 YouTube 影片連結",
+    "en": "Requires a single YouTube video URL",
+    "ja": "単一の YouTube 動画リンクが必要です"
+  },
+  "需要可定位的目标作品链接": {
+    "zh-CN": "需要可定位的目标作品链接",
+    "zh-TW": "需要可定位的目標作品連結",
+    "en": "Requires a target post URL with identifiable ID",
+    "ja": "ID を特定できる対象投稿のリンクが必要です"
+  },
+  "需要有效的内容网址": {
+    "zh-CN": "需要有效的内容网址",
+    "zh-TW": "需要有效的內容網址",
+    "en": "Requires a valid content URL",
+    "ja": "有効なコンテンツ URL が必要です"
+  },
+  "需要登录或 Cookie 已失效": {
+    "zh-CN": "需要登录或 Cookie 已失效",
+    "zh-TW": "需要登入或 Cookie 已失效",
+    "en": "Sign-In Required or Cookie Expired",
+    "ja": "ログイン必要または Cookie 期限切れ"
+  },
+  "需要目标 X 帖子": {
+    "zh-CN": "需要目标 X 帖子",
+    "zh-TW": "需要目標 X 貼文",
+    "en": "Requires target X post URL",
+    "ja": "対象の X 投稿が必要です"
+  },
+  "需要自动加载目标图文页": {
+    "zh-CN": "需要自动加载目标图文页",
+    "zh-TW": "需要自動載入目標圖文頁",
+    "en": "Auto-loading target image page required",
+    "ja": "対象画像ページの自動読み込みが必要です"
+  },
+  "需要自动加载目标平台页面": {
+    "zh-CN": "需要自动加载目标平台页面",
+    "zh-TW": "需要自動載入目標平台頁面",
+    "en": "Auto-loading target platform page required",
+    "ja": "対象プラットフォームページの自動読み込みが必要です"
+  },
+  "音画合流": {
+    "zh-CN": "视频",
+    "zh-TW": "視頻",
+    "en": "Video",
+    "ja": "動画"
+  },
+  "音视频链接": {
+    "zh-CN": "音视频链接",
+    "zh-TW": "音視頻鏈接",
+    "en": "Media link",
+    "ja": "メディアリンク"
+  },
+  "音频": {
+    "zh-CN": "音频",
+    "zh-TW": "音訊",
+    "en": "Audio",
+    "ja": "音声"
+  },
+  "音频播放": {
+    "zh-CN": "音频播放",
+    "zh-TW": "音訊播放",
+    "en": "Audio playback",
+    "ja": "音声再生"
+  },
+  "音频格式": {
+    "zh-CN": "音频格式",
+    "zh-TW": "音訊格式",
+    "en": "Audio format",
+    "ja": "音声形式"
+  },
+  "页面加载未完成，可点击左侧刷新重试或检查网络代理": {
+    "zh-CN": "页面加载未完成，可点击左侧刷新重试或检查网络代理",
+    "zh-TW": "頁面載入未完成，可點擊左側重新整理或檢查網路代理",
+    "en": "Page did not finish loading; reload on the left or check your proxy",
+    "ja": "ページ読み込みが完了しませんでした。左の再読み込みかプロキシをご確認ください"
+  },
+  "页面尚未准备好": {
+    "zh-CN": "页面尚未准备好",
+    "zh-TW": "頁面尚未準備好",
+    "en": "Page is not ready yet",
+    "ja": "ページの準備がまだできていません"
+  },
+  "页面已切换，请返回最初请求的视频后重新解析": {
+    "zh-CN": "页面已切换，请返回最初请求的视频后重新解析",
+    "zh-TW": "頁面已切換，請返回最初請求的影片後重新解析",
+    "en": "Page navigated away; return to the original video and re-analyze",
+    "ja": "ページが移動しました。元の動画に戻ってから再解析してください"
+  },
+  "页面未取得完整 AAC 音轨": {
+    "zh-CN": "页面未取得完整 AAC 音轨",
+    "zh-TW": "頁面未取得完整 AAC 音軌",
+    "en": "Complete AAC audio track not captured",
+    "ja": "ページから完全な AAC 音声を取得できませんでした"
+  },
+  "页面没有目标视频详情": {
+    "zh-CN": "页面没有目标视频详情",
+    "zh-TW": "頁面沒有目標影片詳情",
+    "en": "Target video details not found on page",
+    "ja": "ページに対象動画の詳細がありません"
+  },
+  "页面返回了其他作品": {
+    "zh-CN": "页面返回了其他作品",
+    "zh-TW": "頁面傳回了其他作品",
+    "en": "Page returned a different post",
+    "ja": "ページから別の投稿が返されました"
+  },
+  "页面返回作品或会话不一致": {
+    "zh-CN": "页面返回作品或会话不一致",
+    "zh-TW": "頁面傳回作品或工作階段不一致",
+    "en": "Returned post or session mismatch",
+    "ja": "返された投稿またはセッションが一致しません"
+  },
+  "项 Cookie": {
+    "zh-CN": "项 Cookie",
+    "zh-TW": "項 Cookie",
+    "en": "cookies",
+    "ja": "件の Cookie"
+  },
+  "预览不可用": {
+    "zh-CN": "预览不可用",
+    "zh-TW": "預覽無法使用",
+    "en": "Preview unavailable",
+    "ja": "プレビューを利用できません"
+  },
+  "预览暂不可用，可尝试保存原图": {
+    "zh-CN": "预览暂不可用，可尝试保存原图",
+    "zh-TW": "預覽暫不可用，可嘗試保存原圖",
+    "en": "Preview unavailable; try saving the original",
+    "ja": "プレビューを表示できません。元画像の保存をお試しください"
+  },
+  "预览暂不可用，可尝试用系统默认程序打开或直接保存原图": {
+    "zh-CN": "预览暂不可用，可尝试用系统默认程序打开或直接保存原图",
+    "zh-TW": "預覽暫不可用，可嘗試用系統默認程序打開或直接保存原圖",
+    "en": "Preview unavailable; open with the system app or save the original",
+    "ja": "プレビューを表示できません。システムアプリで開くか元画像を保存してください"
+  },
+  "验证": {
+    "zh-CN": "验证",
+    "zh-TW": "驗證",
+    "en": "Verification",
+    "ja": "認証"
+  },
+  "验证并重试": {
+    "zh-CN": "验证并重试",
+    "zh-TW": "驗證并重試",
+    "en": "Verify and retry",
+    "ja": "認証して再試行"
+  }
+}

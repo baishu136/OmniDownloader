@@ -6,11 +6,11 @@ import re
 ROOT=Path(__file__).resolve().parents[1]
 
 
-def main():
+def main(translations_only=False):
     source=(ROOT/'app/src/main/java/com/omni/downloader/ui/localization/AppStrings.kt').read_text('utf-8')
     values={}
     for key,literal in re.findall(r'^\s+(\w+) = ("(?:[^"\\]|\\.)*"),?\s*$',source,re.M):
-        try: values.setdefault(key,[]).append(json.loads(literal))
+        try: values.setdefault(key,[]).append(json.loads(re.sub(r"\\([\x27$])", r"\1", literal)))
         except ValueError: continue
     translations={language:{} for language in ['zh-CN','zh-TW','en','ja']}
     for rows in values.values():
@@ -25,11 +25,34 @@ def main():
     for base,rows in extras.items():
         translations['zh-CN'][base]=base
         for language,value in zip(['zh-TW','en','ja'],rows):translations[language][base]=value
-    payload=json.dumps(translations,ensure_ascii=False,separators=(',',':'))+'\n'
-    for path in ['OmniDownloader-iOS/OmniDownloader/Resources/strings.json','windows/web/static/strings.json']:
+    paths = ['OmniDownloader-iOS/OmniDownloader/Resources/strings.json', 'windows/web/static/strings.json',
+             'windows/winui3/src/OmniDownloader.WinUI.Core/Assets/strings.json']
+    merged = {language: {} for language in translations}
+    for path in paths:
+        if (ROOT / path).is_file():
+            old = json.loads((ROOT / path).read_text('utf-8'))
+            for language in merged: merged[language].update(old.get(language, {}))
+    for language in merged: merged[language].update(translations[language])
+    for language in merged: merged[language].pop('', None)
+    extras = json.loads((ROOT / 'shared/localization/supplement.json').read_text('utf-8'))
+    for key, table in extras.items():
+        for language in merged: merged[language][key] = table[language]
+    # Only owned progress messages are generated for Android; arbitrary metadata is never translated.
+    kotlin = ['package com.omni.downloader.ui.localization', '', 'private val progressCopies = mapOf(']
+    def literal(value): return json.dumps(value, ensure_ascii=False).replace('$', '\\$')
+    for key, table in extras.items():
+        if table.get('progress'):
+            kotlin.append('    '+literal(key)+' to listOf('+', '.join(literal(table[language]) for language in ['zh-TW','en','ja'])+'),')
+    kotlin += [')', '', 'fun AppStrings.progressText(value: String): String {',
+        '    val index = when (this) { ZhHantStrings -> 0; EnStrings -> 1; JaStrings -> 2; else -> return value }',
+        '    return progressCopies[value]?.get(index) ?: value', '}']
+    (ROOT/'app/src/main/java/com/omni/downloader/ui/localization/ProgressStrings.kt').write_text('\n'.join(kotlin)+'\n', 'utf-8')
+    payload=json.dumps(merged,ensure_ascii=False,indent=2)+'\n'
+    for path in paths:
         dest=ROOT/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(payload,encoding='utf-8')
-    script=(ROOT/'shared/browser/target-capture.js').read_bytes()
-    for path in ['OmniDownloader-iOS/OmniDownloader/Resources/target-capture.js','windows/web/static/target-capture.js']:(ROOT/path).write_bytes(script)
+    if not translations_only:
+        script=(ROOT/'shared/browser/target-capture.js').read_bytes()
+        for path in ['OmniDownloader-iOS/OmniDownloader/Resources/target-capture.js','windows/web/static/target-capture.js']:(ROOT/path).write_bytes(script)
     app=ROOT/'OmniDownloader-iOS/OmniDownloader/Models/AppStrings.swift'
     text=app.read_text('utf-8')
     text=re.sub(r'public let (\w+) = ("(?:[^"\\]|\\.)*")',lambda m:('public var '+m[1]+': String { '+('"1.7.19"' if m[1]=='version' else 'OmniLocalization.text('+m[2]+')')+' }'),text)
@@ -37,4 +60,7 @@ def main():
     print('Shared capture and',len(translations['en']),'Android translation values synchronized')
 
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    import argparse
+    parser=argparse.ArgumentParser();parser.add_argument('--translations-only',action='store_true')
+    main(parser.parse_args().translations_only)

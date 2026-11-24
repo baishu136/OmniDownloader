@@ -1,188 +1,298 @@
 <Window
     x:Class="OmniDownloader.WinUI.Controls.NativeVideoPlayerWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:controls="using:OmniDownloader.WinUI.Controls"
+    xmlns:locui="using:OmniDownloader.WinUI.Helpers"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="OmniDownloader · 媒体播放">
+    Title="OmniDownloader">
 
-    <Grid x:Name="RootGrid" KeyDown="RootGrid_KeyDown">
+    <Grid x:Name="RootGrid" KeyDown="RootGrid_KeyDown" SizeChanged="RootGrid_SizeChanged" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="44" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- 自定义标题栏 -->
+        <!-- 自定义扩展标题栏 -->
         <Grid x:Name="TitleBarDragRegion" Grid.Row="0" Padding="14,0,148,0" ColumnSpacing="8" Background="Transparent">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <FontIcon x:Name="TitleIcon" Grid.Column="0" Glyph="&#xE768;" FontSize="14" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+            <Border
+                Grid.Column="0"
+                Width="24"
+                Height="24"
+                CornerRadius="6"
+                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                VerticalAlignment="Center">
+                <FontIcon x:Name="TitleIcon" Glyph="&#xE768;" FontSize="12" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+            </Border>
             <TextBlock
                 x:Name="WindowTitleText"
                 Grid.Column="1"
-                Text="媒体播放"
+                locui:Localized.Text="媒体播放"
                 Style="{StaticResource CaptionTextBlockStyle}"
                 FontWeight="SemiBold"
                 TextTrimming="CharacterEllipsis"
                 VerticalAlignment="Center" />
+            <Border Grid.Column="2" Style="{StaticResource OmniTagBorderStyle}" VerticalAlignment="Center">
+                <TextBlock x:Name="PlayerKindChipText" locui:Localized.Text="内置媒体引擎" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Border>
         </Grid>
 
-        <!-- 播放列表与快捷工具栏 -->
+        <!-- 顶部媒体信息与播放控制工具栏（支持窄窗自动折行） -->
         <Grid
+            x:Name="HeaderToolbarGrid"
             Grid.Row="1"
-            Padding="14,8"
-            ColumnSpacing="10"
+            Padding="16,10"
+            ColumnSpacing="12"
             RowSpacing="8"
-            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="0,1,0,1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <TextBlock x:Name="NowPlayingTitleText" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                <Border x:Name="EpisodeBadge" Style="{StaticResource OmniTagBorderStyle}" Visibility="Collapsed" VerticalAlignment="Center">
-                    <TextBlock x:Name="EpisodeBadgeText" Style="{StaticResource CaptionTextBlockStyle}" />
+            <Grid Grid.Row="0" Grid.Column="0" ColumnSpacing="8" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                    <TextBlock x:Name="NowPlayingTitleText" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="NowPlayingMetaText" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
+                </StackPanel>
+                <Border
+                    Grid.Column="1"
+                    x:Name="EpisodeBadge"
+                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                    CornerRadius="999"
+                    Padding="9,3"
+                    Visibility="Collapsed"
+                    VerticalAlignment="Center">
+                    <TextBlock x:Name="EpisodeBadgeText" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" FontWeight="SemiBold" />
                 </Border>
-            </StackPanel>
+            </Grid>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                <Button x:Name="PrevEpBtn" ToolTipService.ToolTip="上一集 (Ctrl+Left)" Visibility="Collapsed" Click="PrevEpBtn_Click" Padding="9,5">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
+            <controls:WrapPanel
+                x:Name="VideoActionsPanel"
+                Grid.Row="0"
+                Grid.Column="1"
+                HorizontalSpacing="6"
+                VerticalSpacing="6"
+                VerticalAlignment="Center">
+                <Button x:Name="PrevEpBtn" locui:Localized.ToolTip="上一集 (Ctrl+Left)" Visibility="Collapsed" Click="PrevEpBtn_Click" Padding="10,5" CornerRadius="6">
+                    <StackPanel Orientation="Horizontal" Spacing="5">
                         <FontIcon Glyph="&#xE892;" FontSize="12" />
-                        <TextBlock Text="上一集" />
+                        <TextBlock locui:Localized.Text="上一集" />
                     </StackPanel>
                 </Button>
 
                 <ComboBox
                     x:Name="PlaylistCombo"
-                    MinWidth="150"
-                    MaxWidth="240"
+                    MinWidth="156"
+                    MaxWidth="250"
                     Visibility="Collapsed"
                     SelectionChanged="PlaylistCombo_SelectionChanged" />
 
-                <Button x:Name="NextEpBtn" ToolTipService.ToolTip="下一集 (Ctrl+Right)" Visibility="Collapsed" Click="NextEpBtn_Click" Padding="9,5">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <TextBlock Text="下一集" />
+                <Button x:Name="NextEpBtn" locui:Localized.ToolTip="下一集 (Ctrl+Right)" Visibility="Collapsed" Click="NextEpBtn_Click" Padding="10,5" CornerRadius="6">
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBlock locui:Localized.Text="下一集" />
                         <FontIcon Glyph="&#xE893;" FontSize="12" />
                     </StackPanel>
                 </Button>
 
-                <Button x:Name="FullscreenBtn" ToolTipService.ToolTip="全屏切换 (F / F11)" Click="FullscreenBtn_Click" Padding="9,5">
+                <ToggleButton x:Name="PinTopBtn" locui:Localized.ToolTip="窗口置顶 (T)" Click="PinTopBtn_Click" Padding="9,5" CornerRadius="6">
+                    <FontIcon x:Name="PinTopIcon" Glyph="&#xE718;" FontSize="13" />
+                </ToggleButton>
+
+                <Button x:Name="FullscreenBtn" locui:Localized.ToolTip="全屏切换 (F / F11)" Click="FullscreenBtn_Click" Padding="9,5" CornerRadius="6">
                     <FontIcon x:Name="FullscreenIcon" Glyph="&#xE740;" FontSize="13" />
                 </Button>
 
-                <Button ToolTipService.ToolTip="在电脑中定位文件" Click="LocateBtn_Click" Padding="9,5">
+                <Button locui:Localized.ToolTip="在电脑中定位文件" Click="LocateBtn_Click" Padding="10,5" CornerRadius="6">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon Glyph="&#xE8B7;" FontSize="13" />
-                        <TextBlock Text="定位" />
+                        <TextBlock locui:Localized.Text="定位" />
                     </StackPanel>
                 </Button>
 
-                <Button ToolTipService.ToolTip="用系统默认播放器打开" Click="ExternalBtn_Click" Padding="9,5">
+                <Button Style="{StaticResource AccentButtonStyle}" locui:Localized.ToolTip="用系统默认播放器打开" Click="ExternalBtn_Click" Padding="10,5" CornerRadius="6">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon Glyph="&#xE8A7;" FontSize="13" />
-                        <TextBlock Text="系统播放" />
+                        <TextBlock locui:Localized.Text="系统播放" />
                     </StackPanel>
                 </Button>
-            </StackPanel>
+            </controls:WrapPanel>
         </Grid>
 
-        <!-- 主媒体播放舞台（MediaPlayerElement 原生硬件解码 + 完整传输控制条） -->
-        <Grid Grid.Row="2" Background="#FF000000">
-            <MediaPlayerElement
-                x:Name="PlayerElement"
-                AreTransportControlsEnabled="True"
-                AutoPlay="True"
-                Stretch="Uniform">
-                <MediaPlayerElement.TransportControls>
-                    <MediaTransportControls
-                        IsCompact="False"
-                        IsPlaybackRateEnabled="True"
-                        IsPlaybackRateButtonVisible="True"
-                        IsSkipBackwardEnabled="True"
-                        IsSkipBackwardButtonVisible="True"
-                        IsSkipForwardEnabled="True"
-                        IsSkipForwardButtonVisible="True"
-                        IsZoomEnabled="True"
-                        IsZoomButtonVisible="True"
-                        IsVolumeEnabled="True"
-                        IsVolumeButtonVisible="True"
-                        IsRepeatButtonVisible="True"
-                        IsRepeatEnabled="True" />
-                </MediaPlayerElement.TransportControls>
-            </MediaPlayerElement>
+        <!-- 主媒体播放舞台：精致影院暗色框架（窗口化带圆角与微描边，全屏时无缝铺满） -->
+        <Border
+            x:Name="PlayerStageFrame"
+            Grid.Row="2"
+            Margin="14,12,14,10"
+            CornerRadius="12"
+            BorderThickness="1"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            Background="#FF08090D"
+            DoubleTapped="PlayerStageFrame_DoubleTapped">
+            <Grid>
+                <MediaPlayerElement
+                    x:Name="PlayerElement"
+                    AreTransportControlsEnabled="True"
+                    AutoPlay="True"
+                    Stretch="Uniform">
+                    <MediaPlayerElement.TransportControls>
+                        <MediaTransportControls
+                            IsCompact="False"
+                            IsPlaybackRateEnabled="True"
+                            IsPlaybackRateButtonVisible="True"
+                            IsSkipBackwardEnabled="True"
+                            IsSkipBackwardButtonVisible="True"
+                            IsSkipForwardEnabled="True"
+                            IsSkipForwardButtonVisible="True"
+                            IsZoomEnabled="True"
+                            IsZoomButtonVisible="True"
+                            IsVolumeEnabled="True"
+                            IsVolumeButtonVisible="True"
+                            IsRepeatButtonVisible="True"
+                            IsRepeatEnabled="True" />
+                    </MediaPlayerElement.TransportControls>
+                </MediaPlayerElement>
 
-            <!-- 纯音频播放封面信息卡片（不遮挡底部传输控制条） -->
-            <StackPanel
-                x:Name="AudioCoverPanel"
-                Visibility="Collapsed"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Margin="24,16,24,84"
-                Spacing="14">
+                <!-- 纯音频播放专辑视听卡片（玻璃质感描边，跟随主题强调色，不遮挡底部控制条） -->
                 <Border
-                    Width="200"
-                    Height="200"
-                    CornerRadius="14"
-                    Background="#FF1C1E26"
+                    x:Name="AudioCoverPanel"
+                    Visibility="Collapsed"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Margin="24,18,24,96"
+                    Padding="28,24"
+                    CornerRadius="18"
+                    Background="#E6151822"
+                    BorderBrush="#26FFFFFF"
+                    BorderThickness="1">
+                    <StackPanel Spacing="14" HorizontalAlignment="Center">
+                        <Border
+                            Width="208"
+                            Height="208"
+                            CornerRadius="14"
+                            Background="#FF1F2330"
+                            BorderBrush="#33FFFFFF"
+                            BorderThickness="1"
+                            HorizontalAlignment="Center">
+                            <Grid>
+                                <FontIcon Glyph="&#xE8D6;" FontSize="56" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                <Image x:Name="AudioCoverImage" Stretch="UniformToFill" />
+                            </Grid>
+                        </Border>
+                        <TextBlock
+                            x:Name="AudioTitleText"
+                            Foreground="#FFFFFFFF"
+                            FontSize="17"
+                            FontWeight="SemiBold"
+                            TextWrapping="WrapWholeWords"
+                            TextAlignment="Center"
+                            MaxWidth="440" />
+                        <TextBlock
+                            x:Name="AudioSubText"
+                            Foreground="#FFB8BECB"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            TextAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 快捷键与状态瞬态 HUD 提示胶囊 -->
+                <Border
+                    x:Name="PlaybackHudBorder"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    Margin="0,20,0,0"
+                    Padding="14,7"
+                    CornerRadius="999"
+                    Background="#CC161820"
+                    BorderBrush="#33FFFFFF"
+                    BorderThickness="1">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <FontIcon x:Name="PlaybackHudIcon" Glyph="&#xE768;" FontSize="13" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <TextBlock x:Name="PlaybackHudText" Foreground="#FFFFFFFF" Style="{StaticResource CaptionTextBlockStyle}" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+
+                <ProgressRing
+                    x:Name="LoadingRing"
+                    IsActive="True"
+                    Width="44"
+                    Height="44"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+
+                <!-- 异常提示兜底面板 -->
+                <Border
+                    x:Name="ErrorOverlay"
+                    Visibility="Collapsed"
+                    Background="#ED161922"
                     BorderBrush="#33FFFFFF"
                     BorderThickness="1"
-                    HorizontalAlignment="Center">
-                    <Grid>
-                        <FontIcon Glyph="&#xE8D6;" FontSize="54" Foreground="#B3C5FF" />
-                        <Image x:Name="AudioCoverImage" Stretch="UniformToFill" />
-                    </Grid>
-                </Border>
-                <TextBlock
-                    x:Name="AudioTitleText"
-                    Foreground="#FFFFFFFF"
-                    FontSize="17"
-                    FontWeight="SemiBold"
-                    TextWrapping="WrapWholeWords"
-                    TextAlignment="Center"
-                    MaxWidth="480" />
-                <TextBlock
-                    x:Name="AudioSubText"
-                    Foreground="#FFB8BECB"
-                    Style="{StaticResource CaptionTextBlockStyle}"
-                    TextAlignment="Center" />
-            </StackPanel>
-
-            <ProgressRing
-                x:Name="LoadingRing"
-                IsActive="True"
-                Width="44"
-                Height="44"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center" />
-
-            <!-- 异常提示兜底面板 -->
-            <Border
-                x:Name="ErrorOverlay"
-                Visibility="Collapsed"
-                Background="#E014161D"
-                CornerRadius="12"
-                Padding="24"
-                MaxWidth="440"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
-                <StackPanel Spacing="12">
-                    <FontIcon Glyph="&#xEA39;" FontSize="32" Foreground="#FFFCA5A5" HorizontalAlignment="Center" />
-                    <TextBlock
-                        x:Name="ErrorDetailText"
-                        Foreground="#FFFFFFFF"
-                        TextWrapping="WrapWholeWords"
-                        TextAlignment="Center" />
-                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                        <Button Style="{StaticResource AccentButtonStyle}" Content="用系统默认程序播放" Click="ExternalBtn_Click" />
-                        <Button Content="定位文件" Click="LocateBtn_Click" />
+                    CornerRadius="14"
+                    Padding="24"
+                    MaxWidth="440"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                    <StackPanel Spacing="12">
+                        <Border
+                            Width="52"
+                            Height="52"
+                            CornerRadius="26"
+                            Background="#28EF4444"
+                            HorizontalAlignment="Center">
+                            <FontIcon Glyph="&#xEA39;" FontSize="26" Foreground="#FFFCA5A5" />
+                        </Border>
+                        <TextBlock
+                            x:Name="ErrorDetailText"
+                            Foreground="#FFFFFFFF"
+                            TextWrapping="WrapWholeWords"
+                            TextAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <Button Style="{StaticResource AccentButtonStyle}" locui:Localized.Content="用系统默认程序播放" Click="ExternalBtn_Click" />
+                            <Button locui:Localized.Content="定位文件" Click="LocateBtn_Click" />
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </Border>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- 底部简洁快捷键提示条（全屏时自动隐藏） -->
+        <Grid x:Name="PlayerFooterBar" Grid.Row="3" Padding="16,0,16,12" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                Grid.Column="0"
+                locui:Localized.Text="Space 播放/暂停 · ←/→ 快退进 5 秒 · Ctrl+←/→ 切换剧集 · T 置顶 · 双击/F 全屏"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextTrimming="CharacterEllipsis"
+                VerticalAlignment="Center" />
+            <TextBlock
+                x:Name="FooterEscHint"
+                Grid.Column="1"
+                locui:Localized.Text="Esc 退出"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                VerticalAlignment="Center" />
         </Grid>
     </Grid>
 </Window>

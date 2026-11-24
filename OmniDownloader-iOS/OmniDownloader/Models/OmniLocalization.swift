@@ -12,4 +12,8 @@ enum OmniLocalization{
         else if locale.hasPrefix("ja"){code="ja"}else{code="en"}
         return values[code]?[source] ?? source
     }
+    static func fmt(_ source:String, _ args:CVarArg..., language:String?=nil)->String{
+        let template=text(source,language:language)
+        return String(format:template.replacingOccurrences(of:"%s",with:"%@"),arguments:args)
+    }
 }

@@ -783,15 +783,29 @@ private fun FormatRowItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-    val bgColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
+    val isHdr = format.dynamicRange.isNotBlank() && !format.dynamicRange.equals("SDR", ignoreCase = true)
+    val isDarkSurface = MaterialTheme.colorScheme.surface.red * 0.299f +
+        MaterialTheme.colorScheme.surface.green * 0.587f +
+        MaterialTheme.colorScheme.surface.blue * 0.114f < 0.5f
+    val hdrGold = if (isDarkSurface) Color(0xFFF5C451) else Color(0xFFD49B1A)
+    val borderColor = when {
+        isHdr -> hdrGold
+        isSelected -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.outlineVariant
+    }
+    val bgColor = when {
+        isSelected && isHdr -> hdrGold.copy(alpha = if (isDarkSurface) 0.14f else 0.10f)
+        isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+        isHdr -> hdrGold.copy(alpha = if (isDarkSurface) 0.07f else 0.05f)
+        else -> MaterialTheme.colorScheme.surface
+    }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
             .background(bgColor)
-            .border(width = if (isSelected) 1.5.dp else 0.8.dp, color = borderColor, shape = RoundedCornerShape(8.dp))
+            .border(width = if (isHdr || isSelected) 1.5.dp else 0.8.dp, color = borderColor, shape = RoundedCornerShape(8.dp))
             .clickable { onClick() }
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -807,6 +821,22 @@ private fun FormatRowItem(
             maxLines = 3,
             overflow = TextOverflow.Ellipsis
         )
+        if (isHdr) {
+            Spacer(modifier = Modifier.width(6.dp))
+            Surface(
+                color = hdrGold.copy(alpha = 0.18f),
+                shape = RoundedCornerShape(4.dp),
+                border = BorderStroke(0.75.dp, hdrGold.copy(alpha = 0.65f))
+            ) {
+                Text(
+                    text = format.dynamicRange.uppercase(),
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = hdrGold
+                )
+            }
+        }
     }
 }
 

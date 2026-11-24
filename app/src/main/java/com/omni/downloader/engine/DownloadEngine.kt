@@ -48,17 +48,38 @@ object DownloadEngine {
     @Volatile
     private var initErrorMessage: String? = null
 
+    /** 检查运行目录关键组件是否仍在磁盘上（防止缓存清理后仅剩内存就绪标记） */
+    private fun hasRuntimeFiles(context: Context): Boolean {
+        val base = File(context.noBackupFilesDir, "youtubedl-android")
+        val ytdlp = File(base, "yt-dlp/yt-dlp")
+        val sitePackages = File(base, "packages/python/usr/lib/python3.12/site-packages")
+        val marker = File(sitePackages, ".omni-extras-sha256")
+        val script = File(sitePackages, "omni_media.py")
+        return ytdlp.isFile && marker.isFile && script.isFile
+    }
+
+    /** 清理运行目录后重置内存标记，触发下次按需自愈重建 */
+    fun invalidateRuntimeCache() {
+        isEngineReady = false
+        initErrorMessage = null
+        XGuardRuntime.reset()
+    }
+
     /**
      * 引擎初始化自检与损坏修复
      */
     suspend fun ensureInitialized(context: Context): Result<Unit> = withContext(Dispatchers.IO) {
-        if (isEngineReady) return@withContext Result.success(Unit)
+        val appContext = context.applicationContext
+        if (isEngineReady && hasRuntimeFiles(appContext)) return@withContext Result.success(Unit)
 
         initMutex.withLock {
-            if (isEngineReady) return@withContext Result.success(Unit)
+            if (isEngineReady && hasRuntimeFiles(appContext)) return@withContext Result.success(Unit)
+            if (isEngineReady) {
+                Log.w(TAG, "检测到运行目录关键文件缺失，执行自动自愈重建...")
+                invalidateRuntimeCache()
+            }
 
             try {
-                val appContext = context.applicationContext
                 Log.d(TAG, "正在启动引擎环境检查与初始化...")
 
                 // 检查若存在损坏的旧版解压残留，主动自愈
@@ -111,16 +132,26 @@ object DownloadEngine {
         if (context != null) {
             try {
                 val custom = com.omni.downloader.data.repository.SettingsRepository.getInstance(context).downloadPath.value
-                if (custom.isNotBlank()) {
+                if (custom.isNotBlank() && !custom.startsWith("content://") && !custom.startsWith("file://")) {
                     val dir = File(custom)
-                    if (dir.exists() || dir.mkdirs()) {
+                    if ((dir.exists() && dir.isDirectory) || dir.mkdirs()) {
                         return dir
                     }
                 }
             } catch (ignored: Exception) {}
         }
         val publicDownload = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        return File(publicDownload, "OmniDownloader")
+        val defaultDir = File(publicDownload, "OmniDownloader")
+        if ((defaultDir.exists() && defaultDir.isDirectory) || defaultDir.mkdirs()) {
+            return defaultDir
+        }
+        if (context != null) {
+            val base = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir
+            val fallbackDir = File(base, "OmniDownloader")
+            SafeFiles.ensureDir(fallbackDir)
+            return fallbackDir
+        }
+        return defaultDir
     }
 
     /**
@@ -343,19 +374,19 @@ object DownloadEngine {
                 else -> "jpg"
             }
 
-            val cleanTitle = title.replace(Regex("""[\\/:*?"<>|]"""), "_").trim().ifBlank { "Cover_${System.currentTimeMillis()}" }
-            val truncatedTitle = if (cleanTitle.length > 50) cleanTitle.take(50) else cleanTitle
+            SafeFiles.ensureDir(publicDir)
+            val cleanTitle = SafeFiles.sanitizeFileName(title, "Cover_${System.currentTimeMillis()}", 160)
 
-            var destFile = File(publicDir, "${truncatedTitle}_cover.$ext")
+            var destFile = File(publicDir, "${cleanTitle}_cover.$ext")
             var counter = 1
             while (destFile.exists()) {
-                destFile = File(publicDir, "${truncatedTitle}_cover_$counter.$ext")
+                destFile = File(publicDir, "${cleanTitle}_cover_$counter.$ext")
                 counter++
             }
 
             onProgressUpdate?.invoke(50f, "", "正在保存图片...", TaskStatus.DOWNLOADING)
 
-            FileOutputStream(destFile).use { output ->
+            SafeFiles.openOutputStream(destFile).use { output ->
                 body.byteStream().use { input ->
                     input.copyTo(output)
                 }
@@ -402,9 +433,14 @@ object DownloadEngine {
         }
         staged.fold(onSuccess = { path ->
             try {
-                val source = if (task.downloadType == DownloadType.GIF) {
+                var source = if (task.downloadType == DownloadType.GIF) {
                     prepareGifOutput(context, File(path))
                 } else File(path)
+                if (task.downloadType in setOf(DownloadType.VIDEO_WITH_AUDIO, DownloadType.VIDEO_ONLY) && GifInspector.inspect(source) != null) {
+                    val video = File(source.parentFile, "gif-encoded-${task.id}.mp4")
+                    FFmpegExecutor.gifToMp4(context, source, video).getOrThrow()
+                    source = video
+                }
                 MediaVerifier.verifyTask(source, task, context)?.let {
                     if (task.downloadType == DownloadType.GIF) ready.delete()
                     error(it)
@@ -663,7 +699,7 @@ object DownloadEngine {
                     snapshot = MetadataSnapshots.get(context, cleanUrl, site, proxyUrl, task.mediaId)
                 }
                 check(snapshot != null) { "[MEDIA_ID_MISMATCH] 原媒体已不可定位，请重新解析并选择同一作品" }
-                snapshotFile = File.createTempFile("media-info-", ".json", context.cacheDir).apply { writeText(snapshot) }
+                snapshotFile = SafeFiles.createTempFile(SafeFiles.ensureCacheDir(context), "media-info-", ".json").apply { writeText(snapshot) }
             }
             val plan = planForTask(task)
             val request = YtDlpOptionsFactory.downloadRequest(
@@ -737,10 +773,12 @@ object DownloadEngine {
 
                     val safeFile = safeStagingDir.listFiles()?.filter { it.isFile && it.length() > 0 }?.maxByOrNull { it.lastModified() }
                     if (safeFile != null) {
-                        val cleanTitle = task.title.replace(Regex("""[\\/:*?"<>|]"""), "_").trim().ifBlank { "video_${System.currentTimeMillis()}" }
-                        val safeFinal = File(publicDir, "${cleanTitle.take(60)}.${safeFile.extension}")
-                        safeFile.copyTo(safeFinal, overwrite = true)
-                        safeFile.delete()
+                        val cleanTitle = SafeFiles.sanitizeFileName(task.title, "video_${System.currentTimeMillis()}")
+                        val safeFinal = File(publicDir, "$cleanTitle.${safeFile.extension}")
+                        SafeFiles.safeCopy(safeFile, safeFinal, overwrite = true)
+                        if (safeFile.canonicalFile != safeFinal.canonicalFile) {
+                            safeFile.delete()
+                        }
                         try {
                             android.media.MediaScannerConnection.scanFile(context, arrayOf(safeFinal.absolutePath), null, null)
                         } catch (ignored: Exception) {}
@@ -764,31 +802,14 @@ object DownloadEngine {
             val finalFile = if (stagedFile != null && stagedFile.exists()) {
                 if (task.downloadType == DownloadType.GIF) {
                     onProgressUpdate(95f, "", "正在转换为 GIF 动图 (FFmpeg)...", TaskStatus.PROCESSING)
-                    val baseName = stagedFile.nameWithoutExtension
-                    val cleanBase = if (baseName.length > 60) baseName.take(60) else baseName
-                    val destGif = File(publicDir, "$cleanBase.gif")
-
-                    val isNativeGif = GifInspector.inspect(stagedFile) != null
-                    if (isNativeGif) {
-                        Log.d(TAG, "源文件本身即为标准 GIF 动图，执行直通转存: ${stagedFile.name}")
-                        stagedFile.copyTo(destGif, overwrite = true)
-                        stagedFile.delete()
-                        destGif
-                    } else {
-                        val gifRes = FFmpegExecutor.convertToGif(context, stagedFile, destGif)
-                        if (gifRes.isSuccess && destGif.exists() && destGif.length() > 0) {
-                            stagedFile.delete()
-                            destGif
-                        } else {
-                            destGif.delete()
-                            throw IOException("[POSTPROCESS_FAILED] GIF 转换失败，请重试；未生成 GIF 成品", gifRes.exceptionOrNull())
-                        }
-                    }
+                    prepareGifOutput(context, stagedFile)
                 } else {
                     val dest = File(publicDir, stagedFile.name)
                     try {
-                        stagedFile.copyTo(dest, overwrite = true)
-                        stagedFile.delete()
+                        SafeFiles.safeCopy(stagedFile, dest, overwrite = true)
+                        if (stagedFile.canonicalFile != dest.canonicalFile) {
+                            stagedFile.delete()
+                        }
                         dest
                     } catch (e: Exception) {
                         Log.w(TAG, "转移到公开目录失败，保留暂存文件: ${e.message}")
@@ -1296,6 +1317,7 @@ object DownloadEngine {
                 }
                 try { TransferPolicy.validateResume(existingBytes, resume.getOrNull(1), validator, responseCode) }
                 catch (error: IOException) { tempFile.delete(); resumeFile.delete(); throw error }
+                SafeFiles.ensureDir(resumeFile.parentFile)
                 resumeFile.writeText("$sourceKey\n$validator")
 
                 var downloadedBytes = if (appendMode) existingBytes else 0L
@@ -1310,7 +1332,7 @@ object DownloadEngine {
                 )
 
                 body.byteStream().use { input ->
-                    FileOutputStream(tempFile, appendMode).use { output ->
+                    SafeFiles.openOutputStream(tempFile, appendMode).use { output ->
                         val buffer = ByteArray(64 * 1024)
                         var read: Int
                         while (input.read(buffer).also { read = it } != -1) {
@@ -1439,8 +1461,9 @@ object DownloadEngine {
             DownloadType.GIF -> "gif"
             else -> "mp4"
         }
-        val title = task.title.replace(Regex("""[\\/:*?"<>|]"""), "_").trim()
-            .ifBlank { "OmniVideo_${task.id}" }.take(60)
+        SafeFiles.ensureDir(stagingDir)
+        SafeFiles.ensureDir(publicDir)
+        val title = SafeFiles.sanitizeFileName(task.title, "OmniVideo_${task.id}")
         val processed = File(stagingDir, "processed_${task.id}.$ext")
         var destination = File(publicDir, "$title.$ext")
         var counter = 1
@@ -1449,7 +1472,8 @@ object DownloadEngine {
         try {
             if (cancelledTaskIds.contains(task.id)) throw IOException("下载已取消")
             onProgressUpdate(95f, "", "正在处理并保存媒体...", TaskStatus.PROCESSING)
-            val conversion = when (task.downloadType) {
+            val encodeGifVideo = task.downloadType in setOf(DownloadType.VIDEO_WITH_AUDIO, DownloadType.VIDEO_ONLY) && GifInspector.inspect(source) != null
+            val conversion = if (encodeGifVideo) FFmpegExecutor.gifToMp4(context, source, processed) else when (task.downloadType) {
                 DownloadType.AUDIO_ONLY -> FFmpegExecutor.extractAudio(context, source, processed, task.audioFormat.ext, forceEncode = true)
                 DownloadType.VIDEO_ONLY -> FFmpegExecutor.stripAudio(context, source, processed)
                 DownloadType.GIF -> FFmpegExecutor.convertToGif(context, source, processed)
@@ -1457,11 +1481,11 @@ object DownloadEngine {
             }
             conversion.getOrThrow()
             if (cancelledTaskIds.contains(task.id)) throw IOException("下载已取消")
-            val output = if (task.downloadType in setOf(DownloadType.AUDIO_ONLY, DownloadType.VIDEO_ONLY, DownloadType.GIF)) processed else source
+            val output = if (encodeGifVideo || task.downloadType in setOf(DownloadType.AUDIO_ONLY, DownloadType.VIDEO_ONLY, DownloadType.GIF)) processed else source
             if (!output.exists() || output.length() == 0L) throw IOException("媒体处理未生成有效文件")
             if (!destination.createNewFile()) throw IOException("目标文件已存在，请重试")
             ownsDestination = true
-            output.copyTo(destination, overwrite = true)
+            SafeFiles.safeCopy(output, destination, overwrite = true)
             try {
                 MediaScannerConnection.scanFile(context, arrayOf(destination.absolutePath), null, null)
             } catch (_: Exception) {}
@@ -1723,10 +1747,7 @@ object DownloadEngine {
      * 日志与 UI 都拿到 [CODE] 前缀，便于判断下一步动作。
      */
     private fun formatDetailedError(e: Throwable): String {
-        val root = getRootCause(e)
-        val raw = root.message ?: e.message ?: "未知异常"
-        val safe = LogSanitizer.sanitize(raw)
-        return MediaErrors.describe(MediaErrors.classify(safe), safe)
+        return MediaErrors.describe(e)
     }
 
     private fun planForTask(task: DownloadTask): YtDlpOptionsFactory.DownloadFormatPlan {

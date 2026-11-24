@@ -70,7 +70,8 @@ export function initPlatforms() {
   const chipEls = PLATFORMS.map(([name, color]) => {
     const chip = document.createElement('span');
     chip.className = 'platform-chip';
-    chip.innerHTML = `<span class="platform-chip__dot" style="background:${color}"></span><span>${escapeHtml(name)}</span>`;
+    chip._rawName = name;
+    chip.innerHTML = `<span class="platform-chip__dot" style="background:${color}"></span><span data-no-i18n>${escapeHtml(t(name))}</span>`;
     list.append(chip);
     return chip;
   });
@@ -78,13 +79,18 @@ export function initPlatforms() {
   const toggleBtn = document.createElement('button');
   toggleBtn.type = 'button';
   toggleBtn.className = 'platform-toggle-btn';
-  toggleBtn.setAttribute('aria-label', '展开或收起支持平台');
+  toggleBtn.setAttribute('aria-label', t('展开或收起支持平台'));
   toggleBtn.setAttribute('aria-expanded', 'false');
   toggleBtn.innerHTML = iconSvg('expand_more');
   list.append(toggleBtn);
 
   const applyPacking = () => {
-    chipEls.forEach((el) => el.classList.remove('is-extra'));
+    chipEls.forEach((el) => {
+      el.classList.remove('is-extra');
+      const labelEl = el.querySelector('span[data-no-i18n]');
+      if (labelEl) labelEl.textContent = t(el._rawName);
+    });
+    toggleBtn.setAttribute('aria-label', t('展开或收起支持平台'));
     const count = computeVisibleCount(list, chipEls);
     chipEls.forEach((el, idx) => {
       if (idx >= count) el.classList.add('is-extra');
@@ -126,7 +132,7 @@ export function initPlatforms() {
           if (!matched.length) {
             const empty = document.createElement('div');
             empty.className = 'caption';
-            empty.textContent = '未找到匹配的平台';
+            empty.textContent = t('未找到匹配的平台');
             rows.append(empty);
             return;
           }
@@ -142,7 +148,7 @@ export function initPlatforms() {
             const more = document.createElement('div');
             more.className = 'caption';
             more.style.padding = '8px 4px';
-            more.textContent = `仅展示前 300 项（共 ${matched.length} 项），请输入关键词缩小范围`;
+            more.textContent = t('仅展示前 300 项（共 %d 项），请输入关键词缩小范围', matched.length);
             frag.append(more);
           }
           rows.append(frag);
@@ -166,7 +172,7 @@ export async function checkApplicationUpdate(manual = false) {
       link.href = result.update.url;
       link.textContent = `${t('下载更新')} (${result.update.version})`;
       link.hidden = false;
-      toast(`发现新版 Web ${result.update.version}`, 'info', 8000);
+      toast(t('发现新版 Web %s', result.update.version), 'info', 8000);
     } else if (manual) {
       toast('当前已是最新 Web 版本', 'info');
     }

@@ -1,4 +1,6 @@
 /* Minimal API client: one place for fetch, JSON and error handling. */
+import { t } from './i18n.js';
+
 export class ApiError extends Error {
   constructor(message, status, detail) {
     super(message);
@@ -17,7 +19,7 @@ export async function api(path, options = {}) {
     response = await fetch(path, { ...options, headers });
   } catch (error) {
     if (error && error.name === 'AbortError') throw error;
-    throw new ApiError('无法连接到本地服务，请确认 OmniDownloader 正在运行。', 0, String(error));
+    throw new ApiError(t('无法连接到本地服务，请确认 OmniDownloader 正在运行。'), 0, String(error));
   }
 
   if (!response.ok) {
@@ -28,8 +30,8 @@ export async function api(path, options = {}) {
       if (Array.isArray(detail)) detail = detail.map((item) => item.msg || item).join('；');
     } catch (e) { /* non-JSON error body */ }
     const fallback = response.status === 404
-      ? '当前后端版本未提供该接口（HTTP 404）'
-      : `请求失败（HTTP ${response.status}）`;
+      ? t('当前后端版本未提供该接口（HTTP 404）')
+      : t('请求失败（HTTP %d）', response.status);
     throw new ApiError(detail || fallback, response.status, detail);
   }
 

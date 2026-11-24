@@ -5,7 +5,7 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>OmniDownloader.WinUI</RootNamespace>
     <AssemblyName>OmniDownloader_WinUI</AssemblyName>
-    <Version>1.7.60.0</Version>
+    <Version>1.7.65.0</Version>
     <Product>OmniDownloader</Product>
     <AssemblyTitle>OmniDownloader (WinUI 3)</AssemblyTitle>
     <ApplicationManifest>app.manifest</ApplicationManifest>

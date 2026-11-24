@@ -57,6 +57,7 @@ object SharedPython {
         val args = mutableListOf("$native/libpython.so", script.path, "--action", action, "--url", url, "--platform", platform, "--proxy", proxy)
         scope.cookieFile?.let { args += listOf("--cookies", it.path) }
         args += extra
+        val cacheDir = SafeFiles.ensureCacheDir(context)
         val builder = ProcessBuilder(args)
         builder.environment().apply {
             put("PYTHONHOME", home.path)
@@ -64,12 +65,12 @@ object SharedPython {
             put("LD_LIBRARY_PATH", "${home.path}/lib:${base.path}/packages/ffmpeg/usr/lib:${base.path}/packages/aria2c/usr/lib")
             put("SSL_CERT_FILE", "${home.path}/etc/tls/cert.pem")
             put("REQUESTS_CA_BUNDLE", "${home.path}/etc/tls/cert.pem")
-            put("TMPDIR", context.cacheDir.path)
+            put("TMPDIR", cacheDir.path)
             put("PYTHONIOENCODING", "utf-8")
             put("OMNI_PIXIV_GUARD_DIR",File(context.filesDir,"network_guard").path)
             put("OMNI_X_GUARD_DIR",File(context.filesDir,"network_guard").path)
         }
-        val stderr = File.createTempFile("resolver-", ".err", context.cacheDir)
+        val stderr = SafeFiles.createTempFile(cacheDir, "resolver-", ".err")
         var running:Running?=null
         var reader:Thread?=null
         suspend fun ensureRunning(){currentCoroutineContext().ensureActive();if(running?.cancelled?.get()==true)throw kotlinx.coroutines.CancellationException("解析已取消")}

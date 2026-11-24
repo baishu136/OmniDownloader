@@ -12,7 +12,8 @@ enum MediaArchive {
     private static func append(_ value:UInt32,_ bytes:Int,to data:inout Data){for i in 0..<bytes{data.append(UInt8(truncatingIfNeeded:value>>UInt32(i*8)))}}
     static func pack(_ files:[URL],to destination:URL)throws{
         guard !files.isEmpty,files.count<=2000 else{throw OmniPlatform.error("POSTPROCESS_FAILED","ZIP 文件数量不合法")}
-        FileManager.default.createFile(atPath:destination.path,contents:nil)
+        try FileManager.default.createDirectory(at:destination.deletingLastPathComponent(),withIntermediateDirectories:true)
+        guard FileManager.default.createFile(atPath:destination.path,contents:nil) else{throw OmniPlatform.error("EXPORT_FAILED","无法创建 ZIP 目标文件")}
         let handle=try FileHandle(forWritingTo:destination);defer{try? handle.close()}
         var central=Data(),offset:UInt32=0
         for(index,file)in files.enumerated(){

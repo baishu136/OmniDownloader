@@ -41,7 +41,7 @@ class GifAcceptanceTest {
 
     private val instrument get() = InstrumentationRegistry.getInstrumentation()
 
-    private fun roundTrip(asset: String, suffix: String, preserveBytes: Boolean): Unit = runBlocking {
+    private fun roundTrip(asset: String, suffix: String, preserveBytes: Boolean, kind: DownloadType = DownloadType.GIF): Unit = runBlocking {
         val context = instrument.targetContext
         val settings = SettingsRepository.getInstance(context)
         val oldPath = settings.downloadPath.value
@@ -64,7 +64,7 @@ class GifAcceptanceTest {
         }.apply { isDaemon = true; start() }
         val id = "gif-qa-${UUID.randomUUID()}"
         val task = DownloadTask(id, "http://127.0.0.1:${server.localPort}/source.$suffix", "GIF QA $id",
-            downloadType = DownloadType.GIF, directMediaUrl = "http://127.0.0.1:${server.localPort}/source.$suffix")
+            downloadType = kind, directMediaUrl = "http://127.0.0.1:${server.localPort}/source.$suffix")
         val copy = File(context.cacheDir, "$id.gif")
         var saved: Uri? = null
         try {
@@ -72,6 +72,20 @@ class GifAcceptanceTest {
             settings.setDownloadPath("")
             val result = DownloadEngine.executeDownload(context, task) { _, _, _, _ -> }.getOrThrow()
             saved = Uri.parse(result)
+            if (kind != DownloadType.GIF) {
+                assertEquals("video/mp4", context.contentResolver.getType(saved!!))
+                context.contentResolver.openInputStream(saved!!)!!.use { input -> copy.outputStream().use { input.copyTo(it) } }
+                val prefix = copy.readBytes().take(12).toByteArray()
+                assertEquals("ftyp", prefix.copyOfRange(4, 8).toString(Charsets.US_ASCII))
+                assertNull(GifInspector.inspect(copy))
+                val mp4 = File(context.cacheDir, "$id.mp4")
+                try {
+                    copy.copyTo(mp4, overwrite = true)
+                    val decoded = MediaVerifier.probeWithFallback(context, mp4)!!
+                    assertTrue(decoded.width > 0 && decoded.height > 0 && decoded.durationMs > 0)
+                } finally { mp4.delete() }
+                return@runBlocking
+            }
             assertEquals("image/gif", context.contentResolver.getType(saved!!))
             context.contentResolver.openInputStream(saved!!)!!.use { input -> copy.outputStream().use { input.copyTo(it) } }
             assertNull(MediaVerifier.verifyTask(copy, task, context))
@@ -106,9 +120,25 @@ class GifAcceptanceTest {
         }
     }
 
+    @Test fun nativeGifDownloadsAsRealMp4Video() = roundTrip("animated.gif", "gif", false, DownloadType.VIDEO_WITH_AUDIO)
+    @Test fun nativeGifDownloadsAsRealSilentMp4() = roundTrip("animated.gif", "gif", false, DownloadType.VIDEO_ONLY)
+
     @Test fun nativeSmallAnimatedGifDownloadsWithoutLosingFrames() = roundTrip("animated.gif", "gif", true)
     @Test fun downloadedVideoBecomesARealPlayableGif() = roundTrip("quality-1080.mp4", "mp4", false)
     @Test fun videoWithGifExtensionIsConvertedInsteadOfBlindlyCopied() = roundTrip("quality-1080.mp4", "gif", false)
+
+    @Test fun inPlaceVideoWithGifNameKeepsItsSourceUntilConversionSucceeds(): Unit = runBlocking {
+        val context = instrument.targetContext
+        DownloadEngine.ensureInitialized(context).getOrThrow()
+        val file = File.createTempFile("gif-in-place-", ".gif", context.cacheDir)
+        try {
+            file.writeBytes(instrument.context.assets.open("quality-1080.mp4").use { it.readBytes() })
+            assertNull(GifInspector.inspect(file))
+            FFmpegExecutor.convertToGif(context, file, file).getOrThrow()
+            assertNull(MediaVerifier.verifyGif(file))
+            assertTrue(GifInspector.inspect(file)!!.frames > 1)
+        } finally { file.delete() }
+    }
 
     @Test fun truncatedGifAndRenamedVideoAreRejectedBeforeExport(): Unit = runBlocking {
         val context = instrument.targetContext

@@ -17,6 +17,14 @@ class BrowserIdentityTest {
         assertTrue(result.contains("Windows NT 10.0; Win64; x64"))
         for (marker in listOf("Android", "Mobile", "wv", "Version/4.0")) assertFalse(result.contains(marker))
     }
+    @Test fun mobileAgentRemovesWebViewMarkerAndKeepsAndroidChrome() {
+        val result = BrowserIdentity.mobileUserAgent("Mozilla/5.0 (Linux; Android 15; V2352A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/145.0.7620.41 Mobile Safari/537.36")
+        assertTrue(result.contains("Android"))
+        assertTrue(result.contains("Mobile"))
+        assertTrue(result.contains("Chrome/145.0.7620.41"))
+        assertFalse(result.contains("; wv"))
+        assertFalse(result.contains("Version/4.0"))
+    }
     @Test fun websitePolicyUsesHostBoundaries() {
         assertTrue(BrowserIdentity.prefersDesktopUrl("https://www.xiaohongshu.com/explore"))
         assertTrue(BrowserIdentity.prefersDesktopUrl("https://passport.kuaishou.com/login"))
@@ -27,6 +35,27 @@ class BrowserIdentityTest {
         assertFalse(BrowserIdentity.prefersDesktopUrl("https://example.invalid/?next=https://douyin.com"))
         assertFalse(BrowserIdentity.prefersDesktopUrl("https://www.youtube.com/"))
         assertFalse(BrowserIdentity.prefersDesktop("YouTube"))
+        assertFalse(BrowserIdentity.prefersDesktop("Instagram"))
+    }
+    @Test fun facebookInstagramAndWeiboLoginConfigsAvoidKnownErrorRoutes() {
+        assertEquals("https://www.facebook.com/", loginConfigFor("Facebook").startUrl)
+        assertEquals("https://www.instagram.com/accounts/login/", loginConfigFor("Instagram").startUrl)
+        assertEquals("https://weibo.com/", loginConfigFor("微博").startUrl)
+    }
+    @Test fun httpErrorAndRawJsonRecoverySwitchToSafeFallbackOnce() {
+        assertEquals(
+            "https://www.instagram.com/",
+            LoginPageRecovery.httpErrorFallbackUrl("Instagram", "https://www.instagram.com/accounts/login/", 400, 0)
+        )
+        assertNull(LoginPageRecovery.httpErrorFallbackUrl("Instagram", "https://www.instagram.com/accounts/login/", 400, 1))
+        val kuaishouJson = """{"result":2,"error_msg":null,"request_id":"795476988331238723"}"""
+        assertTrue(LoginPageRecovery.looksLikeRawErrorJsonPayload(kuaishouJson))
+        assertEquals(
+            LoginPageRecovery.KUAISHOU_PASSPORT_URL,
+            LoginPageRecovery.jsonPayloadFallbackUrl("快手", "https://www.kuaishou.com/new-reco", kuaishouJson, 0)
+        )
+        assertNull(LoginPageRecovery.jsonPayloadFallbackUrl("快手", "https://www.kuaishou.com/new-reco", kuaishouJson, 1))
+        assertFalse(LoginPageRecovery.looksLikeRawErrorJsonPayload("<html><body>Login</body></html>"))
     }
     @Test fun domesticLoginNeverDismissesForAnonymousOrOldCookies() {
         for (platform in listOf("小红书", "抖音", "快手")) {

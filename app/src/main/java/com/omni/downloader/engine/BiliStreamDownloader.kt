@@ -52,7 +52,7 @@ internal class BiliStreamDownloader(client: OkHttpClient, private val chunkBytes
         val sources = BiliStreamUrls.ordered(primary, backups)
         for (url in sources) {
             destination.delete()
-            val working = File.createTempFile("bili-stream-", ".part", destination.parentFile)
+            val working = SafeFiles.createTempFile(destination.parentFile, "bili-stream-", ".part")
             try {
                 var offset = 0L; var total = -1L; var validator: String? = null
                 var lastAt = System.nanoTime(); var lastBytes = 0L

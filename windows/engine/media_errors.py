@@ -23,6 +23,10 @@ def code(text):
         (('requested format',), 'QUALITY_UNAVAILABLE'),
         (('timeout', 'timed out', 'connection', 'proxy', 'unexpected_eof', 'unexpected eof', 'eof occurred', 'server disconnected'), 'NETWORK_ERROR'),
         (('deleted', 'unavailable', '404'), 'CONTENT_UNAVAILABLE'),
+        (('open failed: enoent', 'no such file or directory', 'filenotfounderror', 'enoent',
+          'winerror 2', 'winerror 3', 'winerror 5', 'winerror 32', 'winerror 112', 'winerror 206',
+          'no space left on device', 'enospc', 'permission denied', 'read-only file system', 'file name too long',
+          '系统找不到指定', '拒绝访问', '磁盘空间不足', '文件名或扩展名太长'), 'EXPORT_FAILED'),
     ]:
         if any(n in lower for n in needles):
             return value

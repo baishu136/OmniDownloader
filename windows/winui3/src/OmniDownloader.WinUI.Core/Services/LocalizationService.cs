@@ -103,7 +103,7 @@ public sealed partial class LocalizationService : ObservableObject
     public string NavSettings => T("设置");
     public string NavHelp => T("使用帮助");
     public string HomePlaceholder => T("粘贴视频链接或分享文本...");
-    public string BtnPasteAnalyze => T("粘贴剪贴板");
+    public string BtnPasteAnalyze => T("解析剪切板");
     public string BtnAnalyze => T("立即解析");
     public string BtnAnalyzing => T("解析中...");
     public string BrowserAssistTitle => T("浏览器辅助提取");

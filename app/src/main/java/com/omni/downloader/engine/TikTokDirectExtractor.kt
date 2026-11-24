@@ -203,10 +203,17 @@ object TikTokDirectExtractor {
             return@withContext Result.failure(Exception("未找到有效的 TikTok 下载地址"))
         }
 
-        val cleanTitle = task.title.replace(Regex("""[\\/:*?"<>|]"""), "_").trim()
+        val cleanTitle = SafeFiles.sanitizeFileName(task.title, "TikTok_${task.id}")
         val ext = if (isAudio) "mp3" else "mp4"
+        SafeFiles.ensureDir(stagingDir)
+        SafeFiles.ensureDir(publicDir)
         val tempFile = File(stagingDir, "tiktok_${task.id}.$ext")
-        val finalFile = File(publicDir, "$cleanTitle.$ext")
+        var finalFile = File(publicDir, "$cleanTitle.$ext")
+        var counter = 1
+        while (finalFile.exists()) {
+            finalFile = File(publicDir, "${cleanTitle}_$counter.$ext")
+            counter++
+        }
 
         try {
             onProgressUpdate(5f, "", "准备极速下载...", TaskStatus.DOWNLOADING)
@@ -232,7 +239,7 @@ object TikTokDirectExtractor {
             var bytesSinceLastReport = 0L
 
             body.byteStream().use { input ->
-                FileOutputStream(tempFile).use { output ->
+                SafeFiles.openOutputStream(tempFile).use { output ->
                     val buffer = ByteArray(64 * 1024)
                     var read: Int
                     while (input.read(buffer).also { read = it } != -1) {
@@ -265,8 +272,10 @@ object TikTokDirectExtractor {
             }
 
             onProgressUpdate(99f, "", "正在保存到媒体库...", TaskStatus.PROCESSING)
-            tempFile.copyTo(finalFile, overwrite = true)
-            tempFile.delete()
+            SafeFiles.safeCopy(tempFile, finalFile, overwrite = true)
+            if (tempFile.canonicalFile != finalFile.canonicalFile) {
+                tempFile.delete()
+            }
 
             try {
                 android.media.MediaScannerConnection.scanFile(context, arrayOf(finalFile.absolutePath), null, null)

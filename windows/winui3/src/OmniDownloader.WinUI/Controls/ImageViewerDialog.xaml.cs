@@ -23,7 +23,7 @@ public sealed partial class ImageViewerDialog : ContentDialog
         _post = post;
         _index = Math.Clamp(startIndex, 0, Math.Max(0, post.Resources.Count - 1));
         InitializeComponent();
-        Title = string.IsNullOrWhiteSpace(post.Title) ? "图片预览" : post.Title;
+        Title = string.IsNullOrWhiteSpace(post.Title) ? _services.Loc.T("图片预览") : post.Title;
         _ = LoadCurrentAsync();
     }
 

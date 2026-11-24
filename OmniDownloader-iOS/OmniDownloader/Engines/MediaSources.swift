@@ -8,7 +8,7 @@ struct PostImageResource: Identifiable, Codable, Equatable {
     var height: Int = 0
     var original: Bool = true
     var animated: Bool = false
-    var label: String { width>0 && height>0 ? "\(width)×\(height)" : "尺寸未知" }
+    var label: String { width>0 && height>0 ? "\(width)×\(height)" : OmniLocalization.text("尺寸未知") }
 }
 struct ImagePost: Identifiable, Codable {
     var id: String { platform + ":" + contentId }
@@ -145,8 +145,8 @@ enum DouyinQuality {
         var result=native
         result.availableVideoFormats=MediaQuality.sorted(page.availableVideoFormats+native.availableVideoFormats)
         if (page.referenceWidth ?? 0)*(page.referenceHeight ?? 0)>(native.referenceWidth ?? 0)*(native.referenceHeight ?? 0){result.referenceWidth=page.referenceWidth;result.referenceHeight=page.referenceHeight}
-        result.qualityEvidence="已合并同一作品的网页源与原生源，下载后核对实际尺寸。"
-        if needsPage(result){result.qualityWarning="已保留当前可用源；更高画质尚未确认，本次结果不代表上传原片。"}
+        result.qualityEvidence=OmniLocalization.text("已合并同一作品的网页源与原生源，下载后核对实际尺寸。")
+        if needsPage(result){result.qualityWarning=OmniLocalization.text("已保留当前可用源；更高画质尚未确认，本次结果不代表上传原片。")}
         return result
     }
 }
@@ -183,11 +183,11 @@ enum MediaResolver {
             let post=try await ImagePostEngine.analyze(url)
             if post.frameArchive==nil{throw MediaRouting.images(post)}
             let first=post.resources.first
-            var value=VideoMetadata(url:url,title:post.title,author:post.author,thumbnailUrl:first?.url ?? "",siteName:site,isGif:true,availableVideoFormats:[FormatOption(formatId:"ugoira",resolutionLabel:"原始帧动画",width:first?.width ?? 0,height:first?.height ?? 0)],mediaId:post.contentId,expectedDurationMs:Int64(post.frameDelays?.reduce(0,+) ?? 0))
+            var value=VideoMetadata(url:url,title:post.title,author:post.author,thumbnailUrl:first?.url ?? "",siteName:site,isGif:true,availableVideoFormats:[FormatOption(formatId:"ugoira",resolutionLabel:OmniLocalization.text("原始帧动画"),width:first?.width ?? 0,height:first?.height ?? 0)],mediaId:post.contentId,expectedDurationMs:Int64(post.frameDelays?.reduce(0,+) ?? 0))
             value.sourceScope=post.sourceScope;MediaSources.shared.remember(value);return value
         }
         if let source=URL(string:url),["mp4","webm","m4v","mov","m3u8"].contains(source.pathExtension.lowercased()){
-            let format=FormatOption(formatId:url,resolutionLabel:"源视频（尺寸未知）",ext:source.pathExtension.lowercased(),sourceUrl:url)
+            let format=FormatOption(formatId:url,resolutionLabel:OmniLocalization.text("源视频（尺寸未知）"),ext:source.pathExtension.lowercased(),sourceUrl:url)
             let value=VideoMetadata(url:url,title:source.deletingPathExtension().lastPathComponent,siteName:site,availableVideoFormats:[format],mediaId:source.path)
             MediaSources.shared.remember(value);return value
         }

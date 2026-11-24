@@ -71,7 +71,7 @@ public sealed partial class RecentTaskItem : ObservableObject
     public void UpdateFrom(DownloadTask task)
     {
         _task = task;
-        Title = string.IsNullOrWhiteSpace(task.Title) ? "下载任务" : task.Title;
+        Title = string.IsNullOrWhiteSpace(task.Title) ? AppServices.Current.Loc.T("下载任务") : task.Title;
         ThumbnailUrl = task.ThumbnailUrl ?? string.Empty;
         TypeBadge = AppServices.Current.Loc.T(OmniDomainLogic.TypeLabelKey(task.DownloadType));
         StatusBadge = AppServices.Current.Loc.T(OmniDomainLogic.StatusLabelKey(task.Status));
@@ -148,6 +148,7 @@ public sealed partial class HomeViewModel : ObservableObject
     public bool HasVideoMetadata => CurrentVideoMetadata is not null;
     public bool HasImagePost => CurrentImagePost is not null;
     public bool HasRecentTasks => RecentTasks.Count > 0;
+    public bool ShowRecentTasksSection => _services.LocalState.Current.ShowRecentTasksOnHome && RecentTasks.Count > 0;
     public bool HasRelaySites => QuickRelaySites.Count > 0;
     public bool HasMixedImageSources => CurrentImagePost?.Resources.Any(r => !r.Original) == true;
     public int SelectedImagesCount => ImageItems.Count(i => i.IsSelected);
@@ -158,7 +159,7 @@ public sealed partial class HomeViewModel : ObservableObject
         ? _services.Loc.T("正在下载的任务 (%d)", RecentTasks.Count(r => r.Task.IsActive))
         : _services.Loc.T("最近任务");
 
-    public event EventHandler<VideoMetadata>? VideoAnalyzedOpenDialogRequested;
+    public event EventHandler<VideoMetadata>? VideoAnalyzedOptionsRequested;
     public event EventHandler<string>? BuiltInBrowserAssistRequested;
     public event EventHandler<(ImagePost Post, int StartIndex)>? ImageViewerRequested;
 
@@ -218,7 +219,13 @@ public sealed partial class HomeViewModel : ObservableObject
             foreach (var t in shown) RecentTasks.Add(new RecentTaskItem(t));
             OnPropertyChanged(nameof(HasRecentTasks));
         }
+        OnPropertyChanged(nameof(ShowRecentTasksSection));
         OnPropertyChanged(nameof(RecentSectionHeading));
+    }
+
+    public void RefreshRecentTasksVisibility()
+    {
+        OnPropertyChanged(nameof(ShowRecentTasksSection));
     }
 
     public void RefreshImageSelectionCount()
@@ -294,7 +301,7 @@ public sealed partial class HomeViewModel : ObservableObject
             {
                 ClearImagePost();
                 CurrentVideoMetadata = video;
-                VideoAnalyzedOpenDialogRequested?.Invoke(this, video);
+                VideoAnalyzedOptionsRequested?.Invoke(this, video);
             }
         }
         catch (OperationCanceledException)
@@ -318,14 +325,6 @@ public sealed partial class HomeViewModel : ObservableObject
         InputUrl = url;
         _main.NavigateTo("home");
         _ = AnalyzeOrCancelAsync();
-    }
-
-    public void OpenResumeVideoDialog()
-    {
-        if (CurrentVideoMetadata is not null)
-        {
-            VideoAnalyzedOpenDialogRequested?.Invoke(this, CurrentVideoMetadata);
-        }
     }
 
     public void LoadImagePost(ImagePost post)
@@ -375,20 +374,20 @@ public sealed partial class HomeViewModel : ObservableObject
             lower.Contains("captcha") || lower.Contains("challenge"))
         {
             AnalyzeErrorTitle = _services.Loc.T("需要登录或 Cookie 已失效");
-            AnalyzeErrorHint = string.IsNullOrWhiteSpace(raw) ? "请在「设置 → 账号」中导入会话或 Cookie 后重试。" : raw;
+            AnalyzeErrorHint = string.IsNullOrWhiteSpace(raw) ? _services.Loc.T("请在「设置 → 账号」中导入会话或 Cookie 后重试。") : raw;
             AnalyzeErrorAction = "accounts";
         }
         else if (lower.Contains("network") || lower.Contains("timeout") || lower.Contains("connection") ||
                  lower.Contains("网络") || lower.Contains("连接") || lower.Contains("dns"))
         {
             AnalyzeErrorTitle = _services.Loc.T("网络连接失败");
-            AnalyzeErrorHint = string.IsNullOrWhiteSpace(raw) ? "请检查网络或代理设置后重试。" : raw;
+            AnalyzeErrorHint = string.IsNullOrWhiteSpace(raw) ? _services.Loc.T("请检查网络或代理设置后重试。") : raw;
             AnalyzeErrorAction = "network";
         }
         else
         {
             AnalyzeErrorTitle = _services.Loc.T("解析未能成功");
-            AnalyzeErrorHint = string.IsNullOrWhiteSpace(raw) ? "请确认链接来自受支持的平台，或尝试复制完整的分享文本。" : raw;
+            AnalyzeErrorHint = string.IsNullOrWhiteSpace(raw) ? _services.Loc.T("请确认链接来自受支持的平台，或尝试复制完整的分享文本。") : raw;
             AnalyzeErrorAction = "detail";
         }
 
@@ -491,7 +490,7 @@ public sealed partial class HomeViewModel : ObservableObject
         try
         {
             await _services.ApiClient.SubmitDownloadTasksAsync(tasks);
-            _main.Notify($"已加入 {tasks.Count} 个下载任务", InfoBarSeverity.Success);
+            _main.Notify("已加入 %d 个下载任务", InfoBarSeverity.Success, tasks.Count);
             await _main.RefreshTasksAsync();
             _main.NavigateTo("tasks");
         }
@@ -543,7 +542,7 @@ public sealed partial class HomeViewModel : ObservableObject
     public async Task ConfirmAndDownloadAssistVideoAsync(BrowserAssistCandidate source)
     {
         var host = Uri.TryCreate(source.Url, UriKind.Absolute, out var uri) ? uri.Host : source.Url;
-        var title = string.IsNullOrWhiteSpace(source.Title) ? "已播放媒体" : source.Title;
+        var title = string.IsNullOrWhiteSpace(source.Title) ? _services.Loc.T("已播放媒体") : source.Title;
         var ok = await _services.Dialogs.ConfirmAsync(
             _services.Loc.T("保存已播放媒体"),
             $"{title}\n{source.Width}×{source.Height} · {host}",
@@ -589,7 +588,7 @@ public sealed partial class HomeViewModel : ObservableObject
         {
             var ok = await _services.Dialogs.ConfirmAsync(
                 _services.Loc.T("第三方网页使用须知"),
-                "您即将访问用户自行添加的第三方网站。第三方网站可能包含广告或受限于防盗链机制；点击继续后将自动复制当前待解析链接。",
+                _services.Loc.T("您即将访问用户自行添加的第三方网站。第三方网站可能包含广告或受限于防盗链机制；点击继续后将自动复制当前待解析链接。"),
                 _services.Loc.T("我已知晓并继续"),
                 _services.Loc.T("取消"));
             if (!ok) return;

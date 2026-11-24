@@ -107,16 +107,59 @@ object MediaErrors {
                 "merge", "merging", "postprocess", "conversion", "转码", "合并"
             ) -> MediaErrorCode.POSTPROCESS_FAILED
 
+            text.containsAny(
+                "open failed: enoent", "no such file or directory", "enoent",
+                "enametoolong", "file name too long", "eacces", "permission denied",
+                "erofs", "read-only file system", "enospc", "no space left on device",
+                "没有那个文件或目录", "磁盘空间不足", "文件名过长", "权限不足"
+            ) -> MediaErrorCode.EXPORT_FAILED
+
             else -> MediaErrorCode.UNKNOWN
         }
     }
 
-    fun codeOf(error: Throwable): MediaErrorCode {
-        var cause: Throwable? = error
-        while (cause?.cause != null && cause.cause !== cause) {
-            cause = cause.cause
+    internal fun collectMessages(error: Throwable): List<String> {
+        val seen = LinkedHashSet<Throwable>()
+        val messages = mutableListOf<String>()
+        var current: Throwable? = error
+        var depth = 0
+        while (current != null && seen.add(current) && depth < 10) {
+            current.message?.trim()?.takeIf { it.isNotEmpty() }?.let { msg ->
+                if (messages.lastOrNull() != msg) {
+                    messages.add(msg)
+                }
+            }
+            current = current.cause
+            depth++
         }
-        return classify(cause?.message ?: error.message ?: "")
+        return messages
+    }
+
+    fun codeOf(error: Throwable): MediaErrorCode {
+        val messages = collectMessages(error)
+        for (msg in messages.asReversed()) {
+            val classified = classify(msg)
+            if (classified != MediaErrorCode.UNKNOWN) {
+                return classified
+            }
+        }
+        return MediaErrorCode.UNKNOWN
+    }
+
+    internal fun extractDetail(error: Throwable): String {
+        val messages = collectMessages(error)
+        if (messages.isEmpty()) return error.javaClass.simpleName.ifBlank { "未知异常" }
+        val outer = messages.first()
+        val root = messages.last()
+        if (root == outer || outer.contains(root)) return outer
+        if (
+            root.startsWith("open failed:", ignoreCase = true) ||
+            root.startsWith("read failed:", ignoreCase = true) ||
+            root.startsWith("write failed:", ignoreCase = true)
+        ) {
+            return "$outer ($root)"
+        }
+        return root
     }
 
     /** 面向用户的单行错误，保留稳定错误码便于客服与诊断。 */
@@ -129,7 +172,7 @@ object MediaErrors {
         }
     }
 
-    fun describe(error: Throwable): String = describe(codeOf(error), error.message)
+    fun describe(error: Throwable): String = describe(codeOf(error), extractDetail(error))
 
     private fun String.containsAny(vararg needles: String): Boolean =
         needles.any { this.contains(it) }

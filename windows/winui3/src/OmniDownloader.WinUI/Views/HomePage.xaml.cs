@@ -15,7 +15,7 @@ using Windows.UI;
 namespace OmniDownloader.WinUI.Views;
 
 /// <summary>
-/// 首页视图：链接解析、格式弹窗调起、图文网格多选、原生看图及内置浏览器辅助调起
+/// 首页视图：链接解析、页内格式选择、图文网格多选、原生看图及内置浏览器辅助调起
 /// </summary>
 public sealed partial class HomePage : Page
 {
@@ -35,7 +35,14 @@ public sealed partial class HomePage : Page
         AttachVmEvents();
     }
 
-    private void HomePage_Loaded(object sender, RoutedEventArgs e) => AttachVmEvents();
+    private void HomePage_Loaded(object sender, RoutedEventArgs e)
+    {
+        AttachVmEvents();
+        Localized.RefreshTree(this);
+        try { Bindings.Update(); } catch { }
+
+        if (Vm.CurrentVideoMetadata is not null) ShowVideoOptions(Vm.CurrentVideoMetadata);
+    }
 
     private void HomePage_Unloaded(object sender, RoutedEventArgs e) => DetachVmEvents();
 
@@ -43,18 +50,28 @@ public sealed partial class HomePage : Page
     {
         if (_vmEventsHooked) return;
         _vmEventsHooked = true;
-        Vm.VideoAnalyzedOpenDialogRequested += Vm_VideoAnalyzedOpenDialogRequested;
+        Vm.VideoAnalyzedOptionsRequested += Vm_VideoAnalyzedOptionsRequested;
+        Vm.PropertyChanged += Vm_PropertyChanged;
         Vm.BuiltInBrowserAssistRequested += Vm_BuiltInBrowserAssistRequested;
         Vm.ImageViewerRequested += Vm_ImageViewerRequested;
+        AppServices.Current.Loc.LanguageChanged += Loc_LanguageChanged;
     }
 
     private void DetachVmEvents()
     {
         if (!_vmEventsHooked) return;
         _vmEventsHooked = false;
-        Vm.VideoAnalyzedOpenDialogRequested -= Vm_VideoAnalyzedOpenDialogRequested;
+        Vm.VideoAnalyzedOptionsRequested -= Vm_VideoAnalyzedOptionsRequested;
+        Vm.PropertyChanged -= Vm_PropertyChanged;
         Vm.BuiltInBrowserAssistRequested -= Vm_BuiltInBrowserAssistRequested;
         Vm.ImageViewerRequested -= Vm_ImageViewerRequested;
+        AppServices.Current.Loc.LanguageChanged -= Loc_LanguageChanged;
+    }
+
+    private void Loc_LanguageChanged(object? sender, string e)
+    {
+        Localized.RefreshTree(this);
+        try { Bindings.Update(); } catch { }
     }
 
     private void Page_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -71,31 +88,21 @@ public sealed partial class HomePage : Page
 
         ContentContainer.Margin = narrow ? new Thickness(14, 10, 14, 24) : new Thickness(28, 18, 28, 32);
         HeroTitleText.FontSize = narrow ? 22 : 28;
+        Grid.SetColumnSpan(HeroTitlePanel, narrow ? 2 : 1);
 
         Grid.SetRow(HeroCatalogBtn, narrow ? 1 : 0);
         Grid.SetColumn(HeroCatalogBtn, narrow ? 0 : 1);
         HeroCatalogBtn.HorizontalAlignment = narrow ? HorizontalAlignment.Left : HorizontalAlignment.Right;
 
-        // 窄窗口时双主按钮垂直堆叠全宽展示，防止文字裁断
-        if (narrow)
+        if (narrow && w < 320)
         {
-            Grid.SetRow(PasteActionBtn, 0);
-            Grid.SetColumn(PasteActionBtn, 0);
-            Grid.SetColumnSpan(PasteActionBtn, 2);
-
-            Grid.SetRow(AnalyzeActionBtn, 1);
-            Grid.SetColumn(AnalyzeActionBtn, 0);
-            Grid.SetColumnSpan(AnalyzeActionBtn, 2);
+            AnalyzeActionBtn.Width = double.NaN;
+            AnalyzeActionBtn.HorizontalAlignment = HorizontalAlignment.Stretch;
         }
         else
         {
-            Grid.SetRow(PasteActionBtn, 0);
-            Grid.SetColumn(PasteActionBtn, 0);
-            Grid.SetColumnSpan(PasteActionBtn, 1);
-
-            Grid.SetRow(AnalyzeActionBtn, 0);
-            Grid.SetColumn(AnalyzeActionBtn, 1);
-            Grid.SetColumnSpan(AnalyzeActionBtn, 1);
+            AnalyzeActionBtn.Width = 190;
+            AnalyzeActionBtn.HorizontalAlignment = HorizontalAlignment.Right;
         }
     }
 
@@ -120,29 +127,37 @@ public sealed partial class HomePage : Page
         }
     }
 
-    private async void Vm_VideoAnalyzedOpenDialogRequested(object? sender, VideoMetadata metadata)
+    private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName == nameof(HomeViewModel.CurrentVideoMetadata) && Vm.CurrentVideoMetadata is null)
+            FormatOptionsHost.Content = null;
+    }
+
+    private void Vm_VideoAnalyzedOptionsRequested(object? sender, VideoMetadata metadata) => ShowVideoOptions(metadata);
+
+    private void ShowVideoOptions(VideoMetadata metadata)
+    {
+        if (FormatOptionsHost.Content is FormatSelectorPanel current && ReferenceEquals(current.Metadata, metadata)) return;
+        var panel = new FormatSelectorPanel(AppServices.Current, metadata);
+        panel.SubmitRequested += SubmitVideoTasks;
+        FormatOptionsHost.Content = panel;
+        NativeShellHelper.PlayFadeIn(FormatOptionsHost, durationMs: 170, fromOffsetY: 8);
+    }
+
+    private async void SubmitVideoTasks(FormatSelectorPanel panel, IReadOnlyList<CreateTaskItem> tasks)
     {
         try
         {
-            var dialog = new FormatSelectorDialog(AppServices.Current, metadata);
-            var result = await AppServices.Current.Dialogs.ShowCustomDialogAsync(dialog);
-
-            var tasks = dialog.SubmittedTasks;
-            if (tasks is null || tasks.Count == 0) return;
-
-            if (result == ContentDialogResult.Primary || result == ContentDialogResult.Secondary || result == ContentDialogResult.None)
-            {
-                await AppServices.Current.ApiClient.SubmitDownloadTasksAsync(tasks);
-                AppServices.Current.MainVm.Notify($"已加入 {tasks.Count} 个下载任务", InfoBarSeverity.Success);
-                await AppServices.Current.MainVm.RefreshTasksAsync();
-                AppServices.Current.MainVm.NavigateTo("tasks");
-            }
+            await AppServices.Current.ApiClient.SubmitDownloadTasksAsync(tasks);
+            AppServices.Current.MainVm.Notify("已加入 %d 个下载任务", InfoBarSeverity.Success, tasks.Count);
+            await AppServices.Current.MainVm.RefreshTasksAsync();
         }
         catch (Exception ex)
         {
-            AppServices.WriteCrashLog("HomePage.VideoDialog", ex);
+            AppServices.WriteCrashLog("HomePage.VideoDownload", ex);
             AppServices.Current.MainVm.Notify(ex.Message, InfoBarSeverity.Error);
         }
+        finally { panel.SetSubmitting(false); }
     }
 
     private void Vm_BuiltInBrowserAssistRequested(object? sender, string url)
@@ -183,8 +198,6 @@ public sealed partial class HomePage : Page
         }
     }
 
-    private void ResumeFormatDialog_Click(object sender, RoutedEventArgs e) => Vm.OpenResumeVideoDialog();
-
     private void GoRelaySettings_Click(object sender, RoutedEventArgs e) =>
         AppServices.Current.MainVm.NavigateTo("settings", "relay");
 
@@ -218,24 +231,6 @@ public sealed partial class HomePage : Page
         if (sender is Button btn && btn.Tag is RecentTaskItem item)
         {
             _ = Vm.OpenRecentTaskAsync(item);
-        }
-    }
-
-    private async void PreviewImage_Loaded(object sender, RoutedEventArgs e)
-    {
-        if (sender is Image img && img.Tag is string url && !string.IsNullOrWhiteSpace(url) && img.Source is null)
-        {
-            try
-            {
-                var bmp = await NativeShellHelper.LoadImageAsync(url, decodePixelWidth: 320);
-                if (bmp is not null && img.IsLoaded && string.Equals(img.Tag as string, url, StringComparison.Ordinal))
-                {
-                    img.Source = bmp;
-                }
-            }
-            catch
-            {
-            }
         }
     }
 }

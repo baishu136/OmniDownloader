@@ -170,7 +170,7 @@ object UgoiraProcessor {
             if (total > MAX_ARCHIVE_BYTES) throw Exception("帧包超过大小限制")
             var read = 0L
             body.byteStream().use { input ->
-                FileOutputStream(target).use { output ->
+                SafeFiles.openOutputStream(target).use { output ->
                     val buffer = ByteArray(64 * 1024)
                     var lastReport = 0L
                     while (true) {
@@ -208,7 +208,7 @@ object UgoiraProcessor {
                 if (base !in needed || base in found) continue
 
                 val output = File(framesDir, base)
-                FileOutputStream(output).use { out ->
+                SafeFiles.openOutputStream(output).use { out ->
                     val buffer = ByteArray(64 * 1024)
                     while (true) {
                         val count = zip.read(buffer)
@@ -232,7 +232,7 @@ object UgoiraProcessor {
         publicDir: File
     ): File {
         val target = File(publicDir, "$safeTitle.zip")
-        ZipOutputStream(FileOutputStream(target)).use { zip ->
+        ZipOutputStream(SafeFiles.openOutputStream(target)).use { zip ->
             frames.forEach { frame ->
                 val base = frame.file.substringAfterLast('/')
                 val file = File(framesDir, base)

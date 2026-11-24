@@ -4,6 +4,8 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 
+using OmniDownloader.WinUI.Helpers;
+
 namespace OmniDownloader.WinUI.Controls;
 
 /// <summary>
@@ -59,7 +61,16 @@ public sealed partial class OmniSettingsCard : UserControl
         set => SetValue(IsClickEnabledProperty, value);
     }
 
-    public OmniSettingsCard() => InitializeComponent();
+    public OmniSettingsCard()
+    {
+        InitializeComponent();
+        Loaded += (_, _) =>
+        {
+            if (IsClickEnabled)
+            {
+            }
+        };
+    }
 
     private void RootBorder_SizeChanged(object sender, SizeChangedEventArgs e)
     {
@@ -68,6 +79,7 @@ public sealed partial class OmniSettingsCard : UserControl
         var stacked = e.NewSize.Width < 430;
         Grid.SetRow(ActionPresenter, stacked ? 1 : 0);
         Grid.SetColumn(ActionPresenter, stacked ? 1 : 2);
+        Grid.SetColumnSpan(ActionPresenter, stacked ? 3 : 1);
         ActionPresenter.HorizontalAlignment = stacked ? HorizontalAlignment.Left : HorizontalAlignment.Right;
     }
 

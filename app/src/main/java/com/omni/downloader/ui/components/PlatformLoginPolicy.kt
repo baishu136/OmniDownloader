@@ -41,11 +41,11 @@ fun loginConfigFor(platform: String): PlatformLoginConfig = when (platform) {
     )
     "哔哩哔哩" -> PlatformLoginConfig("https://passport.bilibili.com/login", "https://www.bilibili.com/", listOf("SESSDATA="))
     "抖音" -> PlatformLoginConfig("https://www.douyin.com/", "https://www.douyin.com/", emptyList(), automaticCapture = false)
-    "Pinterest" -> PlatformLoginConfig("https://www.pinterest.com/login/", "https://www.pinterest.com/", listOf("_pinterest_sess="))
     "Instagram" -> PlatformLoginConfig("https://www.instagram.com/accounts/login/", "https://www.instagram.com/", listOf("sessionid="))
-    "Facebook" -> PlatformLoginConfig("https://www.facebook.com/login/", "https://www.facebook.com/", listOf("c_user="))
+    "Facebook" -> PlatformLoginConfig("https://www.facebook.com/", "https://www.facebook.com/", listOf("c_user="))
     "TikTok" -> PlatformLoginConfig("https://www.tiktok.com/login", "https://www.tiktok.com/", listOf("sessionid="))
     "快手" -> PlatformLoginConfig("https://www.kuaishou.com/new-reco", "https://www.kuaishou.com/", emptyList(), automaticCapture = false)
+    "微博" -> PlatformLoginConfig("https://weibo.com/", "https://weibo.com/", listOf("SUB="), automaticCapture = false)
     else -> PlatformLoginConfig(
         startUrl = "https://www.xiaoheihe.cn/",
         cookieUrl = "https://www.xiaoheihe.cn/",

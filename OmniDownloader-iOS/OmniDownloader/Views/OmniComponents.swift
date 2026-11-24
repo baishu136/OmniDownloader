@@ -60,8 +60,8 @@ struct OmniPlatformChips:View{
         GeometryReader{geometry in
             VStack(alignment:.leading,spacing:7){ForEach(Array(displayed.enumerated()),id:\.offset){_,row in
                 HStack(spacing:7){ForEach(row,id:\.self){index in
-                    if index == -1{Button{withAnimation(reduceMotion ? nil:.easeInOut(duration:0.2)){expanded.toggle()}}label:{OmniIcon(name:expanded ? "chevron.up":"chevron.down",size:20).frame(width:44,height:36).background(OmniPalette.surfaceVariant.opacity(0.4),in:Capsule())}.buttonStyle(OmniPressStyle()).accessibilityLabel(expanded ? "收起平台":"展开平台")}
-                    else{HStack(spacing:6){Circle().fill(colors[(OmniPlatform.all.firstIndex(of:sites[index]) ?? index)%colors.count]).frame(width:7,height:7);Text(sites[index]).font(.caption).lineLimit(1)}.padding(.horizontal,10).padding(.vertical,7).foregroundColor(OmniPalette.secondary).background(OmniPalette.surfaceVariant.opacity(0.35),in:Capsule())}
+                    if index == -1{Button{withAnimation(reduceMotion ? nil:.easeInOut(duration:0.2)){expanded.toggle()}}label:{OmniIcon(name:expanded ? "chevron.up":"chevron.down",size:20).frame(width:44,height:36).background(OmniPalette.surfaceVariant.opacity(0.4),in:Capsule())}.buttonStyle(OmniPressStyle()).accessibilityLabel(OmniLocalization.text(expanded ? "收起平台":"展开平台"))}
+                    else{HStack(spacing:6){Circle().fill(colors[(OmniPlatform.all.firstIndex(of:sites[index]) ?? index)%colors.count]).frame(width:7,height:7);Text(OmniLocalization.text(sites[index])).font(.caption).lineLimit(1)}.padding(.horizontal,10).padding(.vertical,7).foregroundColor(OmniPalette.secondary).background(OmniPalette.surfaceVariant.opacity(0.35),in:Capsule())}
                 }}
             }}.onAppear{width=max(1,geometry.size.width)}.onChange(of:geometry.size.width){width=max(1,$0)}
         }.frame(height:CGFloat(displayed.count)*(UIFont.preferredFont(forTextStyle:.caption1).lineHeight+14)+CGFloat(max(0,displayed.count-1))*7)
@@ -70,7 +70,7 @@ struct OmniPlatformChips:View{
 struct OmniPageHeader:View{
     let title:String
     var back:(()->Void)?=nil
-    var body:some View{HStack(spacing:14){if let back=back{Button(action:back){OmniIcon(name:"arrow.left",size:24).frame(width:44,height:44)}.buttonStyle(OmniPressStyle()).accessibilityLabel("返回")};Text(title).font(.system(size:25,weight:.semibold));Spacer()}.foregroundColor(OmniPalette.onSurface).padding(.vertical,8)}
+    var body:some View{HStack(spacing:14){if let back=back{Button(action:back){OmniIcon(name:"arrow.left",size:24).frame(width:44,height:44)}.buttonStyle(OmniPressStyle()).accessibilityLabel(OmniLocalization.text("返回"))};Text(title).font(.system(size:25,weight:.semibold));Spacer()}.foregroundColor(OmniPalette.onSurface).padding(.vertical,8)}
 }
 struct OmniRemoteImage:View{
     let url:String
@@ -108,9 +108,9 @@ struct ImagePreviewPage:UIViewRepresentable{
                 do{
                     let(data,_)=try await OmniNetwork.data(url,site:site,timeout:20)
                     try Task.checkCancellation()
-                    guard let source=CGImageSourceCreateWithData(data as CFData,nil),let type=CGImageSourceGetType(source),let mime=UTType(type as String)?.preferredMIMEType else{throw OmniPlatform.error("NO_MEDIA","图片无法解码")}
+                    guard let source=CGImageSourceCreateWithData(data as CFData,nil),let type=CGImageSourceGetType(source),let mime=UTType(type as String)?.preferredMIMEType else{throw OmniPlatform.error("NO_MEDIA",OmniLocalization.text("图片无法解码"))}
                     web.load(data,mimeType:mime,characterEncodingName:"UTF-8",baseURL:URL(string:"https://localhost.invalid/")!)
-                }catch is CancellationError{}catch{web.loadHTMLString("<html><body style='color:white;background:black;font:17px sans-serif'>图片暂时无法加载，请重试或下载原图。</body></html>",baseURL:nil)}
+                }catch is CancellationError{}catch{web.loadHTMLString("<html><body style='color:white;background:black;font:17px sans-serif'>\(OmniLocalization.text("图片暂时无法加载，请重试或下载原图。"))</body></html>",baseURL:nil)}
             }
         }
     }
@@ -123,7 +123,7 @@ struct ImageGallery:View{
     @Environment(\.presentationMode) private var presentation
     @State private var index=0
     var body:some View{
-        NavigationView{TabView(selection:$index){ForEach(Array(resources.enumerated()),id:\.element.id){i,resource in ImagePreviewPage(resource:resource,site:site).tag(i)}}.tabViewStyle(.page(indexDisplayMode:.never)).background(Color.black).navigationTitle("\(index+1) / \(resources.count)").navigationBarTitleDisplayMode(.inline).toolbar{ToolbarItem(placement:.cancellationAction){Button("关闭"){presentation.wrappedValue.dismiss()}}}.onAppear{index=start}}
+        NavigationView{TabView(selection:$index){ForEach(Array(resources.enumerated()),id:\.element.id){i,resource in ImagePreviewPage(resource:resource,site:site).tag(i)}}.tabViewStyle(.page(indexDisplayMode:.never)).background(Color.black).navigationTitle("\(index+1) / \(resources.count)").navigationBarTitleDisplayMode(.inline).toolbar{ToolbarItem(placement:.cancellationAction){Button(OmniLocalization.text("关闭")){presentation.wrappedValue.dismiss()}}}.onAppear{index=start}}
         .navigationViewStyle(.stack)
     }
 }

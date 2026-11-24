@@ -56,6 +56,15 @@ enum NativeFFmpeg {
         if let duration=task.expectedDurationMs,duration>0,abs(actual.durationMs-duration)>max(2000,duration/100){throw OmniPlatform.error("POSTPROCESS_FAILED","成品时长与目标不符")}
         if task.downloadType == .videoOnly,actual.audio{throw OmniPlatform.error("POSTPROCESS_FAILED","纯画面成品仍包含音轨")}
     }
+    static func gifToVideo(_ source:URL,output:URL)async throws{
+        guard source != output else{throw OmniPlatform.error("POSTPROCESS_FAILED","源与输出路径相同")}
+        try await run(["-ignore_loop","1","-i",source.path,"-vf","pad=ceil(iw/2)*2:ceil(ih/2)*2","-vsync","vfr","-an","-c:v","libx264","-pix_fmt","yuv420p","-movflags","+faststart","-f","mp4",output.path])
+        let header=try FileHandle(forReadingFrom:output);defer{try? header.close()}
+        let bytes=try header.read(upToCount:12) ?? Data()
+        guard bytes.count>=8,String(decoding:bytes[4..<8],as:UTF8.self)=="ftyp" else{throw OmniPlatform.error("POSTPROCESS_FAILED","MP4 容器无效")}
+        let actual=try await probe(output)
+        guard actual.width>0,actual.height>0,actual.durationMs>0 else{throw OmniPlatform.error("POSTPROCESS_FAILED","MP4 成品无效")}
+    }
     static func gif(_ source:URL,output:URL)async throws{
         let hls=source.pathExtension=="m3u8" ? ["-protocol_whitelist","file,crypto,data","-allowed_extensions","ALL"]:[]
         try await run(hls+["-i",source.path,"-t","15","-filter_complex","[0:v]fps=15,scale='min(480,iw)':-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle","-an","-loop","0","-f","gif",output.path])

@@ -5,6 +5,15 @@ using OmniDownloader.WinUI.Helpers;
 
 namespace OmniDownloader.WinUI.Services;
 
+public enum CloseAppDecision
+{
+    Cancel,
+    MinimizeToTray,
+    Exit
+}
+
+public sealed record CloseAppPromptResult(CloseAppDecision Decision, bool RememberChoice);
+
 /// <summary>
 /// 统一托管主窗口句柄与 ContentDialog XamlRoot：
 /// 使用异步互斥锁严格串行化弹窗展示，杜绝 WinUI 3 多重 ContentDialog 并发导致的 COM 闪退。
@@ -90,8 +99,8 @@ public sealed class DialogService : IDisposable
                 Text = message,
                 TextWrapping = TextWrapping.WrapWholeWords
             },
-            PrimaryButtonText = primaryText,
-            CloseButtonText = closeText,
+            PrimaryButtonText = OmniDownloader.WinUI.Core.Services.LocalizationService.Instance.T(primaryText),
+            CloseButtonText = OmniDownloader.WinUI.Core.Services.LocalizationService.Instance.T(closeText),
             DefaultButton = destructive ? ContentDialogButton.Close : ContentDialogButton.Primary
         });
         return result == ContentDialogResult.Primary;
@@ -112,7 +121,7 @@ public sealed class DialogService : IDisposable
                     IsTextSelectionEnabled = true
                 }
             },
-            CloseButtonText = closeText
+            CloseButtonText = OmniDownloader.WinUI.Core.Services.LocalizationService.Instance.T(closeText)
         });
     }
 
@@ -125,6 +134,7 @@ public sealed class DialogService : IDisposable
         string? settingsButtonText = null,
         Action? onNavigateSettings = null)
     {
+        var loc = OmniDownloader.WinUI.Core.Services.LocalizationService.Instance;
         var res = await ShowSerialOnUiAsync(() =>
         {
             var stack = new StackPanel { Spacing = 10 };
@@ -135,11 +145,11 @@ public sealed class DialogService : IDisposable
                 IsTextSelectionEnabled = true
             });
 
-            var copyBtn = new Button { Content = "复制错误日志" };
+            var copyBtn = new Button { Content = loc.T("复制错误日志") };
             copyBtn.Click += (_, _) =>
             {
                 NativeShellHelper.CopyText(detail);
-                copyBtn.Content = "已复制错误日志";
+                copyBtn.Content = loc.T("已复制错误日志");
             };
             stack.Children.Add(copyBtn);
 
@@ -147,7 +157,7 @@ public sealed class DialogService : IDisposable
             {
                 Title = title,
                 Content = new ScrollViewer { MaxHeight = 360, Content = stack },
-                CloseButtonText = "关闭",
+                CloseButtonText = loc.T("关闭"),
                 DefaultButton = ContentDialogButton.Close
             };
 
@@ -207,6 +217,83 @@ public sealed class DialogService : IDisposable
             {
                 return ContentDialogResult.None;
             }
+        }
+        finally
+        {
+            try { _dialogGate.Release(); } catch { }
+        }
+    }
+
+    /// <summary>
+    /// 关闭主窗口确认弹窗：询问「是否关闭应用 是 / 最小化到托盘 / 否」并提供「始终保存选择」复选框
+    /// </summary>
+    public async Task<CloseAppPromptResult> ShowCloseAppPromptAsync(Func<string, string> translate)
+    {
+        if (_disposed || _dispatcher is null)
+        {
+            return new CloseAppPromptResult(CloseAppDecision.Cancel, false);
+        }
+
+        await _dialogGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (_disposed || _dispatcher is null)
+            {
+                return new CloseAppPromptResult(CloseAppDecision.Cancel, false);
+            }
+
+            var tcs = new TaskCompletionSource<CloseAppPromptResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var enqueued = _dispatcher.TryEnqueue(async () =>
+            {
+                try
+                {
+                    var xr = TryGetXamlRoot();
+                    if (xr is null)
+                    {
+                        tcs.TrySetResult(new CloseAppPromptResult(CloseAppDecision.Cancel, false));
+                        return;
+                    }
+
+                    var rememberCheck = new CheckBox
+                    {
+                        Content = translate("始终保存选择"),
+                        IsChecked = false
+                    };
+                    var body = new StackPanel { Spacing = 12 };
+                    body.Children.Add(new TextBlock
+                    {
+                        Text = translate("是否关闭应用？"),
+                        TextWrapping = TextWrapping.WrapWholeWords
+                    });
+                    body.Children.Add(rememberCheck);
+
+                    var dialog = new ContentDialog
+                    {
+                        Title = translate("关闭应用"),
+                        Content = body,
+                        PrimaryButtonText = translate("是"),
+                        SecondaryButtonText = translate("最小化到托盘"),
+                        CloseButtonText = translate("否"),
+                        DefaultButton = ContentDialogButton.Close
+                    };
+                    PrepareDialog(dialog, _owner, xr);
+                    var res = await dialog.ShowAsync();
+                    var decision = res switch
+                    {
+                        ContentDialogResult.Primary => CloseAppDecision.Exit,
+                        ContentDialogResult.Secondary => CloseAppDecision.MinimizeToTray,
+                        _ => CloseAppDecision.Cancel
+                    };
+                    tcs.TrySetResult(new CloseAppPromptResult(decision, rememberCheck.IsChecked == true));
+                }
+                catch
+                {
+                    tcs.TrySetResult(new CloseAppPromptResult(CloseAppDecision.Cancel, false));
+                }
+            });
+
+            if (!enqueued) return new CloseAppPromptResult(CloseAppDecision.Cancel, false);
+            return await tcs.Task.ConfigureAwait(false);
         }
         finally
         {

@@ -32,10 +32,17 @@ class AppConfig:
 
     def _load(self):
         self.download_dir: str = get_default_download_dir()
+        self.follow_default_dir: bool = True
+        self.video_download_dir: str = ""
+        self.image_download_dir: str = ""
+        self.audio_download_dir: str = ""
+        self.show_recent_tasks_on_home: bool = True
+        self.enable_web_service: bool = True
         self.proxy_url: str = ""
         self.bilibili_cookie: str = ""
         self.max_concurrent_tasks: int = 3
         self.theme: str = "auto"  # auto, dark, light
+        self.accent_color: str = "system"  # system 或 #RRGGBB
         self.relay_sites: list = []
         self.has_shown_relay_compat_tip: bool = False
 
@@ -44,10 +51,17 @@ class AppConfig:
                 with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     self.download_dir = data.get("download_dir", self.download_dir)
+                    self.follow_default_dir = bool(data.get("follow_default_dir", True))
+                    self.video_download_dir = str(data.get("video_download_dir", "") or "")
+                    self.image_download_dir = str(data.get("image_download_dir", "") or "")
+                    self.audio_download_dir = str(data.get("audio_download_dir", "") or "")
+                    self.show_recent_tasks_on_home = bool(data.get("show_recent_tasks_on_home", True))
+                    self.enable_web_service = bool(data.get("enable_web_service", True))
                     self.proxy_url = data.get("proxy_url", "")
                     self.bilibili_cookie = data.get("bilibili_cookie", "")
                     self.max_concurrent_tasks = data.get("max_concurrent_tasks", 3)
                     self.theme = data.get("theme", "auto")
+                    self.accent_color = data.get("accent_color", "system") or "system"
                     raw_sites = data.get("relay_sites", [])
                     # 剔除旧版所有内置预设网页，完整保留用户此前的自定义网站配置
                     legacy_ids = {"snapany_bili", "x2twitter", "greenvideo", "twittersaver", "snapany_tiktok"}
@@ -103,21 +117,53 @@ class AppConfig:
     def migrate_credentials(self):
         if not self.bilibili_cookie: return
         from core.session_store import sessions
-        header = self.bilibili_cookie.strip()
-        if '=' not in header: header = 'SESSDATA=' + header
-        rows = ['.bilibili.com\tTRUE\t/\tTRUE\t0\t' + part.strip().replace('=', '\t', 1) for part in header.split(';') if '=' in part]
-        sessions.import_text('哔哩哔哩', '# Netscape HTTP Cookie File\n' + '\n'.join(rows))
+        try:
+            sessions.import_cookie_input('哔哩哔哩', self.bilibili_cookie, default_name='SESSDATA')
+        except ValueError:
+            pass
         self.bilibili_cookie = ''
         self.save()
+
+    def resolve_download_dir(self, download_type: Any = None) -> str:
+        """根据下载类型与「跟随默认目录」配置解析实际输出目录（图片目录包含动图 GIF）"""
+        base = (self.download_dir or "").strip() or get_default_download_dir()
+        if getattr(self, "follow_default_dir", True):
+            os.makedirs(base, exist_ok=True)
+            return base
+
+        dtype = getattr(download_type, "value", download_type) or ""
+        dtype = str(dtype).upper()
+        custom = ""
+        if dtype in ("VIDEO_WITH_AUDIO", "VIDEO_ONLY"):
+            custom = (self.video_download_dir or "").strip()
+        elif dtype in ("IMAGE", "IMAGE_ZIP", "COVER", "GIF"):
+            custom = (self.image_download_dir or "").strip()
+        elif dtype == "AUDIO_ONLY":
+            custom = (self.audio_download_dir or "").strip()
+
+        target = custom or base
+        try:
+            os.makedirs(target, exist_ok=True)
+        except Exception:
+            target = base
+            os.makedirs(target, exist_ok=True)
+        return target
 
     def save(self):
         """保存配置到本地 JSON"""
         data = {
             "download_dir": self.download_dir,
+            "follow_default_dir": self.follow_default_dir,
+            "video_download_dir": self.video_download_dir,
+            "image_download_dir": self.image_download_dir,
+            "audio_download_dir": self.audio_download_dir,
+            "show_recent_tasks_on_home": self.show_recent_tasks_on_home,
+            "enable_web_service": self.enable_web_service,
             "proxy_url": self.proxy_url,
             "bilibili_cookie": self.bilibili_cookie,
             "max_concurrent_tasks": self.max_concurrent_tasks,
             "theme": self.theme,
+            "accent_color": self.accent_color,
             "relay_sites": self.relay_sites,
             "has_shown_relay_compat_tip": self.has_shown_relay_compat_tip
         }
@@ -132,11 +178,18 @@ class AppConfig:
         """导出字典格式"""
         return {
             "downloadDir": self.download_dir,
+            "followDefaultDir": self.follow_default_dir,
+            "videoDownloadDir": self.video_download_dir,
+            "imageDownloadDir": self.image_download_dir,
+            "audioDownloadDir": self.audio_download_dir,
+            "showRecentTasksOnHome": self.show_recent_tasks_on_home,
+            "enableWebService": self.enable_web_service,
             "proxyUrl": self.proxy_url,
             "bilibiliCookie": "",
             "hasBilibiliSession": __import__("core.session_store", fromlist=["sessions"]).sessions.status("哔哩哔哩")["state"] == "IMPORTED",
             "maxConcurrentTasks": self.max_concurrent_tasks,
             "theme": self.theme,
+            "accentColor": self.accent_color,
             "relaySites": self.relay_sites,
             "hasShownRelayCompatTip": self.has_shown_relay_compat_tip
         }

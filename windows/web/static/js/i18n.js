@@ -6,6 +6,8 @@ const SKIP = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'CODE', 'PRE', 'INPUT']);
 let dictionaries = null;
 const reverse = new Map();
 const sources = new Set();
+const textHistory = new WeakMap();
+const attributeHistory = new WeakMap();
 let language = 'zh-CN';
 let applying = false;
 let observer = null;
@@ -30,17 +32,21 @@ export function t(source, ...args) {
   return text;
 }
 
-function lookupRaw(trimmed) {
-  const source = sources.has(trimmed) ? trimmed : reverse.get(trimmed);
+function lookupRaw(trimmed, history, owner) {
+  const previous = history?.get(owner);
+  const source = previous && previous.last === trimmed ? previous.source
+    : (sources.has(trimmed) ? trimmed : reverse.get(trimmed));
   if (!source) return null;
-  return (dictionaries[language] && dictionaries[language][source]) || source;
+  const next = (dictionaries[language] && dictionaries[language][source]) || source;
+  history?.set(owner, { source, last: next });
+  return next;
 }
 
 function translateText(node) {
   const raw = node.textContent;
   const trimmed = raw.trim();
   if (!trimmed) return;
-  const next = lookupRaw(trimmed);
+  const next = lookupRaw(trimmed, textHistory, node);
   if (next && next !== trimmed) {
     node.textContent = raw.replace(trimmed, next);
   }
@@ -48,16 +54,23 @@ function translateText(node) {
 
 function translateAttrs(root) {
   if (!dictionaries) return;
-  root.querySelectorAll('[placeholder], [data-i18n-title], [title]').forEach((el) => {
+  root.querySelectorAll('[placeholder], [data-i18n-title], [title], [aria-label]').forEach((el) => {
     if (el.closest('[data-no-i18n]')) return;
+    let history = attributeHistory.get(el);
+    if (!history) { history = new Map(); attributeHistory.set(el, history); }
     if (el.hasAttribute('placeholder')) {
       const val = el.getAttribute('placeholder').trim();
-      const next = lookupRaw(val);
+      const next = lookupRaw(val, history, 'placeholder');
       if (next && next !== val) el.setAttribute('placeholder', next);
+    }
+    if (el.hasAttribute('aria-label')) {
+      const val = el.getAttribute('aria-label').trim();
+      const next = lookupRaw(val, history, 'aria-label');
+      if (next && next !== val) el.setAttribute('aria-label', next);
     }
     if (el.hasAttribute('title')) {
       const val = el.getAttribute('title').trim();
-      const next = lookupRaw(val);
+      const next = lookupRaw(val, history, 'title');
       if (next && next !== val) el.setAttribute('title', next);
     }
   });
@@ -120,6 +133,6 @@ export async function initI18n() {
         applyLanguage();
       });
     });
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'title', 'aria-label'] });
   }
 }

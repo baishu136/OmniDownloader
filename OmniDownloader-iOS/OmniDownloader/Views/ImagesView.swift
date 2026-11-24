@@ -83,7 +83,7 @@ extension Notification.Name{
                 do{result=try await ImagePostEngine.analyze(url)}catch{
                     if error.localizedDescription.contains("NO_MEDIA"){throw error}
                     stage=L("正在自动加载目标图文…")
-                    guard case .images(let post)=try await browser.capture(url,images:true) else{throw OmniPlatform.error("NO_MEDIA","目标不是可导出的图文")};result=post
+                    guard case .images(let post)=try await browser.capture(url,images:true) else{throw OmniPlatform.error("NO_MEDIA", OmniLocalization.text("目标不是可导出的图文"))};result=post
                 }
                 guard generation==epoch,!Task.isCancelled else{return};accept(result)
             }catch is CancellationError{}catch{if generation==epoch{self.error=error.localizedDescription}}

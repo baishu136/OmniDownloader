@@ -20,6 +20,20 @@ public sealed partial class TasksPage : Page
     {
         InitializeComponent();
         DataContext = Vm;
+        Loaded += (_, _) =>
+        {
+            AppServices.Current.Loc.LanguageChanged -= OnLanguageChanged;
+            AppServices.Current.Loc.LanguageChanged += OnLanguageChanged;
+            Localized.RefreshTree(this);
+            try { Bindings.Update(); } catch { }
+        };
+        Unloaded += (_, _) => AppServices.Current.Loc.LanguageChanged -= OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(object? sender, string e)
+    {
+        Localized.RefreshTree(this);
+        try { Bindings.Update(); } catch { }
     }
 
     private void Page_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -36,6 +50,14 @@ public sealed partial class TasksPage : Page
 
         ContentContainer.Margin = narrow ? new Thickness(14, 10, 14, 24) : new Thickness(28, 18, 28, 32);
         PageTitleText.FontSize = narrow ? 22 : 28;
+        var filterPadding = narrow ? new Thickness(6, 7, 6, 5) : new Thickness(12, 10, 12, 7);
+        var filterFontSize = narrow ? 13.0 : 14.0;
+        AllFilterItem.Padding = filterPadding;
+        ActiveFilterItem.Padding = filterPadding;
+        CompletedFilterItem.Padding = filterPadding;
+        AllFilterItem.FontSize = filterFontSize;
+        ActiveFilterItem.FontSize = filterFontSize;
+        CompletedFilterItem.FontSize = filterFontSize;
         Grid.SetRow(HeaderActionsPanel, narrow ? 1 : 0);
         Grid.SetColumn(HeaderActionsPanel, narrow ? 0 : 1);
     }
@@ -48,23 +70,7 @@ public sealed partial class TasksPage : Page
         }
     }
 
-    private async void ThumbImage_Loaded(object sender, RoutedEventArgs e)
-    {
-        if (sender is Image img && img.Tag is string url && !string.IsNullOrWhiteSpace(url) && img.Source is null)
-        {
-            try
-            {
-                var bmp = await NativeShellHelper.LoadImageAsync(url, decodePixelWidth: 200);
-                if (bmp is not null && img.IsLoaded && string.Equals(img.Tag as string, url, StringComparison.Ordinal))
-                {
-                    img.Source = bmp;
-                }
-            }
-            catch
-            {
-            }
-        }
-    }
+
 
     private void PlayTaskBtn_Click(object sender, RoutedEventArgs e)
     {

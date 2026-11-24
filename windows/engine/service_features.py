@@ -6,7 +6,16 @@ from urllib.parse import urlsplit
 import requests
 import yt_dlp
 
-VERSION = '1.7.60'
+VERSION = '1.7.65'
+
+
+def compatible_login_service(schema):
+    """Do not silently redirect a newly started client to the old Google flow."""
+    info = schema.get('info', {}) if isinstance(schema, dict) else {}
+    if not isinstance(info, dict): return False
+    if info.get('title') != 'OmniDownloader API': return False
+    match = re.fullmatch(r'v?(\d+)\.(\d+)\.(\d+)', str(info.get('version', '')))
+    return bool(match and tuple(map(int, match.groups())) >= (1, 7, 63))
 
 
 @functools.lru_cache(maxsize=1)

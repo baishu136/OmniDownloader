@@ -48,13 +48,10 @@ fun BilibiliLoginSheet(
         if (captured) return@LaunchedEffect
         while (isActive && !captured) {
             val cm = CookieManager.getInstance()
-            val c1 = cm.getCookie("https://bilibili.com") ?: ""
-            val c2 = cm.getCookie("https://passport.bilibili.com") ?: ""
-            val combined = when {
-                c1.contains("SESSDATA=") -> c1
-                c2.contains("SESSDATA=") -> c2
-                else -> ""
-            }
+            val c1 = cm.getCookie("https://www.bilibili.com") ?: ""
+            val c2 = cm.getCookie("https://bilibili.com") ?: ""
+            val c3 = cm.getCookie("https://passport.bilibili.com") ?: ""
+            val combined = listOf(c1, c2, c3).firstOrNull { it.contains("SESSDATA=") } ?: ""
             if (combined.isNotEmpty()) {
                 captured = true
                 onCookieCaptured(combined)
@@ -168,13 +165,10 @@ fun BilibiliLoginSheet(
                                     isLoading = false
                                     if (!captured) {
                                         val cm = CookieManager.getInstance()
-                                        val c1 = cm.getCookie("https://bilibili.com") ?: ""
-                                        val c2 = cm.getCookie("https://passport.bilibili.com") ?: ""
-                                        val combined = when {
-                                            c1.contains("SESSDATA=") -> c1
-                                            c2.contains("SESSDATA=") -> c2
-                                            else -> ""
-                                        }
+                                        val c1 = cm.getCookie("https://www.bilibili.com") ?: ""
+                                        val c2 = cm.getCookie("https://bilibili.com") ?: ""
+                                        val c3 = cm.getCookie("https://passport.bilibili.com") ?: ""
+                                        val combined = listOf(c1, c2, c3).firstOrNull { it.contains("SESSDATA=") } ?: ""
                                         if (combined.isNotEmpty()) {
                                             captured = true
                                             onCookieCaptured(combined)
@@ -184,10 +178,8 @@ fun BilibiliLoginSheet(
 
                                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                                     val url = request?.url?.toString() ?: return false
-                                    if (url.contains("bilibili.com")) {
-                                        return false
-                                    }
-                                    return super.shouldOverrideUrlLoading(view, request)
+                                    if (!BrowserIdentity.permitsNavigation(url)) return true
+                                    return false
                                 }
                             }
 

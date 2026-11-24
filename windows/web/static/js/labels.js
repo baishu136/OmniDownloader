@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 /* 状态徽章与下载类型文案映射（对齐 TaskCard.kt & AppStrings.kt） */
 
 export const STATUS = {
@@ -11,21 +12,23 @@ export const STATUS = {
 };
 
 export function statusInfo(status) {
-  return STATUS[status] || { label: status || '未知', pill: '', progress: '' };
+  const row = STATUS[status];
+  if (row) return { ...row, label: t(row.label) };
+  return { label: status ? String(status) : t('未知'), pill: '', progress: '' };
 }
 
 export const TYPE_LABELS = {
-  VIDEO_WITH_AUDIO: '完整',
+  VIDEO_WITH_AUDIO: '视频',
   VIDEO_ONLY: '纯画面',
   AUDIO_ONLY: '音频',
-  GIF: '动图',
+  GIF: 'GIF',
   COVER: '封面',
   IMAGE: '原图',
   IMAGE_ZIP: '导出 ZIP',
 };
 
 export function typeLabel(type) {
-  return TYPE_LABELS[type] || type || '';
+  return t(TYPE_LABELS[type] || type || '');
 }
 
 export const FILTERS = {

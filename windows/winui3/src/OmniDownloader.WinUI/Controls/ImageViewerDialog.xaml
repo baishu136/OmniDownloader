@@ -1,8 +1,9 @@
 <ContentDialog
     x:Class="OmniDownloader.WinUI.Controls.ImageViewerDialog"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:locui="using:OmniDownloader.WinUI.Helpers"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    CloseButtonText="关闭"
+    locui:Localized.CloseButtonText="关闭"
     DefaultButton="Close"
     KeyDown="ContentDialog_KeyDown">
 
@@ -20,14 +21,14 @@
             <Grid>
                 <ProgressRing x:Name="LoadingRing" IsActive="True" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 <Image x:Name="PreviewImage" Stretch="Uniform" />
-                <TextBlock x:Name="FailedText" Text="预览暂不可用，可尝试保存原图" Foreground="#FFB0B5C0" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
+                <TextBlock x:Name="FailedText" locui:Localized.Text="预览暂不可用，可尝试保存原图" Foreground="#FFB0B5C0" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
             </Grid>
         </Border>
 
         <Grid Grid.Row="1">
-            <Button x:Name="PrevBtn" Content="上一张" HorizontalAlignment="Left" Click="PrevBtn_Click" />
+            <Button x:Name="PrevBtn" locui:Localized.Content="上一张" HorizontalAlignment="Left" Click="PrevBtn_Click" />
             <TextBlock x:Name="CounterText" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource BodyStrongTextBlockStyle}" />
-            <Button x:Name="NextBtn" Content="下一张" HorizontalAlignment="Right" Click="NextBtn_Click" />
+            <Button x:Name="NextBtn" locui:Localized.Content="下一张" HorizontalAlignment="Right" Click="NextBtn_Click" />
         </Grid>
     </Grid>
 </ContentDialog>

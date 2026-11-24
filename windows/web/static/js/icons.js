@@ -1,6 +1,9 @@
 /* Google Material Icons Outlined / Filled 24px 内联 SVG 图标集（对齐 Android 端图标视觉） */
 
 const ICON_INNER = {
+  light_mode: '<circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+  menu: '<path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>',
+  checklist: '<path d="M9 5h12v2H9V5zm0 6h12v2H9v-2zm0 6h12v2H9v-2zM3 5h3v2H3V5zm0 6h3v2H3v-2zm0 6h3v2H3v-2z"/>',
   // ===== 导航主图标（Outlined 与 Filled 配对，支持 NavigationFillIcon 效果） =====
   home: '<path d="M12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>',
   home_filled: '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>',

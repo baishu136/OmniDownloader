@@ -367,7 +367,7 @@ object SessionPlatforms {
     const val HEYBOX = "小黑盒"
     const val PIXIV = "Pixiv"
 
-    val all = listOf(YOUTUBE, X, XHS, HEYBOX, PIXIV, "抖音", "哔哩哔哩", "Pinterest", "Instagram", "Facebook", "TikTok", "快手")
+    val all = listOf(YOUTUBE, X, XHS, HEYBOX, PIXIV, "抖音", "哔哩哔哩", "Instagram", "Facebook", "TikTok", "快手")
 
     fun domainsFor(platform: String): Set<String> = when (platform) {
         YOUTUBE -> setOf("youtube.com", "google.com", "youtu.be")
@@ -377,11 +377,10 @@ object SessionPlatforms {
         PIXIV -> setOf("pixiv.net")
         "抖音" -> setOf("douyin.com")
         "哔哩哔哩" -> setOf("bilibili.com")
-        "Pinterest" -> setOf("pinterest.com")
         "Instagram" -> setOf("instagram.com")
         "Facebook" -> setOf("facebook.com")
         "TikTok" -> setOf("tiktok.com")
-        "快手" -> setOf("kuaishou.com")
+        "快手" -> setOf("kuaishou.com", "gifshow.com", "kwai.com", "chenzhongtech.com")
         else -> emptySet()
     }
 }

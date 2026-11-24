@@ -113,7 +113,7 @@ public sealed class OmniApiClient : IDisposable
         if (resp.IsSuccessStatusCode) return;
 
         var raw = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-        var message = $"请求失败 ({(int)resp.StatusCode})";
+        var message = LocalizationService.Instance.T("请求失败 (%d)", (int)resp.StatusCode);
         var errorCode = string.Empty;
         try
         {
@@ -275,6 +275,9 @@ public sealed class OmniApiClient : IDisposable
 
     public Task<UpdateCheckResponse> CheckUpdateAsync(CancellationToken ct = default) =>
         GetJsonAsync<UpdateCheckResponse>("/api/updates", ct);
+
+    public Task<JsonElement> ShutdownBackendAsync(CancellationToken ct = default) =>
+        SendJsonAsync<JsonElement>(HttpMethod.Post, "/api/system/shutdown", null, ct);
 
     // === 浏览器辅助捕获 ===
 

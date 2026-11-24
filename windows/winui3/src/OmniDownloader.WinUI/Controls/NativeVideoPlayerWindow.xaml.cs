@@ -28,7 +28,26 @@ public sealed partial class NativeVideoPlayerWindow : Window
     private MediaSource? _currentSource;
     private bool _syncingPlaylist;
     private bool _isClosed;
+    private bool _isNarrowToolbar;
+    private bool _isPinnedOnTop;
     private int _loadGeneration;
+    private CancellationTokenSource? _hudCts;
+
+    /// <summary>
+    /// 按窗口宽度切换播放栏按钮区至第二行并自动换行，防止挤压或裁切标题与控制键。
+    /// </summary>
+    private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var narrowToolbar = e.NewSize.Width < 760;
+        if (_isNarrowToolbar != narrowToolbar)
+        {
+            _isNarrowToolbar = narrowToolbar;
+            Grid.SetRow(VideoActionsPanel, narrowToolbar ? 1 : 0);
+            Grid.SetColumn(VideoActionsPanel, narrowToolbar ? 0 : 1);
+            Grid.SetColumnSpan(VideoActionsPanel, narrowToolbar ? 2 : 1);
+            VideoActionsPanel.HorizontalAlignment = narrowToolbar ? HorizontalAlignment.Left : HorizontalAlignment.Right;
+        }
+    }
 
     public NativeVideoPlayerWindow(AppServices services, IReadOnlyList<DownloadTask> playlist, int startIndex = 0)
     {
@@ -66,9 +85,9 @@ public sealed partial class NativeVideoPlayerWindow : Window
 
     private void ApplyTheme()
     {
-        if (_isClosed) return;
+        if (_isClosed || NativeShellHelper.IsApplyingThemeRefresh) return;
         var state = _services.LocalState.Current;
-        NativeShellHelper.ApplyThemeAndTitleBarColors(this, state.Theme, state.UsePureBlackDarkMode);
+        NativeShellHelper.ApplyThemeAndTitleBarColors(this, state.Theme, state.UsePureBlackDarkMode, state.AccentColor);
     }
 
     /// <summary>
@@ -154,11 +173,18 @@ public sealed partial class NativeVideoPlayerWindow : Window
         }
 
         var isAudio = OmniDomainLogic.ResolveMediaViewKind(task) == MediaViewKind.Audio;
-        var displayTitle = string.IsNullOrWhiteSpace(task.Title) ? "媒体播放" : task.Title;
+        var displayTitle = string.IsNullOrWhiteSpace(task.Title) ? _services.Loc.T("媒体播放") : task.Title;
         Title = $"OmniDownloader · {displayTitle}";
-        WindowTitleText.Text = displayTitle;
+        WindowTitleText.Text = _services.Loc.T("媒体播放");
+        PlayerKindChipText.Text = _services.Loc.T(isAudio ? "音频播放" : "内置媒体引擎");
         NowPlayingTitleText.Text = displayTitle;
         TitleIcon.Glyph = isAudio ? "\uE8D6" : "\uE768";
+
+        var metaParts = new[] { task.SelectedResolution, task.FileSizeText, task.Author }
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToArray();
+        NowPlayingMetaText.Text = string.Join(" · ", metaParts);
+        NowPlayingMetaText.Visibility = metaParts.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         if (_playlist.Count > 1)
         {
@@ -172,12 +198,16 @@ public sealed partial class NativeVideoPlayerWindow : Window
         AudioCoverPanel.Visibility = isAudio ? Visibility.Visible : Visibility.Collapsed;
         if (isAudio)
         {
+            NativeShellHelper.PlayFadeIn(AudioCoverPanel, durationMs: 180, fromOffsetY: 6);
+        }
+        if (isAudio)
+        {
             AudioTitleText.Text = displayTitle;
             AudioSubText.Text = string.Join(" · ", new[] { task.Author, task.FileSizeText }.Where(s => !string.IsNullOrWhiteSpace(s)));
             AudioCoverImage.Source = null;
             if (!string.IsNullOrWhiteSpace(task.ThumbnailUrl))
             {
-                _ = LoadAudioCoverAsync(task.ThumbnailUrl, gen);
+                _ = LoadAudioCoverAsync(task.ThumbnailUrl, gen, task.Id);
             }
         }
 
@@ -213,7 +243,7 @@ public sealed partial class NativeVideoPlayerWindow : Window
         if (mediaSource is null)
         {
             LoadingRing.IsActive = false;
-            ShowPlayerError($"无法打开媒体源：{openFailure ?? "文件不存在或路径无效"}");
+            ShowPlayerError(_services.Loc.T("无法打开媒体源：%s", openFailure ?? _services.Loc.T("文件不存在或路径无效")));
             return;
         }
 
@@ -249,12 +279,13 @@ public sealed partial class NativeVideoPlayerWindow : Window
         try { src?.Dispose(); } catch { }
     }
 
-    private async Task LoadAudioCoverAsync(string thumbUrl, int gen)
+    private async Task LoadAudioCoverAsync(string thumbUrl, int gen, string? taskId = null)
     {
-        var bmp = await NativeShellHelper.LoadImageAsync(thumbUrl, decodePixelWidth: 420);
+        var bmp = await NativeShellHelper.LoadImageAsync(thumbUrl, decodePixelWidth: 420, taskId: taskId);
         if (!_isClosed && gen == _loadGeneration && bmp is not null)
         {
             AudioCoverImage.Source = bmp;
+            NativeShellHelper.PlayFadeIn(AudioCoverImage, durationMs: 160);
         }
     }
 
@@ -287,7 +318,7 @@ public sealed partial class NativeVideoPlayerWindow : Window
         {
             if (_isClosed) return;
             LoadingRing.IsActive = false;
-            ShowPlayerError($"内置播放器暂不支持此编码或读取中断 ({args.Error})，可使用系统默认播放器打开。");
+            ShowPlayerError(_services.Loc.T("内置播放器暂不支持此编码或读取中断 (%s)，可使用系统默认播放器打开。", args.Error));
         });
     }
 
@@ -326,6 +357,9 @@ public sealed partial class NativeVideoPlayerWindow : Window
     private void NativeVideoPlayerWindow_Closed(object sender, WindowEventArgs args)
     {
         _isClosed = true;
+        _hudCts?.Cancel();
+        _hudCts?.Dispose();
+        _hudCts = null;
         _services.MainVm.ThemeAppearanceChanged -= OnThemeChanged;
         lock (ActiveLock) ActiveWindows.Remove(this);
         DisposeCurrentPlayer();
@@ -380,6 +414,62 @@ public sealed partial class NativeVideoPlayerWindow : Window
 
     private void FullscreenBtn_Click(object sender, RoutedEventArgs e) => ToggleFullScreen();
 
+    private void PinTopBtn_Click(object sender, RoutedEventArgs e) => ToggleAlwaysOnTop();
+
+    private void PlayerStageFrame_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e) => ToggleFullScreen();
+
+    private void ToggleAlwaysOnTop()
+    {
+        _isPinnedOnTop = !_isPinnedOnTop;
+        PinTopBtn.IsChecked = _isPinnedOnTop;
+        PinTopIcon.Glyph = _isPinnedOnTop ? "\uE840" : "\uE718";
+        ApplyAlwaysOnTopState();
+        ShowPlaybackHud(_isPinnedOnTop ? "\uE840" : "\uE718", _services.Loc.T(_isPinnedOnTop ? "已置顶窗口" : "已取消置顶"));
+    }
+
+    private void ApplyAlwaysOnTopState()
+    {
+        try
+        {
+            if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter overlapped)
+            {
+                overlapped.IsAlwaysOnTop = _isPinnedOnTop && !PlayerElement.IsFullWindow;
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    private void ShowPlaybackHud(string glyph, string message)
+    {
+        if (_isClosed) return;
+        PlaybackHudIcon.Glyph = glyph;
+        PlaybackHudText.Text = message;
+        NativeShellHelper.FadeSetVisibility(PlaybackHudBorder, true, durationMs: 130);
+
+        _hudCts?.Cancel();
+        _hudCts?.Dispose();
+        var cts = new CancellationTokenSource();
+        _hudCts = cts;
+        _ = HideHudLaterAsync(cts.Token);
+    }
+
+    private async Task HideHudLaterAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(1100, ct);
+            if (!_isClosed && !ct.IsCancellationRequested)
+            {
+                NativeShellHelper.FadeSetVisibility(PlaybackHudBorder, false, durationMs: 160);
+            }
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
     private void ToggleFullScreen()
     {
         var enter = !PlayerElement.IsFullWindow;
@@ -389,8 +479,16 @@ public sealed partial class NativeVideoPlayerWindow : Window
             AppWindow.SetPresenter(enter
                 ? Microsoft.UI.Windowing.AppWindowPresenterKind.FullScreen
                 : Microsoft.UI.Windowing.AppWindowPresenterKind.Overlapped);
-            TitleBarDragRegion.Visibility = enter ? Visibility.Collapsed : Visibility.Visible;
+            var chromeVis = enter ? Visibility.Collapsed : Visibility.Visible;
+            TitleBarDragRegion.Visibility = chromeVis;
+            HeaderToolbarGrid.Visibility = chromeVis;
+            PlayerFooterBar.Visibility = chromeVis;
+            PlayerStageFrame.Margin = enter ? new Thickness(0) : new Thickness(14, 12, 14, 10);
+            PlayerStageFrame.CornerRadius = enter ? new CornerRadius(0) : new CornerRadius(12);
+            PlayerStageFrame.BorderThickness = enter ? new Thickness(0) : new Thickness(1);
             FullscreenIcon.Glyph = enter ? "\uE73F" : "\uE740";
+            ApplyAlwaysOnTopState();
+            ShowPlaybackHud(enter ? "\uE740" : "\uE73F", _services.Loc.T(enter ? "进入全屏" : "退出全屏"));
         }
         catch
         {
@@ -399,29 +497,61 @@ public sealed partial class NativeVideoPlayerWindow : Window
 
     private void RootGrid_KeyDown(object sender, KeyRoutedEventArgs e)
     {
+        var ctrlDown = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
         switch (e.Key)
         {
             case VirtualKey.Space:
                 if (_player is not null)
                 {
                     if (_player.PlaybackSession.PlaybackState == MediaPlaybackState.Playing)
+                    {
                         _player.Pause();
+                        ShowPlaybackHud("\uE769", _services.Loc.T("已暂停"));
+                    }
                     else
+                    {
                         _player.Play();
+                        ShowPlaybackHud("\uE768", _services.Loc.T("继续播放"));
+                    }
                     e.Handled = true;
                 }
                 break;
             case VirtualKey.Left:
-                if (_player is not null)
+                if (ctrlDown)
+                {
+                    if (_index > 0) _ = LoadEpisodeAsync(_index - 1);
+                    e.Handled = true;
+                }
+                else if (_player is not null)
                 {
                     _player.PlaybackSession.Position = TimeSpan.FromSeconds(Math.Max(0, _player.PlaybackSession.Position.TotalSeconds - 5));
+                    ShowPlaybackHud("\uEB9E", "-5s");
                     e.Handled = true;
                 }
                 break;
             case VirtualKey.Right:
-                if (_player is not null)
+                if (ctrlDown)
+                {
+                    if (_index + 1 < _playlist.Count) _ = LoadEpisodeAsync(_index + 1);
+                    e.Handled = true;
+                }
+                else if (_player is not null)
                 {
                     _player.PlaybackSession.Position = TimeSpan.FromSeconds(_player.PlaybackSession.Position.TotalSeconds + 5);
+                    ShowPlaybackHud("\uEB9D", "+5s");
+                    e.Handled = true;
+                }
+                break;
+            case VirtualKey.T:
+                ToggleAlwaysOnTop();
+                e.Handled = true;
+                break;
+            case VirtualKey.M:
+                if (_player is not null)
+                {
+                    _player.IsMuted = !_player.IsMuted;
+                    ShowPlaybackHud(_player.IsMuted ? "\uE74F" : "\uE767", _services.Loc.T(_player.IsMuted ? "已静音" : "取消静音"));
                     e.Handled = true;
                 }
                 break;

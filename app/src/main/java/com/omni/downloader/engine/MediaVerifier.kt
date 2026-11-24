@@ -85,7 +85,7 @@ object MediaVerifier {
     suspend fun probeWithFallback(context: Context, file: File): Probe? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
         probe(file)?.let { return@withContext it }
         val binary = FFmpegExecutor.getFFmpegBinary(context) ?: return@withContext null
-        val log = File.createTempFile("media-probe-", ".log", context.cacheDir)
+        val log = SafeFiles.createTempFile(SafeFiles.ensureCacheDir(context), "media-probe-", ".log")
         var process: Process? = null
         try {
             val base = File(context.noBackupFilesDir, "youtubedl-android/packages")

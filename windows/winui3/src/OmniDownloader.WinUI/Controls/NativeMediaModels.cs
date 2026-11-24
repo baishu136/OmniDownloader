@@ -63,8 +63,8 @@ public static class MediaWindowCoordinator
                 var startIdx = Math.Max(0, imageTasks.FindIndex(t => t.Id == task.Id));
                 var entries = imageTasks.Select(t => new NativeImageEntry
                 {
-                    Title = string.IsNullOrWhiteSpace(t.Title) ? "图片查看" : t.Title,
-                    Subtitle = string.IsNullOrWhiteSpace(t.FileSizeText) ? "本地图片" : t.FileSizeText,
+                    Title = string.IsNullOrWhiteSpace(t.Title) ? services.Loc.T("图片查看") : t.Title,
+                    Subtitle = string.IsNullOrWhiteSpace(t.FileSizeText) ? services.Loc.T("本地图片") : t.FileSizeText,
                     LocalFilePath = t.LocalFilePath ?? string.Empty,
                     RemoteUrl = services.ApiClient.BuildAbsoluteUrl($"/api/tasks/{Uri.EscapeDataString(t.Id)}/view"),
                     TaskId = t.Id
@@ -89,7 +89,7 @@ public static class MediaWindowCoordinator
         catch (Exception ex)
         {
             AppServices.WriteCrashLog("MediaWindowCoordinator", ex);
-            notify?.Invoke($"无法打开原生媒体窗口: {ex.Message}", InfoBarSeverity.Error);
+            notify?.Invoke(services.Loc.T("无法打开原生媒体窗口: %s", ex.Message), InfoBarSeverity.Error);
         }
     }
 
@@ -100,11 +100,11 @@ public static class MediaWindowCoordinator
         var entries = post.Resources.Select((res, idx) =>
         {
             var dim = res.Width > 0 && res.Height > 0 ? $"{res.Width}×{res.Height}" : string.Empty;
-            var tag = res.Kind == "UGOIRA" ? "动图封面" : (res.Original ? "原图" : "高清预览");
+            var tag = services.Loc.T(res.Kind == "UGOIRA" ? "动图封面" : (res.Original ? "原图" : "高清预览"));
             var subtitle = string.IsNullOrWhiteSpace(dim) ? tag : $"{dim} · {tag}";
             return new NativeImageEntry
             {
-                Title = string.IsNullOrWhiteSpace(post.Title) ? $"图片 {idx + 1}" : post.Title,
+                Title = string.IsNullOrWhiteSpace(post.Title) ? services.Loc.T("图片 %d", idx + 1) : post.Title,
                 Subtitle = subtitle,
                 RemoteUrl = services.ApiClient.BuildAbsoluteUrl(string.IsNullOrWhiteSpace(res.PreviewUrl) ? res.Url : res.PreviewUrl),
                 AllowDownloadSingle = true,
@@ -116,7 +116,7 @@ public static class MediaWindowCoordinator
             };
         }).ToList();
 
-        OpenImageWindow(services, string.IsNullOrWhiteSpace(post.Title) ? "图片预览" : post.Title, entries, startIndex);
+        OpenImageWindow(services, string.IsNullOrWhiteSpace(post.Title) ? services.Loc.T("图片预览") : post.Title, entries, startIndex);
     }
 
     private static async Task OpenImageZipTaskAsync(
@@ -159,14 +159,14 @@ public static class MediaWindowCoordinator
             }
             catch (Exception ex)
             {
-                notify?.Invoke($"读取图集压缩包失败: {ex.Message}", InfoBarSeverity.Error);
+                notify?.Invoke(services.Loc.T("读取图集压缩包失败: %s", ex.Message), InfoBarSeverity.Error);
                 return;
             }
         }
 
         if (entries.Count == 0)
         {
-            notify?.Invoke("压缩包内未找到可直接预览的图片文件，正在改用系统打开", InfoBarSeverity.Warning);
+            notify?.Invoke(services.Loc.T("压缩包内未找到可直接预览的图片文件，正在改用系统打开"), InfoBarSeverity.Warning);
             if (!string.IsNullOrWhiteSpace(task.LocalFilePath) && File.Exists(task.LocalFilePath))
             {
                 NativeShellHelper.OpenWithShell(task.LocalFilePath);
@@ -174,7 +174,7 @@ public static class MediaWindowCoordinator
             return;
         }
 
-        OpenImageWindow(services, string.IsNullOrWhiteSpace(task.Title) ? "图集浏览" : task.Title, entries, 0);
+        OpenImageWindow(services, string.IsNullOrWhiteSpace(task.Title) ? services.Loc.T("图集浏览") : task.Title, entries, 0);
     }
 
     private static void OpenImageWindow(

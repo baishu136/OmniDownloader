@@ -37,7 +37,7 @@ public partial class App : Application
             {
                 if (!AppServices.Current.IsShuttingDown && _mainWindow is not null)
                 {
-                    AppServices.Current.MainVm.Notify($"发生意外异常: {e.Message}", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error);
+                    AppServices.Current.MainVm.Notify("发生意外异常: %s", Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error, e.Message);
                 }
             }
             catch

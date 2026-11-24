@@ -88,4 +88,22 @@ class MediaErrorsTest {
         assertFalse(output.contains("expires=123"))
         assertTrue(output.contains("name=ok"))
     }
+
+    @Test
+    fun fileOpenEnoentIsClassifiedAndPreservesPathContext() {
+        val rootCause = RuntimeException("open failed: ENOENT (No such file or directory)")
+        val outer = java.io.FileNotFoundException("/storage/emulated/0/Download/OmniDownloader/video.mp4: open failed: ENOENT (No such file or directory)")
+            .initCause(rootCause)
+        assertEquals(MediaErrorCode.EXPORT_FAILED, MediaErrors.codeOf(outer))
+        val described = MediaErrors.describe(outer)
+        assertTrue(described.startsWith("[EXPORT_FAILED]"))
+        assertFalse(described.startsWith("[UNKNOWN]"))
+        assertTrue(described.contains("/storage/emulated/0/Download/OmniDownloader/video.mp4"))
+
+        val bareEnoent = IllegalStateException("outer missing context", rootCause)
+        val combined = MediaErrors.describe(bareEnoent)
+        assertTrue(combined.startsWith("[EXPORT_FAILED]"))
+        assertTrue(combined.contains("outer missing context"))
+        assertTrue(combined.contains("open failed: ENOENT"))
+    }
 }

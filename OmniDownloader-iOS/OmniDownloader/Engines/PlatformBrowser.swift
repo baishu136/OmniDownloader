@@ -53,7 +53,7 @@ enum CapturedTarget { case video(VideoMetadata);case images(ImagePost) }
                result.utf8.count<=8_388_608,let data=result.data(using:.utf8),let value=try? JSONSerialization.jsonObject(with:data) as? [String:Any]{
                 let status=value["status"] as? String ?? ""
                 if status=="challenge" || status=="auth"{
-                    notice="平台要求\(status=="challenge" ? "验证":"登录")，请在内置浏览器完成。"
+                    notice=OmniLocalization.fmt("平台要求%@，请在内置浏览器完成。", OmniLocalization.text(status=="challenge" ? "验证":"登录"))
                     if best==nil{throw OmniPlatform.error(status=="challenge" ? "CHALLENGE_REQUIRED":"AUTH_REQUIRED",notice)}
                     break
                 }
@@ -81,7 +81,7 @@ enum CapturedTarget { case video(VideoMetadata);case images(ImagePost) }
         switch captured{
         case .video(var video):
             video.sourceScope=scope
-            if let best=video.availableVideoFormats.first,min(best.width,best.height)<=720{video.qualityWarning="已自动检查当前可访问源；更高画质尚未确认，本次结果不代表上传原片。"}
+            if let best=video.availableVideoFormats.first,min(best.width,best.height)<=720{video.qualityWarning=OmniLocalization.text("已自动检查当前可访问源；更高画质尚未确认，本次结果不代表上传原片。")}
             MediaSources.shared.remember(video);return .video(video)
         case .images(var post):post.sourceScope=scope;MediaSources.shared.remember(post);return .images(post)
         }
@@ -99,7 +99,7 @@ enum CapturedTarget { case video(VideoMetadata);case images(ImagePost) }
         guard let url=navigationAction.request.url,["http","https"].contains(url.scheme ?? ""),url.user==nil,url.password==nil else{decisionHandler(.cancel);return}
         if !login,OmniPlatform.detect(url.absoluteString)==site{
             let actual=OmniPlatform.identifier(url.absoluteString),expected=OmniPlatform.identifier(target)
-            if !actual.isEmpty && actual != expected{notice="请保持在目标作品页面";decisionHandler(.cancel);return}
+            if !actual.isEmpty && actual != expected{notice=OmniLocalization.text("请保持在目标作品页面");decisionHandler(.cancel);return}
         }
         decisionHandler(.allow)
     }
@@ -123,16 +123,16 @@ struct PlatformBrowserSheet:View{
     var body:some View{
         NavigationView{
             VStack(spacing:8){
-                Text(browser.notice.isEmpty ? (login ? "在官方网站登录后点击保存登录状态。":"请完成平台验证；目标作品就绪后自动继续提取。") : browser.notice)
+                Text(browser.notice.isEmpty ? OmniLocalization.text(login ? "在官方网站登录后点击保存登录状态。":"请完成平台验证；目标作品就绪后自动继续提取。") : browser.notice)
                     .font(.caption).foregroundColor(OmniPalette.secondary).padding(.horizontal)
                 PlatformWebContent(browser:browser)
             }
             .background(OmniPalette.background)
-            .navigationTitle(login ? "\(browser.site) 登录":"\(browser.site) 浏览器")
+            .navigationTitle(OmniLocalization.fmt(login ? "%@ 登录":"%@ 浏览器", OmniLocalization.text(browser.site)))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar{
-                ToolbarItem(placement:.cancellationAction){Button("关闭"){onDone()}}
-                ToolbarItem(placement:.confirmationAction){if login{Button(saving ? "保存中…":"保存登录状态"){
+                ToolbarItem(placement:.cancellationAction){Button(OmniLocalization.text("关闭")){onDone()}}
+                ToolbarItem(placement:.confirmationAction){if login{Button(OmniLocalization.text(saving ? "保存中…":"保存登录状态")){
                     saving=true;Task{do{try await browser.saveSession();onSaved?();onDone()}catch{browser.notice=error.localizedDescription};saving=false}
                 }.disabled(saving)}}
             }

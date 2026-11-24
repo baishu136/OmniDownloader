@@ -6,13 +6,19 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -26,6 +32,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -74,8 +81,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -104,6 +116,8 @@ import com.omni.downloader.ui.design.OmniCard
 import com.omni.downloader.ui.design.OmniMotion
 import com.omni.downloader.ui.design.OmniSectionHeader
 import com.omni.downloader.ui.localization.LocalAppStrings
+import com.omni.downloader.ui.localization.localizeError
+import com.omni.downloader.ui.localization.progressText
 import com.omni.downloader.ui.theme.BilibiliPink
 import com.omni.downloader.ui.theme.ErrorRed
 import com.omni.downloader.ui.theme.FacebookBlue
@@ -242,10 +256,10 @@ fun HomeScreen(
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = errorDialogDetail ?: "",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    text = strings.localizeError(errorDialogDetail ?: ""),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = strings.proxyTip,
@@ -560,7 +574,7 @@ private fun HomeInputPanel(
                 )
                 Spacer(modifier = Modifier.width(5.dp))
                 Text(
-                    text = strings.pasteClipboard,
+                    text = strings.analyzeClipboard,
                     style = MaterialTheme.typography.labelLarge,
                     maxLines = 1,
                     softWrap = false,
@@ -592,7 +606,7 @@ private fun HomeInputPanel(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = analysisStage.ifBlank { strings.analyzing },
+                                text = strings.progressText(analysisStage).ifBlank { strings.analyzing },
                                 style = MaterialTheme.typography.labelLarge,
                                 maxLines = 1,
                                 softWrap = false,
@@ -667,11 +681,25 @@ internal fun HomePlatformChips() {
         supportedPlatforms.map { (key, color) -> platformDisplayName(key, appStrings) to color }
     }
     val chipSpacing = 7.dp
-    val toggleWidth = 48.dp
-    val rotation by animateFloatAsState(
-        targetValue = if (expanded) 180f else 0f,
-        animationSpec = tween(OmniMotion.NORMAL, easing = OmniMotion.Emphasized),
-        label = "platformsChevron"
+    val toggleWidth = 44.dp
+    val morphProgress by animateFloatAsState(
+        targetValue = if (expanded) 1f else 0f,
+        animationSpec = tween(OmniMotion.MEDIUM, easing = OmniMotion.Emphasized),
+        label = "platformsEllipsisMorph"
+    )
+    val toggleBgColor by animateColorAsState(
+        targetValue = if (expanded) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.85f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+        },
+        animationSpec = tween(OmniMotion.NORMAL),
+        label = "platformsToggleBg"
+    )
+    val toggleDotColor by animateColorAsState(
+        targetValue = if (expanded) MaterialTheme.colorScheme.primary else muted,
+        animationSpec = tween(OmniMotion.NORMAL),
+        label = "platformsToggleDot"
     )
     BoxWithConstraints(Modifier.fillMaxWidth().testTag("home_platforms")) {
         val width = with(density) { maxWidth.roundToPx() }
@@ -688,50 +716,99 @@ internal fun HomePlatformChips() {
                 collapsedPlatformCount(width, labelSizes.map { it.width + chipInsets }, chipSpacing.roundToPx(), toggleWidth.roundToPx())
             }
         }
-        Column(Modifier.fillMaxWidth()) {
+        val visiblePlatforms = if (expanded) displayedPlatforms else displayedPlatforms.take(count)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize(animationSpec = tween(OmniMotion.MEDIUM, easing = OmniMotion.Emphasized))
+        ) {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(chipSpacing),
                 verticalArrangement = Arrangement.spacedBy(chipSpacing)
             ) {
-                displayedPlatforms.take(count).forEach { (name, color) ->
-                    PlatformChip(name, color, chipHeight)
-                }
-                IconButton(
-                    onClick = { expanded = !expanded },
-                    // Compose expands the touch target beyond this compact visual row.
-                    modifier = Modifier.size(width = toggleWidth, height = chipHeight).testTag("home_platforms_toggle")
-                ) {
-                    Icon(
-                        Icons.Outlined.ExpandMore,
-                        contentDescription = if (expanded) appStrings.collapsePlatforms else appStrings.expandPlatforms,
-                        modifier = Modifier.graphicsLayer { rotationZ = rotation },
-                        tint = muted
-                    )
-                }
-            }
-            AnimatedVisibility(
-                visible = expanded,
-                enter = expandVertically(
-                    expandFrom = Alignment.Top,
-                    animationSpec = tween(OmniMotion.MEDIUM, easing = OmniMotion.Emphasized)
-                ) + fadeIn(tween(OmniMotion.NORMAL)),
-                exit = shrinkVertically(
-                    shrinkTowards = Alignment.Top,
-                    animationSpec = tween(OmniMotion.NORMAL, easing = OmniMotion.Emphasized)
-                ) + fadeOut(tween(OmniMotion.FAST))
-            ) {
-                Column {
-                    if (count < displayedPlatforms.size) {
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth().padding(top = chipSpacing),
-                            horizontalArrangement = Arrangement.spacedBy(chipSpacing),
-                            verticalArrangement = Arrangement.spacedBy(chipSpacing)
-                        ) {
-                            displayedPlatforms.drop(count).forEach { (name, color) -> PlatformChip(name, color, chipHeight) }
+                visiblePlatforms.forEachIndexed { index, (name, color) ->
+                    key(name) {
+                        val isExtra = index >= count
+                        val itemModifier = if (isExtra) {
+                            Modifier.graphicsLayer {
+                                alpha = morphProgress.coerceIn(0f, 1f)
+                                translationY = (1f - morphProgress.coerceIn(0f, 1f)) * -10f
+                            }
+                        } else {
+                            Modifier
+                        }
+                        Box(modifier = itemModifier) {
+                            PlatformChip(name, color, chipHeight)
                         }
                     }
-                    YtDlpPlatformCatalogButton(enabled = expanded)
+                }
+                // 展开/收起按钮：点击后随流式布局立即下移至末尾，并将 "..." 平滑变形为 "^"
+                key("home_platforms_toggle") {
+                    Box(
+                        modifier = Modifier
+                            .size(width = toggleWidth, height = chipHeight)
+                            .clip(CircleShape)
+                            .background(toggleBgColor)
+                            .semantics {
+                                contentDescription = if (expanded) appStrings.collapsePlatforms else appStrings.expandPlatforms
+                            }
+                            .clickable { expanded = !expanded }
+                            .testTag("home_platforms_toggle"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Canvas(modifier = Modifier.size(width = 16.dp, height = 10.dp)) {
+                            val cx = size.width * 0.5f
+                            val cy = size.height * 0.5f
+                            val p = morphProgress.coerceIn(0f, 1f)
+                            val mix: (Float, Float, Float) -> Float = { a, b, t -> a + (b - a) * t }
+
+                            val leftX = mix(cx - 5f.dp.toPx(), cx - 4.4f.dp.toPx(), p)
+                            val rightX = mix(cx + 5f.dp.toPx(), cx + 4.4f.dp.toPx(), p)
+                            val outerY = mix(cy, cy + 2.2f.dp.toPx(), p)
+                            val centerY = mix(cy, cy - 2.2f.dp.toPx(), p)
+
+                            val dotAlpha = (1f - p / 0.45f).coerceIn(0f, 1f)
+                            if (dotAlpha > 0f) {
+                                val r = mix(2.1f.dp.toPx(), 1.0f.dp.toPx(), (p / 0.45f).coerceIn(0f, 1f))
+                                val c = toggleDotColor.copy(alpha = toggleDotColor.alpha * dotAlpha)
+                                drawCircle(color = c, radius = r, center = Offset(leftX, outerY))
+                                drawCircle(color = c, radius = r, center = Offset(cx, centerY))
+                                drawCircle(color = c, radius = r, center = Offset(rightX, outerY))
+                            }
+
+                            val chevronAlpha = ((p - 0.12f) / 0.48f).coerceIn(0f, 1f)
+                            if (chevronAlpha > 0f) {
+                                val path = Path().apply {
+                                    moveTo(leftX, outerY)
+                                    lineTo(cx, centerY)
+                                    lineTo(rightX, outerY)
+                                }
+                                drawPath(
+                                    path = path,
+                                    color = toggleDotColor.copy(alpha = toggleDotColor.alpha * chevronAlpha),
+                                    style = Stroke(
+                                        width = 1.9f.dp.toPx(),
+                                        cap = StrokeCap.Round,
+                                        join = StrokeJoin.Round
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            if (expanded) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 6.dp)
+                        .graphicsLayer {
+                            val p = morphProgress.coerceIn(0f, 1f)
+                            alpha = p
+                            translationY = (1f - p) * -8f
+                        }
+                ) {
+                    YtDlpPlatformCatalogButton(enabled = true)
                 }
             }
         }
@@ -739,7 +816,7 @@ internal fun HomePlatformChips() {
 }
 
 /** 平台显示名：内部仍用中文标识做颜色/身份判断，界面文字统一走 AppStrings。 */
-private fun platformDisplayName(key: String, s: com.omni.downloader.ui.localization.AppStrings): String = when (key) {
+internal fun platformDisplayName(key: String, s: com.omni.downloader.ui.localization.AppStrings): String = when (key) {
     "哔哩哔哩" -> s.platformLabelBilibili
     "抖音" -> s.platformLabelDouyin
     "快手" -> s.platformLabelKuaishou

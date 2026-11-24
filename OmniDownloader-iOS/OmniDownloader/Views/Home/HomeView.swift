@@ -44,9 +44,9 @@ struct SniffedMediaItem:Identifiable,Equatable{
                 VStack(alignment:.leading,spacing:18){
                     HStack(spacing:12){OmniBrand();Text("OmniDownloader").font(.system(size:24,weight:.heavy)).minimumScaleFactor(0.7).lineLimit(1);Text("v1.7.61").font(.caption.bold()).foregroundColor(OmniPalette.primary).padding(.horizontal,7).padding(.vertical,4).background(OmniPalette.primaryContainer,in:RoundedRectangle(cornerRadius:8));Spacer(minLength:0)}.padding(.vertical,6)
                     OmniPlatformChips()
-                    Button("yt-dlp 支持的平台（参考名录）"){showCatalog=true}.font(.subheadline.weight(.semibold))
-                    Text("iOS 使用原生与网页引擎；部分平台需要在浏览器验证，实际能力以解析结果为准。").font(.caption).foregroundColor(OmniPalette.secondary)
-                    if let url=updates.releaseURL{Link("发现 iOS 更新 \(updates.version)",destination:url).padding(12).omniCard()}
+                    Button(OmniLocalization.text("yt-dlp 支持的平台（参考名录）")){showCatalog=true}.font(.subheadline.weight(.semibold))
+                    Text(OmniLocalization.text("iOS 使用原生与网页引擎；部分平台需要在浏览器验证，实际能力以解析结果为准。")).font(.caption).foregroundColor(OmniPalette.secondary)
+                    if let url=updates.releaseURL{Link("\(OmniLocalization.text("发现 iOS 更新")) \(updates.version)",destination:url).padding(12).omniCard()}
                     VStack(spacing:12){
                         HStack(spacing:10){OmniIcon(name:"link",size:20).foregroundColor(OmniPalette.primary);TextField(L("粘贴视频链接或分享文本…"),text:$input).textInputAutocapitalization(.never).disableAutocorrection(true).keyboardType(.URL).submitLabel(.go).onSubmit{start(input)}.accessibilityIdentifier("omni.video.url");if !input.isEmpty{Button{input=""}label:{OmniIcon(name:"xmark",size:20).foregroundColor(OmniPalette.secondary).frame(width:44,height:44)}.accessibilityLabel(L("清空"))};Button(action:paste){OmniIcon(name:"doc.on.clipboard",size:20).foregroundColor(OmniPalette.secondary).frame(width:44,height:44)}.accessibilityLabel(L("粘贴剪贴板"))}.padding(.horizontal,16).padding(.vertical,8).background(OmniPalette.surfaceVariant.opacity(0.35),in:RoundedRectangle(cornerRadius:22))
                         HStack(spacing:12){OmniAction(title:L("粘贴剪贴板"),icon:"doc.on.clipboard",disabled:analyzing,action:paste);OmniAction(title:L(analyzing ? "取消解析":"立即解析"),icon:analyzing ? "xmark":"bolt.fill",prominent:true,disabled:!analyzing && input.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty){if analyzing{cancel()}else{start(input)}}.accessibilityIdentifier("omni.action.analyze")}
@@ -191,11 +191,11 @@ struct RelayBrowserSheet: View {
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("🐱 嗅探猫已捕获 \(sniffedMediaList.count) 个媒体")
+                                Text(OmniLocalization.fmt("🐱 嗅探猫已捕获 %d 个媒体", sniffedMediaList.count))
                                     .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(.primary)
                                 if let first = sniffedMediaList.first {
-                                    Text("最新: [\(first.format)] \(first.host.isEmpty ? "直链 CDN" : first.host)")
+                                    Text(OmniLocalization.fmt("最新: [%s] %s", OmniLocalization.text(first.format), first.host.isEmpty ? OmniLocalization.text("直链 CDN") : first.host))
                                         .font(.system(size: 11))
                                         .foregroundColor(.secondary)
                                         .lineLimit(1)
@@ -205,7 +205,7 @@ struct RelayBrowserSheet: View {
                             Spacer()
 
                             Button(action: { showSnifferSheet = true }) {
-                                Text("列表")
+                                Text(OmniLocalization.text("列表"))
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(OmniPalette.primary)
                                     .padding(.horizontal, 10)
@@ -215,7 +215,7 @@ struct RelayBrowserSheet: View {
                             }
 
                             Button(action: startDownloadLatest) {
-                                Text("下载最新")
+                                Text(OmniLocalization.text("下载最新"))
                                     .font(.system(size: 12, weight: .bold))
                                     .foregroundColor(OmniPalette.onPrimary)
                                     .padding(.horizontal, 10)
@@ -238,7 +238,7 @@ struct RelayBrowserSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("关闭") {
+                    Button(OmniLocalization.text("关闭")) {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
@@ -296,7 +296,7 @@ struct RelayBrowserSheet: View {
     }
 
     private func handleSniffedMedia(url: String, title: String) {
-        let (unpackedUrl, unpackedTitle) = UrlSniffer.unpackDirectMediaUrl(rawUrl: url, defaultTitle: title.isEmpty ? "\(site.name) 视频" : title)
+        let (unpackedUrl, unpackedTitle) = UrlSniffer.unpackDirectMediaUrl(rawUrl: url, defaultTitle: title.isEmpty ? OmniLocalization.fmt("%s 视频", OmniLocalization.text(site.name)) : title)
         guard UrlSniffer.isDirectMediaUrl(urlString: unpackedUrl) else { return }
 
         let host = URL(string: unpackedUrl)?.host ?? ""
@@ -325,11 +325,11 @@ struct RelayBrowserSheet: View {
     private func startDownload(item: SniffedMediaItem) {
         var origin=URLComponents(string:site.url)
         origin?.path="/";origin?.query=nil;origin?.fragment=nil;origin?.user=nil;origin?.password=nil
-        let title=item.title.isEmpty ? "\(site.name) 视频":item.title
-        let format=FormatOption(formatId:item.url,resolutionLabel:"浏览器确认源（尺寸未知）",ext:item.format.lowercased(),sourceUrl:item.url,sourceHeaders:["Referer":origin?.string ?? ""])
+        let title=item.title.isEmpty ? OmniLocalization.fmt("%s 视频", OmniLocalization.text(site.name)):item.title
+        let format=FormatOption(formatId:item.url,resolutionLabel:OmniLocalization.text("浏览器确认源（尺寸未知）"),ext:item.format.lowercased(),sourceUrl:item.url,sourceHeaders:["Referer":origin?.string ?? ""])
         var metadata=VideoMetadata(url:item.url,title:title,siteName:OmniPlatform.detect(item.url),availableVideoFormats:[format])
         metadata.sourceScope=PlatformSession.shared.generation(metadata.siteName)
-        metadata.qualityEvidence="用户确认的浏览器媒体源，下载后核对实际尺寸。"
+        metadata.qualityEvidence=OmniLocalization.text("用户确认的浏览器媒体源，下载后核对实际尺寸。")
         MediaSources.shared.remember(metadata)
         let task = DownloadTask(
             url: item.url,
@@ -367,7 +367,7 @@ struct SnifferManagerSheet: View {
                     }) {
                         HStack(spacing: 4) {
                             Image(systemName: "magnifyingglass")
-                            Text("深度搜索")
+                            Text(OmniLocalization.text("深度搜索"))
                         }
                         .font(.system(size: 13, weight: .medium))
                         .padding(.horizontal, 10)
@@ -380,7 +380,7 @@ struct SnifferManagerSheet: View {
                     Button(action: copyAllUrls) {
                         HStack(spacing: 4) {
                             Image(systemName: "doc.on.doc")
-                            Text("复制全部")
+                            Text(OmniLocalization.text("复制全部"))
                         }
                         .font(.system(size: 13, weight: .medium))
                         .padding(.horizontal, 10)
@@ -409,10 +409,10 @@ struct SnifferManagerSheet: View {
                         Image(systemName: "waveform.badge.magnifyingglass")
                             .font(.system(size: 40))
                             .foregroundColor(.secondary)
-                        Text("暂未嗅探到媒体流")
+                        Text(OmniLocalization.text("暂未嗅探到媒体流"))
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.primary)
-                        Text("播放视频或点击上方「深度搜索」主动挖掘隐藏媒体")
+                        Text(OmniLocalization.text("播放视频或点击上方「深度搜索」主动挖掘隐藏媒体"))
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                         Spacer()
@@ -423,7 +423,7 @@ struct SnifferManagerSheet: View {
                         ForEach(items) { item in
                             HStack(spacing: 10) {
                                 // 格式彩标
-                                Text(item.format)
+                                Text(OmniLocalization.text(item.format))
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(OmniPalette.onPrimary)
                                     .padding(.horizontal, 6)
@@ -435,7 +435,7 @@ struct SnifferManagerSheet: View {
                                     Text(item.title)
                                         .font(.system(size: 13, weight: .semibold))
                                         .lineLimit(1)
-                                    Text("来源: \(item.host.isEmpty ? "直链 CDN" : item.host)")
+                                    Text(OmniLocalization.fmt("来源: %s", item.host.isEmpty ? OmniLocalization.text("直链 CDN") : item.host))
                                         .font(.system(size: 11))
                                         .foregroundColor(.secondary)
                                     Text(item.url)
@@ -459,7 +459,7 @@ struct SnifferManagerSheet: View {
                                 Button(action: {
                                     onDownloadItem(item)
                                 }) {
-                                    Text("下载")
+                                    Text(OmniLocalization.text("下载"))
                                         .font(.system(size: 12, weight: .bold))
                                         .foregroundColor(OmniPalette.onPrimary)
                                         .padding(.horizontal, 10)
@@ -475,11 +475,11 @@ struct SnifferManagerSheet: View {
                     .listStyle(PlainListStyle())
                 }
             }
-            .navigationTitle("🐱 嗅探猫 (\(items.count))")
+            .navigationTitle(OmniLocalization.fmt("🐱 嗅探猫 (%d)", items.count))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("完成") {
+                    Button(OmniLocalization.text("完成")) {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }

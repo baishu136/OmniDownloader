@@ -77,7 +77,7 @@ export function initSettings() {
     try {
       const res = await post('/api/settings', { downloadDir });
       if (res?.config) state.settings = res.config;
-      $('setting-download-dir-preview').textContent = downloadDir || '默认目录';
+      $('setting-download-dir-preview').textContent = downloadDir || t('默认目录');
       toast('保存路径已更新');
     } catch (e) {
       toast(e.message || '保存失败', 'error');
@@ -142,7 +142,14 @@ export function initSettings() {
   $('btn-browser-login')?.addEventListener('click', async () => {
     const platform = $('session-platform').value;
     try {
-      await post(`/api/sessions/${encodeURIComponent(platform)}/login`);
+      const result = await post(`/api/sessions/${encodeURIComponent(platform)}/login`);
+      if (result.phase === 'ERROR') {
+        state.loginPlatform = '';
+        const err = result.errorMessage || t('登录捕获未完成（%s），原有凭据已保留。请关闭旧登录窗口后重试。', result.errorCode || 'CAPTURE_FAILED');
+        $('browser-login-status').textContent = err;
+        toast(err, 'error');
+        return;
+      }
       state.loginPlatform = platform;
       await pollBrowserLogin();
     } catch (e) { toast(e.message, 'error'); }
@@ -152,7 +159,7 @@ export function initSettings() {
     button.disabled = true;
     try {
       const result = await post(`/api/sessions/${encodeURIComponent($('session-platform').value)}/capture`);
-      toast(`已保存 ${result.cookieCount} 项 Cookie 并关闭登录窗口；请重新解析验证账号`);
+      toast(t('已保存 %d 项 Cookie 并关闭登录窗口；请重新解析验证账号', result.cookieCount));
       await loadSessionPolicy();
       await pollBrowserLogin();
     } catch (e) { toast(e.message, 'error'); }
@@ -285,22 +292,22 @@ async function loadSessionPolicy() {
   const pill = $('session-status-pill');
   const st = info?.state || 'MISSING';
   if (!enabled) {
-    pill.textContent = '已停用（保留原凭证）';
+    pill.textContent = t('已停用（保留原凭证）');
     pill.className = 'omni-pill';
   } else if (st === 'IMPORTED') {
-    pill.textContent = '已保存（未验证账号）';
+    pill.textContent = t('已保存（未验证账号）');
     pill.className = 'omni-pill omni-pill--success';
   } else if (['NEEDS_AUTH', 'EXPIRED', 'CORRUPT'].includes(st)) {
-    pill.textContent = '需重新验证';
+    pill.textContent = t('需重新验证');
     pill.className = 'omni-pill omni-pill--warning';
   } else {
-    pill.textContent = '未导入';
+    pill.textContent = t('未导入');
     pill.className = 'omni-pill';
   }
 
-  $('session-policy-status').textContent = enabled
+  $('session-policy-status').textContent = t(enabled
     ? '关闭停用开关时，新解析与新下载可使用该平台已保存的 Cookie'
-    : '已停用：新解析与新下载使用匿名请求，已保存会话仍保留';
+    : '已停用：新解析与新下载使用匿名请求，已保存会话仍保留');
 }
 
 async function toggleSession() {
@@ -327,14 +334,20 @@ async function pollBrowserLogin() {
     const result = await get(`/api/sessions/${encodeURIComponent(platform)}/login`);
     if ($('session-platform').value !== platform) return;
     const messages = {
-      OPENING: '正在打开独立 Edge 登录窗口…',
-      WAITING_LOGIN: '请在 Edge 中完成登录；Google 登录后返回目标平台，再点击「保存会话并关闭」。',
-      CAPTURED: `已保存目标平台 Cookie（${result.cookieCount} 项）；未验证账号。请关闭登录窗口后重新解析。`,
-      CLOSED: '登录窗口已关闭。可以重新打开继续登录，或导入 Cookie 文件。',
-      ERROR: `登录捕获未完成（${result.errorCode || 'CAPTURE_FAILED'}），原有凭据已保留。请关闭旧登录窗口后重试。`,
+      OPENING: t('正在准备普通 Edge 登录窗口…'),
+      WAITING_LOGIN: t('请在普通 Edge 窗口中手动登录；此阶段不启用自动化。Google 登录后返回目标平台，再点击「保存会话并关闭」。'),
+      AWAITING_CAPTURE: t('登录窗口已关闭，仍可点击「保存会话并关闭」读取已保存的浏览器会话。'),
+      CAPTURING: t('正在正常关闭专用登录窗口并保存会话，请勿同时重开。若浏览器提示确认，请先处理提示。'),
+      CAPTURED: t('已保存目标平台 Cookie（%d 项），登录窗口已关闭；未验证账号权益，请重新解析。', result.cookieCount),
+      CLOSED: t('登录窗口已关闭。可以重新打开继续登录，或导入 Cookie 文件。'),
+      ERROR: result.errorMessage || t('登录捕获未完成（%s），原有凭据已保留。请关闭旧登录窗口后重试。', result.errorCode || 'CAPTURE_FAILED'),
     };
     $('browser-login-status').textContent = messages[result.phase] || messages.CLOSED;
-    if (result.skippedPartitionedCookies) $('browser-login-status').textContent += ` 已跳过 ${result.skippedPartitionedCookies} 项分区 Cookie；部分登录能力可能仅在浏览器中可用。`;
+    if (result.skippedPartitionedCookies) $('browser-login-status').textContent += ' ' + t('已跳过 %d 项分区 Cookie；部分登录能力可能仅在浏览器中可用。', result.skippedPartitionedCookies);
+    if (!result.running && (result.phase === 'ERROR' || result.phase === 'CAPTURED' || result.phase === 'CLOSED')) {
+      state.loginPlatform = '';
+      if (result.phase === 'ERROR') toast(messages.ERROR, 'error');
+    }
     await loadSessionPolicy();
   } catch (e) { $('browser-login-status').textContent = e.message; }
   finally { state.loginPolling = false; }
@@ -365,7 +378,7 @@ async function clearSession() {
   const platform = $('session-platform').value;
   const ok = await confirmDialog({
     title: '清除会话',
-    message: `确定清除「${platform}」的 Cookie 和独立登录浏览器状态吗？操作后需要重新登录。`,
+    message: t('确定清除「%s」的 Cookie 和独立登录浏览器状态吗？操作后需要重新登录。', platform),
     confirmText: '清除',
     danger: true,
   });
@@ -383,21 +396,21 @@ async function clearSession() {
 async function checkEngine() {
   const status = $('engine-status');
   const pill = $('engine-ready-pill');
-  if (status) status.textContent = '正在探测本机引擎环境...';
+  if (status) status.textContent = t('正在探测本机引擎环境...');
   try {
     const data = await get('/api/engine/diagnostics');
     if (status) {
-      status.textContent = `Python ${data.python} · yt-dlp ${data.ytDlp} · EJS ${data.ejs} · FFmpeg ${data.ffmpegAvailable ? '就绪' : '未就绪'} · JS 运行时 ${data.denoAvailable ? '可用' : '缺失'}`;
+      status.textContent = t('Python %s · yt-dlp %s · EJS %s · FFmpeg %s · JS 运行时 %s', data.python, data.ytDlp, data.ejs, t(data.ffmpegAvailable ? '就绪' : '未就绪'), t(data.denoAvailable ? '可用' : '缺失'));
     }
     if (pill) {
       const ok = Boolean(data.ytDlp);
-      pill.textContent = ok ? '正常运行' : '未就绪';
+      pill.textContent = t(ok ? '正常运行' : '未就绪');
       pill.className = `omni-pill ${ok ? 'omni-pill--success' : 'omni-pill--error'}`;
     }
   } catch (e) {
-    if (status) status.textContent = e.message || '无法读取';
+    if (status) status.textContent = e.message || t('无法读取');
     if (pill) {
-      pill.textContent = '未就绪';
+      pill.textContent = t('未就绪');
       pill.className = 'omni-pill omni-pill--error';
     }
   }

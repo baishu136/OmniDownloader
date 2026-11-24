@@ -7,6 +7,8 @@ import WebKit
 
 enum OmniPlatform {
     static let all = ["哔哩哔哩", "抖音", "快手", "小红书", "微博", "YouTube", "西瓜视频", "TikTok", "X (Twitter)", "Instagram", "Facebook", "Reddit", "Twitch", "优酷", "爱奇艺", "AcFun", "虎牙", "TED", "Internet Archive", "Pinterest", "Pixiv", "小黑盒"]
+    /// Cookie 与登录管理平台清单（已移除 Pinterest 登录服务）
+    static let cookiePlatforms = all.filter { $0 != "Pinterest" }
     static let domains: [String: [String]] = [
         "微博":["weibo.com","weibo.cn","t.cn"], "西瓜视频":["ixigua.com"], "Reddit":["reddit.com","redd.it"], "Twitch":["twitch.tv"], "优酷":["youku.com"], "爱奇艺":["iqiyi.com"], "AcFun":["acfun.cn"], "虎牙":["huya.com"], "TED":["ted.com"], "Internet Archive":["archive.org"],
         "哔哩哔哩": ["bilibili.com", "b23.tv"], "抖音": ["douyin.com", "iesdouyin.com"],
@@ -41,7 +43,17 @@ enum OmniPlatform {
               let range = Range(match.range(at: 1), in: text) else { return "" }
         return String(text[range])
     }
-    static func error(_ code: String, _ message: String) -> NSError { NSError(domain:"OmniDownloader",code:1,userInfo:[NSLocalizedDescriptionKey:"[\(code)] \(message)"]) }
+    static func error(_ code: String, _ message: String) -> NSError { NSError(domain:"OmniDownloader",code:1,userInfo:[NSLocalizedDescriptionKey:"[\(code)] \(OmniLocalization.text(message))"]) }
+    static func formatError(_ error: Error) -> String {
+        let nsError = error as NSError
+        let message = error.localizedDescription
+        if message.contains("[") && message.contains("]") { return message }
+        let isStorageError = (nsError.domain == NSCocoaErrorDomain && [4, 260, 513, 640, 642].contains(nsError.code)) ||
+            (nsError.domain == NSPOSIXErrorDomain && [2, 13, 28, 30, 63].contains(nsError.code)) ||
+            message.localizedCaseInsensitiveContains("enoent") ||
+            message.localizedCaseInsensitiveContains("no such file or directory")
+        return isStorageError ? "[EXPORT_FAILED] \(OmniLocalization.text("文件或保存目录不可用，请检查存储空间或重新选择目录")) (\(message))" : message
+    }
 }
 
 /// Credentials stay in the device-only Keychain. Browser stores are separate and ephemeral.
