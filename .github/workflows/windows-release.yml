@@ -1,0 +1,92 @@
+name: Windows Release Publisher
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to build and attach Windows binaries to'
+        required: true
+        default: 'v1.7.65'
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout target tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag }}
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install locked Python dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r windows/requirements-lock.txt
+
+      - name: Run localization audit and Windows backend tests
+        shell: pwsh
+        run: |
+          python tools/audit_localization.py
+          python -m pytest windows/tests -q
+
+      - name: Build Windows Web and Unified WinUI 3 release packages
+        shell: pwsh
+        run: |
+          python windows/build_release.py --mode web
+          python tools/build_unified_windows.py --skip-engine
+
+      - name: Sync assets, verify checksums, and publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $tag = "${{ inputs.release_tag }}"
+          $stage = "release/ci-stage"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item "windows/release/OmniDownloader-1.7.65-Windows-x64.zip" "$stage/" -Force
+          Copy-Item "windows/release/OmniDownloader_Web-1.7.65.zip" "$stage/" -Force
+
+          $relJson = gh release view $tag -R ${{ github.repository }} --json databaseId,assets | ConvertFrom-Json
+          $need = @("OmniDownloader-1.7.62-arm64-v8a.apk", "OmniDownloader-1.7.61-unsigned.ipa", "OmniDownloader-1.7.65-source.zip", "OmniDownloader_Source_LATEST.zip", "RELEASE_NOTES.md")
+          foreach ($asset in $relJson.assets) {
+            if ($need -contains $asset.name -and $asset.state -eq "uploaded") {
+              Write-Host "Downloading existing release asset $($asset.name)..."
+              curl.exe -fsSL -H "Authorization: Bearer $env:GH_TOKEN" -H "Accept: application/octet-stream" -o "$stage/$($asset.name)" $asset.apiUrl
+              if ($LASTEXITCODE -ne 0) { throw "Failed to download $($asset.name)" }
+            }
+          }
+
+          Copy-Item "$stage/OmniDownloader-1.7.62-arm64-v8a.apk" "$stage/OmniDownloader_LATEST.apk" -Force
+          $order = @(
+            "OmniDownloader-1.7.65-Windows-x64.zip",
+            "OmniDownloader_Web-1.7.65.zip",
+            "OmniDownloader-1.7.62-arm64-v8a.apk",
+            "OmniDownloader_LATEST.apk",
+            "OmniDownloader-1.7.61-unsigned.ipa",
+            "OmniDownloader-1.7.65-source.zip",
+            "OmniDownloader_Source_LATEST.zip",
+            "RELEASE_NOTES.md"
+          )
+          $lines = foreach ($name in $order) {
+            if (-not (Test-Path "$stage/$name")) { throw "Missing asset $name in stage" }
+            $h = (Get-FileHash "$stage/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$h  $name"
+          }
+          [System.IO.File]::WriteAllText("$stage/SHA256SUMS.txt", ($lines -join "`n") + "`n", [System.Text.UTF8Encoding]::new($false))
+          $uploadArgs = ($order + "SHA256SUMS.txt") | ForEach-Object { "$stage/$_" }
+          gh release upload $tag $uploadArgs -R ${{ github.repository }} --clobber
+          if ($LASTEXITCODE -ne 0) { throw "gh release upload failed" }
+          gh release edit $tag -R ${{ github.repository }} --draft=false --latest --notes-file "$stage/RELEASE_NOTES.md"
+          if ($LASTEXITCODE -ne 0) { throw "gh release edit failed" }
