@@ -1,7 +1,3 @@
-## Release 1.7.34 · Android 解析・一括ダウンロード更新
-
-[Android 1.7.34 をダウンロード](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.34) · リンク追加時の事前解析、完了したリンクの自動削除、Cherry Studio Mobile 風メニューを追加。X の公開レスポンス判定、小紅書の画像ソース、抖音の解析待ちを改善しました。Windows **1.7.20** と iOS **1.7.21** は[以前のリリース](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20)からダウンロードできます。
-
 <div align="center">
 
 # OmniDownloader (万能メディアダウンローダー)
@@ -14,16 +10,16 @@
 </p>
 
 [![Release](https://img.shields.io/github/v/release/baishu136/OmniDownloader?color=blue&label=Release)](https://github.com/baishu136/OmniDownloader/releases)
-[![Android](https://img.shields.io/badge/Android-v1.7.34-green.svg)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-Jetpack%20Compose-green.svg)](app)
 [![iOS](https://img.shields.io/badge/iOS-SwiftUI%20Native-orange.svg)](OmniDownloader-iOS)
-[![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
+[![Windows](https://img.shields.io/badge/Windows-WinUI%203%20%2B%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
 
 <p align="center">
   <img src="docs/images/screenshot.jpg" alt="OmniDownloader スクリーンショット" />
 </p>
 
-**OmniDownloader** は、クロスプラットフォームに対応した最新のメディアダウンローダーです（**Android ネイティブ、Apple iOS ネイティブ、Windows デスクトップ独立版、Web バックグラウンド版**）。**Bilibili (4K/1080P60/DASH分離ストリーム合成/プレイリスト一括)、TikTok、Douyin (抖音)、YouTube、X (Twitter)、小紅書、快手** などの透かしなし高画質メディアを高速抽出・保存できます。
+**OmniDownloader** は、クロスプラットフォームに対応した最新のマルチメディアダウンローダーです（**Android ネイティブ、Apple iOS ネイティブ、Windows WinUI 3 ネイティブデスクトップ、Web コンパニオン版**）。**Bilibili (4K/1080P60 DASH分離ストリーム合成/プレイリスト一括)、Douyin (抖音)、TikTok、Kuaishou (快手)、小紅書、YouTube、X (Twitter)、Instagram、Facebook、Pixiv** などの透かしなし高画質動画・音声・画像・GIF を高速に抽出・保存できます。
 
 </div>
 
@@ -33,61 +29,46 @@
 
 | プラットフォーム | 対象デバイス | コア技術 | インストールと取得方法 |
 | :--- | :--- | :--- | :--- |
-| **🤖 Android 版** | Android スマートフォン / タブレット / TV (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [最新 APK (v1.7.34) をダウンロード](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) または Releases より |
-| **🍎 iOS 版** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + ネイティブ FFmpeg + 写真アプリ連携 | [IPA 1.7.21](https://github.com/baishu136/OmniDownloader/releases/download/v1.7.20/OmniDownloader-1.7.21-unsigned.ipa) · [Signing / 签名 / 署名](OmniDownloader-iOS/README_IOS.md) |
-| **💻 Windows デスクトップ版** | Windows 10 / 11 (64bit) | Python 3 + FastAPI + Edge WebView2 独立ウィンドウ + 内蔵 FFmpeg | [`OmniDownloader_Desktop-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/download/v1.7.20/OmniDownloader_Desktop-1.7.20.zip) を展開するだけですぐ使えます（多言語マニュアル同梱） |
-| **🌐 Web バックグラウンド版** | Windows PC のローカルブラウザ | 軽量タスクトレイ常駐 + ローカルWebサーバー + 内蔵 FFmpeg | [`OmniDownloader_Web-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/download/v1.7.20/OmniDownloader_Web-1.7.20.zip) をダウンロード。ブラウザ直接保存対応 |
+| **🤖 Android 版** | Android スマートフォン / タブレット / TV (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [最新 APK をダウンロード](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) · [Releases](https://github.com/baishu136/OmniDownloader/releases) |
+| **🍎 iOS 版** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + ネイティブ FFmpeg + 写真アプリ連携 | [Releases](https://github.com/baishu136/OmniDownloader/releases) · [iOS ビルド・署名ガイド](OmniDownloader-iOS/README_IOS.md) |
+| **💻 Windows 統合デスクトップ版** | Windows 10 / 11 (64bit) | .NET 8 WinUI 3 Fluent クライアント + Python FastAPI + 内蔵 FFmpeg / Deno | [Latest Release](https://github.com/baishu136/OmniDownloader/releases/latest) から統合ポータブル版を展開してすぐ実行 |
+| **🌐 Web コンパニオン版** | Windows PC のローカルブラウザ | 軽量 Win32 タスクトレイ常駐 + FastAPI Web UI + 内蔵 FFmpeg | 統合版に同梱、または [Latest Release](https://github.com/baishu136/OmniDownloader/releases/latest) の Web 単体版を利用 |
 
 ---
 
 ## 🚀 主な機能と特徴
 
 1. **主要メディアプラットフォーム完全対応**：
-   - Bilibili (4K/1080P60 DASH 映像・音声合成、SESSDATA 認証、合集一括ダウンロード)
-   - 透かしなし動画の直接抽出 (TikTok、Douyin、小紅書、快手)
-   - YouTube (4K、Shorts)、X (Twitter)、Instagram 等のグローバルメディア
-2. **多彩な出力モード**：
-   - 映像＋音声 (MP4)、映像のみ (無音)、高音質音声抽出 (MP3 / M4A / FLAC)、アニメーション GIF、HD カバー画像保存
-3. **多言語完全サポート**：
-   - 日本語、英語、簡体字中国語、繁体字中国語の4言語に対応。
+   - **Bilibili**：単話・複数パート・合集の一括認識に対応し、4K/1080P60 DASH 映像・音声合成、内蔵ブラウザログインおよび `SESSDATA` 認証をサポート。
+   - **ショート動画・画像直連抽出**：Douyin (抖音)、Kuaishou (快手)、小紅書、TikTok の透かしなし動画および高画質画像セット／ZIP 保存に対応。
+   - **グローバルプラットフォーム対応**：YouTube (4K / Shorts)、X (Twitter 複数動画・高画質画像)、Instagram、Facebook、Pixiv (Ugoira 動画・フレーム含む) をカバー。
+2. **WinUI 3 ネイティブ体験・オンボーディング・トレイ制御**：
+   - カスタムテーマアクセントカラー設定に対応し、Web コンパニオン画面もクライアント配色と連動。
+   - 初回起動ガイドでテーマ色、Web サービスの有効・無効、種別ごとの保存フォルダ（デフォルトに追従／動画／画像・GIF／音声）を設定可能。
+   - 終了確認ダイアログ（選択を記憶）、Win32 タスクトレイ右クリックメニュー（「ウィンドウを表示」「Web 版を開く」※無効時は非表示、「終了」）、Web サービス無効時の関連プロセス完全終了、拡張可能なコンポーネント管理、内蔵メディアプレーヤー／ビューア、ホーム画面の「最近のタスク」表示切替を搭載。
+3. **多彩な出力・変換モード**：
+   - 映像＋音声 (`MP4`)、映像のみ (無音)、高音質音声抽出 (`MP3` / `M4A` / `FLAC` / `OPUS`)、双方向 `GIF` ↔ `MP4` FFmpeg 変換と検証、HDR 枠表示、HD カバー画像保存に対応。
+4. **スマート一括ダウンロード & 4言語完全サポート**：
+   - バッチ URL 解析・TXT 読込、重み付け進捗＆エピソード展開カードを備え、**日本語、English、简体中文、繁體中文** の 4 言語に対応。
 
 ---
 
 ## 📲 クイックダウンロード
 
-- **Android 最新版**: [`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) (または [`OmniDownloader-1.7.34-arm64-v8a.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.34-arm64-v8a.apk))
-- **iOS サイドロードガイド**: [`OmniDownloader-iOS/README_IOS.md`](OmniDownloader-iOS/README_IOS.md) を参照
-- **Windows 配布パッケージ**: [GitHub Release](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20)
+- **Android 最新版 APK**：[`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk)
+- **Windows 統合版 / Web 版**：[GitHub Latest Release](https://github.com/baishu136/OmniDownloader/releases/latest) より取得
+- **iOS サイドロードガイド**：[`OmniDownloader-iOS/README_IOS.md`](OmniDownloader-iOS/README_IOS.md) を参照
+- **完全ソースコードアーカイブ**：[`OmniDownloader_Source_LATEST.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Source_LATEST.zip)
 
 ---
 
-## Android v1.5.10
+## ☕ スポンサー・支援
 
-- コレクションの元動画と Bilibili のパートを正しく選択し、一覧順と実際の動画 URL を保持。
-- サイレント解析と手動ブラウザーのメディア捕捉処理を共通化し、リソースパネルと深いスキャンの操作を削除。
-- ダウンロード画面に単一の移動する選択インジケーターを採用し、設定 → アプリ情報に GitHub リンクを追加。
-- 1.5.7–1.5.9 のタブ・一覧最適化、コンパクトなホーム、7 分類の設定子画面、Material 3 操作、R8 とリソース縮小を含みます。
-- Android 8.0+、ARM64、APK **53.35 MiB**。**JVM テスト 27 件、エミュレーターの端末テスト 8 件**と最適化版の検証記録あり。ARM64 実機のネイティブメディア処理は未検証です。
+本プロジェクトがお役に立ちましたら、作者へのコーヒー一杯のご支援をいただければ幸いです。皆様のご支援が継続的なメンテナンスと機能向上の原動力になります。
 
-[リリースと APK](https://github.com/baishu136/OmniDownloader/releases/tag/v1.5.10) · [変更詳細](docs/RELAY_AND_COLLECTION_1.5.10.md) · [復元した検証記録](docs/RELEASE_VERIFICATION_1.5.10.md)
-
----
-
-## 📝 過去の更新履歴 (v1.4.8)
-
-- **[NEW] 中継解析サイト機能の刷新**:
-  - 中継サイト管理を【設定】画面へ統合。未登録時はホーム画面の空カードを非表示化。
-  - URL入力時に700msデバウンスでWebページ `<title>` を非同期自動取得し、サイト名を自動補完。
-  - ワンクリックで静默直接解析・ダウンロードを行うメインルートを復帰。CAPTCHA対策としてブラウザウィンドウも保持。
-- **[SEC & FIX] 通信傍受およびダウンロードエンジンの堅牢化**:
-  - **HTTP 405 (Method Not Allowed) エラーの完全修正**: 内部 API への誤傍受を防止し、GET メディアストリームのみを確実に取得。
-  - **プレイヤーでの source error (再生不可) の解消**: バイナリ Magic Bytes 検証を導入し、HTML/JSONの誤保存を防止。HLS/M3U8 の FFmpeg 自動無劣化多重化および JWT 直リンク復号に対応。
-- **[PERF] 120fps / 60fps フルフレームレートの快適性向上**:
-  - `DownloadTask` を完全不変データクラスへリファクタリングし、不要な再描画（Recomposition）を100%排除。
-  - 進捗表示をマイクロコンポーザブルへ分離し、スクロールのもたつきを完全解消。
-- **[ALIGN] Windows 版および iOS 版との完全同期**:
-  - **Windows 版**: タイトル自動取得 API (`/api/relay-sites/fetch-title`)、設定画面への移行、直リンク復号に対応。
-  - **iOS 版**: UserDefaults 永続化、タイトル自動ストリーム取得、ネイティブ嗅探シートとの同期。
+| 微信支付 (WeChat Pay) | 支付宝 (Alipay) |
+| :---: | :---: |
+| <img src="docs/images/sponsor_wechat.jpg" width="240" alt="WeChat Pay" /> | <img src="docs/images/sponsor_alipay.jpg" width="240" alt="Alipay" /> |
 
 ---
 

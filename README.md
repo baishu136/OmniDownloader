@@ -1,7 +1,3 @@
-## Release 1.7.34 · Android parsing and batch updates
-
-[Download Android 1.7.34](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.34) · Adds batch pre-parsing and automatic removal of completed inputs, Cherry Studio Mobile-style menus, and fixes for X public responses, Xiaohongshu image sources and Douyin parsing waits. Windows **1.7.20** and iOS **1.7.21** remain available from the [previous release](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20).
-
 <div align="center">
 
 # OmniDownloader
@@ -14,16 +10,16 @@
 </p>
 
 [![Release](https://img.shields.io/github/v/release/baishu136/OmniDownloader?color=blue&label=Release)](https://github.com/baishu136/OmniDownloader/releases)
-[![Android](https://img.shields.io/badge/Android-v1.7.34-green.svg)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-Jetpack%20Compose-green.svg)](app)
 [![iOS](https://img.shields.io/badge/iOS-SwiftUI%20Native-orange.svg)](OmniDownloader-iOS)
-[![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
+[![Windows](https://img.shields.io/badge/Windows-WinUI%203%20%2B%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
 
 <p align="center">
   <img src="docs/images/screenshot.jpg" alt="OmniDownloader Screenshot" />
 </p>
 
-**OmniDownloader** is a modern, cross-platform multimedia downloader matrix (**Android native, Apple iOS native, Windows Desktop standalone app, and Web background service**). It supports ultra-fast extraction and direct downloading of original-quality videos without watermarks from major platforms including **Bilibili (4K/1080P60 DASH muxing & playlists), Douyin, TikTok, Kuaishou, Xiaohongshu, YouTube, and X (Twitter)**.
+**OmniDownloader** is a modern, cross-platform multimedia downloader matrix (**Android native, Apple iOS native, Windows WinUI 3 native desktop, and Web companion service**). It supports ultra-fast extraction and direct downloading of original-quality videos, audio, image galleries, and animated GIFs without watermarks from major platforms including **Bilibili (4K/1080P60 DASH muxing & playlists), Douyin, TikTok, Kuaishou, Xiaohongshu, YouTube, X (Twitter), Instagram, Facebook, and Pixiv**.
 
 </div>
 
@@ -33,70 +29,36 @@
 
 | Platform | Target Devices | Core Tech Stack | Installation & Download |
 | :--- | :--- | :--- | :--- |
-| **🤖 Android Native** | Android Phones / Tablets / TV (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [Download Latest APK (v1.7.34)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) or via Releases |
-| **🍎 iOS Native** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + native FFmpeg | [IPA 1.7.21](https://github.com/baishu136/OmniDownloader/releases/download/v1.7.20/OmniDownloader-1.7.21-unsigned.ipa) · [Signing / 签名 / 署名](OmniDownloader-iOS/README_IOS.md) |
-| **💻 Windows Desktop** | Windows 10 / 11 (64-bit) | Python 3 + FastAPI + Edge WebView2 standalone window + Built-in FFmpeg | Download [`OmniDownloader_Desktop-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/download/v1.7.20/OmniDownloader_Desktop-1.7.20.zip); Standalone portable app with multilingual guides |
-| **🌐 Web Background** | Windows PC, local browser | Lightweight system tray daemon + Local web service + Built-in FFmpeg | Download [`OmniDownloader_Web-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/download/v1.7.20/OmniDownloader_Web-1.7.20.zip); Silent tray app with browser download takeover |
+| **🤖 Android Native** | Android Phones / Tablets / TV (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [Download Latest APK](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) · [All Releases](https://github.com/baishu136/OmniDownloader/releases) |
+| **🍎 iOS Native** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + Native FFmpeg + Photos | [GitHub Releases](https://github.com/baishu136/OmniDownloader/releases) · [Sideload & Build Guide](OmniDownloader-iOS/README_IOS.md) |
+| **💻 Windows Desktop (Unified)** | Windows 10 / 11 (64-bit) | .NET 8 WinUI 3 Fluent App + Python FastAPI + Built-in FFmpeg / Deno | [Latest Windows Portable Bundle](https://github.com/baishu136/OmniDownloader/releases/latest) · [WinUI 3 Docs](windows/winui3/README.md) |
+| **🌐 Web Companion** | Windows PC, local browser | Lightweight Win32 tray daemon + FastAPI Web UI + Built-in FFmpeg | Included in Windows bundle or standalone Web archive on [Releases](https://github.com/baishu136/OmniDownloader/releases/latest) |
 
 ---
 
 ## 🚀 Key Features
 
-1. **Native Platform Support**:
-   - **Bilibili**: Full DASH stream muxing up to 4K / 1080P60, playlist batch downloading, SESSDATA authentication.
-   - **Short Video No-Watermark Extraction**: Direct official CDN streams from Douyin, Kuaishou, Xiaohongshu, and TikTok.
-   - **Global Platforms**: Full coverage of YouTube (4K/Shorts), X (Twitter), Instagram, and Facebook.
-2. **Flexible Export Modes**:
-   - Video + Audio (MP4), Video Only (Mute for remixing), High-fidelity Audio extraction (MP3 / M4A / FLAC), Animated GIF, and HD Cover art.
-3. **Smart Collection Aggregation**:
-   - Playlists and multi-video collections display with a weighted progress bar and expandable episode drawers.
-4. **Multilingual Support**:
-   - Complete guides included in English, Simplified Chinese, Traditional Chinese, and Japanese.
+1. **Multi-Platform Native Extraction**:
+   - **Bilibili**: Full DASH stream muxing up to 4K / 1080P60, multi-part playlist batch downloading, built-in browser / Edge isolated sign-in, and persistent `SESSDATA` authentication.
+   - **Short Video No-Watermark Extraction**: Direct official CDN streams from Douyin, Kuaishou, Xiaohongshu, and TikTok, plus original image sets and ZIP archiving.
+   - **Global Media Platforms**: YouTube (4K / Shorts), X (Twitter, multi-video & HD image extraction), Instagram, Facebook, and Pixiv (including Ugoira frame archives & animations).
+2. **Windows WinUI 3 Desktop & Theme-Synced Web Companion**:
+   - **Unified Architecture & Customization**: Shared FastAPI core service powering both the native WinUI 3 client (`OmniDownloader_WinUI.exe`) and a clean Web UI (`OmniDownloader_Web.exe`) that automatically inherits client light/dark theme and custom accent colors.
+   - **First-Run Onboarding & Category Routing**: Setup flow configures theme accent color, optional local Web Service switch, and separate default save folders (**Follow Default / Video / Images incl. GIF / Audio**).
+   - **System Tray, Close Behavior & Component Management**: Native Win32 system tray right-click menu (`Show Window`, conditional `Open Web Version` hidden when Web Service is disabled, `Exit App`), persistent close behavior confirmation (`Minimize to Tray` / `Exit` + remember choice), clean subprocess shutdown when Web Service is disabled, built-in media players/viewers, Home recent-tasks visibility toggle, and extensible Component Management settings.
+3. **Flexible Export & Transcoding Modes**:
+   - Video + Audio (`MP4`), Video Only (mute track), High-fidelity Audio (`MP3` / `M4A` / `FLAC` / `OPUS`), bidirectional `GIF` ↔ `MP4` FFmpeg encoding with content validation, HDR outlines, and HD cover art saving.
+4. **Collection Aggregation, Batch Queue & Full Localization**:
+   - Batch URL parsing & TXT import, multi-episode collection cards with weighted progress drawers, browser media sniffer & relay parsing support, and full synchronization across **English, 简体中文, 繁體中文, and 日本語**.
 
 ---
 
 ## 📲 Quick Downloads
 
-- **Android Latest APK**: [`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) (or [`OmniDownloader-1.7.34-arm64-v8a.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.34-arm64-v8a.apk))
-- **iOS Sideload Guide**: See [`OmniDownloader-iOS/README_IOS.md`](OmniDownloader-iOS/README_IOS.md)
-- **Windows Portable ZIPs**: Located in [GitHub Release](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20)
-
----
-
-## Android v1.5.10
-
-- Correctly select the original video or Bilibili part in collections; retain playlist order and real video URLs.
-- Share bounded media capture between silent relay parsing and the manual browser; remove the browser resource panel and deep-scan controls.
-- Use one moving selection indicator on the download page and add the project link under Settings → About.
-- Includes the compact home screen, seven settings categories, Material 3 interactions, retained-page performance fixes, and R8/resource shrinking introduced in 1.5.7–1.5.9.
-- Android 8.0+, ARM64 APK: **53.35 MiB**. Verification: **27 JVM tests, 8 emulator device cases**, optimized release checks; physical ARM64 media execution remains unverified.
-
-[Release and APK](https://github.com/baishu136/OmniDownloader/releases/tag/v1.5.10) · [Change details](docs/RELAY_AND_COLLECTION_1.5.10.md) · [Recovered verification record](docs/RELEASE_VERIFICATION_1.5.10.md)
-
----
-
-## 📝 Historical Changelog (v1.4.8)
-
-- **[NEW] 🐱 "Cat Catch" (嗅探猫) Professional Multi-Stream Sniffer Integration**:
-  - **Deep Network Hooks**: Injected Fetch, XMLHttpRequest, and HTMLMediaElement listeners into the built-in browser to automatically capture asynchronous media streams, M3U8 playlists, and direct CDN links.
-  - **Multi-Media Resource Drawer**: Replaced single-stream overwrite with an interactive Cat Catch resource manager panel, supporting badge counts, categorized format badges (MP4, M3U8, Audio, WebM, FLV), and batch copy.
-  - **Toolbox Features**: Integrated Deep Search (`__omniDeepSearch`) to probe hidden DOM nodes and inline scripts, one-click copy of all URLs, and per-item direct download queues.
-  - **Full Cross-Platform Alignment**: Implemented in both Android (`RelayBrowserDialog`) and Apple iOS (`RelayBrowserSheet`).
-- **[NEW] Relay Sites Architecture Revamp**:
-  - Moved relay site management into the Settings tab; empty placeholder cards are cleanly hidden from the Home tab when no sites are configured.
-  - Prioritized URL input with 700ms debounce asynchronous web title detection to auto-populate site names via low-bandwidth stream truncation.
-  - Restored silent in-place parsing for one-click downloading, while preserving the built-in browser window for manual CAPTCHA verification.
-  - Enhanced SPA automation for `greenvideo.cc` with native URL query injection and Pinia state tree triggering.
-- **[SEC & FIX] Network Sniffing & Direct Download Hardening**:
-  - **Fixed HTTP 405 (Method Not Allowed)**: Strictly excludes internal POST API endpoints from media interceptors, restricting direct capture to GET media streams.
-  - **Fixed Media Player Source Error (MT Manager)**: Added ISO BMFF / Magic Bytes binary header validation to prevent saving HTML/JSON errors as media; integrated automated FFmpeg remuxing for HLS/M3U8 streams; added JWT Base64 stream unpacking.
-- **[PERF] 120fps / 60fps Full-Framerate Fluidity Optimization**:
-  - Completely refactored `DownloadTask` into an immutable Stable data class, achieving 100% recomposition skipping.
-  - Extracted 250ms progress and speed updates into isolated micro-composables.
-  - Flattened `HomeScreen` to native `LazyColumn`, optimizing card measurement from 15ms to 0.2ms, and replaced off-screen tab keeping with `rememberSaveableStateHolder` to eliminate LTPO dynamic refresh rate conflicts.
-- **[ALIGN] Full Cross-Platform Alignment**:
-  - **Windows Desktop & Web**: Added `/api/relay-sites/fetch-title` endpoint, centralized settings UI, debounce title fetching, direct stream decryption, and fixed button click responsiveness in web frontend.
-  - **iOS Native**: Added `RelaySite` UserDefaults persistence in `CookieStore`, async stream title extraction in `UrlSniffer`, and synchronized Settings/Home views with Cat Catch sniffer sheet.
+- **Android Latest APK**: [`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk)
+- **Windows Unified Desktop & Web**: Browse binaries & checksums on [GitHub Releases (Latest)](https://github.com/baishu136/OmniDownloader/releases/latest)
+- **iOS Native Project & Sideload Guide**: See [`OmniDownloader-iOS/README_IOS.md`](OmniDownloader-iOS/README_IOS.md)
+- **Complete Source Archive**: [`OmniDownloader_Source_LATEST.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Source_LATEST.zip)
 
 ---
 

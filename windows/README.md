@@ -1,58 +1,40 @@
-# OmniDownloader Windows 1.7.60
+# OmniDownloader Windows 客户端与后台服务
 
-1.7.60 为 X 官方公开媒体接口的瞬时 SSL EOF、连接重置和超时增加一次有界重试；持续失败返回脱敏的网络错误，不关闭证书校验。用户提供的帖子 `2124444023373074488` 实际为 5 张图片，已完成统一解析、原图 ZIP 下载和图片解码校验。详见 [X 连接修复及实测](../docs/WINDOWS_X_1.7.60.md)。本版继续包含下述 1.7.59 登录会话修复。
-
-1.7.59 修复桌面与 Web 共用的登录会话链路。设置 → 账号 → 选择平台 → 浏览器登录，在独立 Edge 窗口中完成登录。使用 Google 登录时，先返回目标平台，再点击「保存会话并关闭」。保存结果表示已写入本机 DPAPI 凭据库，不代表账号权益或下载能力已经验证；请重新解析目标链接确认。
-
-登录 Profile 位于 `%LOCALAPPDATA%/OmniDownloader/login-profiles`，不随应用升级和关闭窗口清除。退出账号会清除此平台的独立浏览器状态和凭据。Cookie 导入仍可使用，最大 1MiB。新版本保留 HttpOnly、识别过期/不可读会话，成功完成的 yt-dlp 请求可按版本回写更新，旧任务无法覆盖新登录或恢复已清除的凭据。
-
-浏览器桥接需要本机 Microsoft Edge；Google 和各平台仍可能要求人工验证，分区 Cookie 不会被伪装成普通 HTTP Cookie。真实账号验证、已知限制和测试记录见 [1.7.59 登录修复说明](../docs/WINDOWS_LOGIN_1.7.59.md)。新构建在 `dist/1.7.59/`，压缩包在 `release/`，不会覆盖正在运行的旧版。
-
-1.7.51 将视频和图文合并到首页解析，所有平台标签默认可见。新增批量下载页，支持分享文本、TXT、去重、导出类型、全部分集、重试和停止添加。图文批量自动保存为原图 ZIP，完成文件可从最近任务打开。批次进度和草稿在本机保存。详见 [1.7.51 验证记录](../docs/WEB_ANDROID_1.7.51.md)。
-
-本次同步 Android 的微博解析、yt-dlp 平台目录、平台展开布局、Web 应用更新检查和完成媒体浏览器查看功能。构建输出位于 `dist/1.7.50/`。实现与验证说明见 [Web 1.7.50 同步记录](../docs/WEB_ANDROID_SYNC_1.7.50.md)。
-
-Windows 10/11 x64 客户端，提供桌面 EXE 和本机 Web EXE。两种形态共用下载核心和用户数据。
+Windows 10/11 (x64) 桌面方案由原生 **.NET 8 WinUI 3 Fluent 客户端**（`OmniDownloader_WinUI.exe`）与内置 **FastAPI 共享后台服务**（`OmniDownloader_Web.exe`）组成，亦可单独使用独立 Web 后台版。两种形态共用下载队列、配置及加密凭据；完整便携包免预先安装 Python、FFmpeg 或 yt-dlp（[WinUI 3 工程说明](winui3/README.md)）。
 
 ## 使用
 
-完整解压 `OmniDownloader_Desktop-1.7.20.zip` 或 `OmniDownloader_Web-1.7.20.zip`，在解压目录双击同名 EXE；请保留 `_internal` 目录。运行不需要安装 Python。桌面版需要 Edge WebView2；抖音自动网页补全需要本机 Microsoft Edge。
-
-Web 版默认仅监听 http://127.0.0.1:58000，启动后常驻托盘。托盘可打开网页或退出后台服务。用户数据在 `%LOCALAPPDATA%/OmniDownloader`，已下载成品保存在设置所选目录。自启动为可选项。
+- **整合便携包**：下载并完整解压 `OmniDownloader-Windows-x64.zip` 后，双击根目录 `OmniDownloader_WinUI.exe` 启动；请保留同目录 DLL、运行时文件及 `OmniDownloader_Web` 子目录。
+- **独立 Web 版**：下载并完整解压 `OmniDownloader_Web.zip` 后，双击 `OmniDownloader_Web.exe` 启动本地后台服务并在浏览器中使用（默认仅监听 `http://127.0.0.1:58000`）。
+- 独立 Edge 隔离登录窗口与抖音自动网页补全需要本机安装 Microsoft Edge；客户端首次启动提供引导配置（自定义主题色、视频/图片含 GIF/音频分类保存目录、网页服务开关）。
 
 ## 界面和功能
 
-1.7.20 恢复 PC 顶部导航、卡片与渐变按钮风格；品牌图标和 EXE/托盘/Favicon 采用同一矢量来源，各 ICO 尺寸分别渲染，修复边角溢出。
-
-- 首页、图文、任务、设置四页；单行输入、平台标签、剪贴板和解析/下载进度。
-- 七类设置和子页：外观与语言、下载与存储、网络代理、中转站、账号、下载引擎、关于；账号说明为“Cookie 与登录管理”。
-- 音画合流、纯画面、MP3/M4A/FLAC/OPUS、GIF、封面、合集与 X 多视频。
-- 图文原图选择、预览、ZIP；Pixiv Ugoira 原始帧、MP4/GIF。
-- 会话按平台导入/清除/禁用，使用 Windows 用户 DPAPI 保存。接口不返回 Cookie 值。媒体历史也保存在 DPAPI 加密文件中。
-- 最高规格按实际可访问的源排序，提供尺寸、帧率、HDR、编码与严格画质策略。下载后核对成品；导出失败保留已验证的成品，重试无需重新下载。
-- 抖音使用原生读取优先，必要时以独立临时 Edge 配置补全同一作品的可用源。遇到登录或验证码时保留已有可用源并说明限制；不会自动处理验证码。
-- 页面样式、图标、脚本均随包提供，启动 UI 不依赖样式 CDN。网页服务仍需要网络访问媒体平台。
+- **客户端与网页版共享引擎**：
+  - 客户端包含首页解析、批量下载、下载任务管理、分层设置（主题配色/语言、组件管理、下载与存储、网络代理、中转站、账号与 Cookie 等）及内置原生视频播放器与图片查看器。
+  - 网页版提供单条/批量下载、进度管理与深浅色主题，视觉配色自动跟随客户端设置；当客户端关闭「网页服务」时，网页端口访问将被安全拦截，并在退出主程序时同步结束全部关联后台进程。
+  - 原生 Win32 系统托盘提供「显示窗口」「拉起网页版（开启网页服务时显示）」「退出程序」，关闭窗口时支持弹窗选择退出或最小化到托盘并记住偏好。
+- **平台与格式支持**：
+  - 音画合流 (`MP4`)、纯画面、高保真音频 (`MP3`/`M4A`/`FLAC`/`OPUS`)、真实双向 `GIF` ↔ `MP4` 转换、高清封面、HDR 轮廓标示、合集多选与 X 多视频。
+  - 图文原图选择、预览与 ZIP 打包；Pixiv Ugoira 原始帧、MP4 与 GIF。
+- **凭据与数据安全**：
+  - 设置 → 账号 → 选择平台 → 浏览器登录 / 导入 Netscape Cookie；登录 Profile 独立保存在 `%LOCALAPPDATA%/OmniDownloader/login-profiles`，凭据与媒体历史采用 Windows 用户 DPAPI 加密存储，接口不回传 Cookie 明文。
+  - 下载前根据分类目录规则解析实际存储路径；导出前执行媒体内容校验，导出失败时保留已验证缓存以便免重下重试。
 
 ## 限制
 
-最高源画质不等于上传原片。平台登录、会员/充电权益、内容状态、地区和 DRM 限制不会被绕过。部分动态页面（如小黑盒）需要桌面辅助浏览器播放并确认目标媒体；纯 Web 版没有桌面 WebView 的交互捕获能力。组件随应用发布更新，不在设置中承诺独立二进制热更新。
+- 最高源画质按目标作品实际可访问流排序，不等同于平台原始上传母片；会员、付费/充电权益、地区与 DRM 限制不会被绕过。
+- 验证码及部分强交互动态页面需要用户在内置浏览器或隔离登录窗口中手动确认。
+- 网页版与客户端共用 `%LOCALAPPDATA%/OmniDownloader`；如需同时迁移或更新正在运行的后台，请先从托盘正常退出旧服务，再重连新版本，避免直接覆盖运行中的二进制文件。
 
 ## 开发与打包
 
-Python 3.12，依赖固定在 `requirements-lock.txt`。开发服务器为 `python -m uvicorn omni_server:app --app-dir windows --host 127.0.0.1 --port 58000`。
+开发运行环境为 Python 3.12（依赖锁定于 `requirements-lock.txt`）与 .NET 8 / Windows App SDK。本地开发调试后台可运行 `python -m uvicorn omni_server:app --app-dir windows --host 127.0.0.1 --port 58000`。
 
 ```powershell
-python -m pytest windows/tests -q
-python windows/tools/prepare_web_assets.py
-python windows/build_release.py --mode all
+.venv\Scripts\python.exe -m pytest windows/tests -q
+.venv\Scripts\python.exe tools/audit_localization.py
+.venv\Scripts\python.exe tools/build_unified_windows.py
 ```
 
-样式资产构建需要 Node/npm；最终 EXE 不依赖这些开发工具。`runtime-lock.json` 固定 Deno 2.9.8 和 FFmpeg 7.1 的官方归档及二进制 SHA-256，构建前校验并在缺失时恢复。不同版本不会被静默混入成品。新输出在 `dist/1.7.20/`，不会停止或覆盖旧服务；发布 ZIP 在 `release/`。
-
-`OMNI_STATE_DIR` 可为测试指定独立数据目录，`OMNI_PORT` 可指定本机测试端口。测试请使用独立状态，避免改动真实任务。
-
-## 本机升级和恢复
-
-本次 58000 服务已更新，原安装目录和用户状态备份在仓库 `.local/backups/` 及 `windows/dist/OmniDownloader_Web.backup-1719-*`。旧版安装目录内的历史已迁移至用户数据目录。配置、Cookie、历史与下载目录不随重新打包覆盖。
-
-恢复旧程序时先退出托盘服务，保留当前用户数据；将原安装目录恢复到原路径，再启动原 EXE。若需要回退数据，应同时使用对应的用户数据备份，避免旧版本误读新格式。备份可能含登录状态，请只保存在本机。
+样式资产构建依赖 Node/npm，最终发布包不依赖任何开发工具。`runtime-lock.json` 锁定 Deno 与 FFmpeg 的官方归档及 SHA-256 校验，构建前自动校验并在缺失时恢复。测试请使用 `OMNI_STATE_DIR` 与 `OMNI_PORT` 指定隔离目录和端口，避免影响本机真实配置与任务记录。

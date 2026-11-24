@@ -1,7 +1,3 @@
-## 1.7.34 正式發行 · Android 解析與批次下載更新
-
-[下載 Android 1.7.34](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.34) · 新增批次預先解析、已完成連結自動移除及 Cherry Studio Mobile 風格選單，修正 X 公開回應誤判、小紅書圖片來源與抖音解析等待問題。Windows **1.7.20**、iOS **1.7.21** 繼續從[原發行頁](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20)下載。
-
 <div align="center">
 
 # OmniDownloader (全能影音下載器)
@@ -14,16 +10,16 @@
 </p>
 
 [![Release](https://img.shields.io/github/v/release/baishu136/OmniDownloader?color=blue&label=Release)](https://github.com/baishu136/OmniDownloader/releases)
-[![Android](https://img.shields.io/badge/Android-v1.7.34-green.svg)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-Jetpack%20Compose-green.svg)](app)
 [![iOS](https://img.shields.io/badge/iOS-SwiftUI%20Native-orange.svg)](OmniDownloader-iOS)
-[![Windows](https://img.shields.io/badge/Windows-Desktop%20%26%20Web-blue.svg)](windows)
+[![Windows](https://img.shields.io/badge/Windows-WinUI%203%20%2B%20Web-blue.svg)](windows)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
 
 <p align="center">
   <img src="docs/images/screenshot.jpg" alt="OmniDownloader 軟體截圖" />
 </p>
 
-**OmniDownloader** 是一套現代化全平台多媒體影音下載矩陣（涵蓋 **Android 原生、Apple iOS 原生、Windows 桌面獨立版、Web 網頁純後台服務版**）。支援 **Bilibili (4K/1080P60/DASH分離流/合輯聚合)、抖音、快手、小紅書、TikTok、YouTube、X (Twitter)** 等各大主流平台的原畫無浮水印極速下載。
+**OmniDownloader** 是一套現代化全平台多媒體影音下載矩陣（涵蓋 **Android 原生、Apple iOS 原生、Windows WinUI 3 原生桌面版、Web 網頁配套後台版**）。支援 **Bilibili (4K/1080P60/DASH分離流/合輯聚合)、抖音、快手、小紅書、TikTok、YouTube、X (Twitter)、Instagram、Facebook、Pixiv** 等各大主流平台原畫無浮水印影音、圖文與動圖的極速提取與下載。
 
 </div>
 
@@ -33,65 +29,45 @@
 
 | 平台型態 | 適用裝置 | 核心技術棧 | 取得與安裝方式 |
 | :--- | :--- | :--- | :--- |
-| **🤖 Android 原生版** | Android 手機 / 平板 / 電視盒 (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [下載最新 APK (v1.7.34)](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) 或 Releases 頁面 |
-| **🍎 iOS 原生版** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + 原生 FFmpeg + Photos 相簿 | [IPA 1.7.21](https://github.com/baishu136/OmniDownloader/releases/download/v1.7.20/OmniDownloader-1.7.21-unsigned.ipa) · [Signing / 签名 / 署名](OmniDownloader-iOS/README_IOS.md) |
-| **💻 Windows 桌面版** | Windows 10 / 11 (64位元) | Python 3 + FastAPI + Edge WebView2 原生獨立視窗 + 內建 FFmpeg | 下載 [`OmniDownloader_Desktop-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/download/v1.7.20/OmniDownloader_Desktop-1.7.20.zip)，免環境解壓即用，附帶多國語言說明 |
-| **🌐 Web 網頁純後台版** | Windows 本機瀏覽器 | 輕量系統列托盤常駐 + 本地 Web 服務 + 內建 FFmpeg | 下載 [`OmniDownloader_Web-1.7.20.zip`](https://github.com/baishu136/OmniDownloader/releases/download/v1.7.20/OmniDownloader_Web-1.7.20.zip)，靜默常駐托盤，支援瀏覽器原生接管下載 |
+| **🤖 Android 原生版** | Android 手機 / 平板 / 電視盒 (Android 8.0+) | Kotlin + Jetpack Compose + yt-dlp + FFmpeg | [下載最新 APK](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk) · [Releases 頁面](https://github.com/baishu136/OmniDownloader/releases) |
+| **🍎 iOS 原生版** | iPhone / iPad (iOS 15.0+) | Swift 5.9 + SwiftUI + 原生 FFmpeg + Photos 相簿 | [Releases 頁面](https://github.com/baishu136/OmniDownloader/releases) · [iOS 編譯與側載指南](OmniDownloader-iOS/README_IOS.md) |
+| **💻 Windows 桌面整合版** | Windows 10 / 11 (64位元) | .NET 8 WinUI 3 Fluent 用戶端 + Python FastAPI + 內建 FFmpeg / Deno | 前往 [Latest Release](https://github.com/baishu136/OmniDownloader/releases/latest) 下載便攜整合包，解壓即用 |
+| **🌐 Web 網頁配套後台版** | Windows 本機瀏覽器 | 輕量 Win32 系統列托盤常駐 + FastAPI Web 服務 + 內建 FFmpeg | 整合包內建或前往 [Latest Release](https://github.com/baishu136/OmniDownloader/releases/latest) 下載獨立後台包 |
 
 ---
 
 ## 🚀 核心特性
 
-1. **主流影音平台原生全支援**：
-   - **Bilibili**：支援單集、多P分集與番劇/電視劇合輯；原生 DASH 雙流解耦，支援 4K/1080P60 畫質與 `SESSDATA` 授權憑證。
-   - **短影音免浮水印直連**：抖音、快手、小紅書短鏈嗅探與自動重新導向，提取官方 CDN 原畫無浮水印直鏈。
-   - **國際主流媒體全覆蓋**：YouTube (4K/Shorts)、TikTok、X (Twitter)、Instagram 等。
-2. **多樣化導出模式**：
-   - 音畫合流 (MP4)、純視訊畫面、高保真音訊提取 (MP3 / M4A / FLAC 無損)、動圖 (GIF)、高清封面圖。
-3. **智慧合輯聚合卡片與分集抽屜**：
-   - 下載管理頁面支援加權總進度條 + 子任務進度，點擊展開抽屜即可檢視各分集明細。
-4. **多國語言國際化支援**：
-   - 包含繁體中文、簡體中文、英文與日文，包內皆附完整說明。
+1. **主流影音與圖文平台原生全支援**：
+   - **Bilibili**：支援單集、多P分集與番劇/UGC合輯；原生 DASH 雙流解耦，支援 4K/1080P60 畫質、內建瀏覽器登入與 `SESSDATA` 授權憑證。
+   - **短影音與圖文直連**：抖音、快手、小紅書、TikTok 短鏈嗅探與自動重新導向，提取官方 CDN 原畫無浮水印直鏈與原圖壓縮包。
+   - **國際主流媒體全覆蓋**：YouTube (4K/Shorts)、X (Twitter)、Instagram、Facebook、Pixiv（含 Ugoira 動圖導出）及隔離 Cookie 工作階段管理。
+2. **WinUI 3 原生互動、首次引導與系統列控制**：
+   - 支援自訂主題強調色，配套網頁版自動同步用戶端主題與配色；首次啟動引導支援分類儲存目錄（跟隨預設 / 影片 / 圖片含 GIF / 音訊）與網頁服務開關。
+   - 關閉視窗確認（關閉 / 最小化到系統列 / 取消 + 記住選擇）、Win32 系統列托盤選單（顯示視窗 / 拉起網頁版 / 結束程式）、可擴充的元件管理介面、內建原生播放器與首頁「最近任務」顯示開關。
+3. **多樣化導出與轉碼模式**：
+   - 音畫合流 (`MP4`)、純視訊畫面、高保真音訊提取 (`MP3` / `M4A` / `FLAC` / `OPUS`)、真實 `GIF` ↔ `MP4` 雙向轉碼、HDR 金色輪廓標記與高畫質封面圖。
+4. **智慧合輯聚合卡片與多國語言支援**：
+   - 支援批次連結匯入、加權總進度條與展開分集抽屜，介面全面支援 **繁體中文、簡體中文、English、日本語**。
 
 ---
 
 ## 📲 快速下載安裝
 
-- **Android 最新版**：[`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk)（或 [`OmniDownloader-1.7.34-arm64-v8a.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader-1.7.34-arm64-v8a.apk)）
-- **iOS 側載指南**：參考 [`OmniDownloader-iOS/README_IOS.md`](OmniDownloader-iOS/README_IOS.md)
-- **Windows 發行包**：位於 [GitHub Release](https://github.com/baishu136/OmniDownloader/releases/tag/v1.7.20)
+- **Android 最新版**：[`OmniDownloader_LATEST.apk`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_LATEST.apk)
+- **Windows 整合包與獨立 Web 版**：前往 [GitHub Latest Release](https://github.com/baishu136/OmniDownloader/releases/latest) 下載對應壓縮包與 `SHA256SUMS.txt`
+- **iOS 側載與建置指南**：參考 [`OmniDownloader-iOS/README_IOS.md`](OmniDownloader-iOS/README_IOS.md)
+- **完整原始碼壓縮檔**：[`OmniDownloader_Source_LATEST.zip`](https://github.com/baishu136/OmniDownloader/releases/latest/download/OmniDownloader_Source_LATEST.zip)
 
 ---
 
-## Android v1.5.10
+## ☕ 贊助與支持
 
-- 修正合集預設選取原影片與 Bilibili 分P定位，保留合集順序與真實影片網址。
-- 靜默解析與視窗排查共用有界媒體捕獲管線，移除網頁資源面板與深度掃描控制項。
-- 下載頁使用單一連續移動的選取背景，設定 → 關於新增 GitHub 專案入口。
-- 包含 1.5.7–1.5.9 的切頁與清單最佳化、精簡首頁、七類設定子頁、Material 3 互動及程式碼/資源裁剪。
-- Android 8.0+、ARM64，安裝包 **53.35 MiB**。已有 **27 項 JVM 測試、8 項模擬器裝置案例**及最佳化正式包驗收紀錄；ARM64 實機原生命令尚未驗證。
+如果您覺得本專案對您有所幫助，歡迎贊助支持作者！您的支持是持續維護與更新的最大動力。
 
-[發行頁與安裝包](https://github.com/baishu136/OmniDownloader/releases/tag/v1.5.10) · [變更詳情](docs/RELAY_AND_COLLECTION_1.5.10.md) · [恢復的驗收紀錄](docs/RELEASE_VERIFICATION_1.5.10.md)
-
----
-
-## 📝 歷史更新日誌 (v1.4.8)
-
-- **[NEW] 備用中轉解析站體驗與架構重構**：
-  - 添加入口規範遷移至【設定】中心集中管理，首頁未配置中轉站時完全隱藏空白佔位卡片；
-  - 添加入口將【網址輸入框】置頂，支援 700ms 防抖自動非同步檢索網頁 `<title>` 並智慧填入名稱；
-  - 恢復舊版「就地靜默秒級直接解析下載」，同時保留「視窗排查（瀏覽器）」作為處理滑塊人機驗證的逃生通道；
-  - 針對 `greenvideo.cc` 等 SPA 架構網站實現 URL 參數原生注入與 Pinia 狀態樹自動化觸發。
-- **[SEC & FIX] 網路嗅探與下載引擎深度防禦**：
-  - **徹底修復 HTTP 405 (Method Not Allowed) 報錯**：嚴格排除內部 API 介面路由，嚴禁向僅支援 POST 的介面發送 GET 下載請求；
-  - **徹底修復 MT 管理器等播放器報 source error 無法播放問題**：增加二進位 Magic Bytes 檔案頭核驗，杜絕將 HTML/JSON 儲存為 MP4；支援 HLS/M3U8 自動偵測並調度 FFmpeg 高速無損封裝；支援 JWT Base64 直鏈深度解包。
-- **[PERF] 列表渲染與滑動 120fps/60fps 滿幀性能治理**：
-  - `DownloadTask` 全面重構為不可變 Stable 資料類別，達成 100% 重組跳過（Recomposition Skip）；
-  - 任務下載進度高頻（250ms）更新獨立抽離為局部微組件，徹底杜絕全螢幕任務卡片連帶重繪；
-  - 首頁重構為扁平化原生 `LazyColumn`，中轉卡片單項測量精簡至 0.2ms；移除負座標偽保活，完美契合系統 LTPO 動態高更新率排程。
-- **[ALIGN] Windows 端與 iOS 端全面對齊**：
-  - **Windows 客戶端**：後端新增 `/api/relay-sites/fetch-title` 串流標題探測路由；前端設定頁集中管理中轉站與防抖自動抓取標題；同步引入 JWT 直鏈解密與防 405 攔截。
-  - **iOS 原生客戶端**：`CookieStore` 支援中轉站持久化，`UrlSniffer` 擴充非同步串流標題提取與媒體格式判定，設定頁與首頁對齊中轉站管理與原生嗅探彈窗。
+| 微信支付 (WeChat Pay) | 支付寶 (Alipay) |
+| :---: | :---: |
+| <img src="docs/images/sponsor_wechat.jpg" width="240" alt="微信支付" /> | <img src="docs/images/sponsor_alipay.jpg" width="240" alt="支付寶" /> |
 
 ---
 
