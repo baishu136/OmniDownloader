@@ -35,9 +35,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r windows/requirements-lock.txt
 
-      - name: Run localization audit and Windows backend tests
+      - name: Restore locked native runtimes and run tests
         shell: pwsh
         run: |
+          python windows/tools/prepare_runtime.py
           python tools/audit_localization.py
           python -m pytest windows/tests -q
 
