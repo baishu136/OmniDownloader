@@ -49,6 +49,10 @@ public sealed class BatchJobRowViewItem
         "QUEUED" => AppServices.Current.Loc.T("已加入队列"),
         "FAILED" => AppServices.Current.Loc.T("失败"),
         "CANCELLED" => AppServices.Current.Loc.T("已停止"),
+        "IGNORED" => AppServices.Current.Loc.T("已忽略"),
+        "PARSE_ONLY" => AppServices.Current.Loc.T("仅解析"),
+        "SKIPPED" => AppServices.Current.Loc.T("已去重跳过"),
+        "WAIT_CONFIRM" => AppServices.Current.Loc.T("待确认"),
         _ => Row.Status
     };
 
@@ -63,6 +67,7 @@ public sealed partial class BatchViewModel : ObservableObject
     private readonly AppServices _services;
     private readonly MainViewModel _main;
     private bool _refreshing;
+    private string _lastJobsSignature = string.Empty;
 
     private bool _isManualMode;
     private string _rawInputText = string.Empty;
@@ -71,6 +76,8 @@ public sealed partial class BatchViewModel : ObservableObject
     private string _selectedDownloadType = "VIDEO_WITH_AUDIO";
     private string _selectedAudioFormat = "mp3";
     private bool _downloadAllEpisodes;
+    private string _selectedRuleMode = "auto";
+    private string _selectedRuleId = string.Empty;
     private string _summaryText = string.Empty;
 
     public bool IsManualMode { get => _isManualMode; set => SetProperty(ref _isManualMode, value); }
@@ -107,10 +114,13 @@ public sealed partial class BatchViewModel : ObservableObject
     }
     public string SelectedAudioFormat { get => _selectedAudioFormat; set => SetProperty(ref _selectedAudioFormat, value); }
     public bool DownloadAllEpisodes { get => _downloadAllEpisodes; set => SetProperty(ref _downloadAllEpisodes, value); }
+    public string SelectedRuleMode { get => _selectedRuleMode; set => SetProperty(ref _selectedRuleMode, value); }
+    public string SelectedRuleId { get => _selectedRuleId; set => SetProperty(ref _selectedRuleId, value); }
     public string SummaryText { get => _summaryText; set => SetProperty(ref _summaryText, value); }
 
     public ObservableCollection<string> DraftLinks { get; } = new();
     public ObservableCollection<BatchJobViewItem> Jobs { get; } = new();
+    public ObservableCollection<RuleSelectorChoice> QuickRuleChoices => _main.RulesVm.QuickRuleChoices;
 
     public LocalizationService Loc => _services.Loc;
     public bool HasDraftLinks => DraftLinks.Count > 0;
@@ -249,7 +259,9 @@ public sealed partial class BatchViewModel : ObservableObject
                 Text = string.Join('\n', DraftLinks),
                 Type = SelectedDownloadType,
                 Audio = SelectedAudioFormat,
-                AllEpisodes = DownloadAllEpisodes
+                AllEpisodes = DownloadAllEpisodes,
+                RuleMode = SelectedRuleMode,
+                RuleId = SelectedRuleId
             });
             DraftLinks.Clear();
             SaveDraftLinks();
@@ -278,17 +290,24 @@ public sealed partial class BatchViewModel : ObservableObject
             var queued = items.Count(i => i.Status == "QUEUED");
             var tasksTotal = items.Sum(i => i.TaskIds.Count);
 
+            var signature = string.Join(";", jobs.Select(j =>
+                $"{j.Id}:{j.Items.Count}:{string.Join(",", j.Items.Select(i => $"{i.Id}={i.Status}/{i.TaskIds.Count}"))}"));
+
             _main.RunOnUi(() =>
             {
                 SummaryText = items.Count > 0
                     ? _services.Loc.T("已提交 %d / %d 条 · 生成 %d 个任务", queued, items.Count, tasksTotal)
                     : string.Empty;
-                Jobs.Clear();
-                foreach (var j in Enumerable.Reverse(jobs))
+                if (!string.Equals(_lastJobsSignature, signature, StringComparison.Ordinal))
                 {
-                    Jobs.Add(new BatchJobViewItem(j));
+                    _lastJobsSignature = signature;
+                    Jobs.Clear();
+                    foreach (var j in Enumerable.Reverse(jobs))
+                    {
+                        Jobs.Add(new BatchJobViewItem(j));
+                    }
+                    OnPropertyChanged(nameof(HasJobs));
                 }
-                OnPropertyChanged(nameof(HasJobs));
             });
 
             if (jobs.Any(j => j.Items.Any(r => r.Status is "PENDING" or "RESOLVING")))
@@ -360,4 +379,40 @@ public sealed partial class BatchViewModel : ObservableObject
 
     [RelayCommand]
     private void NavigateToTasks() => _main.NavigateTo("tasks");
+
+    [RelayCommand]
+    private async Task ClearBatchJobsAsync()
+    {
+        if (Jobs.Count == 0)
+        {
+            _main.Notify("暂无可清空的解析记录", InfoBarSeverity.Informational);
+            return;
+        }
+
+        var hasRunning = Jobs.Any(j => j.IsRunning);
+        var confirmMsg = hasRunning
+            ? _services.Loc.T("存在正在解析中的批次，确定停止解析并清空全部批次解析记录吗？（已加入下载队列的任务和本地文件不会被删除）")
+            : _services.Loc.T("确定清空全部批次解析记录吗？（已加入下载队列的任务和本地文件不会被删除）");
+
+        var ok = await _services.Dialogs.ConfirmAsync(
+            _services.Loc.T("清空解析记录"),
+            confirmMsg,
+            _services.Loc.T("立即清除"),
+            _services.Loc.T("取消"),
+            destructive: true);
+        if (!ok) return;
+
+        try
+        {
+            await _services.ApiClient.ClearBatchesAsync(clearAll: true);
+            Jobs.Clear();
+            SummaryText = string.Empty;
+            OnPropertyChanged(nameof(HasJobs));
+            _main.Notify("已清空批次解析记录", InfoBarSeverity.Informational);
+        }
+        catch (Exception ex)
+        {
+            _main.Notify(ex.Message, InfoBarSeverity.Error);
+        }
+    }
 }

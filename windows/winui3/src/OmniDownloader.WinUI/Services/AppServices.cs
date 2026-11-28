@@ -105,7 +105,7 @@ public sealed class AppServices : IDisposable
             {
                 File.WriteAllText(logPath, string.Empty);
             }
-            var entry = $"[{DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss zzz}] [{source}] {ex.GetType().FullName}: {ex.Message}\n{ex.StackTrace}\n\n";
+            var entry = $"[{DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss zzz}] [{source}] {ex}\n\n";
             File.AppendAllText(logPath, entry);
         }
         catch

@@ -24,6 +24,29 @@ public sealed partial class MainViewModel : ObservableObject
     private CancellationTokenSource? _tasksDebounceCts;
     private volatile bool _isShuttingDown;
     private long _lastSingleTaskUiTickMs;
+    private long _lastBatchRefreshMs;
+    private volatile bool _isWindowActiveOrVisible = true;
+    private volatile bool _pendingRestoreSync;
+
+    public bool IsWindowActiveOrVisible => _isWindowActiveOrVisible;
+
+    public void SetWindowActiveOrVisible(bool visible)
+    {
+        if (_isWindowActiveOrVisible == visible) return;
+        _isWindowActiveOrVisible = visible;
+        Helpers.NativeShellHelper.SuppressNonEssentialAnimations = !visible;
+        if (visible && _pendingRestoreSync)
+        {
+            _pendingRestoreSync = false;
+            RunOnUi(() =>
+            {
+                TasksVm.RefreshAfterWindowRestore();
+                HomeVm.RefreshAfterWindowRestore();
+                ActiveTasksCount = TasksVm.ActiveCount;
+            });
+            _ = BatchVm.RefreshBatchesIfVisibleAsync();
+        }
+    }
 
     private string _selectedNavKey = "home";
     private bool _isBackendConnected;
@@ -54,6 +77,7 @@ public sealed partial class MainViewModel : ObservableObject
     public HomeViewModel HomeVm { get; }
     public BatchViewModel BatchVm { get; }
     public TasksViewModel TasksVm { get; }
+    public RulesViewModel RulesVm { get; }
     public SettingsViewModel SettingsVm { get; }
 
     public Microsoft.UI.Xaml.Visibility ActiveTasksBadgeVisibility =>
@@ -65,10 +89,14 @@ public sealed partial class MainViewModel : ObservableObject
     public event EventHandler<(string Theme, bool PureBlack)>? ThemeAppearanceChanged;
     public event EventHandler? OnboardingRequested;
     public event EventHandler? WebServiceModeChanged;
+    public event EventHandler<(string Title, string Message, bool IsWarning)>? TrayBalloonRequested;
 
     public void RequestOnboarding() => OnboardingRequested?.Invoke(this, EventArgs.Empty);
 
     public void NotifyWebServiceModeChanged() => WebServiceModeChanged?.Invoke(this, EventArgs.Empty);
+
+    public void RaiseTrayBalloon(string title, string message, bool isWarning = false) =>
+        TrayBalloonRequested?.Invoke(this, (title, message, isWarning));
 
     public MainViewModel(AppServices services)
     {
@@ -76,6 +104,7 @@ public sealed partial class MainViewModel : ObservableObject
         HomeVm = new HomeViewModel(services, this);
         BatchVm = new BatchViewModel(services, this);
         TasksVm = new TasksViewModel(services, this);
+        RulesVm = new RulesViewModel(services, this);
         SettingsVm = new SettingsViewModel(services, this);
         _backendStatusText = _services.Loc.T("正在连接本地核心引擎...");
         _services.Loc.LanguageChanged += (_, _) =>
@@ -253,10 +282,11 @@ public sealed partial class MainViewModel : ObservableObject
     {
         try
         {
-            // 启动阶段优先并行加载精简设置与任务列表；诊断与会话策略延迟至进入设置子页再按需读取
+            // 启动阶段优先并行加载精简设置、任务列表与下载规则概览；诊断与会话策略延迟至进入设置子页再按需读取
             await Task.WhenAll(
                 SettingsVm.LoadInitialAsync(),
-                RefreshTasksAsync()).ConfigureAwait(false);
+                RefreshTasksAsync(),
+                RulesVm.LoadOverviewAsync()).ConfigureAwait(false);
 
             if (string.Equals(SelectedNavKey, "batch", StringComparison.Ordinal))
             {
@@ -416,24 +446,57 @@ public sealed partial class MainViewModel : ObservableObject
             if (eventType == "task_update" && root.TryGetProperty("task", out var taskEl))
             {
                 var task = taskEl.Deserialize<DownloadTask>(SseJsonOptions);
-                if (task is not null)
+                if (task is null) return;
+                var nowMs = Environment.TickCount64;
+                var isActiveTick = task.IsActive;
+                var throttleMs = _isWindowActiveOrVisible ? 120 : 2000;
+                if (!_isWindowActiveOrVisible && isActiveTick)
                 {
-                    var nowMs = Environment.TickCount64;
-                    var isActiveTick = task.IsActive;
-                    // 下载中进度节流合并至 ~120ms 刷新一帧，终态变更立即刷新，免除 HTTP 重拉风暴
-                    if (!isActiveTick || nowMs - Interlocked.Read(ref _lastSingleTaskUiTickMs) >= 120)
-                    {
-                        Interlocked.Exchange(ref _lastSingleTaskUiTickMs, nowMs);
-                        RunOnUi(() =>
-                        {
-                            TasksVm.ApplySingleTaskUpdate(task);
-                            HomeVm.ApplySingleRecentTaskUpdate(task);
-                            ActiveTasksCount = TasksVm.ActiveCount;
-                        });
-                    }
-                    _ = BatchVm.RefreshBatchesIfVisibleAsync();
-                    return;
+                    _pendingRestoreSync = true;
                 }
+                // 前台 120ms 节流增量刷新；最小化或隐藏托盘期间大幅降低 UI 刷频并在恢复时一次性同步
+                if (!isActiveTick || nowMs - Interlocked.Read(ref _lastSingleTaskUiTickMs) >= throttleMs)
+                {
+                    Interlocked.Exchange(ref _lastSingleTaskUiTickMs, nowMs);
+                    RunOnUi(() =>
+                    {
+                        TasksVm.ApplySingleTaskUpdate(task);
+                        HomeVm.ApplySingleRecentTaskUpdate(task);
+                        ActiveTasksCount = TasksVm.ActiveCount;
+                    });
+                }
+                if (_isWindowActiveOrVisible && (!isActiveTick || nowMs - Interlocked.Read(ref _lastBatchRefreshMs) >= 1200))
+                {
+                    Interlocked.Exchange(ref _lastBatchRefreshMs, nowMs);
+                    _ = BatchVm.RefreshBatchesIfVisibleAsync();
+                }
+                return;
+            }
+
+            if (eventType == "rule_confirm_required")
+            {
+                _ = RulesVm.LoadOverviewAsync();
+                Notify("剪贴板或批量任务命中需要确认的下载规则，请前往「下载规则」页确认入队", InfoBarSeverity.Informational);
+                if (RulesVm.ClipboardShowTrayNotice)
+                {
+                    RaiseTrayBalloon(
+                        _services.Loc.T("OmniDownloader · 等待确认下载"),
+                        _services.Loc.T("命中下载规则，请打开软件查看并确认入队"),
+                        false);
+                }
+                return;
+            }
+
+            if (eventType == "rule_auth_required")
+            {
+                _ = RulesVm.LoadOverviewAsync();
+                var detail = root.TryGetProperty("detail", out var dProp) ? dProp.GetString() : string.Empty;
+                var msg = string.IsNullOrWhiteSpace(detail)
+                    ? _services.Loc.T("规则自动处理已停止：目标需要登录验证或媒体源暂不可用")
+                    : _services.Loc.T("规则自动处理已停止：%s", detail);
+                Notify(msg, InfoBarSeverity.Warning);
+                RaiseTrayBalloon(_services.Loc.T("OmniDownloader · 需要处理验证"), msg, true);
+                return;
             }
 
             if (eventType is "tasks_updated" or "task_update" or "progress" or "task_deleted" or "tasks_cleared")

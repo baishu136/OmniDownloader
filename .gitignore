@@ -38,6 +38,7 @@ __pycache__/
 /agent-edition/
 *.ipa
 windows/tasks.pre-v3.bin
+windows/gpu_probe_cache.json
 windows/winui3/**/bin/
 windows/winui3/**/obj/
 /windows/winui3/publish/

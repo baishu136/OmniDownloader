@@ -11,6 +11,9 @@ const state = {
   expandedCollections: new Set(),
   eventSource: null,
   renderRaf: null,
+  renderTimer: null,
+  lastRenderTs: 0,
+  dirtyWhileHidden: false,
   recentRaf: null,
 };
 
@@ -37,7 +40,13 @@ export function initTasks() {
 
   fetchTasks();
   initSSE();
-  document.addEventListener('omni:language', () => renderAll());
+  document.addEventListener('omni:language', () => renderAll({ forceRebuild: true }));
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && state.dirtyWhileHidden) {
+      state.dirtyWhileHidden = false;
+      renderAll();
+    }
+  });
 }
 
 export async function refreshTasks() {
@@ -117,11 +126,11 @@ function typeBadgeText(task) {
 }
 
 /* ---------- 渲染 ---------- */
-function renderAll() {
+function renderAll(options = {}) {
   const groups = buildDisplayItems(state.tasks);
   updateHeaderAndTabs(groups);
   updateBadge();
-  renderList(groups);
+  renderList(groups, options);
   updateClearBtn(groups);
   scheduleRecent();
 }
@@ -163,14 +172,105 @@ function scheduleRecent() {
   });
 }
 
-function renderList(groups) {
+function singleModeTag(task) {
+  if (task.status === 'COMPLETED') return 'single_done';
+  if (['DOWNLOADING', 'PROCESSING'].includes(task.status)) return 'single_running';
+  if (['FAILED', 'WAITING_FOR_AUTH'].includes(task.status)) return 'single_error';
+  return 'single_other';
+}
+
+function patchSingleCardInPlace(card, task) {
+  const info = statusInfo(task.status);
+  const progress = Math.min(Math.max(Number(task.progress) || 0, 0), 100);
+  const ratio = (progress / 100).toFixed(4);
+  const refs = card._refs;
+  if (!refs) return;
+  if (refs.statusPill) {
+    const nextCls = `omni-pill ${info.pill}`;
+    if (refs.statusPill.textContent !== info.label) refs.statusPill.textContent = info.label;
+    if (refs.statusPill.className !== nextCls) refs.statusPill.className = nextCls;
+  }
+  if (refs.sizeCap && task.fileSizeText && refs.sizeCap.textContent !== task.fileSizeText) {
+    refs.sizeCap.textContent = task.fileSizeText;
+  }
+  if (refs.bar) {
+    const barCls = `omni-progress__bar omni-progress__bar--gpu ${info.progress}`;
+    if (refs.bar.className !== barCls) refs.bar.className = barCls;
+    refs.bar.style.transform = `scaleX(${ratio})`;
+  }
+  if (refs.metaLeft && refs.metaRight) {
+    const leftText = task.status === 'PROCESSING'
+      ? t('正在合并音画轨...')
+      : `${progress.toFixed(0)}%${task.speedText ? ' · ' + task.speedText : ''}`;
+    const rightText = task.etaText ? t('剩余 %s', t(task.etaText)) : '';
+    if (refs.metaLeft.textContent !== leftText) refs.metaLeft.textContent = leftText;
+    if (refs.metaRight.textContent !== rightText) refs.metaRight.textContent = rightText;
+  }
+}
+
+function collectionFingerprint(col, expanded) {
+  const tasks = col.tasks;
+  const total = tasks.length;
+  const completedCount = tasks.filter((x) => x.status === 'COMPLETED').length;
+  const failedCount = tasks.filter((x) => ['FAILED', 'WAITING_FOR_AUTH', 'CANCELLED'].includes(x.status)).length;
+  const activeTask = tasks.find((x) => ['DOWNLOADING', 'PROCESSING'].includes(x.status));
+  return `${total}|${completedCount}|${failedCount}|${expanded ? 1 : 0}|${activeTask ? activeTask.id : ''}`;
+}
+
+function patchCollectionCardInPlace(card, col) {
+  const tasks = col.tasks;
+  const total = tasks.length;
+  const completedCount = tasks.filter((x) => x.status === 'COMPLETED').length;
+  const activeTask = tasks.find((x) => ['DOWNLOADING', 'PROCESSING'].includes(x.status));
+  let overallSum = 0;
+  for (const item of tasks) {
+    if (item.status === 'COMPLETED') overallSum += 100;
+    else if (item.status === 'DOWNLOADING' || item.status === 'PROCESSING') overallSum += Math.min(Math.max(Number(item.progress) || 0, 0), 100);
+  }
+  const overallPct = total ? Math.min(Math.max(overallSum / total, 0), 100) : 0;
+
+  const topMeta = card.querySelectorAll('.task-progress-block > .task-progress-meta span');
+  if (topMeta.length >= 2) {
+    const labelText = t('总进度: 已完成 %d/%d 集 (%d%%)', completedCount, total, overallPct.toFixed(0));
+    const pctText = `${overallPct.toFixed(0)}%`;
+    if (topMeta[0].textContent !== labelText) topMeta[0].textContent = labelText;
+    if (topMeta[1].textContent !== pctText) topMeta[1].textContent = pctText;
+  }
+  const topBar = card.querySelector('.task-progress-block > .omni-progress > .omni-progress__bar--gpu');
+  if (topBar) topBar.style.transform = `scaleX(${(overallPct / 100).toFixed(4)})`;
+
+  if (activeTask) {
+    const activePct = Math.min(Math.max(Number(activeTask.progress) || 0, 0), 100);
+    const subBar = card.querySelector('.collection-sub-box .omni-progress__bar--gpu');
+    if (subBar) subBar.style.transform = `scaleX(${(activePct / 100).toFixed(4)})`;
+    const subMeta = card.querySelectorAll('.collection-sub-box .task-progress-meta span');
+    if (subMeta.length >= 2) {
+      const sLeft = `${activePct.toFixed(0)}% · ${activeTask.speedText || t('准备中')}`;
+      const sRight = activeTask.etaText ? t('剩余 %s', t(activeTask.etaText)) : '';
+      if (subMeta[0].textContent !== sLeft) subMeta[0].textContent = sLeft;
+      if (subMeta[1].textContent !== sRight) subMeta[1].textContent = sRight;
+    }
+  }
+  if (state.expandedCollections.has(col.collectionId)) {
+    const pctMap = new Map(tasks.map((x) => [x.id, Math.min(Math.max(Number(x.progress) || 0, 0), 100)]));
+    card.querySelectorAll('[data-ep-pct-id]').forEach((el) => {
+      const val = pctMap.get(el.dataset.epPctId);
+      if (val !== undefined) {
+        const txt = `${val.toFixed(0)}%`;
+        if (el.textContent !== txt) el.textContent = txt;
+      }
+    });
+  }
+}
+
+function renderList(groups, options = {}) {
   const g = groups || buildDisplayItems(state.tasks);
   const visible = g[state.filter] || g.all;
   const container = $('tasks-container');
   const empty = $('tasks-empty');
 
   if (!visible.length) {
-    container.replaceChildren();
+    if (container.childElementCount > 0) container.replaceChildren();
     empty.hidden = false;
     const iconBox = $('tasks-empty-icon');
     const titleEl = $('tasks-empty-title');
@@ -192,11 +292,60 @@ function renderList(groups) {
   }
 
   empty.hidden = true;
-  const frag = document.createDocumentFragment();
-  for (const item of visible) {
-    frag.appendChild(item.kind === 'collection' ? buildCollectionCard(item) : buildSingleCard(item.task));
+  const forceRebuild = Boolean(options.forceRebuild);
+  const existingMap = new Map();
+  if (!forceRebuild) {
+    for (const child of Array.from(container.children)) {
+      if (child.dataset && child.dataset.groupKey) {
+        existingMap.set(child.dataset.groupKey, child);
+      }
+    }
   }
-  container.replaceChildren(frag);
+
+  const desiredNodes = [];
+  for (const item of visible) {
+    const existing = existingMap.get(item.key);
+    if (item.kind === 'single') {
+      const task = item.task;
+      const mode = singleModeTag(task);
+      if (existing && existing.dataset.mode === mode && mode === 'single_running') {
+        patchSingleCardInPlace(existing, task);
+        desiredNodes.push(existing);
+        continue;
+      }
+      if (existing && existing.dataset.mode === mode && existing.dataset.sig === `${task.status}|${task.title}|${task.fileSizeText || ''}|${task.errorMessage || ''}`) {
+        desiredNodes.push(existing);
+        continue;
+      }
+      const created = buildSingleCard(task);
+      created.dataset.groupKey = item.key;
+      created.dataset.mode = mode;
+      created.dataset.sig = `${task.status}|${task.title}|${task.fileSizeText || ''}|${task.errorMessage || ''}`;
+      desiredNodes.push(created);
+    } else {
+      const expanded = state.expandedCollections.has(item.collectionId);
+      const fp = collectionFingerprint(item, expanded);
+      if (existing && existing.dataset.mode === 'collection' && existing.dataset.fp === fp) {
+        patchCollectionCardInPlace(existing, item);
+        desiredNodes.push(existing);
+        continue;
+      }
+      const created = buildCollectionCard(item);
+      created.dataset.groupKey = item.key;
+      created.dataset.mode = 'collection';
+      created.dataset.fp = fp;
+      desiredNodes.push(created);
+    }
+  }
+
+  // 仅当 DOM 子节点集合或顺序真正变化时才移动/替换节点，避免每帧拆装封面与布局树
+  const sameChildren = container.children.length === desiredNodes.length
+    && desiredNodes.every((node, i) => container.children[i] === node);
+  if (!sameChildren) {
+    const frag = document.createDocumentFragment();
+    for (const node of desiredNodes) frag.appendChild(node);
+    container.replaceChildren(frag);
+  }
 }
 
 /* ---------- 单任务卡片 (TaskCard.kt) ---------- */
@@ -228,7 +377,7 @@ function buildSingleCard(task) {
     </div>
     ${isRunning ? `
     <div class="task-progress-block">
-      <div class="omni-progress"><div class="omni-progress__bar ${info.progress}" style="width:${progress}%"></div></div>
+      <div class="omni-progress"><div class="omni-progress__bar omni-progress__bar--gpu ${info.progress}" style="transform:scaleX(${(progress / 100).toFixed(4)})"></div></div>
       <div class="task-progress-meta">
         <span>${task.status === 'PROCESSING' ? escapeHtml(t('正在合并音画轨...')) : `${progress.toFixed(0)}%${task.speedText ? ' · ' + escapeHtml(task.speedText) : ''}`}</span>
         <span>${task.etaText ? escapeHtml(t('剩余 %s', t(task.etaText))) : ''}</span>
@@ -243,6 +392,15 @@ function buildSingleCard(task) {
 
   const img = card.querySelector('.task-cover img');
   if (img) img.addEventListener('error', () => img.remove());
+
+  const metaSpans = card.querySelectorAll('.task-progress-meta span');
+  card._refs = {
+    statusPill: card.querySelector('.task-card__badges .omni-pill:nth-child(2)'),
+    sizeCap: card.querySelector('.task-card__badges .caption'),
+    bar: card.querySelector('.omni-progress__bar--gpu'),
+    metaLeft: metaSpans[0] || null,
+    metaRight: metaSpans[1] || null,
+  };
 
   const errStrip = card.querySelector('.task-error-strip');
   if (errStrip) {
@@ -341,7 +499,7 @@ function buildCollectionCard(col) {
         <span style="font-weight:700;color:${isAllDone ? 'var(--success)' : 'var(--primary)'}">${overallPct.toFixed(0)}%</span>
       </div>
       <div class="omni-progress omni-progress--lg">
-        <div class="omni-progress__bar ${isAllDone ? 'omni-progress__bar--success' : ''}" style="width:${overallPct}%"></div>
+        <div class="omni-progress__bar omni-progress__bar--gpu ${isAllDone ? 'omni-progress__bar--success' : ''}" style="transform:scaleX(${(overallPct / 100).toFixed(4)})"></div>
       </div>
       ${activeTask ? `
       <div class="collection-sub-box">
@@ -349,7 +507,7 @@ function buildCollectionCard(col) {
           ${iconSvg('downloading')}
           <span class="collection-sub-box__title">${escapeHtml(t('当前分集 (P%d/%d): %s', activeTask.episodeIndex || 1, total, activeTask.title))}</span>
         </div>
-        <div class="omni-progress omni-progress--sm"><div class="omni-progress__bar" style="width:${activePct}%"></div></div>
+        <div class="omni-progress omni-progress--sm"><div class="omni-progress__bar omni-progress__bar--gpu" style="transform:scaleX(${(activePct / 100).toFixed(4)})"></div></div>
         <div class="task-progress-meta">
           <span style="color:var(--primary);font-weight:600">${activePct.toFixed(0)}% · ${escapeHtml(activeTask.speedText || t('准备中'))}</span>
           <span>${activeTask.etaText ? escapeHtml(t('剩余 %s', t(activeTask.etaText))) : ''}</span>
@@ -367,6 +525,15 @@ function buildCollectionCard(col) {
 
   const img = card.querySelector('.task-cover img');
   if (img) img.addEventListener('error', () => img.remove());
+
+  const metaSpans = card.querySelectorAll('.task-progress-meta span');
+  card._refs = {
+    statusPill: card.querySelector('.task-card__badges .omni-pill:nth-child(2)'),
+    sizeCap: card.querySelector('.task-card__badges .caption'),
+    bar: card.querySelector('.omni-progress__bar--gpu'),
+    metaLeft: metaSpans[0] || null,
+    metaRight: metaSpans[1] || null,
+  };
 
   card.querySelector('.collection-toggle').addEventListener('click', () => {
     if (state.expandedCollections.has(col.collectionId)) state.expandedCollections.delete(col.collectionId);
@@ -394,6 +561,7 @@ function buildCollectionCard(col) {
         row.appendChild(playBtn);
       } else if (sub.status === 'DOWNLOADING' || sub.status === 'PROCESSING') {
         const pct = document.createElement('span');
+        pct.dataset.epPctId = sub.id;
         pct.style.cssText = 'font-size:11px;font-weight:700;color:var(--primary)';
         pct.textContent = `${subPct.toFixed(0)}%`;
         row.appendChild(pct);
@@ -602,7 +770,9 @@ function initSSE() {
       else state.tasks.unshift(updated);
 
       if (updated.status === 'COMPLETED' && previous && previous.status !== 'COMPLETED') {
-        const auto = localStorage.getItem('omni_auto_browser_download') !== 'false';
+        // 客户端发起的下载任务始终直接保存至本地指定目录，严禁经由浏览器触发二次下载
+        const isClientManaged = updated.clientSource === 'winui' || updated.clientSource === 'desktop';
+        const auto = !isClientManaged && localStorage.getItem('omni_auto_browser_download') === 'true';
         if (auto) {
           toast(t('任务已完成，正在调起浏览器保存：%s', updated.title));
           triggerBrowserDownload(updated.id);
@@ -627,11 +797,27 @@ function initSSE() {
 }
 
 function scheduleRender() {
-  if (state.renderRaf) return;
-  state.renderRaf = requestAnimationFrame(() => {
+  if (document.hidden) {
+    state.dirtyWhileHidden = true;
+    return;
+  }
+  const now = performance.now();
+  const elapsed = now - state.lastRenderTs;
+  const run = () => {
     state.renderRaf = null;
+    state.renderTimer = null;
+    state.lastRenderTs = performance.now();
     renderAll();
-  });
+  };
+  if (state.renderRaf || state.renderTimer) return;
+  if (elapsed >= 90) {
+    state.renderRaf = requestAnimationFrame(run);
+  } else {
+    state.renderTimer = setTimeout(() => {
+      state.renderTimer = null;
+      if (!state.renderRaf) state.renderRaf = requestAnimationFrame(run);
+    }, Math.max(16, 90 - elapsed));
+  }
 }
 
 function triggerBrowserDownload(id) {

@@ -81,23 +81,118 @@ class FFmpegHelper:
         pending = asyncio.create_task(proc.communicate())
         deadline = asyncio.get_running_loop().time() + 1800
         try:
-            while True:
-                cancelled = cancel_context.get()
-                if cancelled is not None and cancelled.is_set(): raise asyncio.CancelledError()
-                if asyncio.get_running_loop().time() >= deadline: raise asyncio.TimeoutError()
-                try:
-                    stdout, stderr = await asyncio.wait_for(asyncio.shield(pending), timeout=.25)
-                    break
-                except asyncio.TimeoutError: continue
+            cancelled = cancel_context.get()
+            if cancelled is None:
+                stdout, stderr = await asyncio.wait_for(pending, timeout=1800)
+            else:
+                while True:
+                    if cancelled.is_set():
+                        raise asyncio.CancelledError()
+                    remaining = deadline - asyncio.get_running_loop().time()
+                    if remaining <= 0:
+                        raise asyncio.TimeoutError()
+                    try:
+                        stdout, stderr = await asyncio.wait_for(asyncio.shield(pending), timeout=min(0.4, remaining))
+                        break
+                    except asyncio.TimeoutError:
+                        if asyncio.get_running_loop().time() >= deadline:
+                            raise
+                        continue
         except (asyncio.CancelledError, asyncio.TimeoutError):
-            if proc.returncode is None: proc.kill()
-            await pending
+            await cls._terminate_process_tree(proc)
+            try:
+                await pending
+            except Exception:
+                pass
             raise
         if proc.returncode != 0:
             err_msg = stderr.decode("utf-8", errors="ignore")
             print(f"[FFmpeg Error] 命令执行失败: {err_msg[:300]}")
             return False
         return True
+
+    @classmethod
+    async def _terminate_process_tree(cls, proc) -> None:
+        """终止 FFmpeg 子进程及其可能派生的进程树，确保取消后资源与文件句柄立即释放。"""
+        try:
+            if proc.returncode is not None:
+                return
+            if sys.platform == "win32" and getattr(proc, "pid", None):
+                try:
+                    await asyncio.to_thread(
+                        subprocess.run,
+                        ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                        capture_output=True,
+                        timeout=3,
+                        creationflags=0x08000000,
+                    )
+                except Exception:
+                    pass
+            if proc.returncode is None:
+                proc.kill()
+        except Exception:
+            pass
+
+    @classmethod
+    async def _encode_h264_with_fallback(
+        cls,
+        input_args: List[str],
+        output_path: str,
+        *,
+        vf_prefix: str = "pad=ceil(iw/2)*2:ceil(ih/2)*2",
+        extra_output_args: Optional[List[str]] = None,
+        vfr_no_bframes: bool = False,
+        allow_hardware: bool = True,
+        use_hwaccel_decode: bool = False,
+    ) -> bool:
+        """优先尝试 GPU 硬件 H.264 编码，任一步异常自动回退软件 libx264。"""
+        from engine.gpu_accel import (
+            mark_encoder_failed,
+            mark_hwaccel_failed,
+            resolve_h264_encode_attempts,
+            resolve_hwaccel_decode_args,
+        )
+
+        ffmpeg_exe = get_ffmpeg_path()
+        attempts = resolve_h264_encode_attempts(ffmpeg_exe)
+        if not allow_hardware:
+            attempts = [a for a in attempts if not a.is_hardware] or attempts[-1:]
+
+        hw_decode = resolve_hwaccel_decode_args(ffmpeg_exe) if (allow_hardware and use_hwaccel_decode) else []
+        for idx, profile in enumerate(attempts):
+            vf_filter = f"{vf_prefix},format={profile.pix_fmt}" if vf_prefix else f"format={profile.pix_fmt}"
+            decode_prefix = hw_decode if profile.is_hardware else []
+            args = [
+                "-y",
+                *decode_prefix,
+                *input_args,
+                "-vf", vf_filter,
+                *profile.build_encode_args(vfr_no_bframes=vfr_no_bframes),
+                *(extra_output_args or []),
+                output_path,
+            ]
+            if await cls._run_command(args):
+                return True
+            if profile.is_hardware:
+                if decode_prefix and len(decode_prefix) == 2:
+                    mark_hwaccel_failed(decode_prefix[1])
+                if idx + 1 < len(attempts):
+                    mark_encoder_failed(profile.encoder, "runtime encode error")
+        return False
+
+    @classmethod
+    async def encode_ugoira_video(cls, concat_path: Path | str, duration: float, output_path: Path | str) -> bool:
+        """编码 Pixiv Ugoira 动图序列（支持 NVENC/QSV/AMF 硬件编码并自动回退软件）。"""
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        return await cls._encode_h264_with_fallback(
+            ["-safe", "0", "-f", "concat", "-i", str(concat_path), "-t", f"{duration + .001:.3f}", "-fps_mode", "vfr"],
+            str(output_path),
+            vf_prefix="pad=ceil(iw/2)*2:ceil(ih/2)*2",
+            extra_output_args=["-movflags", "+faststart"],
+            vfr_no_bframes=True,
+            allow_hardware=True,
+            use_hwaccel_decode=False,
+        )
 
     @classmethod
     async def merge_video_and_audio(cls, video_path: str, audio_path: str, output_path: str) -> bool:
@@ -135,28 +230,39 @@ class FFmpegHelper:
     @classmethod
     async def extract_audio(cls, input_path: str, output_path: str, audio_format: str = "mp3") -> bool:
         """提取并转码为独立高音质音频文件"""
+        from engine.gpu_accel import optimal_ffmpeg_threads
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        t = str(optimal_ffmpeg_threads())
         fmt = audio_format.lower()
         if fmt in ["m4a", "aac"]:
-            args = ["-y", "-i", input_path, "-vn", "-c:a", "aac", "-b:a", "320k", output_path]
+            args = ["-y", "-threads", t, "-i", input_path, "-vn", "-c:a", "aac", "-b:a", "320k", output_path]
         elif fmt == "flac":
-            args = ["-y", "-i", input_path, "-vn", "-c:a", "flac", output_path]
+            args = ["-y", "-threads", t, "-i", input_path, "-vn", "-c:a", "flac", output_path]
         elif fmt == "opus":
-            args = ["-y", "-i", input_path, "-vn", "-c:a", "libopus", "-b:a", "192k", output_path]
+            args = ["-y", "-threads", t, "-i", input_path, "-vn", "-c:a", "libopus", "-b:a", "192k", output_path]
         else:  # mp3
-            args = ["-y", "-i", input_path, "-vn", "-c:a", "libmp3lame", "-q:a", "0", output_path]
+            args = ["-y", "-threads", t, "-i", input_path, "-vn", "-c:a", "libmp3lame", "-q:a", "0", output_path]
         return await cls._run_command(args)
 
     @classmethod
     async def gif_to_video(cls, source: str, output: str) -> bool:
-        from engine.gif_media import verify_gif
+        from engine.gif_media import inspect_gif, verify_gif
         from engine.media_verifier import probe
         verify_gif(source)
         if Path(source).resolve() == Path(output).resolve(): return False
         Path(output).parent.mkdir(parents=True, exist_ok=True)
-        success = await cls._run_command(['-y', '-ignore_loop', '1', '-i', source,
-            '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', '-vsync', 'vfr', '-an',
-            '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-f', 'mp4', output])
+        meta = inspect_gif(source)
+        # NVENC/QSV 硬件编码存在最小分辨率门限；极小尺寸直接走软件路径以免触发无意义的硬件重试
+        allow_hw = bool(meta and meta.get("width", 0) >= 160 and meta.get("height", 0) >= 120)
+        success = await cls._encode_h264_with_fallback(
+            ['-ignore_loop', '1', '-i', source],
+            output,
+            vf_prefix='pad=ceil(iw/2)*2:ceil(ih/2)*2',
+            extra_output_args=['-vsync', 'vfr', '-an', '-movflags', '+faststart', '-f', 'mp4'],
+            vfr_no_bframes=False,
+            allow_hardware=allow_hw,
+            use_hwaccel_decode=False,
+        )
         if success:
             info = probe(output)
             if info['width'] > 0 and info['height'] > 0 and info['duration'] > 0:

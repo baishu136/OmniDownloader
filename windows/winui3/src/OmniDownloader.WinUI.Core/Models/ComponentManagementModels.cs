@@ -116,6 +116,94 @@ public static class ThemeAccentHelper
 }
 
 /// <summary>
+/// 主题明暗解析与防闪烁策略工具：确保窗口首帧与系统实际深浅一致，避免加载后二次反色闪烁
+/// </summary>
+public static class ThemeAppearanceLogic
+{
+    public static bool ResolveEffectiveDark(string? themePreference, bool osIsDark, bool rootIsLoaded, bool rootActualIsDark)
+    {
+        if (string.Equals(themePreference, "dark", StringComparison.OrdinalIgnoreCase)) return true;
+        if (string.Equals(themePreference, "light", StringComparison.OrdinalIgnoreCase)) return false;
+        return rootIsLoaded ? rootActualIsDark : osIsDark;
+    }
+
+    public static bool ShouldReapplyOnActualThemeChanged(string? themePreference) =>
+        !string.Equals(themePreference, "light", StringComparison.OrdinalIgnoreCase) &&
+        !string.Equals(themePreference, "dark", StringComparison.OrdinalIgnoreCase);
+}
+
+/// <summary>
+/// 窗口背景材质风格枚举（还原原默认原生参数并整合 Ghost-Downloader-3 多材质外观选项）
+/// </summary>
+public enum EffectiveBackdropKind
+{
+    Solid,
+    NativeOriginal,
+    MicaBase,
+    MicaAlt,
+    WallpaperMica,
+    WallpaperMicaAlt,
+    Acrylic,
+    Aero
+}
+
+/// <summary>
+/// 背景材质偏好解析与 Windows 10/11 兼容性差异化策略
+/// </summary>
+public static class BackdropStyleLogic
+{
+    public const string AutoKey = "auto";
+    public const string MicaKey = "mica";
+    public const string MicaAltKey = "mica_alt";
+    public const string AcrylicKey = "acrylic";
+    public const string AeroKey = "aero";
+    public const string SolidKey = "solid";
+
+    public static string NormalizeStyle(string? style) =>
+        (style ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            MicaKey => MicaKey,
+            MicaAltKey or "micaalt" or "mica-alt" => MicaAltKey,
+            AcrylicKey => AcrylicKey,
+            AeroKey or "glass" or "blur" => AeroKey,
+            SolidKey or "none" or "pure" => SolidKey,
+            "original" or "native" or "default" => AutoKey,
+            _ => AutoKey
+        };
+
+    public static EffectiveBackdropKind ResolveEffectiveKind(
+        string? requestedStyle,
+        bool isDark,
+        bool pureBlackDark,
+        bool micaSupported,
+        bool acrylicSupported)
+    {
+        if (isDark && pureBlackDark)
+        {
+            return EffectiveBackdropKind.Solid;
+        }
+
+        var norm = NormalizeStyle(requestedStyle);
+        return norm switch
+        {
+            SolidKey => EffectiveBackdropKind.Solid,
+            AeroKey => acrylicSupported ? EffectiveBackdropKind.Aero : EffectiveBackdropKind.Solid,
+            AcrylicKey => acrylicSupported ? EffectiveBackdropKind.Acrylic : EffectiveBackdropKind.Solid,
+            MicaAltKey => micaSupported
+                ? EffectiveBackdropKind.MicaAlt
+                : EffectiveBackdropKind.WallpaperMicaAlt,
+            MicaKey => micaSupported
+                ? EffectiveBackdropKind.MicaBase
+                : EffectiveBackdropKind.WallpaperMica,
+            // 默认材质（auto）：完整回归添加 Ghost 背景前的原版原生参数（Win11 原生 Mica Base / Win10 原生 DesktopAcrylic）
+            _ => (micaSupported || acrylicSupported)
+                ? EffectiveBackdropKind.NativeOriginal
+                : EffectiveBackdropKind.WallpaperMica
+        };
+    }
+}
+
+/// <summary>
 /// 持久化存储的用户自定义扩展组件条目，为后续接入外部插件与自定义引擎做准备
 /// </summary>
 public sealed class CustomComponentEntry

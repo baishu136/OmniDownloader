@@ -69,7 +69,13 @@ public sealed partial class NativeImageViewerWindow : Window
 
         ApplyTheme();
 
-        RootGrid.ActualThemeChanged += (_, _) => ApplyTheme();
+        RootGrid.ActualThemeChanged += (_, _) =>
+        {
+            if (ThemeAppearanceLogic.ShouldReapplyOnActualThemeChanged(_services.LocalState.Current.Theme))
+            {
+                ApplyTheme();
+            }
+        };
         _services.MainVm.ThemeAppearanceChanged += OnThemeChanged;
         Closed += NativeImageViewerWindow_Closed;
 

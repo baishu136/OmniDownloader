@@ -50,12 +50,11 @@ class ImageEngine:
                 ready.write_text(json.dumps({'signature': signature, 'file': source.name}), encoding='utf-8')
             if cancel.is_set(): raise RuntimeError('[CANCELLED] 用户取消')
             progress(98, '', '正在导出', TaskStatus.PROCESSING)
-            export_dir = Path(config.resolve_download_dir(task.download_type))
-            destination = export_dir / f'{clean_media_title(task.title)}{source.suffix}'
-            index = 1
-            while destination.exists():
-                destination = export_dir / f'{clean_media_title(task.title)}_{index}{source.suffix}'
-                index += 1
+            from core.rules.output_helper import resolve_task_export_target
+            destination, dup_action = resolve_task_export_target(task, clean_media_title(task.title), source.suffix)
+            if dup_action == 'skip':
+                ready.unlink(missing_ok=True); source.unlink(missing_ok=True)
+                return str(destination)
             partial = destination.with_name('.' + destination.name + '.' + task.id + '.part')
             try:
                 destination.parent.mkdir(parents=True, exist_ok=True)

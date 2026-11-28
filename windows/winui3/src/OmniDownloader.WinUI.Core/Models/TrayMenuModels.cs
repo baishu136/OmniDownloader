@@ -8,7 +8,8 @@ public enum TrayMenuAction
     Separator = 0,
     ShowWindow = 1001,
     LaunchWeb = 1002,
-    ExitApp = 1003
+    ExitApp = 1003,
+    ToggleClipboardWatch = 1004
 }
 
 /// <summary>
@@ -20,13 +21,15 @@ public sealed record TrayMenuItemSpec(TrayMenuAction Action, string Label)
 }
 
 /// <summary>
-/// 托盘右键菜单构建器：根据「是否开启网页服务」开关决定是否展示「拉起网页版」
+/// 托盘右键菜单构建器：根据「是否开启网页服务」及剪贴板监听状态构建原生菜单项
 /// </summary>
 public static class TrayMenuCatalog
 {
     public static IReadOnlyList<TrayMenuItemSpec> BuildMenuItems(
         bool enableWebService,
-        Func<string, string>? translate = null)
+        Func<string, string>? translate = null,
+        bool clipboardWatchActive = false,
+        bool clipboardWatchPaused = false)
     {
         var t = translate ?? (s => s);
         var items = new List<TrayMenuItemSpec>
@@ -37,6 +40,13 @@ public static class TrayMenuCatalog
         if (enableWebService)
         {
             items.Add(new TrayMenuItemSpec(TrayMenuAction.LaunchWeb, t("拉起网页版")));
+        }
+
+        if (clipboardWatchActive)
+        {
+            items.Add(new TrayMenuItemSpec(
+                TrayMenuAction.ToggleClipboardWatch,
+                clipboardWatchPaused ? t("恢复剪贴板自动下载") : t("暂停剪贴板自动下载")));
         }
 
         items.Add(new TrayMenuItemSpec(TrayMenuAction.Separator, string.Empty));

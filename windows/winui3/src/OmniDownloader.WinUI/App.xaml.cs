@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using OmniDownloader.WinUI.Helpers;
 using OmniDownloader.WinUI.Services;
 
 namespace OmniDownloader.WinUI;
@@ -12,17 +13,6 @@ public partial class App : Application
 
     public App()
     {
-        InitializeComponent();
-
-        TaskScheduler.UnobservedTaskException += (_, e) =>
-        {
-            if (e.Exception.InnerExceptions.Any(ex => ex is not OperationCanceledException))
-            {
-                AppServices.WriteCrashLog("UnobservedTask", e.Exception);
-            }
-            e.SetObserved();
-        };
-
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
             AppServices.WriteCrashLog("AppDomain", e.ExceptionObject as Exception);
@@ -44,10 +34,39 @@ public partial class App : Application
             {
             }
         };
+
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            if (e.Exception.InnerExceptions.Any(ex => ex is not OperationCanceledException))
+            {
+                AppServices.WriteCrashLog("UnobservedTask", e.Exception);
+            }
+            e.SetObserved();
+        };
+
+        try
+        {
+            InitializeComponent();
+        }
+        catch (Exception ex)
+        {
+            AppServices.WriteCrashLog("App.InitializeComponent", ex);
+            throw;
+        }
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        try
+        {
+            // 在创建任何窗口与 XAML 控件前预置可原地更新的 Light / Default 强调色画刷字典
+            NativeShellHelper.InitializeThemeResources(AppServices.Current.LocalState.Current.AccentColor);
+        }
+        catch (Exception ex)
+        {
+            AppServices.WriteCrashLog("OnLaunched.InitializeThemeResources", ex);
+        }
+
         _mainWindow = new MainWindow();
         _mainWindow.Closed += (_, _) =>
         {

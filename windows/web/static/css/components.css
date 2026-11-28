@@ -121,7 +121,7 @@
   color: var(--on-primary-container);
 }
 .btn-primary-container:hover {
-  filter: brightness(0.96);
+  opacity: 0.92;
 }
 
 .btn-outline {
@@ -150,7 +150,7 @@
 html[data-theme="dark"] .btn-danger {
   color: #690005;
 }
-.btn-danger:hover { filter: brightness(0.95); }
+.btn-danger:hover { opacity: 0.92; }
 
 .btn-danger-text {
   color: var(--status-error);
@@ -787,6 +787,11 @@ html[data-theme="light"] .toast--info .m-icon { color: #B3C5FF; }
   border-radius: inherit;
   background: var(--primary);
   transition: width 180ms var(--ease-standard);
+}
+.omni-progress__bar--gpu {
+  width: 100%;
+  transform-origin: left center;
+  will-change: transform;
 }
 .omni-progress__bar--success { background: var(--success); }
 .omni-progress__bar--error { background: var(--status-error); }

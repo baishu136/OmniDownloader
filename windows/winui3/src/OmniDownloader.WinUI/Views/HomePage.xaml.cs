@@ -24,6 +24,8 @@ public sealed partial class HomePage : Page
     private BrowserAssistWindow? _assistWindow;
     private bool _vmEventsHooked;
     private bool? _isNarrowLayout;
+    private string? _appliedLanguage;
+    private readonly OleDragThresholdController _dragController = new();
 
     public HomePage()
     {
@@ -38,8 +40,13 @@ public sealed partial class HomePage : Page
     private void HomePage_Loaded(object sender, RoutedEventArgs e)
     {
         AttachVmEvents();
-        Localized.RefreshTree(this);
-        try { Bindings.Update(); } catch { }
+        var lang = AppServices.Current.Loc.CurrentLanguage;
+        if (!string.Equals(_appliedLanguage, lang, StringComparison.Ordinal))
+        {
+            _appliedLanguage = lang;
+            Localized.RefreshTree(this);
+            try { Bindings.Update(); } catch { }
+        }
 
         if (Vm.CurrentVideoMetadata is not null) ShowVideoOptions(Vm.CurrentVideoMetadata);
     }
@@ -70,6 +77,7 @@ public sealed partial class HomePage : Page
 
     private void Loc_LanguageChanged(object? sender, string e)
     {
+        _appliedLanguage = AppServices.Current.Loc.CurrentLanguage;
         Localized.RefreshTree(this);
         try { Bindings.Update(); } catch { }
     }
@@ -86,7 +94,7 @@ public sealed partial class HomePage : Page
         if (_isNarrowLayout == narrow) return;
         _isNarrowLayout = narrow;
 
-        ContentContainer.Margin = narrow ? new Thickness(14, 10, 14, 24) : new Thickness(28, 18, 28, 32);
+        ContentContainer.Margin = narrow ? new Thickness(12, 10, 12, 20) : new Thickness(22, 14, 22, 26);
         HeroTitleText.FontSize = narrow ? 22 : 28;
         Grid.SetColumnSpan(HeroTitlePanel, narrow ? 2 : 1);
 
@@ -94,13 +102,21 @@ public sealed partial class HomePage : Page
         Grid.SetColumn(HeroCatalogBtn, narrow ? 0 : 1);
         HeroCatalogBtn.HorizontalAlignment = narrow ? HorizontalAlignment.Left : HorizontalAlignment.Right;
 
-        if (narrow && w < 320)
+        if (narrow)
         {
-            AnalyzeActionBtn.Width = double.NaN;
-            AnalyzeActionBtn.HorizontalAlignment = HorizontalAlignment.Stretch;
+            Grid.SetColumnSpan(HomeRulePanel, 2);
+            Grid.SetRow(AnalyzeActionBtn, 1);
+            Grid.SetColumn(AnalyzeActionBtn, 0);
+            Grid.SetColumnSpan(AnalyzeActionBtn, 2);
+            AnalyzeActionBtn.Width = w < 320 ? double.NaN : 190;
+            AnalyzeActionBtn.HorizontalAlignment = w < 320 ? HorizontalAlignment.Stretch : HorizontalAlignment.Right;
         }
         else
         {
+            Grid.SetColumnSpan(HomeRulePanel, 1);
+            Grid.SetRow(AnalyzeActionBtn, 0);
+            Grid.SetColumn(AnalyzeActionBtn, 1);
+            Grid.SetColumnSpan(AnalyzeActionBtn, 1);
             AnalyzeActionBtn.Width = 190;
             AnalyzeActionBtn.HorizontalAlignment = HorizontalAlignment.Right;
         }
@@ -109,6 +125,17 @@ public sealed partial class HomePage : Page
     public string InlineIconGlyph(bool hasInput) => hasInput ? "\uE711" : "\uE77F";
 
     public bool CanClickAnalyze(bool hasInput, bool isAnalyzing) => hasInput || isAnalyzing;
+
+    public bool CanClickRuleRun(bool hasInput, bool isAnalyzing) => hasInput && !isAnalyzing;
+
+    private void HomeRuleSelectorCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (HomeRuleSelectorCombo?.SelectedItem is RuleSelectorChoice choice)
+        {
+            Vm.SelectedRuleMode = choice.Mode;
+            Vm.SelectedRuleId = choice.RuleId;
+        }
+    }
 
     public string AnalyzeButtonText(bool isAnalyzing) =>
         isAnalyzing ? Vm.Loc.BtnAnalyzing : Vm.Loc.BtnAnalyze;
@@ -226,11 +253,42 @@ public sealed partial class HomePage : Page
         }
     }
 
-    private void RecentTaskCard_Click(object sender, RoutedEventArgs e)
+    private void RecentTaskCard_Tapped(object sender, TappedRoutedEventArgs e)
     {
-        if (sender is Button btn && btn.Tag is RecentTaskItem item)
+        if (sender is FrameworkElement el && el.Tag is RecentTaskItem item)
         {
             _ = Vm.OpenRecentTaskAsync(item);
         }
     }
+
+    private void CopyRecentTaskFileBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is RecentTaskItem item)
+        {
+            Vm.CopyRecentTaskFile(item);
+        }
+    }
+
+    private void CopyRecentTaskPathBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is RecentTaskItem item)
+        {
+            Vm.CopyRecentTaskFilePath(item);
+        }
+    }
+
+    private void RecentTaskCard_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement el || el.Tag is not RecentTaskItem item || !item.IsCompleted) return;
+        _dragController.TryArm(el, e, new[] { item.Task });
+    }
+
+    private void RecentTaskCard_PointerMoved(object sender, PointerRoutedEventArgs e) =>
+        _dragController.HandlePointerMoved(sender, e);
+
+    private void RecentTaskCard_PointerReleased(object sender, PointerRoutedEventArgs e) =>
+        _dragController.HandlePointerEnded(sender);
+
+    private void RecentTaskCard_PointerCaptureLost(object sender, PointerRoutedEventArgs e) =>
+        _dragController.HandlePointerEnded(sender);
 }

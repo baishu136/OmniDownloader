@@ -61,7 +61,13 @@ public sealed partial class NativeVideoPlayerWindow : Window
         NativeShellHelper.ConfigureWindowChrome(this, TitleBarDragRegion, baseWidth: 1020, baseHeight: 680);
         ApplyTheme();
 
-        RootGrid.ActualThemeChanged += (_, _) => ApplyTheme();
+        RootGrid.ActualThemeChanged += (_, _) =>
+        {
+            if (ThemeAppearanceLogic.ShouldReapplyOnActualThemeChanged(_services.LocalState.Current.Theme))
+            {
+                ApplyTheme();
+            }
+        };
         _services.MainVm.ThemeAppearanceChanged += OnThemeChanged;
         Closed += NativeVideoPlayerWindow_Closed;
 

@@ -4,8 +4,10 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
+using OmniDownloader.WinUI.Core.Models;
 using OmniDownloader.WinUI.Helpers;
 using OmniDownloader.WinUI.Services;
+using WinRT.Interop;
 
 namespace OmniDownloader.WinUI.Controls;
 
@@ -39,9 +41,16 @@ public sealed partial class BilibiliLoginWindow : Window
         var icoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico");
         if (File.Exists(icoPath)) AppWindow.SetIcon(icoPath);
         AppWindow.Resize(new Windows.Graphics.SizeInt32(920, 740));
+        NativeShellHelper.AttachAntiFlickerGuard(WindowNative.GetWindowHandle(this));
         ApplyTheme();
 
-        RootGrid.ActualThemeChanged += (_, _) => ApplyTheme();
+        RootGrid.ActualThemeChanged += (_, _) =>
+        {
+            if (ThemeAppearanceLogic.ShouldReapplyOnActualThemeChanged(_services.LocalState.Current.Theme))
+            {
+                ApplyTheme();
+            }
+        };
         _services.MainVm.ThemeAppearanceChanged += OnThemeChanged;
 
         _ = InitWebViewAsync();
@@ -101,18 +110,15 @@ public sealed partial class BilibiliLoginWindow : Window
     {
         try
         {
-            var userDataDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "OmniDownloader",
-                "WebView2",
-                "BilibiliLogin");
-            Directory.CreateDirectory(userDataDir);
-
-            var env = await CoreWebView2Environment.CreateWithOptionsAsync(null, userDataDir, null);
-            await LoginWebView.EnsureCoreWebView2Async(env);
+            await WebViewEnvironmentHelper.EnsureInitializedAsync(LoginWebView, _services);
             if (_isClosed || LoginWebView.CoreWebView2 is null) return;
 
             var core = LoginWebView.CoreWebView2;
+            core.DownloadStarting += (coreSender, dlArgs) =>
+            {
+                dlArgs.Cancel = true;
+                dlArgs.Handled = true;
+            };
             core.NewWindowRequested += (_, e) =>
             {
                 if (!string.IsNullOrWhiteSpace(e.Uri))

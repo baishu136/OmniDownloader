@@ -10,17 +10,29 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- 预置 Light / Default(Dark) 主题强调色与可原地调色背景卡片画刷，切换背景材质或主题时就地更新 Color 彻底消除闪烁 -->
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="OmniCardSurfaceBrush" Color="#EBFFFFFF" />
+                    <SolidColorBrush x:Key="OmniCardBorderBrush" Color="#18000000" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Default">
+                    <SolidColorBrush x:Key="OmniCardSurfaceBrush" Color="#D82A2C34" />
+                    <SolidColorBrush x:Key="OmniCardBorderBrush" Color="#22FFFFFF" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
             <!-- 通用值转换器 -->
             <helpers:BoolToVisibilityConverter x:Key="BoolToVis" />
             <helpers:StringToVisibilityConverter x:Key="StrToVis" />
             <helpers:IntToVisibilityConverter x:Key="IntToVis" />
 
-            <!-- Windows 11 原生卡片容器样式（跟随系统圆角、描边与表面色） -->
+            <!-- Fluent 卡片容器样式：随当前窗口背景材质动态协调透明度与玻璃边框对比度 -->
             <Style x:Key="OmniCardBorderStyle" TargetType="Border">
-                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
-                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter Property="Background" Value="{ThemeResource OmniCardSurfaceBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource OmniCardBorderBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="CornerRadius" Value="10" />
                 <Setter Property="Padding" Value="16" />
             </Style>
 

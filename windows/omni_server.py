@@ -46,8 +46,14 @@ from engine.ytdlp_engine import YtDlpEngine
 
 @asynccontextmanager
 async def lifespan(application):
+    try:
+        from engine.gpu_accel import start_background_gpu_warmup
+        start_background_gpu_warmup()
+    except Exception:
+        pass
     try: yield
     finally:
+        await task_manager.shutdown()
         from core.browser_login import browser_login
         await asyncio.to_thread(browser_login.shutdown)
 
@@ -92,6 +98,11 @@ class CreateTaskItem(BaseModel):
     collection_title: Optional[str] = Field(None, alias="collectionTitle")
     episode_index: int = Field(0, alias="episodeIndex")
     episode_total: int = Field(0, alias="episodeTotal")
+    client_source: str = Field("", alias="clientSource")
+    output_dir_override: str = Field("", alias="outputDirOverride")
+    filename_override: str = Field("", alias="filenameOverride")
+    duplicate_policy: str = Field("rename", alias="duplicatePolicy")
+    rule_snapshot: Optional[Dict[str, Any]] = Field(None, alias="ruleSnapshot")
 
     class Config:
         populate_by_name = True
@@ -112,6 +123,8 @@ class UpdateSettingsRequest(BaseModel):
     proxy_url: Optional[str] = Field(None, alias="proxyUrl")
     bilibili_cookie: Optional[str] = Field(None, alias="bilibiliCookie")
     max_concurrent_tasks: Optional[int] = Field(None, alias="maxConcurrentTasks")
+    gpu_acceleration_enabled: Optional[bool] = Field(None, alias="gpuAccelerationEnabled")
+    gpu_preferred_vendor: Optional[str] = Field(None, alias="gpuPreferredVendor")
     theme: Optional[Literal["auto", "light", "dark"]] = None
     accent_color: Optional[str] = Field(None, alias="accentColor")
     auto_start: Optional[bool] = Field(None, alias="autoStart")
@@ -365,11 +378,18 @@ def _extract_local_task_thumb_bytes(task_id: str) -> tuple[bytes, str] | None:
                 return None
             ffmpeg_bin = Path(found)
         try:
-            res = subprocess.run(
-                [str(ffmpeg_bin), '-v', 'error', '-ss', '0.5', '-i', str(local_path),
-                 '-vframes', '1', '-vf', 'scale=360:-1', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-'],
-                capture_output=True, timeout=4, check=False
-            )
+            from engine.gpu_accel import resolve_hwaccel_decode_args
+            hw_args = resolve_hwaccel_decode_args(str(ffmpeg_bin))
+            cmd = [str(ffmpeg_bin), '-v', 'error', *hw_args, '-threads', '2', '-ss', '0.5', '-i', str(local_path),
+                   '-vframes', '1', '-vf', 'scale=360:-1', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-']
+            res = subprocess.run(cmd, capture_output=True, timeout=4, check=False)
+            if res.returncode != 0 and hw_args:
+                # 硬件解码异常时自动回退至软件解码提取缩略图
+                res = subprocess.run(
+                    [str(ffmpeg_bin), '-v', 'error', '-threads', '2', '-ss', '0.5', '-i', str(local_path),
+                     '-vframes', '1', '-vf', 'scale=360:-1', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-'],
+                    capture_output=True, timeout=4, check=False
+                )
             if res.returncode == 0 and res.stdout:
                 return _normalize_thumb_bytes_for_winui(res.stdout)
         except Exception:
@@ -556,7 +576,12 @@ async def create_download_tasks(req: BatchCreateTaskRequest):
             collection_id=item.collection_id,
             collection_title=item.collection_title,
             episode_index=item.episode_index,
-            episode_total=item.episode_total
+            episode_total=item.episode_total,
+            client_source=item.client_source,
+            output_dir_override=item.output_dir_override,
+            filename_override=item.filename_override,
+            duplicate_policy=item.duplicate_policy,
+            rule_snapshot=item.rule_snapshot,
         )
         created_tasks.append(task.model_dump(by_alias=True))
     return {"status": "success", "count": len(created_tasks), "tasks": created_tasks}
@@ -581,12 +606,168 @@ async def analyze_media(req: AnalyzeRequest):
                 raise
 
 
+async def _commit_rule_plan_tasks(
+    plan: Dict[str, Any],
+    *,
+    trigger: str,
+    url: str,
+    rule_id: str,
+    rule_name: str,
+) -> List[str]:
+    """将规则引擎生成的计划任务安全投递到统一 TaskManager 并记录审计与去重索引。"""
+    planned = plan.get("plannedTasks") or []
+    ctx = plan.get("context") or {}
+    payload: List[CreateTaskItem] = []
+    for p in planned:
+        payload.append(CreateTaskItem(
+            url=p["url"],
+            title=p["title"],
+            author=p.get("author", ""),
+            thumbnailUrl=p.get("thumbnailUrl", ""),
+            downloadType=p["downloadType"],
+            selectedResolution=p.get("selectedResolution", ""),
+            selectedVideoFormatId=p.get("selectedVideoFormatId", ""),
+            qualitySelection=QualitySelection.model_validate(p["qualitySelection"]) if p.get("qualitySelection") else None,
+            audioFormat=p.get("audioFormat", "mp3"),
+            mediaId=p.get("mediaId", ""),
+            imagePlatform=p.get("imagePlatform", ""),
+            selectedImageIds=p.get("selectedImageIds", []),
+            collectionId=p.get("collectionId"),
+            collectionTitle=p.get("collectionTitle"),
+            episodeIndex=int(p.get("episodeIndex") or 0),
+            episodeTotal=int(p.get("episodeTotal") or 0),
+            clientSource=p.get("clientSource") or f"rule:{trigger}",
+            outputDirOverride=p.get("outputDirOverride", ""),
+            filenameOverride=p.get("filenameOverride", ""),
+            duplicatePolicy=p.get("duplicatePolicy", "rename"),
+            ruleSnapshot=p.get("ruleSnapshot"),
+        ))
+
+    result = await create_download_tasks(BatchCreateTaskRequest(tasks=payload))
+    created_ids = [task["id"] for task in result["tasks"]]
+    from core.rules.store import rule_store
+    rule_store.append_audit(
+        trigger=trigger,
+        url=url,
+        platform=str(ctx.get("platform") or ""),
+        title=str(ctx.get("title") or ""),
+        rule_id=rule_id,
+        rule_name=rule_name,
+        status="queued",
+        reason=f"已按规则「{rule_name}」创建 {len(created_ids)} 个任务",
+        warnings=plan.get("warnings") or [],
+        task_ids=created_ids,
+        planned_count=len(created_ids),
+        skipped_count=len(plan.get("skippedItems") or []) + len(plan.get("dedupSkipped") or []),
+    )
+    return created_ids
+
+
 async def enqueue_batch_row(row, options):
     collection = 'batch-' + row['id']
     existing = [task.id for task in task_manager.tasks.values() if task.collection_id == collection]
     if existing:
         return existing
-    parsed = await analyze_media(AnalyzeRequest(url=row['url']))
+
+    options = options or {}
+    rule_mode = str(options.get('ruleMode') or 'auto').strip().lower()
+    rule_id = str(options.get('ruleId') or '').strip()
+    pre_parsed = None
+
+    from core.rules import RuleTrigger, rule_engine, rule_store
+    if rule_mode != 'bypass' and rule_store.get_settings().rules_system_enabled:
+        active_ids = {
+            tid for tid, t in task_manager.tasks.items()
+            if t.status in (TaskStatus.PENDING, TaskStatus.DOWNLOADING, TaskStatus.PROCESSING)
+        }
+        plan = await rule_engine.evaluate_url(
+            row['url'],
+            trigger=RuleTrigger.BATCH,
+            analyze_media_fn=lambda target: analyze_media(AnalyzeRequest(url=target)),
+            rule_id=rule_id,
+            rule_mode=rule_mode,
+            active_task_ids=active_ids,
+            fallback_options=options,
+        )
+        if plan.get('error'):
+            raise HTTPException(400, plan['error'])
+        if plan.get('matched'):
+            matched_rule = plan.get('matchedRule') or {}
+            r_id = str(matched_rule.get('id') or rule_id)
+            r_name = str(matched_rule.get('name') or '下载规则')
+            ctx = plan.get('context') or {}
+            action = str(plan.get('action') or '')
+            if action == 'ignore':
+                rule_store.append_audit(
+                    trigger='batch', url=row['url'], platform=str(ctx.get('platform') or ''),
+                    title=str(ctx.get('title') or ''), rule_id=r_id, rule_name=r_name,
+                    status='ignored', reason=f'批量链接被规则「{r_name}」忽略',
+                )
+                row['_rule_status'] = 'IGNORED'
+                row['_rule_note'] = f'已忽略 ({r_name})'
+                return []
+            if action == 'parse_only':
+                rule_store.append_audit(
+                    trigger='batch', url=row['url'], platform=str(ctx.get('platform') or ''),
+                    title=str(ctx.get('title') or ''), rule_id=r_id, rule_name=r_name,
+                    status='parse_only', reason=f'已按规则「{r_name}」仅解析不入队',
+                    warnings=plan.get('warnings') or [],
+                )
+                row['_rule_status'] = 'PARSE_ONLY'
+                row['_rule_note'] = f'仅解析 ({r_name})'
+                return []
+            planned = plan.get('plannedTasks') or []
+            if not planned:
+                skipped_cnt = len(plan.get('skippedItems') or []) + len(plan.get('dedupSkipped') or [])
+                rule_store.append_audit(
+                    trigger='batch', url=row['url'], platform=str(ctx.get('platform') or ''),
+                    title=str(ctx.get('title') or ''), rule_id=r_id, rule_name=r_name,
+                    status=str(plan.get('status') or 'dedup_skipped'),
+                    reason=f'命中去重或合集条件已全部跳过（{skipped_cnt} 项）',
+                    warnings=plan.get('warnings') or [],
+                    skipped_count=skipped_cnt,
+                )
+                row['_rule_status'] = 'SKIPPED'
+                row['_rule_note'] = f'已去重或跳过 ({r_name})'
+                return []
+            if action == 'confirm':
+                pending = rule_store.add_pending_confirmation({
+                    'trigger': 'batch',
+                    'url': row['url'],
+                    'platform': str(ctx.get('platform') or ''),
+                    'title': str(ctx.get('title') or ''),
+                    'ruleId': r_id,
+                    'ruleName': r_name,
+                    'qualitySummary': plan.get('qualitySummary', ''),
+                    'warnings': plan.get('warnings') or [],
+                    'plannedTasks': planned,
+                    'skippedItems': plan.get('skippedItems') or [],
+                    'dedupSkipped': plan.get('dedupSkipped') or [],
+                })
+                await task_manager.broadcast_event({'type': 'rule_confirm_required', 'confirmation': {k: v for k, v in pending.items() if k != 'plannedTasks'}})
+                rule_store.append_audit(
+                    trigger='batch', url=row['url'], platform=str(ctx.get('platform') or ''),
+                    title=str(ctx.get('title') or ''), rule_id=r_id, rule_name=r_name,
+                    status='confirm_required', reason=f'等待用户确认下载（{len(planned)} 项）',
+                    warnings=plan.get('warnings') or [], planned_count=len(planned),
+                )
+                row['_rule_status'] = 'WAIT_CONFIRM'
+                row['_rule_note'] = f'待确认 ({r_name})'
+                return []
+            # 将本行绑定合集标识前缀并检查单批总任务限制
+            for p in planned:
+                if not p.get('collectionId'):
+                    p['collectionId'] = collection
+            job = next((job for job in batch_manager.jobs.values() if any(item['id'] == row['id'] for item in job['items'])), None)
+            if job and sum(len(item['taskIds']) for item in job['items']) + len(planned) > 500:
+                raise HTTPException(400, '每批最多 500 个下载任务，请分批处理')
+            return await _commit_rule_plan_tasks(plan, trigger='batch', url=row['url'], rule_id=r_id, rule_name=r_name)
+
+        if rule_mode == 'specific':
+            raise HTTPException(400, plan.get('reason') or '指定规则未匹配当前链接')
+        pre_parsed = plan.get('parsed')
+
+    parsed = pre_parsed if pre_parsed is not None else await analyze_media(AnalyzeRequest(url=row['url']))
     if parsed['kind'] == 'images':
         data = parsed['data']
         ids = [resource['id'] for resource in data['resources']]
@@ -596,7 +777,8 @@ async def enqueue_batch_row(row, options):
         groups = [[identifier] for identifier in ids] if image_type == 'IMAGE' else [ids]
         payload = [CreateTaskItem(url=data['url'], title=data['title'], downloadType=image_type,
             imagePlatform=data['platform'], selectedImageIds=group, collectionId=collection,
-            episodeIndex=index + 1, episodeTotal=len(groups)) for index, group in enumerate(groups)]
+            episodeIndex=index + 1, episodeTotal=len(groups),
+            clientSource=options.get('clientSource', '')) for index, group in enumerate(groups)]
     else:
         if options['type'] in ('IMAGE', 'IMAGE_ZIP'):
             raise HTTPException(400, '这是视频作品，请选择视频导出类型')
@@ -606,7 +788,8 @@ async def enqueue_batch_row(row, options):
             raise HTTPException(400, '单条链接最多下载 100 个分集，请分批处理')
         payload = [CreateTaskItem(url=child.url, title=child.title, author=child.author, thumbnailUrl=child.thumbnail_url,
             downloadType=options['type'], audioFormat=options['audio'], mediaId=child.media_id,
-            collectionId=collection, collectionTitle=meta.title, episodeIndex=index + 1, episodeTotal=len(children))
+            collectionId=collection, collectionTitle=meta.title, episodeIndex=index + 1, episodeTotal=len(children),
+            clientSource=options.get('clientSource', ''))
             for index, child in enumerate(children)]
     job = next((job for job in batch_manager.jobs.values() if any(item['id'] == row['id'] for item in job['items'])), None)
     if job and sum(len(item['taskIds']) for item in job['items']) + len(payload) > 500:
@@ -624,13 +807,27 @@ class BatchInputRequest(BaseModel):
     type: DownloadType = DownloadType.VIDEO_WITH_AUDIO
     audio: AudioFormat = AudioFormat.MP3
     allEpisodes: bool = False
+    clientSource: str = ""
+    ruleMode: Literal["auto", "specific", "bypass"] = "auto"
+    ruleId: str = ""
 
 
 @app.post('/api/batches')
 async def create_batch(req: BatchInputRequest, request: Request):
     require_local_session_action(request)
     try:
-        return batch_manager.create(req.text, {'type': req.type.value, 'audio': req.audio.value, 'allEpisodes': req.allEpisodes}, enqueue_batch_row)
+        return batch_manager.create(
+            req.text,
+            {
+                'type': req.type.value,
+                'audio': req.audio.value,
+                'allEpisodes': req.allEpisodes,
+                'clientSource': req.clientSource,
+                'ruleMode': req.ruleMode,
+                'ruleId': req.ruleId,
+            },
+            enqueue_batch_row,
+        )
     except ValueError as error:
         raise HTTPException(400, str(error))
 
@@ -638,6 +835,15 @@ async def create_batch(req: BatchInputRequest, request: Request):
 @app.get('/api/batches')
 async def list_batches():
     return list(batch_manager.jobs.values())
+
+
+@app.post('/api/batches/clear')
+@app.delete('/api/batches/clear')
+async def clear_batches(request: Request, clearAll: bool = True):
+    """清空批量解析历史记录（不影响已提交到下载队列的任务与本地文件）"""
+    require_local_session_action(request)
+    cleared = batch_manager.clear(clear_all=clearAll)
+    return {'status': 'success', 'cleared': cleared}
 
 
 @app.post('/api/batches/{identifier}/{action}')
@@ -837,15 +1043,24 @@ async def open_download_folder():
 
 @app.get("/api/settings")
 async def get_settings():
-    """获取当前系统配置"""
+    """获取当前系统配置（毫秒级读取硬件状态快照，不触发子进程阻塞）"""
+    from engine.gpu_accel import get_cached_gpu_status_fast
     res = config.to_dict()
     res["version"] = app.version
+    res["gpuStatus"] = get_cached_gpu_status_fast()
     try:
         from setup_shortcuts import is_autostart_enabled
         res["autoStart"] = is_autostart_enabled()
     except Exception:
         res["autoStart"] = False
     return res
+
+
+@app.get("/api/gpu/status")
+async def get_gpu_hardware_status(refresh: bool = False):
+    """探测并返回本机 GPU 硬件编解码支持及当前生效状态（含自动回退状态）。"""
+    from engine.gpu_accel import get_gpu_status
+    return await asyncio.to_thread(get_gpu_status, None, refresh)
 
 
 @app.post("/api/settings")
@@ -888,6 +1103,13 @@ async def update_settings(req: UpdateSettingsRequest, request: Request):
         config.bilibili_cookie = ""
     if req.max_concurrent_tasks is not None:
         config.max_concurrent_tasks = req.max_concurrent_tasks
+    if req.gpu_acceleration_enabled is not None:
+        config.gpu_acceleration_enabled = bool(req.gpu_acceleration_enabled)
+    if req.gpu_preferred_vendor is not None:
+        vendor = req.gpu_preferred_vendor.strip().lower()
+        if vendor not in ("auto", "nvidia", "intel", "amd", "software"):
+            raise HTTPException(400, "GPU 首选后端参数无效")
+        config.gpu_preferred_vendor = vendor
     if req.theme is not None:
         config.theme = req.theme
     if req.accent_color is not None:
@@ -1132,13 +1354,460 @@ async def get_application_update():
 async def engine_diagnostics():
     import platform, importlib.metadata
     from engine.ffmpeg_helper import get_ffmpeg_path
+    from engine.gpu_accel import get_gpu_status
     return {"python": platform.python_version(), "ytDlp": importlib.metadata.version("yt-dlp"),
             "ejs": importlib.metadata.version("yt-dlp-ejs"), "ffmpegAvailable": bool(get_ffmpeg_path()),
-            "denoAvailable": (CURRENT_DIR / "bin" / "deno.exe").is_file()}
+            "denoAvailable": (CURRENT_DIR / "bin" / "deno.exe").is_file(),
+            "gpu": await asyncio.to_thread(get_gpu_status)}
 
 
 class BrowserAssistRequest(BaseModel):
     url: str
+
+
+# === Omni Download Rules 自定义规则系统 API ===
+
+class RuleSettingsUpdateRequest(BaseModel):
+    rulesSystemEnabled: Optional[bool] = None
+    clipboardWatchEnabled: Optional[bool] = None
+    clipboardPaused: Optional[bool] = None
+    clipboardDebounceMs: Optional[int] = None
+    clipboardDedupWindowSec: Optional[int] = None
+    clipboardShowTrayNotice: Optional[bool] = None
+
+
+class RuleJsonPayloadRequest(BaseModel):
+    jsonText: str
+
+
+class RuleReorderRequest(BaseModel):
+    orderedIds: List[str]
+
+
+class RuleTestPreviewRequest(BaseModel):
+    url: str
+    trigger: Literal["manual", "collection", "batch", "clipboard"] = "manual"
+    ruleId: str = ""
+
+
+class RuleExecuteRequest(BaseModel):
+    text: str
+    trigger: Literal["manual", "collection", "batch", "clipboard"] = "manual"
+    ruleMode: Literal["auto", "specific", "bypass"] = "auto"
+    ruleId: str = ""
+    clientSource: str = ""
+
+
+@app.get("/api/rules/overview")
+async def get_rules_overview():
+    from core.rules import RULE_SCHEMA_DOCS, rule_store
+    return {
+        "settings": rule_store.get_settings().model_dump(by_alias=True),
+        "rules": [r.model_dump(by_alias=True, mode="json") for r in rule_store.list_rules()],
+        "pendingConfirmations": [
+            {k: v for k, v in item.items() if k != "plannedTasks"} | {"plannedCount": len(item.get("plannedTasks") or [])}
+            for item in rule_store.list_pending_confirmations()
+        ],
+        "dedupSummary": {"totalCount": rule_store.list_dedup_entries(limit=1)["totalCount"]},
+        "schemaDocs": RULE_SCHEMA_DOCS,
+    }
+
+
+@app.get("/api/rules")
+async def list_download_rules():
+    from core.rules import rule_store
+    return [r.model_dump(by_alias=True, mode="json") for r in rule_store.list_rules()]
+
+
+@app.post("/api/rules")
+async def create_or_save_rule(request: Request):
+    require_local_session_action(request)
+    from core.rules import DownloadRule, rule_store
+    from core.rules.schema import contains_sensitive_data
+    body = await request.json()
+    if contains_sensitive_data(body):
+        raise HTTPException(400, "规则禁止包含 Cookie、Token 或命令注入表达式")
+    try:
+        rule = DownloadRule.model_validate(body)
+        saved = rule_store.upsert_rule(rule)
+        return {"status": "success", "rule": saved.model_dump(by_alias=True, mode="json")}
+    except Exception as exc:
+        raise HTTPException(400, str(exc)) from None
+
+
+@app.put("/api/rules/{rule_id}")
+async def update_download_rule(rule_id: str, request: Request):
+    require_local_session_action(request)
+    from core.rules import DownloadRule, rule_store
+    from core.rules.schema import contains_sensitive_data
+    body = await request.json()
+    if contains_sensitive_data(body):
+        raise HTTPException(400, "规则禁止包含 Cookie、Token 或命令注入表达式")
+    if isinstance(body, dict):
+        body["id"] = rule_id
+    try:
+        rule = DownloadRule.model_validate(body)
+        saved = rule_store.upsert_rule(rule)
+        return {"status": "success", "rule": saved.model_dump(by_alias=True, mode="json")}
+    except Exception as exc:
+        raise HTTPException(400, str(exc)) from None
+
+
+@app.post("/api/rules/{rule_id}/duplicate")
+async def duplicate_download_rule(rule_id: str, request: Request):
+    require_local_session_action(request)
+    from core.rules import rule_store
+    cloned = rule_store.duplicate_rule(rule_id)
+    if cloned is None:
+        raise HTTPException(404, "规则不存在")
+    return {"status": "success", "rule": cloned.model_dump(by_alias=True, mode="json")}
+
+
+@app.delete("/api/rules/{rule_id}")
+async def delete_download_rule(rule_id: str, request: Request):
+    require_local_session_action(request)
+    from core.rules import rule_store
+    if not rule_store.delete_rule(rule_id):
+        raise HTTPException(404, "规则不存在")
+    return {"status": "success"}
+
+
+@app.post("/api/rules/reorder")
+async def reorder_download_rules(req: RuleReorderRequest, request: Request):
+    require_local_session_action(request)
+    from core.rules import rule_store
+    rules = rule_store.reorder_rules(req.orderedIds)
+    return {"status": "success", "rules": [r.model_dump(by_alias=True, mode="json") for r in rules]}
+
+
+@app.post("/api/rules/settings")
+async def update_rule_settings(req: RuleSettingsUpdateRequest, request: Request):
+    require_local_session_action(request)
+    from core.rules import rule_store
+    updated = rule_store.update_settings(req.model_dump(exclude_none=True))
+    return {"status": "success", "settings": updated.model_dump(by_alias=True)}
+
+
+@app.post("/api/rules/validate")
+async def validate_rule_json_endpoint(req: RuleJsonPayloadRequest):
+    from core.rules import parse_and_validate_rule_json
+    try:
+        rules, warnings = parse_and_validate_rule_json(req.jsonText)
+        return {
+            "valid": True,
+            "count": len(rules),
+            "warnings": warnings,
+            "rules": [r.model_dump(by_alias=True, mode="json") for r in rules],
+        }
+    except ValueError as exc:
+        return {"valid": False, "error": str(exc), "count": 0, "warnings": [], "rules": []}
+
+
+@app.post("/api/rules/import")
+async def import_rules_bundle(req: RuleJsonPayloadRequest, request: Request):
+    require_local_session_action(request)
+    from core.rules import apply_external_import_safety_guard, parse_and_validate_rule_json, rule_store
+    try:
+        raw_rules, parse_warnings = parse_and_validate_rule_json(req.jsonText)
+        safe_rules, safety_notes = apply_external_import_safety_guard(raw_rules)
+        imported = [rule_store.upsert_rule(r).model_dump(by_alias=True, mode="json") for r in safe_rules]
+        return {
+            "status": "success",
+            "importedCount": len(imported),
+            "rules": imported,
+            "warnings": parse_warnings + safety_notes,
+        }
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from None
+
+
+@app.get("/api/rules/export")
+async def export_rules_bundle_endpoint(ruleId: str = ""):
+    from core.rules import rule_store
+    ids = [x.strip() for x in ruleId.split(",") if x.strip()] if ruleId else None
+    bundle = rule_store.export_bundle(ids)
+    return bundle
+
+
+@app.post("/api/rules/test")
+async def test_rule_preview(req: RuleTestPreviewRequest):
+    from core.rules import RuleTrigger, rule_engine
+    active_ids = {
+        tid for tid, t in task_manager.tasks.items()
+        if t.status in (TaskStatus.PENDING, TaskStatus.DOWNLOADING, TaskStatus.PROCESSING)
+    }
+    trigger_enum = RuleTrigger(req.trigger)
+    result = await rule_engine.evaluate_url(
+        req.url,
+        trigger=trigger_enum,
+        analyze_media_fn=lambda target: analyze_media(AnalyzeRequest(url=target)),
+        rule_id=req.ruleId,
+        rule_mode="specific" if req.ruleId else "auto",
+        active_task_ids=active_ids,
+        dry_run=True,
+        record_audit=False,
+    )
+    sanitized = {k: v for k, v in result.items() if k not in ("parsed", "ruleObj")}
+    return sanitized
+
+
+@app.post("/api/rules/execute")
+async def execute_rules_for_input(req: RuleExecuteRequest, request: Request):
+    """
+    统一供首页普通下载、合集快速应用及后台剪贴板事件调用：
+    支持单条分享文本或多条链接自动提取，命中启用规则后按执行策略完成入队/仅解析/待确认/忽略。
+    """
+    require_local_session_action(request)
+    from core.batch_manager import links as extract_all_links
+    from core.rules import RuleTrigger, rule_engine, rule_store
+
+    settings = rule_store.get_settings()
+    trigger_enum = RuleTrigger(req.trigger)
+    if req.ruleMode == "bypass" or not settings.rules_system_enabled:
+        return {"matched": False, "bypassed": True, "results": []}
+
+    raw_text = (req.text or "").strip()
+    if not raw_text:
+        return {"matched": False, "results": []}
+
+    if req.trigger == "clipboard":
+        try:
+            urls = extract_all_links(raw_text)[:15]
+        except ValueError:
+            urls = []
+        if not urls:
+            # 剪贴板仅提取链接，不含任何支持 URL 时绝不写日志也不报错
+            return {"matched": False, "results": []}
+    else:
+        single = UrlSniffer.extract_url(raw_text)
+        urls = [single] if single else ([raw_text] if re.fullmatch(r"(?i)BV[a-z0-9]{10}", raw_text) else [])
+        if not urls:
+            raise HTTPException(400, "未识别到有效链接")
+
+    results: List[Dict[str, Any]] = []
+    any_matched = False
+    auth_blocked = False
+    active_ids = {
+        tid for tid, t in task_manager.tasks.items()
+        if t.status in (TaskStatus.PENDING, TaskStatus.DOWNLOADING, TaskStatus.PROCESSING)
+    }
+
+    for url in urls:
+        plan = await rule_engine.evaluate_url(
+            url,
+            trigger=trigger_enum,
+            analyze_media_fn=lambda target: analyze_media(AnalyzeRequest(url=target)),
+            rule_id=req.ruleId,
+            rule_mode=req.ruleMode,
+            active_task_ids=active_ids,
+            dry_run=False,
+            record_audit=True,
+            fallback_options={"clientSource": req.clientSource or req.trigger},
+        )
+        if not plan.get("matched"):
+            results.append({"url": url, "matched": False, "reason": plan.get("reason", "")})
+            continue
+
+        any_matched = True
+        matched_rule = plan.get("matchedRule") or {}
+        r_id = str(matched_rule.get("id") or "")
+        r_name = str(matched_rule.get("name") or "")
+        ctx = plan.get("context") or {}
+
+        if plan.get("error"):
+            is_auth = bool(plan.get("blockedByAuthOrSource"))
+            if is_auth:
+                auth_blocked = True
+                await task_manager.broadcast_event({
+                    "type": "rule_auth_required",
+                    "url": url,
+                    "ruleName": r_name,
+                    "errorCode": plan.get("errorCode", ""),
+                    "detail": plan["error"],
+                })
+            results.append({
+                "url": url,
+                "matched": True,
+                "ruleId": r_id,
+                "ruleName": r_name,
+                "status": plan.get("status", "failed"),
+                "error": plan["error"],
+                "errorCode": plan.get("errorCode", ""),
+                "blockedByAuthOrSource": is_auth,
+            })
+            if auth_blocked:
+                # 遇到登录/验证或媒体源不可用，立即停止当前批次后续自动化触发并提示用户
+                break
+            continue
+
+        action = str(plan.get("action") or "")
+        if action == "ignore":
+            rule_store.append_audit(
+                trigger=req.trigger, url=url, platform=str(ctx.get("platform") or ""),
+                title=str(ctx.get("title") or ""), rule_id=r_id, rule_name=r_name,
+                status="ignored", reason=f"规则「{r_name}」策略为忽略",
+            )
+            results.append({"url": url, "matched": True, "ruleId": r_id, "ruleName": r_name, "action": "ignore", "status": "ignored"})
+            continue
+
+        if action == "parse_only":
+            rule_store.append_audit(
+                trigger=req.trigger, url=url, platform=str(ctx.get("platform") or ""),
+                title=str(ctx.get("title") or ""), rule_id=r_id, rule_name=r_name,
+                status="parse_only", reason=f"已按规则「{r_name}」完成仅解析", warnings=plan.get("warnings") or [],
+            )
+            parsed = plan.get("parsed") or {}
+            serialized_data = parsed.get("data").model_dump(by_alias=True) if hasattr(parsed.get("data"), "model_dump") else parsed.get("data")
+            results.append({
+                "url": url, "matched": True, "ruleId": r_id, "ruleName": r_name,
+                "action": "parse_only", "status": "parse_only",
+                "parsedKind": parsed.get("kind", "video"),
+                "parsedData": serialized_data,
+                "warnings": plan.get("warnings") or [],
+            })
+            continue
+
+        planned = plan.get("plannedTasks") or []
+        if not planned:
+            skipped_cnt = len(plan.get("skippedItems") or []) + len(plan.get("dedupSkipped") or [])
+            rule_store.append_audit(
+                trigger=req.trigger, url=url, platform=str(ctx.get("platform") or ""),
+                title=str(ctx.get("title") or ""), rule_id=r_id, rule_name=r_name,
+                status=str(plan.get("status") or "dedup_skipped"),
+                reason=f"命中去重或筛选已全部跳过（{skipped_cnt} 项）",
+                warnings=plan.get("warnings") or [], skipped_count=skipped_cnt,
+            )
+            results.append({
+                "url": url, "matched": True, "ruleId": r_id, "ruleName": r_name,
+                "status": str(plan.get("status") or "dedup_skipped"),
+                "skippedCount": skipped_cnt,
+                "warnings": plan.get("warnings") or [],
+            })
+            continue
+
+        if action == "confirm":
+            pending = rule_store.add_pending_confirmation({
+                "trigger": req.trigger,
+                "url": url,
+                "platform": str(ctx.get("platform") or ""),
+                "title": str(ctx.get("title") or ""),
+                "ruleId": r_id,
+                "ruleName": r_name,
+                "qualitySummary": plan.get("qualitySummary", ""),
+                "warnings": plan.get("warnings") or [],
+                "plannedTasks": planned,
+                "skippedItems": plan.get("skippedItems") or [],
+                "dedupSkipped": plan.get("dedupSkipped") or [],
+            })
+            await task_manager.broadcast_event({
+                "type": "rule_confirm_required",
+                "confirmation": {k: v for k, v in pending.items() if k != "plannedTasks"} | {"plannedCount": len(planned)},
+            })
+            rule_store.append_audit(
+                trigger=req.trigger, url=url, platform=str(ctx.get("platform") or ""),
+                title=str(ctx.get("title") or ""), rule_id=r_id, rule_name=r_name,
+                status="confirm_required", reason=f"等待用户确认下载（{len(planned)} 项）",
+                warnings=plan.get("warnings") or [], planned_count=len(planned),
+            )
+            results.append({
+                "url": url, "matched": True, "ruleId": r_id, "ruleName": r_name,
+                "action": "confirm", "status": "confirm_required",
+                "confirmId": pending["confirmId"],
+                "plannedCount": len(planned),
+                "title": str(ctx.get("title") or ""),
+                "warnings": plan.get("warnings") or [],
+            })
+            continue
+
+        created_ids = await _commit_rule_plan_tasks(
+            plan, trigger=req.trigger, url=url, rule_id=r_id, rule_name=r_name
+        )
+        results.append({
+            "url": url, "matched": True, "ruleId": r_id, "ruleName": r_name,
+            "action": "auto_download", "status": "queued",
+            "taskIds": created_ids, "plannedCount": len(created_ids),
+            "title": str(ctx.get("title") or ""),
+            "qualitySummary": plan.get("qualitySummary", ""),
+            "warnings": plan.get("warnings") or [],
+        })
+
+    return {
+        "matched": any_matched,
+        "authBlocked": auth_blocked,
+        "results": results,
+    }
+
+
+@app.post("/api/rules/pending/{confirm_id}/approve")
+async def approve_pending_rule_download(confirm_id: str, request: Request):
+    require_local_session_action(request)
+    from core.rules import rule_store
+    item = rule_store.pop_pending_confirmation(confirm_id)
+    if not item:
+        raise HTTPException(404, "待确认记录不存在或已处理")
+    plan = {
+        "plannedTasks": item.get("plannedTasks") or [],
+        "context": {"platform": item.get("platform", ""), "title": item.get("title", "")},
+        "warnings": item.get("warnings") or [],
+        "skippedItems": item.get("skippedItems") or [],
+        "dedupSkipped": item.get("dedupSkipped") or [],
+    }
+    ids = await _commit_rule_plan_tasks(
+        plan,
+        trigger=str(item.get("trigger") or "manual"),
+        url=str(item.get("url") or ""),
+        rule_id=str(item.get("ruleId") or ""),
+        rule_name=str(item.get("ruleName") or ""),
+    )
+    return {"status": "success", "taskIds": ids, "count": len(ids)}
+
+
+@app.post("/api/rules/pending/{confirm_id}/dismiss")
+async def dismiss_pending_rule_download(confirm_id: str, request: Request):
+    require_local_session_action(request)
+    from core.rules import rule_store
+    item = rule_store.pop_pending_confirmation(confirm_id)
+    if not item:
+        raise HTTPException(404, "待确认记录不存在或已处理")
+    rule_store.append_audit(
+        trigger=str(item.get("trigger") or "manual"),
+        url=str(item.get("url") or ""),
+        platform=str(item.get("platform") or ""),
+        title=str(item.get("title") or ""),
+        rule_id=str(item.get("ruleId") or ""),
+        rule_name=str(item.get("ruleName") or ""),
+        status="ignored",
+        reason="用户取消确认入队",
+    )
+    return {"status": "success"}
+
+
+@app.get("/api/rules/audit")
+async def get_rule_audit_logs(limit: int = 100):
+    from core.rules import rule_store
+    return {"items": rule_store.list_audit_logs(limit=max(1, min(limit, 300)))}
+
+
+@app.post("/api/rules/audit/clear")
+async def clear_rule_audit_logs(request: Request):
+    require_local_session_action(request)
+    from core.rules import rule_store
+    cleared = rule_store.clear_audit_logs()
+    return {"status": "success", "cleared": cleared}
+
+
+@app.get("/api/rules/dedup")
+async def get_rule_dedup_index(limit: int = 100):
+    from core.rules import rule_store
+    return rule_store.list_dedup_entries(limit=max(1, min(limit, 300)))
+
+
+@app.post("/api/rules/dedup/clear")
+async def clear_rule_dedup_index(request: Request):
+    require_local_session_action(request)
+    from core.rules import rule_store
+    cleared = rule_store.clear_dedup_index()
+    return {"status": "success", "cleared": cleared}
 
 
 @app.post('/api/browser-assist/open')

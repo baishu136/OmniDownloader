@@ -67,21 +67,95 @@ class TaskManager:
                 print(f"[TaskManager] 读取任务历史异常: {e}")
 
     def _save_persisted_tasks(self):
-        """保存任务历史记录"""
+        """防抖调度任务历史加密落盘（有事件循环时卸载至工作线程合并高频写入，无事件循环时直接同步落盘）。"""
+        self.schedule_save(immediate=False)
+
+    def flush_persisted_tasks_sync(self) -> None:
+        """同步立即加密写入最近 100 条任务记录（用于退出刷新与无事件循环调用）。"""
+        timer = getattr(self, "_save_timer", None)
+        if timer is not None:
+            try:
+                timer.cancel()
+            except Exception:
+                pass
+            self._save_timer = None
         try:
-            # 最多保存最近 100 条任务
             recent = list(self.tasks.values())[-100:]
             data = [t.model_dump(by_alias=True) for t in recent]
+            encrypted = b"OMNI3:" + protect(json.dumps(data, ensure_ascii=False).encode("utf-8"))
             TASKS_STORAGE_FILE.parent.mkdir(parents=True, exist_ok=True)
             temporary = TASKS_STORAGE_FILE.with_suffix(".tmp")
-            temporary.write_bytes(b"OMNI3:" + protect(json.dumps(data, ensure_ascii=False).encode("utf-8")))
+            temporary.write_bytes(encrypted)
             temporary.replace(TASKS_STORAGE_FILE)
         except Exception as e:
             print(f"[TaskManager] 保存任务记录失败: {e}")
 
+    def schedule_save(self, immediate: bool = False) -> None:
+        """合并连续状态更新，避免每次任务切换在事件循环线程同步执行 DPAPI 加密与磁盘替换。"""
+        self._save_dirty = True
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            self.flush_persisted_tasks_sync()
+            return
+
+        if getattr(self, "_save_timer", None) is not None:
+            try:
+                self._save_timer.cancel()
+            except Exception:
+                pass
+            self._save_timer = None
+
+        delay = 0.05 if immediate else 0.55
+
+        def _kick():
+            self._save_timer = None
+            if getattr(self, "_save_dirty", False):
+                asyncio.create_task(self._flush_persisted_tasks_async())
+
+        self._save_timer = loop.call_later(delay, _kick)
+
+    async def _flush_persisted_tasks_async(self) -> None:
+        if getattr(self, "_save_inflight", False):
+            return
+        self._save_inflight = True
+        try:
+            while getattr(self, "_save_dirty", False):
+                self._save_dirty = False
+                recent = list(self.tasks.values())[-100:]
+                data = [t.model_dump(by_alias=True) for t in recent]
+                await asyncio.to_thread(self._write_persisted_snapshot, data)
+        except Exception as e:
+            print(f"[TaskManager] 异步保存任务记录失败: {e}")
+        finally:
+            self._save_inflight = False
+
+    @staticmethod
+    def _write_persisted_snapshot(data: list) -> None:
+        encrypted = b"OMNI3:" + protect(json.dumps(data, ensure_ascii=False).encode("utf-8"))
+        TASKS_STORAGE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        temporary = TASKS_STORAGE_FILE.with_suffix(".tmp")
+        temporary.write_bytes(encrypted)
+        temporary.replace(TASKS_STORAGE_FILE)
+
+    async def shutdown(self) -> None:
+        """关闭前停止活跃下载任务、清理子进程并确保最近记录落盘。"""
+        for ev in list(getattr(self, "cancel_events", {}).values()):
+            try:
+                ev.set()
+            except Exception:
+                pass
+        for t in list(getattr(self, "running_tasks", {}).values()):
+            if not t.done():
+                t.cancel()
+        running = [t for t in getattr(self, "running_tasks", {}).values() if not t.done()]
+        if running:
+            await asyncio.gather(*running, return_exceptions=True)
+        await asyncio.to_thread(self.flush_persisted_tasks_sync)
+
     async def register_listener(self) -> asyncio.Queue:
-        """注册 SSE 推流监听器"""
-        q = asyncio.Queue()
+        """注册 SSE 推流监听器（有界队列防止慢消费端导致内存无限堆积）"""
+        q: asyncio.Queue = asyncio.Queue(maxsize=256)
         self.listeners.add(q)
         return q
 
@@ -91,21 +165,35 @@ class TaskManager:
 
     async def broadcast_task_update(self, task: DownloadTask):
         """广播任务状态变更通知"""
+        if not self.listeners:
+            return
         payload = {
             "type": "task_update",
             "task": task.model_dump(by_alias=True)
         }
         for q in list(self.listeners):
             try:
-                await q.put(payload)
+                if q.full():
+                    try:
+                        q.get_nowait()
+                    except asyncio.QueueEmpty:
+                        pass
+                q.put_nowait(payload)
             except Exception:
                 self.listeners.discard(q)
 
     async def broadcast_event(self, payload: dict):
         """广播任意系统级自定义事件（如页面聚焦 focus_page 指令）"""
+        if not self.listeners:
+            return
         for q in list(self.listeners):
             try:
-                await q.put(payload)
+                if q.full():
+                    try:
+                        q.get_nowait()
+                    except asyncio.QueueEmpty:
+                        pass
+                q.put_nowait(payload)
             except Exception:
                 self.listeners.discard(q)
 
@@ -134,7 +222,12 @@ class TaskManager:
         episode_index: int = 0,
         episode_total: int = 0,
         quality_selection=None, selected_video_format_id: str = "", media_id: str = "",
-        image_platform: str = "", selected_image_ids=None
+        image_platform: str = "", selected_image_ids=None,
+        client_source: str = "",
+        output_dir_override: str = "",
+        filename_override: str = "",
+        duplicate_policy: str = "rename",
+        rule_snapshot=None
     ) -> DownloadTask:
         """创建并投递新任务"""
         task_id = str(uuid.uuid4())[:8]
@@ -157,17 +250,69 @@ class TaskManager:
             collectionId=collection_id,
             collectionTitle=collection_title,
             episodeIndex=episode_index,
-            episodeTotal=episode_total
+            episodeTotal=episode_total,
+            clientSource=client_source,
+            outputDirOverride=output_dir_override or "",
+            filenameOverride=filename_override or "",
+            duplicatePolicy=duplicate_policy or "rename",
+            ruleSnapshot=rule_snapshot
         )
 
         self.tasks[task_id] = task
         self.cancel_events[task_id] = asyncio.Event()
         self._save_persisted_tasks()
+        self._register_task_in_dedup_index(task, status="QUEUED")
         await self.broadcast_task_update(task)
 
         # 启动异步下载后台协程
         asyncio.create_task(self._process_task(task_id))
         return task
+
+    def _register_task_in_dedup_index(self, task: DownloadTask, status: str, local_file_path: str = "") -> None:
+        """登记任务到独立跨入口去重索引（包含手动、合集、批量与剪贴板），互不重复触发。"""
+        try:
+            from core.rules.store import compute_dedup_key, rule_store
+            snap = task.rule_snapshot if isinstance(task.rule_snapshot, dict) else None
+            dedup_key = str(snap.get("dedupKey") or "") if snap else ""
+            platform_name = task.image_platform or UrlSniffer.identify_site(task.url)
+            ep_id = (task.media_id or task.url) if task.collection_id else ""
+            out_fmt = (
+                "zip" if task.download_type == DownloadType.IMAGE_ZIP
+                else ("jpg" if task.download_type in (DownloadType.IMAGE, DownloadType.COVER)
+                      else ("gif" if task.download_type == DownloadType.GIF
+                            else (task.audio_format.value if task.download_type == DownloadType.AUDIO_ONLY
+                                  else (task.quality_selection.container if task.quality_selection else "mp4"))))
+            )
+            q_sig = "best"
+            if task.quality_selection:
+                qs = task.quality_selection
+                q_sig = f"{qs.max_height}p|{qs.codec_preference}|{qs.target_fps}|{qs.dynamic_range_preference}" if qs.max_height else f"best|{qs.codec_preference}|{qs.target_fps}|{qs.dynamic_range_preference}"
+            if not dedup_key:
+                dedup_key = compute_dedup_key(
+                    platform_name,
+                    task.media_id or task.url,
+                    ep_id,
+                    task.download_type.value,
+                    q_sig,
+                    out_fmt,
+                    fallback_url=task.url,
+                )
+            rule_store.record_dedup_entry(
+                dedup_key,
+                platform=platform_name,
+                media_id=task.media_id or "",
+                episode_id=ep_id,
+                download_type=task.download_type.value,
+                quality_strategy=q_sig,
+                output_format=out_fmt,
+                title=task.title,
+                url=task.url,
+                task_id=task.id,
+                local_file_path=local_file_path,
+                status=status,
+            )
+        except Exception:
+            pass
 
     async def retry_task(self, task_id):
         task = self.tasks.get(task_id)
@@ -193,6 +338,11 @@ class TaskManager:
             task.error_message = "用户主动取消"
             task.speed_text = ""
             task.eta_text = ""
+            try:
+                from core.rules.store import rule_store
+                rule_store.mark_task_inactive(task_id)
+            except Exception:
+                pass
             self._save_persisted_tasks()
             await self.broadcast_task_update(task)
 
@@ -201,6 +351,11 @@ class TaskManager:
         await self.cancel_task(task_id)
         task = self.tasks.pop(task_id, None)
         self.cancel_events.pop(task_id, None)
+        try:
+            from core.rules.store import rule_store
+            rule_store.mark_task_inactive(task_id)
+        except Exception:
+            pass
 
         if task and delete_file and task.local_file_path and os.path.exists(task.local_file_path):
             try:
@@ -339,16 +494,32 @@ class TaskManager:
                 if os.path.exists(final_path):
                     size = os.path.getsize(final_path)
                     task.file_size_text = f"{size / (1024 * 1024):.1f} MB"
+                self._register_task_in_dedup_index(task, status="COMPLETED", local_file_path=final_path)
             except asyncio.CancelledError:
                 task.status = TaskStatus.CANCELLED
                 task.error_message = "下载已取消"
+                try:
+                    from core.rules.store import rule_store
+                    rule_store.mark_task_inactive(task_id)
+                except Exception:
+                    pass
             except Exception as e:
                 if cancel_ev.is_set():
                     task.status = TaskStatus.CANCELLED
                     task.error_message = '下载已取消'
                     task.error_code = 'CANCELLED'
+                    try:
+                        from core.rules.store import rule_store
+                        rule_store.mark_task_inactive(task_id)
+                    except Exception:
+                        pass
                     return
                 task.status = TaskStatus.FAILED
+                try:
+                    from core.rules.store import rule_store
+                    rule_store.mark_task_inactive(task_id)
+                except Exception:
+                    pass
                 from engine.media_errors import sanitize, code
                 task.error_message = sanitize(e)
                 task.error_code = code(e)

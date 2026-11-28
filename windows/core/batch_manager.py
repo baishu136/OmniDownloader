@@ -69,11 +69,20 @@ class BatchManager:
                     self.save()
                     try:
                         row['taskIds'] = await asyncio.wait_for(enqueue(row, job['options']), timeout=150)
-                        row.update(status='QUEUED', note='已加入下载队列')
+                        override_status = row.pop('_rule_status', None)
+                        override_note = row.pop('_rule_note', None)
+                        row.update(
+                            status=override_status or 'QUEUED',
+                            note=override_note or '已加入下载队列',
+                        )
                     except asyncio.CancelledError:
+                        row.pop('_rule_status', None)
+                        row.pop('_rule_note', None)
                         row.update(status='CANCELLED', note='已停止添加下载')
                         raise
                     except Exception as error:
+                        row.pop('_rule_status', None)
+                        row.pop('_rule_note', None)
                         from engine.media_errors import sanitize
                         row.update(status='FAILED', note=sanitize(getattr(error, 'detail', str(error)))[:400])
                     finally:
@@ -92,3 +101,20 @@ class BatchManager:
         if worker:
             worker.cancel()
         self.save()
+
+    def clear(self, clear_all: bool = True) -> int:
+        """清空批量解析历史记录；若 clear_all 为 True，同时停止进行中的解析协程"""
+        if clear_all:
+            for identifier in list(self.workers.keys()):
+                worker = self.workers.pop(identifier, None)
+                if worker:
+                    worker.cancel()
+            cleared = len(self.jobs)
+            self.jobs.clear()
+        else:
+            to_remove = [key for key in self.jobs if key not in self.workers]
+            cleared = len(to_remove)
+            for key in to_remove:
+                self.jobs.pop(key, None)
+        self.save()
+        return cleared

@@ -90,7 +90,15 @@ def main():
     )
 
     try:
+        from core.config import config
         from core.session_store import sessions
+        if not os.environ.get("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"):
+            if getattr(config, "gpu_acceleration_enabled", True):
+                os.environ["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = (
+                    "--enable-gpu-rasterization --enable-zero-copy --ignore-gpu-blocklist"
+                )
+            else:
+                os.environ["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = "--disable-gpu"
         webview.start(private_mode=False, storage_path=str(sessions.directory.parent / 'desktop-webview'))
     finally:
         print("[OmniApp] 窗口关闭，正在停止后台服务...")

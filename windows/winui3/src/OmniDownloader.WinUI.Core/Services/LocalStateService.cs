@@ -12,6 +12,7 @@ public sealed class LocalClientState
     public bool AutoStartBackend { get; set; } = true;
     public string Language { get; set; } = "zh-CN";
     public string Theme { get; set; } = "auto"; // auto | light | dark
+    public string BackdropStyle { get; set; } = "auto"; // auto | mica | mica_alt | acrylic | solid
     public string AccentColor { get; set; } = "system"; // system | #RRGGBB
     public bool UsePureBlackDarkMode { get; set; } = false;
     public bool ShowRecentTasksOnHome { get; set; } = true;
@@ -23,6 +24,8 @@ public sealed class LocalClientState
     public string AudioDownloadDir { get; set; } = string.Empty;
     public bool AlwaysRememberCloseBehavior { get; set; } = false;
     public string SavedCloseBehavior { get; set; } = string.Empty; // "" | "exit" | "tray"
+    public bool GpuAccelerationEnabled { get; set; } = true;
+    public string GpuPreferredVendor { get; set; } = "auto"; // auto | nvidia | intel | amd | software
     public List<string> DisabledOptionalComponentIds { get; set; } = new();
     public List<CustomComponentEntry> CustomComponents { get; set; } = new();
     public string BatchRawInputDraft { get; set; } = string.Empty;

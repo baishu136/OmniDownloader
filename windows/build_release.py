@@ -30,7 +30,7 @@ def main():
                    '--specpath', str(BASE / 'build' / VERSION / kind), '--paths', str(BASE),
                    '--add-data', f'{BASE / "web"};web', '--add-data', f'{BASE / "bin"};bin',
                    '--collect-all', 'yt_dlp_ejs', '--collect-all', 'yt_dlp', '--collect-all', 'websockets', '--copy-metadata', 'yt-dlp', '--copy-metadata', 'yt-dlp-ejs',
-                   '--hidden-import', 'yt_dlp', '--hidden-import', 'uvicorn.logging', '--hidden-import', 'uvicorn.loops.auto',
+                   '--hidden-import', 'yt_dlp', '--hidden-import', 'core.rules', '--hidden-import', 'uvicorn.logging', '--hidden-import', 'uvicorn.loops.auto',
                    '--hidden-import', 'uvicorn.protocols.http.auto', '--hidden-import', 'uvicorn.protocols.websockets.auto']
         if (BASE / 'app.ico').is_file(): command += ['--icon', str(BASE / 'app.ico'), '--add-data', f'{BASE / "app.ico"};.']
         command += [str(BASE / entry)]

@@ -6,10 +6,10 @@
     <UserControl.Resources>
         <!-- 纯 ThemeResource ControlTemplate：完整跟随父级 RequestedTheme / ActualTheme，避免 C# 取错全局画刷或离开后卡住高亮 -->
         <Style x:Key="OmniClickCardButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
-            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="Background" Value="{ThemeResource OmniCardSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource OmniCardBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="CornerRadius" Value="10" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="VerticalAlignment" Value="Stretch" />
@@ -68,9 +68,9 @@
     <Grid SizeChanged="RootBorder_SizeChanged">
         <Border
             x:Name="StaticBgBorder"
-            CornerRadius="8"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            CornerRadius="10"
+            Background="{ThemeResource OmniCardSurfaceBrush}"
+            BorderBrush="{ThemeResource OmniCardBorderBrush}"
             BorderThickness="1"
             Visibility="{x:Bind IsClickEnabled, Mode=OneWay, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}" />
 

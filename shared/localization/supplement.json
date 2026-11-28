@@ -65,6 +65,12 @@
     "en": "AAC (efficient compression)",
     "ja": "AAC（高効率圧縮）"
   },
+  "Aero 玻璃 (Aero)": {
+    "zh-CN": "Aero 玻璃 (Aero)",
+    "zh-TW": "Aero 玻璃 (Aero)",
+    "en": "Aero Glass",
+    "ja": "Aero ガラス"
+  },
   "B站凭据已通过内置网页自动保存，可重新解析验证超清画质": {
     "zh-CN": "B站凭据已通过内置网页自动保存，可重新解析验证超清画质",
     "zh-TW": "B站憑證已透過內建網頁自動保存，可重新解析驗證超清畫質",
@@ -749,6 +755,36 @@
     "en": "Event stream disconnected, retrying...",
     "ja": "イベント接続が中断されました。再試行中..."
   },
+  "云母叠加 (Mica Alt)": {
+    "zh-CN": "云母叠加 (Mica Alt)",
+    "zh-TW": "雲母疊加 (Mica Alt)",
+    "en": "Mica Alt",
+    "ja": "Mica Alt"
+  },
+  "云母材质 (Mica)": {
+    "zh-CN": "云母材质 (Mica)",
+    "zh-TW": "雲母材質 (Mica)",
+    "en": "Mica",
+    "ja": "Mica (マイカ)"
+  },
+  "亚克力毛玻璃 (Acrylic)": {
+    "zh-CN": "亚克力毛玻璃 (Acrylic)",
+    "zh-TW": "壓克力毛玻璃 (Acrylic)",
+    "en": "Acrylic",
+    "ja": "Acrylic (すりガラス)"
+  },
+  "仅复制合集内全部文件路径文本": {
+    "zh-CN": "仅复制合集内全部文件路径文本",
+    "zh-TW": "僅複製合集內全部檔案路徑文字",
+    "en": "Copy all file paths in this collection as text",
+    "ja": "コレクション内のファイルパス一覧をテキストコピー"
+  },
+  "仅复制本地文件路径文本": {
+    "zh-CN": "仅复制本地文件路径文本",
+    "zh-TW": "僅複製本機檔案路徑文字",
+    "en": "Copy local file path text only",
+    "ja": "ローカルファイルパスのテキストのみコピー"
+  },
   "仅展示前 300 项（共 %d 项），请输入关键词缩小范围": {
     "zh-CN": "仅展示前 300 项（共 %d 项），请输入关键词缩小范围",
     "zh-TW": "僅顯示前 300 項（共 %d 項），請輸入關鍵字縮小範圍",
@@ -1025,6 +1061,12 @@
     "en": "High-quality media · Direct native downloads",
     "ja": "高画質メディア・ネイティブ直接ダウンロード"
   },
+  "全选已完成": {
+    "zh-CN": "全选已完成",
+    "zh-TW": "全選已完成",
+    "en": "Select all completed",
+    "ja": "完了済みをすべて選択"
+  },
   "全部 (0)": {
     "zh-CN": "全部 (0)",
     "zh-TW": "全部 (0)",
@@ -1261,6 +1303,12 @@
     "en": "Go to Account Settings",
     "ja": "アカウント設定へ"
   },
+  "剪贴板当前正被其他应用占用，请稍后重试": {
+    "zh-CN": "剪贴板当前正被其他应用占用，请稍后重试",
+    "zh-TW": "剪貼簿目前正被其他應用佔用，請稍後重試",
+    "en": "Clipboard is currently locked by another app; please try again",
+    "ja": "クリップボードが他のアプリに占有されています。少し待ってから再試行してください"
+  },
   "功能设置": {
     "zh-CN": "功能设置",
     "zh-TW": "功能設置",
@@ -1428,6 +1476,24 @@
     "zh-TW": "原封面已無法定位",
     "en": "Original cover could not be located",
     "ja": "元のカバー画像を特定できません"
+  },
+  "参考 Ghost-Downloader-3 多材质外观，支持 Mica、Mica Alt、Acrylic 毛玻璃、Aero 玻璃与纯色模式": {
+    "zh-CN": "参考 Ghost-Downloader-3 多材质外观，支持 Mica、Mica Alt、Acrylic 毛玻璃、Aero 玻璃与纯色模式",
+    "zh-TW": "參考 Ghost-Downloader-3 多材質外觀，支援 Mica、Mica Alt、Acrylic 毛玻璃、Aero 玻璃與純色模式",
+    "en": "Inspired by Ghost-Downloader-3: supports Mica, Mica Alt, Acrylic blur, Aero glass, and Solid",
+    "ja": "Ghost-Downloader-3 風の質感切替（Mica / Mica Alt / Acrylic / Aero / 単色）"
+  },
+  "参考 Ghost-Downloader-3 多材质外观，支持 Mica、Mica Alt、Acrylic 毛玻璃或纯色模式": {
+    "zh-CN": "参考 Ghost-Downloader-3 多材质外观，支持 Mica、Mica Alt、Acrylic 毛玻璃或纯色模式",
+    "zh-TW": "參考 Ghost-Downloader-3 多材質外觀，支援 Mica、Mica Alt、Acrylic 毛玻璃或純色模式",
+    "en": "Inspired by Ghost-Downloader-3: supports Mica, Mica Alt, Acrylic blur, or solid background",
+    "ja": "Ghost-Downloader-3 風の質感切替（Mica / Mica Alt / Acrylic / 単色に対応）"
+  },
+  "参考 Ghost-Downloader-3 多材质外观：支持壁纸着色云母 (Mica / Mica Alt)、Acrylic 磨砂、Aero 晶莹玻璃与纯色模式": {
+    "zh-CN": "参考 Ghost-Downloader-3 多材质外观：支持壁纸着色云母 (Mica / Mica Alt)、Acrylic 磨砂、Aero 晶莹玻璃与纯色模式",
+    "zh-TW": "參考 Ghost-Downloader-3 多材質外觀：支援桌布著色雲母 (Mica / Mica Alt)、Acrylic 磨砂、Aero 晶瑩玻璃與純色模式",
+    "en": "Inspired by Ghost-Downloader-3: wallpaper-tinted Mica / Mica Alt, Acrylic frosted, Aero glass, and Solid",
+    "ja": "Ghost-Downloader-3 風の質感切替：壁紙色調 Mica / Mica Alt、Acrylic、Aero ガラス、単色に対応"
   },
   "发现 %@。IPA 需按发布说明签名安装。": {
     "zh-CN": "发现 %@。IPA 需按发布说明签名安装。",
@@ -1711,11 +1777,47 @@
     "en": "Copy Cover URL",
     "ja": "カバー URL をコピー"
   },
+  "复制所选文件": {
+    "zh-CN": "复制所选文件",
+    "zh-TW": "複製所選檔案",
+    "en": "Copy selected files",
+    "ja": "選択したファイルをコピー"
+  },
+  "复制所选路径": {
+    "zh-CN": "复制所选路径",
+    "zh-TW": "複製所選路徑",
+    "en": "Copy selected paths",
+    "ja": "選択したパスをコピー"
+  },
+  "复制文件": {
+    "zh-CN": "复制文件",
+    "zh-TW": "複製檔案",
+    "en": "Copy file",
+    "ja": "ファイルをコピー"
+  },
+  "复制文件到剪贴板（可直接 Ctrl+V 粘贴至微信/QQ/资源管理器等应用）": {
+    "zh-CN": "复制文件到剪贴板（可直接 Ctrl+V 粘贴至微信/QQ/资源管理器等应用）",
+    "zh-TW": "複製檔案到剪貼簿（可直接 Ctrl+V 貼上至 LINE/WeChat/QQ/檔案總管等應用）",
+    "en": "Copy file reference to clipboard (Ctrl+V directly into Explorer, Telegram, WeChat, QQ, etc.)",
+    "ja": "ファイルをクリップボードにコピー（エクスプローラーやチャットアプリへ Ctrl+V で直接貼り付け可能）"
+  },
+  "复制文件路径": {
+    "zh-CN": "复制文件路径",
+    "zh-TW": "複製檔案路徑",
+    "en": "Copy file path",
+    "ja": "ファイルパスをコピー"
+  },
   "复制标题": {
     "zh-CN": "复制标题",
     "zh-TW": "複製標題",
     "en": "Copy Title",
     "ja": "タイトルをコピー"
+  },
+  "多选复制": {
+    "zh-CN": "多选复制",
+    "zh-TW": "多選複製",
+    "en": "Multi-select copy",
+    "ja": "複数選択コピー"
   },
   "如何获取 SESSDATA？": {
     "zh-CN": "如何获取 SESSDATA？",
@@ -1794,6 +1896,12 @@
     "zh-TW": "媒體鏈接",
     "en": "Media link",
     "ja": "メディアリンク"
+  },
+  "存在正在解析中的批次，确定停止解析并清空全部批次解析记录吗？（已加入下载队列的任务和本地文件不会被删除）": {
+    "zh-CN": "存在正在解析中的批次，确定停止解析并清空全部批次解析记录吗？（已加入下载队列的任务和本地文件不会被删除）",
+    "zh-TW": "存在正在解析中的批次，確定停止解析並清空全部批次解析記錄嗎？（已加入下載佇列的任務與本機檔案不會被刪除）",
+    "en": "Active batch parsing will stop. Clear all batch parse history? (Queued download tasks and local files are kept)",
+    "ja": "解析中のバッチを停止してすべてのバッチ解析履歴をクリアしますか？（キュー済みタスクとローカルファイルは保持されます）"
   },
   "完成 %d/%d": {
     "zh-CN": "完成 %d/%d",
@@ -2053,6 +2161,36 @@
     "en": "Local companion engine started (%s)",
     "ja": "ローカル付随エンジン起動済み (%s)"
   },
+  "已复制 %d 个文件到剪贴板（另有 %d 个文件已缺失）": {
+    "zh-CN": "已复制 %d 个文件到剪贴板（另有 %d 个文件已缺失）",
+    "zh-TW": "已複製 %d 個檔案到剪貼簿（另有 %d 個檔案已遺失）",
+    "en": "Copied %d files to clipboard (%d missing)",
+    "ja": "%d 件のファイルをクリップボードにコピーしました（%d 件が見つかりません）"
+  },
+  "已复制 %d 个文件到剪贴板，可直接粘贴至其他应用": {
+    "zh-CN": "已复制 %d 个文件到剪贴板，可直接粘贴至其他应用",
+    "zh-TW": "已複製 %d 個檔案到剪貼簿，可直接貼上至其他應用",
+    "en": "Copied %d files to clipboard; paste directly into other apps",
+    "ja": "%d 件のファイルをクリップボードにコピーしました（他アプリへ直接貼り付け可能）"
+  },
+  "已复制 %d 条文件路径到剪贴板": {
+    "zh-CN": "已复制 %d 条文件路径到剪贴板",
+    "zh-TW": "已複製 %d 條檔案路徑到剪貼簿",
+    "en": "Copied %d file paths to clipboard",
+    "ja": "%d 件のファイルパスをクリップボードにコピーしました"
+  },
+  "已复制文件到剪贴板，可直接粘贴至其他应用": {
+    "zh-CN": "已复制文件到剪贴板，可直接粘贴至其他应用",
+    "zh-TW": "已複製檔案到剪貼簿，可直接貼上至其他應用",
+    "en": "File copied to clipboard; paste directly into other apps",
+    "ja": "ファイルをクリップボードにコピーしました（他アプリへ直接貼り付け可能）"
+  },
+  "已复制文件路径到剪贴板": {
+    "zh-CN": "已复制文件路径到剪贴板",
+    "zh-TW": "已複製檔案路徑到剪貼簿",
+    "en": "File path copied to clipboard",
+    "ja": "ファイルパスをクリップボードにコピーしました"
+  },
   "已完成 (0)": {
     "zh-CN": "已完成 (0)",
     "zh-TW": "已完成 (0)",
@@ -2100,6 +2238,12 @@
     "zh-TW": "已清空內建網頁快取，請重新登入嗶哩嗶哩帳號",
     "en": "Cleared in-app browser cache; sign in to Bilibili again",
     "ja": "内蔵ブラウザのキャッシュを消去しました。再度ログインしてください"
+  },
+  "已清空批次解析记录": {
+    "zh-CN": "已清空批次解析记录",
+    "zh-TW": "已清空批次解析記錄",
+    "en": "Batch parse history cleared",
+    "ja": "バッチ解析履歴をクリアしました"
   },
   "已确认 %d 个可下载的 MP4 格式。": {
     "zh-CN": "已确认 %d 个可下载的 MP4 格式。",
@@ -2160,6 +2304,12 @@
     "zh-TW": "已連線本機執行服務 (%s)",
     "en": "Connected to local service (%s)",
     "ja": "ローカルサービス接続中 (%s)"
+  },
+  "已选 %d 项": {
+    "zh-CN": "已选 %d 项",
+    "zh-TW": "已選 %d 項",
+    "en": "%d selected",
+    "ja": "%d 件選択中"
   },
   "已选 0 / 0 集": {
     "zh-CN": "已选 0 / 0 集",
@@ -2599,6 +2749,12 @@
     "en": "Download collection",
     "ja": "コレクションをダウンロード"
   },
+  "批量复制合集内全部已完成文件到剪贴板": {
+    "zh-CN": "批量复制合集内全部已完成文件到剪贴板",
+    "zh-TW": "批次複製合集內全部已完成檔案到剪貼簿",
+    "en": "Copy all completed files in this collection to clipboard",
+    "ja": "コレクション内の完了済みファイルをまとめてクリップボードにコピー"
+  },
   "批量导出模式": {
     "zh-CN": "批量导出模式",
     "zh-TW": "批量導出模式",
@@ -2688,6 +2844,12 @@
     "zh-TW": "播放視頻或點擊上方「深度搜索」主動挖掘隱藏媒體",
     "en": "Play media or select Deep search to find streams",
     "ja": "メディアを再生するか「詳細検索」でストリームを検出してください"
+  },
+  "支持 Acrylic 毛玻璃与纯色模式；Windows 10 下选择 Mica 将自动适配为相近质感": {
+    "zh-CN": "支持 Acrylic 毛玻璃与纯色模式；Windows 10 下选择 Mica 将自动适配为相近质感",
+    "zh-TW": "支援 Acrylic 毛玻璃與純色模式；Windows 10 下選擇 Mica 將自動適配為相近質感",
+    "en": "Supports Acrylic blur and solid modes; selecting Mica on Windows 10 adapts automatically",
+    "ja": "Acrylic ブラーと単色に対応（Windows 10 では Mica 選択時に近い質感へ自動調整）"
   },
   "支持 HTTP / HTTPS / SOCKS5 代理（如 http://127.0.0.1:7890 或 socks5://127.0.0.1:7891）；留空即直连网络。": {
     "zh-CN": "支持 HTTP / HTTPS / SOCKS5 代理（如 http://127.0.0.1:7890 或 socks5://127.0.0.1:7891）；留空即直连网络。",
@@ -2881,6 +3043,12 @@
     "en": "Display name",
     "ja": "表示名"
   },
+  "智能默认 (Mica 优先)": {
+    "zh-CN": "智能默认 (Mica 优先)",
+    "zh-TW": "智慧預設 (Mica 優先)",
+    "en": "Auto (Prefer Mica)",
+    "ja": "自動 (Mica 優先)"
+  },
   "暂停": {
     "zh-CN": "暂停",
     "zh-TW": "暫停",
@@ -2892,6 +3060,12 @@
     "zh-TW": "暫無下載任務",
     "en": "No download tasks",
     "ja": "ダウンロードタスクはありません"
+  },
+  "暂无可清空的解析记录": {
+    "zh-CN": "暂无可清空的解析记录",
+    "zh-TW": "暫無可清空的解析記錄",
+    "en": "No parse history to clear",
+    "ja": "クリアできる解析履歴はありません"
   },
   "暂无封面可预览": {
     "zh-CN": "暂无封面可预览",
@@ -3007,6 +3181,12 @@
     "en": "No playable completed media found",
     "ja": "再生可能な完了済みメディアがありません"
   },
+  "未找到有效的本地文件路径": {
+    "zh-CN": "未找到有效的本地文件路径",
+    "zh-TW": "未找到有效的本機檔案路徑",
+    "en": "No valid local file path found",
+    "ja": "有効なローカルファイルパスが見つかりません"
+  },
   "未探测": {
     "zh-CN": "未探测",
     "zh-TW": "未偵測",
@@ -3078,6 +3258,12 @@
     "zh-TW": "本地引擎連接配置",
     "en": "Local engine connection",
     "ja": "ローカルエンジン接続"
+  },
+  "本地文件不存在或已被移动": {
+    "zh-CN": "本地文件不存在或已被移动",
+    "zh-TW": "本機檔案不存在或已被移動",
+    "en": "Local file does not exist or has been moved",
+    "ja": "ローカルファイルが見つからないか移動されています"
   },
   "本地服务未连接": {
     "zh-CN": "本地服务未连接",
@@ -3814,11 +4000,23 @@
     "en": "Confirm clearing",
     "ja": "消去の確認"
   },
+  "清空解析记录": {
+    "zh-CN": "清空解析记录",
+    "zh-TW": "清空解析記錄",
+    "en": "Clear parse history",
+    "ja": "解析履歴をクリア"
+  },
   "清空记录会保留已下载的文件": {
     "zh-CN": "清空记录会保留已下载的文件",
     "zh-TW": "清空記錄會保留已下載的文件",
     "en": "Clearing history keeps downloaded files",
     "ja": "履歴を消去してもダウンロード済みファイルは保持します"
+  },
+  "清空选择": {
+    "zh-CN": "清空选择",
+    "zh-TW": "清空選擇",
+    "en": "Clear selection",
+    "ja": "選択解除"
   },
   "清除所选平台的登录状态？": {
     "zh-CN": "清除所选平台的登录状态？",
@@ -4048,6 +4246,12 @@
     "en": "Delete all %d task records in collection \"%s\"?",
     "ja": "コレクション「%s」の全 %d 件のタスク履歴を削除しますか？"
   },
+  "确定清空全部批次解析记录吗？（已加入下载队列的任务和本地文件不会被删除）": {
+    "zh-CN": "确定清空全部批次解析记录吗？（已加入下载队列的任务和本地文件不会被删除）",
+    "zh-TW": "確定清空全部批次解析記錄嗎？（已加入下載佇列的任務與本機檔案不會被刪除）",
+    "en": "Clear all batch parse history? (Queued download tasks and local files are kept)",
+    "ja": "すべてのバッチ解析履歴をクリアしますか？（キュー済みタスクとローカルファイルは保持されます）"
+  },
   "确定清空已识别的待下载链接列表吗？": {
     "zh-CN": "确定清空已识别的待下载链接列表吗？",
     "zh-TW": "確定清空已辨識的待下載連結清單嗎？",
@@ -4119,6 +4323,12 @@
     "zh-TW": "視窗置頂 (T)",
     "en": "Always on top (T)",
     "ja": "常に手前に表示 (T)"
+  },
+  "窗口背景风格": {
+    "zh-CN": "窗口背景风格",
+    "zh-TW": "視窗背景風格",
+    "en": "Window backdrop style",
+    "ja": "ウィンドウ背景スタイル"
   },
   "第 %d 张": {
     "zh-CN": "第 %d 张",
@@ -4299,6 +4509,12 @@
     "zh-TW": "純畫面模式：自動移除音軌並匯出靜音影片",
     "en": "Video-only mode: remove audio and export silent video",
     "ja": "映像のみ：音声を除去して無音動画を書き出します"
+  },
+  "纯色无透明 (Solid)": {
+    "zh-CN": "纯色无透明 (Solid)",
+    "zh-TW": "純色無透明 (Solid)",
+    "en": "Solid (Opaque)",
+    "ja": "単色 (透過なし)"
   },
   "继续": {
     "zh-CN": "继续",
@@ -5062,5 +5278,1187 @@
     "zh-TW": "驗證并重試",
     "en": "Verify and retry",
     "ja": "認証して再試行"
+  },
+  "GPU 硬件加速": {
+    "zh-CN": "GPU 硬件加速",
+    "zh-TW": "GPU 硬體加速",
+    "en": "GPU Hardware Acceleration",
+    "ja": "GPU ハードウェアアクセラレーション"
+  },
+  "刷新硬件探测": {
+    "zh-CN": "刷新硬件探测",
+    "zh-TW": "重新整理硬體偵測",
+    "en": "Refresh Hardware Probe",
+    "ja": "ハードウェア検出を更新"
+  },
+  "已关闭": {
+    "zh-CN": "已关闭",
+    "zh-TW": "已關閉",
+    "en": "Disabled",
+    "ja": "無効"
+  },
+  "已启用 · %s": {
+    "zh-CN": "已启用 · %s",
+    "zh-TW": "已啟用 · %s",
+    "en": "Enabled · %s",
+    "ja": "有効 · %s"
+  },
+  "已回退软件处理": {
+    "zh-CN": "已回退软件处理",
+    "zh-TW": "已退回軟體處理",
+    "en": "Software Fallback",
+    "ja": "ソフトウェアフォールバック"
+  },
+  "已开启 GPU 硬件加速，等待核心引擎反馈真实硬件状态": {
+    "zh-CN": "已开启 GPU 硬件加速，等待核心引擎反馈真实硬件状态",
+    "zh-TW": "已開啟 GPU 硬體加速，等待核心引擎回傳真實硬體狀態",
+    "en": "GPU acceleration enabled; awaiting active hardware telemetry from core engine",
+    "ja": "GPU アクセラレーションが有効です。コアエンジンからの実ハードウェア状態を確認中です"
+  },
+  "当前已关闭 GPU 硬件加速，转码与图形渲染均采用软件模式": {
+    "zh-CN": "当前已关闭 GPU 硬件加速，转码与图形渲染均采用软件模式",
+    "zh-TW": "目前已關閉 GPU 硬體加速，轉碼與圖形算繪均採用軟體模式",
+    "en": "GPU acceleration is disabled; software encoding and rendering are active",
+    "ja": "GPU アクセラレーションは無効で、ソフトウェアエンコードおよび描画を使用中です"
+  },
+  "待探测": {
+    "zh-CN": "待探测",
+    "zh-TW": "待偵測",
+    "en": "Pending Probe",
+    "ja": "検出待機"
+  },
+  "显卡：%s · 编码器 %s · 解码 %s · 无损直传保持开启": {
+    "zh-CN": "显卡：%s · 编码器 %s · 解码 %s · 无损直传保持开启",
+    "zh-TW": "顯示卡：%s · 編碼器 %s · 解碼 %s · 無損直傳保持開啟",
+    "en": "GPU: %s · Encoder %s · Decode %s · Lossless copy active",
+    "ja": "GPU: %s · エンコーダ %s · デコード %s · 無損失コピー維持"
+  },
+  "未检测到可用硬件编码器或驱动初始化失败，已自动回退软件处理 (%s)": {
+    "zh-CN": "未检测到可用硬件编码器或驱动初始化失败，已自动回退软件处理 (%s)",
+    "zh-TW": "未偵測到可用硬體編碼器或驅動初始化失敗，已自動退回軟體處理 (%s)",
+    "en": "No usable hardware encoder detected or driver init failed; fell back to software (%s)",
+    "ja": "利用可能なハードウェアエンコーダが見つからないか初期化に失敗したためソフトウェアにフォールバックしました (%s)"
+  },
+  "自动选择 (推荐)": {
+    "zh-CN": "自动选择 (推荐)",
+    "zh-TW": "自動選擇 (推薦)",
+    "en": "Auto Select (Recommended)",
+    "ja": "自動選択 (推奨)"
+  },
+  "软件解码": {
+    "zh-CN": "软件解码",
+    "zh-TW": "軟體解碼",
+    "en": "Software Decode",
+    "ja": "ソフトウェアデコード"
+  },
+  "JSON 内容不能为空": {
+    "zh-CN": "JSON 内容不能为空",
+    "zh-TW": "JSON 內容不能為空",
+    "en": "JSON content cannot be empty",
+    "ja": "JSON 内容は空にできません"
+  },
+  "JSON 语法与安全校验通过，共 %d 条规则%s": {
+    "zh-CN": "JSON 语法与安全校验通过，共 %d 条规则%s",
+    "zh-TW": "JSON 語法與安全校驗通過，共 %d 條規則%s",
+    "en": "JSON syntax and security check passed (%d rules)%s",
+    "ja": "JSON 構文とセキュリティ検証に成功しました（合計 %d 件のルール）%s"
+  },
+  "Omni Download Rules JSON 字段协议参考": {
+    "zh-CN": "Omni Download Rules JSON 字段协议参考",
+    "zh-TW": "Omni Download Rules JSON 欄位協議參考",
+    "en": "Omni Download Rules JSON Schema Reference",
+    "ja": "Omni Download Rules JSON スキーマ参照"
+  },
+  "OmniDownloader · 剪贴板监听已暂停": {
+    "zh-CN": "OmniDownloader · 剪贴板监听已暂停",
+    "zh-TW": "OmniDownloader · 剪貼簿監聽已暫停",
+    "en": "OmniDownloader · Clipboard Watcher Paused",
+    "ja": "OmniDownloader · クリップボード監視は一時停止中です"
+  },
+  "OmniDownloader · 剪贴板自动下载监听中": {
+    "zh-CN": "OmniDownloader · 剪贴板自动下载监听中",
+    "zh-TW": "OmniDownloader · 剪貼簿自動下載監聽中",
+    "en": "OmniDownloader · Clipboard Auto-Download Active",
+    "ja": "OmniDownloader · クリップボード自動ダウンロード監視中"
+  },
+  "OmniDownloader · 等待确认下载": {
+    "zh-CN": "OmniDownloader · 等待确认下载",
+    "zh-TW": "OmniDownloader · 等待確認下載",
+    "en": "OmniDownloader · Confirmation Required",
+    "ja": "OmniDownloader · ダウンロード確認待ち"
+  },
+  "OmniDownloader · 自动下载已添加": {
+    "zh-CN": "OmniDownloader · 自动下载已添加",
+    "zh-TW": "OmniDownloader · 自動下載已加入",
+    "en": "OmniDownloader · Auto-Download Queued",
+    "ja": "OmniDownloader · 自動ダウンロードを追加しました"
+  },
+  "OmniDownloader · 需要处理验证": {
+    "zh-CN": "OmniDownloader · 需要处理验证",
+    "zh-TW": "OmniDownloader · 需要處理驗證",
+    "en": "OmniDownloader · Verification Required",
+    "ja": "OmniDownloader · 認証が必要です"
+  },
+  "URL 匹配方式": {
+    "zh-CN": "URL 匹配方式",
+    "zh-TW": "URL 匹配方式",
+    "en": "URL Match Mode",
+    "ja": "URL 一致方式"
+  },
+  "URL 匹配模式": {
+    "zh-CN": "URL 匹配模式",
+    "zh-TW": "URL 匹配模式",
+    "en": "URL Patterns",
+    "ja": "URL 一致パターン"
+  },
+  "一键暂停": {
+    "zh-CN": "一键暂停",
+    "zh-TW": "一鍵暫停",
+    "en": "Pause Watcher",
+    "ja": "一時停止"
+  },
+  "上移优先级": {
+    "zh-CN": "上移优先级",
+    "zh-TW": "上移優先順序",
+    "en": "Move Up Priority",
+    "ja": "優先度を上げる"
+  },
+  "下移优先级": {
+    "zh-CN": "下移优先级",
+    "zh-TW": "下移優先順序",
+    "en": "Move Down Priority",
+    "ja": "優先度を下げる"
+  },
+  "下载参数与画质回退策略": {
+    "zh-CN": "下载参数与画质回退策略",
+    "zh-TW": "下載參數與畫質回退策略",
+    "en": "Download Parameters & Quality Fallback",
+    "ja": "ダウンロード設定と画質フォールバック"
+  },
+  "下载导出类型": {
+    "zh-CN": "下载导出类型",
+    "zh-TW": "下載匯出類型",
+    "en": "Download Export Mode",
+    "ja": "エクスポート種別"
+  },
+  "下载规则": {
+    "zh-CN": "下载规则",
+    "zh-TW": "下載規則",
+    "en": "Download Rules",
+    "ja": "ダウンロードルール"
+  },
+  "下载规则系统当前已关闭，请前往「下载规则」页开启或使用「立即解析」": {
+    "zh-CN": "下载规则系统当前已关闭，请前往「下载规则」页开启或使用「立即解析」",
+    "zh-TW": "下載規則系統目前已關閉，請前往「下載規則」頁開啟或使用「立即解析」",
+    "en": "Download Rules are disabled. Enable them on the Rules page or use Analyze Now.",
+    "ja": "ダウンロードルールが無効です。「ルール」ページで有効にするか「今すぐ解析」をご利用ください。"
+  },
+  "下载规则（可选）": {
+    "zh-CN": "下载规则（可选）",
+    "zh-TW": "下載規則（可選）",
+    "en": "Download Rule (Optional)",
+    "ja": "ダウンロードルール（任意）"
+  },
+  "不使用规则（按手动参数）": {
+    "zh-CN": "不使用规则（按手动参数）",
+    "zh-TW": "不使用規則（按手動參數）",
+    "en": "Bypass Rules (Use Manual Options)",
+    "ja": "ルール未使用（手動設定を使用）"
+  },
+  "严格匹配失败则中断": {
+    "zh-CN": "严格匹配失败则中断",
+    "zh-TW": "嚴格匹配失敗則中斷",
+    "en": "Strict Match (Fail if Unavailable)",
+    "ja": "厳格一致（未検出時は中止）"
+  },
+  "仅按分集关键词 (keywords)": {
+    "zh-CN": "仅按分集关键词 (keywords)",
+    "zh-TW": "僅按分集關鍵字 (keywords)",
+    "en": "Keywords Only (keywords)",
+    "ja": "キーワードのみ (keywords)"
+  },
+  "仅解析": {
+    "zh-CN": "仅解析",
+    "zh-TW": "僅解析",
+    "en": "Parse Only",
+    "ja": "解析のみ"
+  },
+  "仅解析不下载": {
+    "zh-CN": "仅解析不下载",
+    "zh-TW": "僅解析不下載",
+    "en": "Parse Only (Do Not Queue)",
+    "ja": "解析のみ（ダウンロードしない）"
+  },
+  "仅音频": {
+    "zh-CN": "仅音频",
+    "zh-TW": "僅音訊",
+    "en": "Audio Only",
+    "ja": "音声のみ"
+  },
+  "从表单重新生成 JSON": {
+    "zh-CN": "从表单重新生成 JSON",
+    "zh-TW": "從表單重新產生 JSON",
+    "en": "Regenerate JSON from Form",
+    "ja": "フォームから JSON を再生成"
+  },
+  "优先级 %d": {
+    "zh-CN": "优先级 %d",
+    "zh-TW": "優先級 %d",
+    "en": "Priority %d",
+    "ja": "優先度 %d"
+  },
+  "优先级（越小越优先）": {
+    "zh-CN": "优先级（越小越优先）",
+    "zh-TW": "優先級（越小越優先）",
+    "en": "Priority (Lower Runs First)",
+    "ja": "優先度（小さいほど優先）"
+  },
+  "作者 / UP主关键词": {
+    "zh-CN": "作者 / UP主关键词",
+    "zh-TW": "作者 / 創作者關鍵字",
+    "en": "Author / Creator Keywords",
+    "ja": "投稿者 / 作成者キーワード"
+  },
+  "保存规则": {
+    "zh-CN": "保存规则",
+    "zh-TW": "儲存規則",
+    "en": "Save Rule",
+    "ja": "ルールを保存"
+  },
+  "全部下载 (all)": {
+    "zh-CN": "全部下载 (all)",
+    "zh-TW": "全部下載 (all)",
+    "en": "Download All (all)",
+    "ja": "すべてダウンロード (all)"
+  },
+  "关键词 / 通配符 / 正则表达式": {
+    "zh-CN": "关键词 / 通配符 / 正则表达式",
+    "zh-TW": "關鍵字 / 萬用字元 / 正規表達式",
+    "en": "Keywords / Wildcard / Regex",
+    "ja": "キーワード / ワイルドカード / 正規表現"
+  },
+  "内容类型（video / images / gif / audio）": {
+    "zh-CN": "内容类型（video / images / gif / audio）",
+    "zh-TW": "內容類型（video / images / gif / audio）",
+    "en": "Media Types (video / images / gif / audio)",
+    "ja": "コンテンツ種別（video / images / gif / audio）"
+  },
+  "分集列表（如 1,3,5-8）": {
+    "zh-CN": "分集列表（如 1,3,5-8）",
+    "zh-TW": "分集清單（如 1,3,5-8）",
+    "en": "Episodes (e.g. 1,3,5-8)",
+    "ja": "エピソード指定（例: 1,3,5-8）"
+  },
+  "分集包含/排除词用下方 JSON": {
+    "zh-CN": "分集包含/排除词用下方 JSON",
+    "zh-TW": "分集包含/排除詞",
+    "en": "Episode Keyword Filters",
+    "ja": "エピソードのキーワード絞り込み"
+  },
+  "分集标题包含词": {
+    "zh-CN": "分集标题包含词",
+    "zh-TW": "分集標題包含詞",
+    "en": "Episode Include Keywords",
+    "ja": "エピソード必須キーワード"
+  },
+  "分集标题排除词": {
+    "zh-CN": "分集标题排除词",
+    "zh-TW": "分集標題排除詞",
+    "en": "Episode Exclude Keywords",
+    "ja": "エピソード除外キーワード"
+  },
+  "分集筛选模式": {
+    "zh-CN": "分集筛选模式",
+    "zh-TW": "分集篩選模式",
+    "en": "Collection Filter Mode",
+    "ja": "コレクション絞り込み方式"
+  },
+  "删除下载规则": {
+    "zh-CN": "删除下载规则",
+    "zh-TW": "刪除下載規則",
+    "en": "Delete Download Rule",
+    "ja": "ダウンロードルールを削除"
+  },
+  "剪贴板或批量任务命中需要确认的下载规则，请前往「下载规则」页确认入队": {
+    "zh-CN": "剪贴板或批量任务命中需要确认的下载规则，请前往「下载规则」页确认入队",
+    "zh-TW": "剪貼簿或批次任務命中需要確認的下載規則，請前往「下載規則」頁確認入隊",
+    "en": "A rule matched and requires confirmation. Go to Download Rules to approve.",
+    "ja": "確認が必要なルールに一致しました。「ダウンロードルール」ページで確認してください。"
+  },
+  "剪贴板监听已暂停": {
+    "zh-CN": "剪贴板监听已暂停",
+    "zh-TW": "剪貼簿監聽已暫停",
+    "en": "Clipboard Watcher Paused",
+    "ja": "クリップボード監視一時停止"
+  },
+  "剪贴板系统事件监听运行中": {
+    "zh-CN": "剪贴板系统事件监听运行中",
+    "zh-TW": "剪貼簿系統事件監聽執行中",
+    "en": "Clipboard Event Watcher Active",
+    "ja": "クリップボードイベント監視中"
+  },
+  "剪贴板自动下载监听（零轮询系统事件）": {
+    "zh-CN": "剪贴板自动下载监听（零轮询系统事件）",
+    "zh-TW": "剪貼簿自動下載監聽（零輪詢系統事件）",
+    "en": "Clipboard Auto-Download Watcher (Zero-Polling OS Events)",
+    "ja": "クリップボード自動ダウンロード監視（OSイベント駆動）"
+  },
+  "剪贴板自动捕获": {
+    "zh-CN": "剪贴板自动捕获",
+    "zh-TW": "剪貼簿自動擷取",
+    "en": "Clipboard Capture",
+    "ja": "クリップボード自動取得"
+  },
+  "剪贴板规则「%s」已自动入队 %d 个任务": {
+    "zh-CN": "剪贴板规则「%s」已自动入队 %d 个任务",
+    "zh-TW": "剪貼簿規則「%s」已自動加入 %d 個任務",
+    "en": "Clipboard rule \"%s\" queued %d task(s)",
+    "ja": "クリップボードルール「%s」で %d 件を追加しました"
+  },
+  "剪贴板触发": {
+    "zh-CN": "剪贴板触发",
+    "zh-TW": "剪貼簿觸發",
+    "en": "Clipboard Trigger",
+    "ja": "クリップボードトリガー"
+  },
+  "动态范围": {
+    "zh-CN": "动态范围",
+    "zh-TW": "動態範圍",
+    "en": "Dynamic Range",
+    "ja": "ダイナミックレンジ"
+  },
+  "包含关键词 (contains)": {
+    "zh-CN": "包含关键词 (contains)",
+    "zh-TW": "包含關鍵字 (contains)",
+    "en": "Contains Keyword (contains)",
+    "ja": "部分一致 (contains)"
+  },
+  "匹配后执行策略": {
+    "zh-CN": "匹配后执行策略",
+    "zh-TW": "匹配後執行策略",
+    "en": "Execution Action",
+    "ja": "一致時の動作"
+  },
+  "匹配条件（留空表示不限制）": {
+    "zh-CN": "匹配条件（留空表示不限制）",
+    "zh-TW": "匹配條件（留空表示不限制）",
+    "en": "Match Conditions (Leave Blank for Any)",
+    "ja": "一致条件（空欄は制限なし）"
+  },
+  "单次最大任务数": {
+    "zh-CN": "单次最大任务数",
+    "zh-TW": "單次最大任務數",
+    "en": "Max Tasks per Run",
+    "ja": "1回あたりの最大タスク数"
+  },
+  "原始图片（逐张）": {
+    "zh-CN": "原始图片（逐张）",
+    "zh-TW": "原始圖片（逐張）",
+    "en": "Original Images (Individual)",
+    "ja": "オリジナル画像（個別）"
+  },
+  "原生默认 (经典外观)": {
+    "zh-CN": "原生默认 (经典外观)",
+    "zh-TW": "原生預設 (經典外觀)",
+    "en": "Native Original (Classic Default)",
+    "ja": "ネイティブ既定 (クラシック)"
+  },
+  "合集创建独立子目录": {
+    "zh-CN": "合集创建独立子目录",
+    "zh-TW": "合集建立獨立子目錄",
+    "en": "Create Subfolder per Collection",
+    "ja": "コレクション用サブフォルダを作成"
+  },
+  "合集筛选下载": {
+    "zh-CN": "合集筛选下载",
+    "zh-TW": "合集篩選下載",
+    "en": "Collection Filtering",
+    "ja": "コレクション絞り込み"
+  },
+  "合集筛选策略": {
+    "zh-CN": "合集筛选策略",
+    "zh-TW": "合集篩選策略",
+    "en": "Collection Filter Policy",
+    "ja": "コレクション絞り込み方針"
+  },
+  "启用": {
+    "zh-CN": "启用",
+    "zh-TW": "啟用",
+    "en": "Enabled",
+    "ja": "有効"
+  },
+  "启用规则": {
+    "zh-CN": "启用规则",
+    "zh-TW": "啟用規則",
+    "en": "Enable Rule",
+    "ja": "ルールを有効化"
+  },
+  "命中下载规则，请打开软件查看并确认入队": {
+    "zh-CN": "命中下载规则，请打开软件查看并确认入队",
+    "zh-TW": "命中下載規則，請開啟軟體檢視並確認入隊",
+    "en": "Matched download rule. Open app to confirm.",
+    "ja": "ダウンロードルールに一致しました。アプリで確認してください。"
+  },
+  "命中后忽略": {
+    "zh-CN": "命中后忽略",
+    "zh-TW": "命中後忽略",
+    "en": "Ignore When Matched",
+    "ja": "一致時に無視"
+  },
+  "命中规则「%s」 · 动作：%s · 计划 %d 项": {
+    "zh-CN": "命中规则「%s」 · 动作：%s · 计划 %d 项",
+    "zh-TW": "命中規則「%s」 · 動作：%s · 計畫 %d 項",
+    "en": "Matched rule \"%s\" · Action: %s · %d planned",
+    "ja": "ルール「%s」に一致・動作: %s・予定 %d 件"
+  },
+  "命中规则「%s」，请前往「下载规则」页确认入队": {
+    "zh-CN": "命中规则「%s」，请前往「下载规则」页确认入队",
+    "zh-TW": "命中規則「%s」，請前往「下載規則」頁確認入隊",
+    "en": "Matched rule \"%s\". Go to Rules to confirm.",
+    "ja": "ルール「%s」に一致しました。「ルール」で確認してください。"
+  },
+  "命名模板（可用 {title} {author} {platform} {id} {episodeIndex}）": {
+    "zh-CN": "命名模板（可用 {title} {author} {platform} {id} {episodeIndex}）",
+    "zh-TW": "命名範本（可用 {title} {author} {platform} {id} {episodeIndex}）",
+    "en": "Filename Template ({title} {author} {platform} {id} {episodeIndex})",
+    "ja": "ファイル名テンプレート ({title} {author} {platform} {id} {episodeIndex})"
+  },
+  "回退最近较低规格": {
+    "zh-CN": "回退最近较低规格",
+    "zh-TW": "回退最近較低規格",
+    "en": "Fallback to Closest Lower",
+    "ja": "近い下位画質へフォールバック"
+  },
+  "图文打包 ZIP": {
+    "zh-CN": "图文打包 ZIP",
+    "zh-TW": "圖文打包 ZIP",
+    "en": "Images Archive (ZIP)",
+    "ja": "画像まとめ ZIP"
+  },
+  "域名过滤（逗号分隔）": {
+    "zh-CN": "域名过滤（逗号分隔）",
+    "zh-TW": "網域過濾（逗號分隔）",
+    "en": "Domain Filter (Comma-separated)",
+    "ja": "ドメイン指定（カンマ区切り）"
+  },
+  "外源导入·需确认": {
+    "zh-CN": "外源导入·需确认",
+    "zh-TW": "外源匯入·需確認",
+    "en": "Imported · Confirm Required",
+    "ja": "外部インポート・要確認"
+  },
+  "如：bilibili.com, youtube.com": {
+    "zh-CN": "如：bilibili.com, youtube.com",
+    "zh-TW": "如：bilibili.com, youtube.com",
+    "en": "e.g. bilibili.com, youtube.com",
+    "ja": "例: bilibili.com, youtube.com"
+  },
+  "如：{platform}/{author}": {
+    "zh-CN": "如：{platform}/{author}",
+    "zh-TW": "如：{platform}/{author}",
+    "en": "e.g. {platform}/{author}",
+    "ja": "例: {platform}/{author}"
+  },
+  "如：哔哩哔哩, YouTube, Pixiv": {
+    "zh-CN": "如：哔哩哔哩, YouTube, Pixiv",
+    "zh-TW": "如：嗶哩嗶哩, YouTube, Pixiv",
+    "en": "e.g. Bilibili, YouTube, Pixiv",
+    "ja": "例: ビリビリ, YouTube, Pixiv"
+  },
+  "安全文件归档与执行动作": {
+    "zh-CN": "安全文件归档与执行动作",
+    "zh-TW": "安全檔案歸檔與執行動作",
+    "en": "Safe File Organization & Execution",
+    "ja": "安全なファイル整理と実行動作"
+  },
+  "导入规则": {
+    "zh-CN": "导入规则",
+    "zh-TW": "匯入規則",
+    "en": "Import Rules",
+    "ja": "ルールをインポート"
+  },
+  "导出 .omnirule.json": {
+    "zh-CN": "导出 .omnirule.json",
+    "zh-TW": "匯出 .omnirule.json",
+    "en": "Export .omnirule.json",
+    "ja": ".omnirule.json をエクスポート"
+  },
+  "尚未添加自定义规则。点击「新建规则」或导入 .omnirule.json 文件开始定制自动化流程；无规则匹配时保持原有下载逻辑不变。": {
+    "zh-CN": "尚未添加自定义规则。点击「新建规则」或导入 .omnirule.json 文件开始定制自动化流程；无规则匹配时保持原有下载逻辑不变。",
+    "zh-TW": "尚未新增自訂規則。點擊「新增規則」或匯入 .omnirule.json 檔案開始定制自動化流程；無規則匹配時維持原有下載邏輯不變。",
+    "en": "No custom rules yet. Click New Rule or import a .omnirule.json file; unmatched links follow the default download flow.",
+    "ja": "カスタムルールはまだありません。「新規ルール」または .omnirule.json のインポートから開始できます。一致しない場合は既定の動作になります。"
+  },
+  "已去重跳过": {
+    "zh-CN": "已去重跳过",
+    "zh-TW": "已去重跳過",
+    "en": "Skipped (Dedup)",
+    "ja": "重複スキップ"
+  },
+  "已命中去重或筛选策略跳过": {
+    "zh-CN": "已命中去重或筛选策略跳过",
+    "zh-TW": "已命中去重或篩選策略跳過",
+    "en": "Skipped by deduplication or collection filter",
+    "ja": "重複除外または絞り込み条件によりスキップされました"
+  },
+  "已复制规则": {
+    "zh-CN": "已复制规则",
+    "zh-TW": "已複製規則",
+    "en": "Rule duplicated",
+    "ja": "ルールを複製しました"
+  },
+  "已安全导入 %d 条规则": {
+    "zh-CN": "已安全导入 %d 条规则",
+    "zh-TW": "已安全匯入 %d 條規則",
+    "en": "Safely imported %d rule(s)",
+    "ja": "%d 件のルールを安全にインポートしました"
+  },
+  "已导入 %d 条规则；%s": {
+    "zh-CN": "已导入 %d 条规则；%s",
+    "zh-TW": "已匯入 %d 條規則；%s",
+    "en": "Imported %d rule(s); %s",
+    "ja": "%d 件のルールをインポートしました：%s"
+  },
+  "已导出脱敏规则包 (.omnirule.json)": {
+    "zh-CN": "已导出脱敏规则包 (.omnirule.json)",
+    "zh-TW": "已匯出脫敏規則包 (.omnirule.json)",
+    "en": "Exported sanitized rule bundle (.omnirule.json)",
+    "ja": "認証情報を含まないルールパック (.omnirule.json) を出力しました"
+  },
+  "已忽略": {
+    "zh-CN": "已忽略",
+    "zh-TW": "已忽略",
+    "en": "Ignored",
+    "ja": "無視済み"
+  },
+  "已忽略该链接": {
+    "zh-CN": "已忽略该链接",
+    "zh-TW": "已忽略該連結",
+    "en": "Link ignored",
+    "ja": "リンクを無視しました"
+  },
+  "已按合集规则「%s」筛选入队 %d 个任务": {
+    "zh-CN": "已按合集规则「%s」筛选入队 %d 个任务",
+    "zh-TW": "已按合集規則「%s」篩選加入 %d 個任務",
+    "en": "Collection rule \"%s\" queued %d task(s)",
+    "ja": "コレクションルール「%s」で %d 件をキューに追加しました"
+  },
+  "已按规则「%s」完成仅解析": {
+    "zh-CN": "已按规则「%s」完成仅解析",
+    "zh-TW": "已按規則「%s」完成僅解析",
+    "en": "Parsed via rule \"%s\" (no auto-download)",
+    "ja": "ルール「%s」で解析のみ完了しました"
+  },
+  "已清理去重记录索引": {
+    "zh-CN": "已清理去重记录索引",
+    "zh-TW": "已清理去重紀錄索引",
+    "en": "Deduplication index cleared",
+    "ja": "重複除外インデックスをクリアしました"
+  },
+  "已清空规则执行记录": {
+    "zh-CN": "已清空规则执行记录",
+    "zh-TW": "已清空規則執行紀錄",
+    "en": "Rule audit logs cleared",
+    "ja": "ルール実行履歴を消去しました"
+  },
+  "已确认加入下载队列": {
+    "zh-CN": "已确认加入下载队列",
+    "zh-TW": "已確認加入下載佇列",
+    "en": "Confirmed and queued",
+    "ja": "確認してダウンロードキューに追加しました"
+  },
+  "已禁用": {
+    "zh-CN": "已禁用",
+    "zh-TW": "已停用",
+    "en": "Disabled",
+    "ja": "無効"
+  },
+  "已配置规则列表（按优先级从高到低匹配首个完整命中项）": {
+    "zh-CN": "已配置规则列表（按优先级从高到低匹配首个完整命中项）",
+    "zh-TW": "已設定規則清單（按優先級由高到低匹配首個完整命中項）",
+    "en": "Configured Rules (Evaluated in Priority Order)",
+    "ja": "設定済みルール一覧（優先度順に最初の一致ルールを実行）"
+  },
+  "平台名称（逗号分隔，自动兼容全引擎）": {
+    "zh-CN": "平台名称（逗号分隔，自动兼容全引擎）",
+    "zh-TW": "平台名稱（逗號分隔，自動相容全引擎）",
+    "en": "Platforms (Comma-separated, Engine Agnostic)",
+    "ja": "プラットフォーム名（カンマ区切り・全エンジン対応）"
+  },
+  "弹出确认后下载": {
+    "zh-CN": "弹出确认后下载",
+    "zh-TW": "彈出確認後下載",
+    "en": "Confirm Before Download",
+    "ja": "確認後にダウンロード"
+  },
+  "当前合集未匹配到启用规则，可手动勾选分集或先在「下载规则」配置规则": {
+    "zh-CN": "当前合集未匹配到启用规则，可手动勾选分集或先在「下载规则」配置规则",
+    "zh-TW": "目前合集未匹配到啟用規則，可手動勾選分集或先在「下載規則」設定規則",
+    "en": "No enabled rule matched this collection. Select episodes manually or configure a rule.",
+    "ja": "一致する有効なルールがありません。手動で選択するかルールを設定してください。"
+  },
+  "当前已选择“不使用规则”，请手动勾选分集后下载": {
+    "zh-CN": "当前已选择“不使用规则”，请手动勾选分集后下载",
+    "zh-TW": "目前已選擇「不使用規則」，請手動勾選分集後下載",
+    "en": "Rule bypass selected. Pick episodes manually to download.",
+    "ja": "「ルール未使用」が選択されています。手動でエピソードを選んでください。"
+  },
+  "当前已选择“不使用规则”，请点击右侧「立即解析」走手动流程": {
+    "zh-CN": "当前已选择“不使用规则”，请点击右侧「立即解析」走手动流程",
+    "zh-TW": "目前已選擇「不使用規則」，請點擊右側「立即解析」走手動流程",
+    "en": "Rule bypass selected. Click Analyze Now for manual download.",
+    "ja": "「ルール未使用」が選択されています。右側の「今すぐ解析」を押してください。"
+  },
+  "待确认": {
+    "zh-CN": "待确认",
+    "zh-TW": "待確認",
+    "en": "Pending Confirmation",
+    "ja": "確認待ち"
+  },
+  "待确认下载任务": {
+    "zh-CN": "待确认下载任务",
+    "zh-TW": "待確認下載任務",
+    "en": "Pending Rule Confirmations",
+    "ja": "確認待ちタスク"
+  },
+  "忽略": {
+    "zh-CN": "忽略",
+    "zh-TW": "忽略",
+    "en": "Dismiss",
+    "ja": "無視"
+  },
+  "恢复监听": {
+    "zh-CN": "恢复监听",
+    "zh-TW": "恢復監聽",
+    "en": "Resume Watcher",
+    "ja": "監視を再開"
+  },
+  "手动下载": {
+    "zh-CN": "手动下载",
+    "zh-TW": "手動下載",
+    "en": "Manual Download",
+    "ja": "手動ダウンロード"
+  },
+  "托盘气泡提醒": {
+    "zh-CN": "托盘气泡提醒",
+    "zh-TW": "系統匣氣泡提醒",
+    "en": "Tray Balloon Notification",
+    "ja": "トレイ通知を表示"
+  },
+  "执行记录与去重": {
+    "zh-CN": "执行记录与去重",
+    "zh-TW": "執行紀錄與去重",
+    "en": "Execution Logs & Dedup",
+    "ja": "実行履歴と重複除外"
+  },
+  "批量链接下载": {
+    "zh-CN": "批量链接下载",
+    "zh-TW": "批次連結下載",
+    "en": "Batch Download",
+    "ja": "一括ダウンロード"
+  },
+  "指定分集编号 (episodes)": {
+    "zh-CN": "指定分集编号 (episodes)",
+    "zh-TW": "指定分集編號 (episodes)",
+    "en": "Specific Episodes (episodes)",
+    "ja": "エピソード番号指定 (episodes)"
+  },
+  "指定目标分辨率": {
+    "zh-CN": "指定目标分辨率",
+    "zh-TW": "指定目標解析度",
+    "en": "Target Resolution",
+    "ja": "目標解像度を指定"
+  },
+  "指定起止范围 (range)": {
+    "zh-CN": "指定起止范围 (range)",
+    "zh-TW": "指定起止範圍 (range)",
+    "en": "Episode Range (range)",
+    "ja": "範囲指定 (range)"
+  },
+  "按规则执行": {
+    "zh-CN": "按规则执行",
+    "zh-TW": "按規則執行",
+    "en": "Run Rule",
+    "ja": "ルールで実行"
+  },
+  "按规则筛选下载": {
+    "zh-CN": "按规则筛选下载",
+    "zh-TW": "按規則篩選下載",
+    "en": "Filter by Rule",
+    "ja": "ルールで絞り込み"
+  },
+  "新建下载规则": {
+    "zh-CN": "新建下载规则",
+    "zh-TW": "新增下載規則",
+    "en": "New Download Rule",
+    "ja": "新規ダウンロードルール"
+  },
+  "新建规则": {
+    "zh-CN": "新建规则",
+    "zh-TW": "新增規則",
+    "en": "New Rule",
+    "ja": "新規ルール"
+  },
+  "普通手动下载": {
+    "zh-CN": "普通手动下载",
+    "zh-TW": "一般手動下載",
+    "en": "Manual Download",
+    "ja": "通常ダウンロード"
+  },
+  "暂无规则执行记录": {
+    "zh-CN": "暂无规则执行记录",
+    "zh-TW": "暫無規則執行紀錄",
+    "en": "No rule execution logs yet",
+    "ja": "ルールの実行履歴はまだありません"
+  },
+  "最低帧率": {
+    "zh-CN": "最低帧率",
+    "zh-TW": "最低幀率",
+    "en": "Minimum FPS",
+    "ja": "最小 FPS"
+  },
+  "最大时长(秒)": {
+    "zh-CN": "最大时长(秒)",
+    "zh-TW": "最大時長(秒)",
+    "en": "Max Duration (sec)",
+    "ja": "最大再生時間(秒)"
+  },
+  "最小时长(秒)": {
+    "zh-CN": "最小时长(秒)",
+    "zh-TW": "最小時長(秒)",
+    "en": "Min Duration (sec)",
+    "ja": "最小再生時間(秒)"
+  },
+  "最高可用画质": {
+    "zh-CN": "最高可用画质",
+    "zh-TW": "最高可用畫質",
+    "en": "Best Available Quality",
+    "ja": "利用可能な最高画質"
+  },
+  "未匹配到适用的规则，请点击右侧「立即解析」走常规下载流程": {
+    "zh-CN": "未匹配到适用的规则，请点击右侧「立即解析」走常规下载流程",
+    "zh-TW": "未匹配到適用的規則，請點擊右側「立即解析」走常規下載流程",
+    "en": "No matching rule found. Click Analyze Now to use the standard flow.",
+    "ja": "一致するルールがありません。右側の「今すぐ解析」から通常通りダウンロードしてください。"
+  },
+  "未匹配启用规则（将沿用默认手动流程）：%s": {
+    "zh-CN": "未匹配启用规则（将沿用默认手动流程）：%s",
+    "zh-TW": "未匹配啟用規則（將沿用預設手動流程）：%s",
+    "en": "No enabled rule matched (default flow applies): %s",
+    "ja": "有効なルールに一致しませんでした（既定のフローが適用されます）: %s"
+  },
+  "未命名规则": {
+    "zh-CN": "未命名规则",
+    "zh-TW": "未命名規則",
+    "en": "Untitled Rule",
+    "ja": "名称未設定ルール"
+  },
+  "未开启剪贴板监听": {
+    "zh-CN": "未开启剪贴板监听",
+    "zh-TW": "未開啟剪貼簿監聽",
+    "en": "Clipboard Watcher Off",
+    "ja": "クリップボード監視オフ"
+  },
+  "查看字段说明": {
+    "zh-CN": "查看字段说明",
+    "zh-TW": "檢視欄位說明",
+    "en": "Field Reference",
+    "ja": "フィールド仕様を表示"
+  },
+  "标题包含关键词": {
+    "zh-CN": "标题包含关键词",
+    "zh-TW": "標題包含關鍵字",
+    "en": "Title Include Keywords",
+    "ja": "タイトル必須キーワード"
+  },
+  "标题排除关键词": {
+    "zh-CN": "标题排除关键词",
+    "zh-TW": "標題排除關鍵字",
+    "en": "Title Exclude Keywords",
+    "ja": "タイトル除外キーワード"
+  },
+  "标题正则（可选）": {
+    "zh-CN": "标题正则（可选）",
+    "zh-TW": "標題正規（可選）",
+    "en": "Title Regex (Optional)",
+    "ja": "タイトル正規表現（任意）"
+  },
+  "校验 JSON 与安全性": {
+    "zh-CN": "校验 JSON 与安全性",
+    "zh-TW": "校驗 JSON 與安全性",
+    "en": "Validate JSON & Security",
+    "ja": "JSON と安全性を検証"
+  },
+  "模拟触发入口": {
+    "zh-CN": "模拟触发入口",
+    "zh-TW": "模擬觸發入口",
+    "en": "Simulated Trigger",
+    "ja": "トリガー種別"
+  },
+  "正则表达式 (regex)": {
+    "zh-CN": "正则表达式 (regex)",
+    "zh-TW": "正規表達式 (regex)",
+    "en": "Regular Expression (regex)",
+    "ja": "正規表現 (regex)"
+  },
+  "测试匹配并预览计划": {
+    "zh-CN": "测试匹配并预览计划",
+    "zh-TW": "測試匹配並預覽計畫",
+    "en": "Test & Preview Plan",
+    "ja": "一致テストとプラン確認"
+  },
+  "测试媒体链接": {
+    "zh-CN": "测试媒体链接",
+    "zh-TW": "測試媒體連結",
+    "en": "Test Media URL",
+    "ja": "テスト用 URL"
+  },
+  "测试链接预览": {
+    "zh-CN": "测试链接预览",
+    "zh-TW": "測試連結預覽",
+    "en": "Rule Test Sandbox",
+    "ja": "テストプレビュー"
+  },
+  "清理去重索引": {
+    "zh-CN": "清理去重索引",
+    "zh-TW": "清理去重索引",
+    "en": "Clear Dedup Index",
+    "ja": "重複インデックスを消去"
+  },
+  "画质选择策略": {
+    "zh-CN": "画质选择策略",
+    "zh-TW": "畫質選擇策略",
+    "en": "Quality Strategy",
+    "ja": "画質選択ポリシー"
+  },
+  "监听关闭": {
+    "zh-CN": "监听关闭",
+    "zh-TW": "監聽關閉",
+    "en": "Watcher Off",
+    "ja": "監視オフ"
+  },
+  "监听开启": {
+    "zh-CN": "监听开启",
+    "zh-TW": "監聽開啟",
+    "en": "Watcher On",
+    "ja": "監視オン"
+  },
+  "目标高度(px)": {
+    "zh-CN": "目标高度(px)",
+    "zh-TW": "目標高度(px)",
+    "en": "Target Height (px)",
+    "ja": "目標高さ(px)"
+  },
+  "直接自动下载": {
+    "zh-CN": "直接自动下载",
+    "zh-TW": "直接自動下載",
+    "en": "Auto-Download",
+    "ja": "自動ダウンロード"
+  },
+  "相对分类子目录（限下载目录内）": {
+    "zh-CN": "相对分类子目录（限下载目录内）",
+    "zh-TW": "相對分類子目錄（限下載目錄內）",
+    "en": "Relative Subfolder (Sandboxed)",
+    "ja": "サブフォルダ（ダウンロード先配下）"
+  },
+  "确定删除规则「%s」吗？不会影响已经创建的历史任务。": {
+    "zh-CN": "确定删除规则「%s」吗？不会影响已经创建的历史任务。",
+    "zh-TW": "確定刪除規則「%s」嗎？不會影響已經建立的歷史任務。",
+    "en": "Delete rule \"%s\"? Existing queued or completed tasks will not be affected.",
+    "ja": "ルール「%s」を削除しますか？既存のタスクには影響しません。"
+  },
+  "确认下载": {
+    "zh-CN": "确认下载",
+    "zh-TW": "確認下載",
+    "en": "Approve",
+    "ja": "承認してダウンロード"
+  },
+  "禁用": {
+    "zh-CN": "禁用",
+    "zh-TW": "停用",
+    "en": "Disabled",
+    "ja": "無効"
+  },
+  "纯视频（无音轨）": {
+    "zh-CN": "纯视频（无音轨）",
+    "zh-TW": "純視訊（無音軌）",
+    "en": "Video Only (Muted)",
+    "ja": "映像のみ（無音）"
+  },
+  "结束分集号": {
+    "zh-CN": "结束分集号",
+    "zh-TW": "結束分集號",
+    "en": "End Episode",
+    "ja": "終了エピソード"
+  },
+  "编码偏好": {
+    "zh-CN": "编码偏好",
+    "zh-TW": "編碼偏好",
+    "en": "Codec Preference",
+    "ja": "コーデック優先"
+  },
+  "编辑": {
+    "zh-CN": "编辑",
+    "zh-TW": "編輯",
+    "en": "Edit",
+    "ja": "編集"
+  },
+  "自动": {
+    "zh-CN": "自动",
+    "zh-TW": "自動",
+    "en": "Auto",
+    "ja": "自動"
+  },
+  "自动匹配已启用规则": {
+    "zh-CN": "自动匹配已启用规则",
+    "zh-TW": "自動匹配已啟用規則",
+    "en": "Auto-Match Enabled Rules",
+    "ja": "有効なルールを自動一致"
+  },
+  "自动回退最高可用": {
+    "zh-CN": "自动回退最高可用",
+    "zh-TW": "自動回退最高可用",
+    "en": "Fallback to Best Available",
+    "ja": "利用可能な最高画質へフォールバック"
+  },
+  "自动提取分享文本中的单个或多个链接，仅处理命中已启用规则的媒体；遇到验证或登录受限时自动暂停并提示": {
+    "zh-CN": "自动提取分享文本中的单个或多个链接，仅处理命中已启用规则的媒体；遇到验证或登录受限时自动暂停并提示",
+    "zh-TW": "自動擷取分享文字中的單個或多個連結，僅處理命中已啟用規則的媒體；遇到驗證或登入受限時自動暫停並提示",
+    "en": "Extracts single or multiple links and runs matching rules only; pauses and notifies on auth or challenge gates.",
+    "ja": "テキスト内の単一または複数リンクを自動抽出し、一致ルールのみ処理します。認証が必要な場合は自動停止して通知します。"
+  },
+  "自动递增重命名": {
+    "zh-CN": "自动递增重命名",
+    "zh-TW": "自動遞增重新命名",
+    "en": "Auto Rename",
+    "ja": "自動リネーム"
+  },
+  "覆盖已有文件": {
+    "zh-CN": "覆盖已有文件",
+    "zh-TW": "覆蓋已有檔案",
+    "en": "Overwrite Existing",
+    "ja": "既存ファイルを上書き"
+  },
+  "规则「%s」已加入 %d 个任务%s": {
+    "zh-CN": "规则「%s」已加入 %d 个任务%s",
+    "zh-TW": "規則「%s」已加入 %d 個任務%s",
+    "en": "Rule \"%s\" queued %d task(s)%s",
+    "ja": "ルール「%s」で %d 件を追加しました%s"
+  },
+  "规则「%s」状态：%s": {
+    "zh-CN": "规则「%s」状态：%s",
+    "zh-TW": "規則「%s」狀態：%s",
+    "en": "Rule \"%s\" status: %s",
+    "ja": "ルール「%s」ステータス: %s"
+  },
+  "规则「%s」：%s": {
+    "zh-CN": "规则「%s」：%s",
+    "zh-TW": "規則「%s」：%s",
+    "en": "Rule \"%s\": %s",
+    "ja": "ルール「%s」: %s"
+  },
+  "规则名称 *": {
+    "zh-CN": "规则名称 *",
+    "zh-TW": "規則名稱 *",
+    "en": "Rule Name *",
+    "ja": "ルール名 *"
+  },
+  "规则已保存": {
+    "zh-CN": "规则已保存",
+    "zh-TW": "規則已儲存",
+    "en": "Rule saved",
+    "ja": "ルールを保存しました"
+  },
+  "规则已删除": {
+    "zh-CN": "规则已删除",
+    "zh-TW": "規則已刪除",
+    "en": "Rule deleted",
+    "ja": "ルールを削除しました"
+  },
+  "规则干跑预览台（安全测试，不写入下载队列与磁盘）": {
+    "zh-CN": "规则干跑预览台（安全测试，不写入下载队列与磁盘）",
+    "zh-TW": "規則乾跑預覽台（安全測試，不寫入下載佇列與磁碟）",
+    "en": "Rule Dry-Run Sandbox (Preview without queueing or writing files)",
+    "ja": "ルールドライラン（キュー登録やファイル書き込みを行わず確認）"
+  },
+  "规则执行流水与跨入口去重记录": {
+    "zh-CN": "规则执行流水与跨入口去重记录",
+    "zh-TW": "規則執行流水與跨入口去重紀錄",
+    "en": "Rule Audit Logs & Cross-Entry Deduplication",
+    "ja": "ルール実行ログと重複除外記録"
+  },
+  "规则管理与编辑器": {
+    "zh-CN": "规则管理与编辑器",
+    "zh-TW": "規則管理與編輯器",
+    "en": "Rules & Editor",
+    "ja": "ルール管理とエディター"
+  },
+  "规则系统已关闭": {
+    "zh-CN": "规则系统已关闭",
+    "zh-TW": "規則系統已關閉",
+    "en": "Rules Off",
+    "ja": "ルール無効"
+  },
+  "规则系统已启用": {
+    "zh-CN": "规则系统已启用",
+    "zh-TW": "規則系統已啟用",
+    "en": "Rules On",
+    "ja": "ルール有効"
+  },
+  "规则系统已总控关闭": {
+    "zh-CN": "规则系统已总控关闭",
+    "zh-TW": "規則系統已總控關閉",
+    "en": "Rule Engine Disabled",
+    "ja": "ルールシステム全体が無効"
+  },
+  "规则编辑器": {
+    "zh-CN": "规则编辑器",
+    "zh-TW": "規則編輯器",
+    "en": "Rule Editor",
+    "ja": "ルールエディター"
+  },
+  "规则自动处理已停止：%s": {
+    "zh-CN": "规则自动处理已停止：%s",
+    "zh-TW": "規則自動處理已停止：%s",
+    "en": "Rule automation paused: %s",
+    "ja": "ルール自動処理を停止しました：%s"
+  },
+  "规则自动处理已停止：目标需要登录验证或媒体源暂不可用": {
+    "zh-CN": "规则自动处理已停止：目标需要登录验证或媒体源暂不可用",
+    "zh-TW": "規則自動處理已停止：目標需要登入驗證或媒體來源暫不可用",
+    "en": "Rule automation stopped: sign-in, challenge, or source error.",
+    "ja": "認証・ログインまたはメディアエラーのため自動処理を停止しました。"
+  },
+  "规则说明": {
+    "zh-CN": "规则说明",
+    "zh-TW": "規則說明",
+    "en": "Description",
+    "ja": "説明"
+  },
+  "视频容器": {
+    "zh-CN": "视频容器",
+    "zh-TW": "視訊容器",
+    "en": "Container",
+    "ja": "コンテナ"
+  },
+  "视频（音画合流）": {
+    "zh-CN": "视频（音画合流）",
+    "zh-TW": "視訊（音畫合流）",
+    "en": "Video (Audio + Video)",
+    "ja": "動画（音声あり）"
+  },
+  "触发入口": {
+    "zh-CN": "触发入口",
+    "zh-TW": "觸發入口",
+    "en": "Triggers",
+    "ja": "トリガー"
+  },
+  "请输入测试媒体链接": {
+    "zh-CN": "请输入测试媒体链接",
+    "zh-TW": "請輸入測試媒體連結",
+    "en": "Enter a test media URL",
+    "ja": "テスト用メディア URL を入力してください"
+  },
+  "质量回退策略": {
+    "zh-CN": "质量回退策略",
+    "zh-TW": "品質回退策略",
+    "en": "Fallback Strategy",
+    "ja": "画質フォールバック戦略"
+  },
+  "起始分集号": {
+    "zh-CN": "起始分集号",
+    "zh-TW": "起始分集號",
+    "en": "Start Episode",
+    "ja": "開始エピソード"
+  },
+  "跨入口去重索引中当前记录共 %d 条（自动屏蔽重复触发）": {
+    "zh-CN": "跨入口去重索引中当前记录共 %d 条（自动屏蔽重复触发）",
+    "zh-TW": "跨入口去重索引中目前紀錄共 %d 條（自動封鎖重複觸發）",
+    "en": "%d record(s) in cross-entry deduplication index",
+    "ja": "重複除外インデックスに現在 %d 件登録済み"
+  },
+  "跳过复用已有文件": {
+    "zh-CN": "跳过复用已有文件",
+    "zh-TW": "跳過複用已有檔案",
+    "en": "Skip & Reuse Existing",
+    "ja": "既存ファイルを再利用してスキップ"
+  },
+  "跳过已下载分集": {
+    "zh-CN": "跳过已下载分集",
+    "zh-TW": "跳過已下載分集",
+    "en": "Skip Downloaded Episodes",
+    "ja": "ダウンロード済みエピソードをスキップ"
+  },
+  "输入任意视频/合集/图文链接...": {
+    "zh-CN": "输入任意视频/合集/图文链接...",
+    "zh-TW": "輸入任意視訊/合集/圖文連結...",
+    "en": "Enter any video, collection, or image URL...",
+    "ja": "動画・コレクション・画像の URL を入力..."
+  },
+  "通过统一 JSON 协议编排普通、合集、批量及剪贴板自动下载行为": {
+    "zh-CN": "通过统一 JSON 协议编排普通、合集、批量及剪贴板自动下载行为",
+    "zh-TW": "透過統一 JSON 協議編排一般、合集、批次及剪貼簿自動下載行為",
+    "en": "Orchestrate manual, collection, batch, and clipboard downloads via unified JSON rules",
+    "ja": "統一 JSON スキーマで通常・コレクション・一括・クリップボード自動ダウンロードを制御します"
+  },
+  "通配符 (wildcard)": {
+    "zh-CN": "通配符 (wildcard)",
+    "zh-TW": "萬用字元 (wildcard)",
+    "en": "Wildcard (wildcard)",
+    "ja": "ワイルドカード (wildcard)"
+  },
+  "重名文件处理": {
+    "zh-CN": "重名文件处理",
+    "zh-TW": "重名檔案處理",
+    "en": "Duplicate Files",
+    "ja": "重複ファイル処理"
+  },
+  "重置为新建": {
+    "zh-CN": "重置为新建",
+    "zh-TW": "重設為新增",
+    "en": "Reset to New",
+    "ja": "新規作成にリセット"
+  },
+  "预览失败：%s": {
+    "zh-CN": "预览失败：%s",
+    "zh-TW": "預覽失敗：%s",
+    "en": "Preview failed: %s",
+    "ja": "プレビュー失敗: %s"
+  },
+  "高清封面": {
+    "zh-CN": "高清封面",
+    "zh-TW": "高畫質封面",
+    "en": "HD Cover",
+    "ja": "高画質カバー"
+  },
+  "高级 JSON 编辑器": {
+    "zh-CN": "高级 JSON 编辑器",
+    "zh-TW": "進階 JSON 編輯器",
+    "en": "Advanced JSON Editor",
+    "ja": "JSON エディター"
+  },
+  "默认保留原版经典亚克力参数，并可选壁纸染色云母、Ghost Acrylic 磨砂、Aero 玻璃与纯色模式": {
+    "zh-CN": "默认保留原版经典亚克力参数，并可选壁纸染色云母、Ghost Acrylic 磨砂、Aero 玻璃与纯色模式",
+    "zh-TW": "預設保留原版經典壓克力參數，並可選桌布染色雲母、Ghost Acrylic 磨砂、Aero 玻璃與純色模式",
+    "en": "Restores original Acrylic defaults, plus wallpaper-tinted Mica, Ghost Acrylic, Aero, and Solid",
+    "ja": "従来の既定アクリル設定に加え、壁紙色付きマイカ・Ghost アクリル・Aero・単色を選択できます"
+  },
+  "默认保留原版经典原生质感，并可选 Ghost 风格的 Mica、Mica Alt、Acrylic 磨砂、Aero 玻璃与纯色模式": {
+    "zh-CN": "默认保留原版经典原生质感，并可选 Ghost 风格的 Mica、Mica Alt、Acrylic 磨砂、Aero 玻璃与纯色模式",
+    "zh-TW": "預設保留原版經典原生質感，並可選 Ghost 風格的 Mica、Mica Alt、Acrylic 磨砂、Aero 玻璃與純色模式",
+    "en": "Restores original classic backdrop defaults, plus Ghost-style Mica, Mica Alt, Acrylic, Aero, and Solid",
+    "ja": "従来のネイティブ既定質感に加え、Ghost スタイルの Mica・Mica Alt・Acrylic・Aero・単色を選択できます"
+  },
+  "恢复剪贴板自动下载": {
+    "zh-CN": "恢复剪贴板自动下载",
+    "zh-TW": "恢復剪貼簿自動下載",
+    "en": "Resume Clipboard Auto-Download",
+    "ja": "クリップボード自動ダウンロードを再開"
+  },
+  "暂停剪贴板自动下载": {
+    "zh-CN": "暂停剪贴板自动下载",
+    "zh-TW": "暫停剪貼簿自動下載",
+    "en": "Pause Clipboard Auto-Download",
+    "ja": "クリップボード自動ダウンロードを一時停止"
   }
 }

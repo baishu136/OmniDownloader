@@ -10,8 +10,8 @@
     NavigationCacheMode="Required">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid x:Name="ContentContainer" MaxWidth="820" Margin="28,18,28,32">
-            <StackPanel Spacing="16">
+        <Grid x:Name="ContentContainer" MaxWidth="940" Margin="22,14,22,26">
+            <StackPanel Spacing="14">
                 <!-- Windows 11 原生面包屑分层头 -->
                 <StackPanel Spacing="4">
                     <Grid>
@@ -62,6 +62,20 @@
                             locui:Localized.OffContent="关闭"
                             locui:Localized.OnContent="开启"
                             IsOn="{x:Bind Vm.UsePureBlackDark, Mode=TwoWay}" />
+                    </controls:OmniSettingsCard>
+
+                    <controls:OmniSettingsCard
+                        locui:Localized.Title="窗口背景风格"
+                        Description="{x:Bind Vm.BackdropStyleDescription, Mode=OneWay}"
+                        Glyph="&#xE7F4;">
+                        <ComboBox x:Name="BackdropStyleCombo" MinWidth="188" SelectionChanged="BackdropStyleCombo_SelectionChanged">
+                            <ComboBoxItem locui:Localized.Content="原生默认 (经典外观)" Tag="auto" />
+                            <ComboBoxItem locui:Localized.Content="云母材质 (Mica)" Tag="mica" />
+                            <ComboBoxItem locui:Localized.Content="云母叠加 (Mica Alt)" Tag="mica_alt" />
+                            <ComboBoxItem locui:Localized.Content="亚克力毛玻璃 (Acrylic)" Tag="acrylic" />
+                            <ComboBoxItem locui:Localized.Content="Aero 玻璃 (Aero)" Tag="aero" />
+                            <ComboBoxItem locui:Localized.Content="纯色无透明 (Solid)" Tag="solid" />
+                        </ComboBox>
                     </controls:OmniSettingsCard>
 
                     <!-- 自定义主题强调色卡片 -->
@@ -131,7 +145,7 @@
                                                     Glyph="&#xE73E;"
                                                     FontSize="12"
                                                     Foreground="{x:Bind CheckBrush}"
-                                                    Visibility="{x:Bind SelectedVisibility}" />
+                                                    Visibility="{x:Bind SelectedVisibility, Mode=OneWay}" />
                                             </Button>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -180,6 +194,52 @@
                             <ComboBoxItem locui:Localized.Content="直接关闭应用" Tag="exit" />
                         </ComboBox>
                     </controls:OmniSettingsCard>
+
+                    <Border Style="{StaticResource OmniCardBorderStyle}">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Grid.Column="0" Glyph="&#xE950;" FontSize="20" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                                    <controls:WrapPanel HorizontalSpacing="8" VerticalSpacing="4">
+                                        <TextBlock locui:Localized.Text="GPU 硬件加速" Style="{StaticResource BodyTextBlockStyle}" VerticalAlignment="Center" />
+                                        <Border Style="{StaticResource OmniTagBorderStyle}" Padding="8,2" VerticalAlignment="Center">
+                                            <TextBlock Text="{x:Bind Vm.GpuStatusBadge, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                        </Border>
+                                    </controls:WrapPanel>
+                                    <TextBlock
+                                        Text="{x:Bind Vm.GpuStatusSummary, Mode=OneWay}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        TextWrapping="WrapWholeWords" />
+                                </StackPanel>
+                                <ToggleSwitch
+                                    Grid.Column="2"
+                                    locui:Localized.OffContent="关闭"
+                                    locui:Localized.OnContent="开启"
+                                    IsOn="{x:Bind Vm.GpuAccelerationEnabled, Mode=TwoWay}"
+                                    VerticalAlignment="Center" />
+                            </Grid>
+
+                            <controls:WrapPanel
+                                Margin="32,0,0,0"
+                                HorizontalSpacing="8"
+                                VerticalSpacing="6"
+                                Visibility="{x:Bind Vm.GpuAccelerationEnabled, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                                <ComboBox x:Name="GpuVendorCombo" MinWidth="168" SelectionChanged="GpuVendorCombo_SelectionChanged">
+                                    <ComboBoxItem locui:Localized.Content="自动选择 (推荐)" Tag="auto" />
+                                    <ComboBoxItem Content="NVIDIA NVENC" Tag="nvidia" />
+                                    <ComboBoxItem Content="Intel QSV" Tag="intel" />
+                                    <ComboBoxItem Content="AMD AMF" Tag="amd" />
+                                </ComboBox>
+                                <Button locui:Localized.Content="刷新硬件探测" Command="{x:Bind Vm.RefreshGpuStatusCommand}" VerticalAlignment="Center" />
+                            </controls:WrapPanel>
+                        </StackPanel>
+                    </Border>
 
                     <TextBlock locui:Localized.Text="功能设置" Style="{StaticResource GroupHeaderTextStyle}" />
 

@@ -30,11 +30,118 @@ namespace OmniDownloader.WinUI.Helpers;
 /// </summary>
 public static class NativeShellHelper
 {
+    private delegate IntPtr SubclassProcDelegate(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, UIntPtr uIdSubclass, UIntPtr dwRefData);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Win32Rect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct DwmMargins
+    {
+        public int Left;
+        public int Right;
+        public int Top;
+        public int Bottom;
+    }
+
+    private const uint WmEraseBkgnd = 0x0014;
+    private const uint WmNcPaint = 0x0085;
+    private const uint WmNcActivate = 0x0086;
+    private const uint WmNcDestroy = 0x0082;
+    private const uint RdwFrame = 0x0400;
+    private const uint RdwInvalidate = 0x0001;
+    private const uint RdwUpdatenow = 0x0100;
+    private const int GclpHbrBackground = -10;
+    private const int NullBrush = 5;
+    private const int DwmwaUseImmersiveDarkMode = 20;
+    private const int DwmwaBorderColor = 34;
+    private static readonly UIntPtr AntiFlickerSubclassId = new(0x4F4D4E49);
+    private static readonly object SubclassLock = new();
+    private static readonly Dictionary<IntPtr, SubclassProcDelegate> SubclassProcs = new();
+    private static readonly Dictionary<IntPtr, uint> TopEdgeColorRefs = new();
+    private static readonly Dictionary<IntPtr, bool> ExtendedTitleWindows = new();
+
     [DllImport("user32.dll")]
     private static extern uint GetDpiForWindow(IntPtr hWnd);
 
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+    public static void SendWindowClose(IntPtr hwnd)
+    {
+        if (hwnd != IntPtr.Zero)
+        {
+            _ = PostMessage(hwnd, 0x0010, IntPtr.Zero, IntPtr.Zero);
+        }
+    }
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetWindowRect(IntPtr hWnd, out Win32Rect lpRect);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetWindowDC(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
+    [DllImport("user32.dll")]
+    private static extern int FillRect(IntPtr hDC, ref Win32Rect lprc, IntPtr hbr);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprcUpdate, IntPtr hrgnUpdate, uint flags);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsZoomed(IntPtr hWnd);
+
+    [DllImport("user32.dll", EntryPoint = "SetClassLongPtrW")]
+    private static extern IntPtr SetClassLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+    [DllImport("gdi32.dll")]
+    private static extern IntPtr GetStockObject(int fnObject);
+
+    [DllImport("gdi32.dll")]
+    private static extern IntPtr CreateSolidBrush(uint crColor);
+
+    [DllImport("gdi32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool DeleteObject(IntPtr hObject);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref uint attrValue, int attrSize);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref DwmMargins pMarInset);
+
+    [DllImport("comctl32.dll", SetLastError = true)]
+    private static extern bool SetWindowSubclass(IntPtr hWnd, SubclassProcDelegate pfnSubclass, UIntPtr uIdSubclass, UIntPtr dwRefData);
+
+    [DllImport("comctl32.dll", SetLastError = true)]
+    private static extern bool RemoveWindowSubclass(IntPtr hWnd, SubclassProcDelegate pfnSubclass, UIntPtr uIdSubclass);
+
+    [DllImport("comctl32.dll")]
+    private static extern IntPtr DefSubclassProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam);
+
     private const int MaxCachedImages = 72;
     private const int MaxCachedBytes = 16 * 1024 * 1024;
+    private const int MaxFailedImageUrls = 256;
+
+    /// <summary>
+    /// 窗口最小化或隐藏至托盘期间开启，跳过非必要 UI 过渡动画以将 GPU/CPU 降至最低。
+    /// </summary>
+    public static volatile bool SuppressNonEssentialAnimations;
 
     private static readonly HttpClient ImageHttp = CreateImageHttpClient();
     private static readonly object CacheLock = new();
@@ -45,80 +152,64 @@ public static class NativeShellHelper
     private static readonly ConcurrentDictionary<string, Task<byte[]?>> InflightImageDownloads = new(StringComparer.Ordinal);
     private static readonly ConditionalWeakTable<Microsoft.UI.Xaml.Controls.Image, string> BoundImageUrls = new();
     private static readonly ConditionalWeakTable<Microsoft.UI.Xaml.Controls.Image, CancellationTokenSource> BoundImageCts = new();
-    private static readonly ConditionalWeakTable<UIElement, Storyboard> ActiveElementStoryboards = new();
+    private static readonly ConditionalWeakTable<UIElement, Microsoft.UI.Composition.CompositionScopedBatch> ActiveFadeBatches = new();
 
     /// <summary>
-    /// 使用 WinUI 3 原生 XAML Storyboard 与 CubicEase(EaseOut) 执行克制自然的淡入/微位移呈现。
-    /// 不修改布局缩放或注入全局隐式位移动画，保持原生桌面交互稳定。
+    /// 使用 Windows Composition Visual API 在 DWM GPU 合成线程运行高刷（60/120/144/165/240Hz）淡入与微位移过渡，
+    /// 零 UI 线程逐帧回调与布局重算开销；窗口最小化/隐藏时自动静默直显。
     /// </summary>
     public static void PlayFadeIn(UIElement? element, int durationMs = 150, double fromOffsetY = 0, double fromOffsetX = 0)
     {
         if (element is null || element.Visibility != Visibility.Visible) return;
         try
         {
-            if (ActiveElementStoryboards.TryGetValue(element, out var prev))
+            Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.SetIsTranslationEnabled(element, true);
+            var visual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(element);
+            if (ActiveFadeBatches.TryGetValue(element, out var prevBatch))
             {
-                prev.Stop();
+                ActiveFadeBatches.Remove(element);
+                try { prevBatch.Dispose(); } catch { }
             }
 
-            var sb = new Storyboard();
-            var keyTime = KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(Math.Max(60, durationMs)));
-            static KeySpline MakeDecelerateSpline() => new()
+            if (SuppressNonEssentialAnimations)
             {
-                ControlPoint1 = new Windows.Foundation.Point(0.1, 0.9),
-                ControlPoint2 = new Windows.Foundation.Point(0.2, 1.0)
-            };
+                visual.StopAnimation("Opacity");
+                visual.StopAnimation("Translation");
+                visual.Opacity = 1f;
+                visual.Properties.InsertVector3("Translation", System.Numerics.Vector3.Zero);
+                element.Opacity = 1.0;
+                return;
+            }
 
-            var fade = new DoubleAnimationUsingKeyFrames();
-            fade.KeyFrames.Add(new DiscreteDoubleKeyFrame { KeyTime = KeyTime.FromTimeSpan(TimeSpan.Zero), Value = 0.0 });
-            fade.KeyFrames.Add(new SplineDoubleKeyFrame { KeyTime = keyTime, Value = 1.0, KeySpline = MakeDecelerateSpline() });
-            Storyboard.SetTarget(fade, element);
-            Storyboard.SetTargetProperty(fade, "Opacity");
-            sb.Children.Add(fade);
+            var compositor = visual.Compositor;
+            var duration = TimeSpan.FromMilliseconds(Math.Max(60, durationMs));
+            var easing = compositor.CreateCubicBezierEasingFunction(
+                new System.Numerics.Vector2(0.1f, 0.9f),
+                new System.Numerics.Vector2(0.2f, 1.0f));
+
+            element.Opacity = 1.0;
+            visual.Opacity = 0f;
+            var fadeAnim = compositor.CreateScalarKeyFrameAnimation();
+            fadeAnim.InsertKeyFrame(0f, 0f);
+            fadeAnim.InsertKeyFrame(1f, 1f, easing);
+            fadeAnim.Duration = duration;
+            visual.StartAnimation("Opacity", fadeAnim);
 
             if (Math.Abs(fromOffsetX) > 0.1 || Math.Abs(fromOffsetY) > 0.1)
             {
-                if (element.RenderTransform is not TranslateTransform tt)
-                {
-                    tt = new TranslateTransform();
-                    element.RenderTransform = tt;
-                }
-                if (Math.Abs(fromOffsetY) > 0.1)
-                {
-                    tt.Y = fromOffsetY;
-                    var slideY = new DoubleAnimationUsingKeyFrames();
-                    slideY.KeyFrames.Add(new DiscreteDoubleKeyFrame { KeyTime = KeyTime.FromTimeSpan(TimeSpan.Zero), Value = fromOffsetY });
-                    slideY.KeyFrames.Add(new SplineDoubleKeyFrame { KeyTime = keyTime, Value = 0.0, KeySpline = MakeDecelerateSpline() });
-                    Storyboard.SetTarget(slideY, tt);
-                    Storyboard.SetTargetProperty(slideY, "Y");
-                    sb.Children.Add(slideY);
-                }
-                if (Math.Abs(fromOffsetX) > 0.1)
-                {
-                    tt.X = fromOffsetX;
-                    var slideX = new DoubleAnimationUsingKeyFrames();
-                    slideX.KeyFrames.Add(new DiscreteDoubleKeyFrame { KeyTime = KeyTime.FromTimeSpan(TimeSpan.Zero), Value = fromOffsetX });
-                    slideX.KeyFrames.Add(new SplineDoubleKeyFrame { KeyTime = keyTime, Value = 0.0, KeySpline = MakeDecelerateSpline() });
-                    Storyboard.SetTarget(slideX, tt);
-                    Storyboard.SetTargetProperty(slideX, "X");
-                    sb.Children.Add(slideX);
-                }
+                var startOffset = new System.Numerics.Vector3((float)fromOffsetX, (float)fromOffsetY, 0f);
+                visual.Properties.InsertVector3("Translation", startOffset);
+                var slideAnim = compositor.CreateVector3KeyFrameAnimation();
+                slideAnim.InsertKeyFrame(0f, startOffset);
+                slideAnim.InsertKeyFrame(1f, System.Numerics.Vector3.Zero, easing);
+                slideAnim.Duration = duration;
+                visual.StartAnimation("Translation", slideAnim);
             }
-
-            sb.Completed += (_, _) =>
+            else
             {
-                if (ActiveElementStoryboards.TryGetValue(element, out var cur) && ReferenceEquals(cur, sb))
-                {
-                    element.Opacity = 1.0;
-                    if (element.RenderTransform is TranslateTransform t)
-                    {
-                        t.X = 0;
-                        t.Y = 0;
-                    }
-                }
-            };
-            ActiveElementStoryboards.AddOrUpdate(element, sb);
-            sb.Begin();
+                visual.StopAnimation("Translation");
+                visual.Properties.InsertVector3("Translation", System.Numerics.Vector3.Zero);
+            }
         }
         catch
         {
@@ -127,49 +218,62 @@ public static class NativeShellHelper
     }
 
     /// <summary>
-    /// 为浮层/提示面板提供轻量原生的显隐透明度过渡（隐藏后自动复位 Collapsed）。
+    /// 使用 GPU 合成视觉透明度执行浮层显隐过渡（隐藏完成自动复位 Collapsed）。
     /// </summary>
     public static void FadeSetVisibility(UIElement? element, bool visible, int durationMs = 140, double slideY = 0)
     {
         if (element is null) return;
         try
         {
-            if (ActiveElementStoryboards.TryGetValue(element, out var prev))
+            var visual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(element);
+            if (ActiveFadeBatches.TryGetValue(element, out var prevBatch))
             {
-                prev.Stop();
+                ActiveFadeBatches.Remove(element);
+                try { prevBatch.Dispose(); } catch { }
             }
 
             if (visible)
             {
                 var wasCollapsed = element.Visibility != Visibility.Visible;
                 element.Visibility = Visibility.Visible;
-                if (!wasCollapsed && element.Opacity >= 0.99) return;
+                if (!wasCollapsed && visual.Opacity >= 0.99f && element.Opacity >= 0.99) return;
                 PlayFadeIn(element, durationMs, fromOffsetY: slideY);
                 return;
             }
 
             if (element.Visibility != Visibility.Visible) return;
-            var sb = new Storyboard();
-            var fade = new DoubleAnimation
+            if (SuppressNonEssentialAnimations)
             {
-                From = element.Opacity,
-                To = 0.0,
-                Duration = new Duration(TimeSpan.FromMilliseconds(Math.Max(60, durationMs))),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
-            };
-            Storyboard.SetTarget(fade, element);
-            Storyboard.SetTargetProperty(fade, "Opacity");
-            sb.Children.Add(fade);
-            sb.Completed += (_, _) =>
+                visual.StopAnimation("Opacity");
+                visual.Opacity = 1f;
+                element.Visibility = Visibility.Collapsed;
+                element.Opacity = 1.0;
+                return;
+            }
+
+            var compositor = visual.Compositor;
+            var easing = compositor.CreateCubicBezierEasingFunction(
+                new System.Numerics.Vector2(0.4f, 0.0f),
+                new System.Numerics.Vector2(1.0f, 1.0f));
+            var fadeOut = compositor.CreateScalarKeyFrameAnimation();
+            fadeOut.InsertKeyFrame(1f, 0f, easing);
+            fadeOut.Duration = TimeSpan.FromMilliseconds(Math.Max(60, durationMs));
+
+            var batch = compositor.CreateScopedBatch(Microsoft.UI.Composition.CompositionBatchTypes.Animation);
+            ActiveFadeBatches.AddOrUpdate(element, batch);
+            batch.Completed += (_, _) =>
             {
-                if (ActiveElementStoryboards.TryGetValue(element, out var cur) && ReferenceEquals(cur, sb))
+                if (ActiveFadeBatches.TryGetValue(element, out var cur) && ReferenceEquals(cur, batch))
                 {
+                    ActiveFadeBatches.Remove(element);
                     element.Visibility = Visibility.Collapsed;
+                    visual.Opacity = 1f;
                     element.Opacity = 1.0;
                 }
+                try { batch.Dispose(); } catch { }
             };
-            ActiveElementStoryboards.AddOrUpdate(element, sb);
-            sb.Begin();
+            visual.StartAnimation("Opacity", fadeOut);
+            batch.End();
         }
         catch
         {
@@ -303,6 +407,18 @@ public static class NativeShellHelper
     private static SolidColorBrush? _darkBgBrush;
     private static SolidColorBrush? _lightBgBrush;
     private static SolidColorBrush? _transparentBrush;
+    private static SolidColorBrush? _wallpaperMicaBrush;
+    private static SolidColorBrush? _transitionHoldBrush;
+    private static long _backdropEpoch;
+    private static readonly ConditionalWeakTable<Window, BoxedBackdropState> AppliedWindowBackdrops = new();
+
+    private sealed class BoxedBackdropState
+    {
+        public EffectiveBackdropKind Kind { get; set; }
+        public string StyleKey { get; set; } = string.Empty;
+        public bool IsDark { get; set; }
+        public long Epoch { get; set; }
+    }
 
     private static HttpClient CreateImageHttpClient()
     {
@@ -320,7 +436,13 @@ public static class NativeShellHelper
         return client;
     }
 
-    public static void ConfigureWindowChrome(Window window, FrameworkElement titleBarDragRegion, int baseWidth = 1100, int baseHeight = 760)
+    public static BorderlessWindowChromeHelper? ConfigureWindowChrome(
+        Window window,
+        FrameworkElement titleBarDragRegion,
+        int baseWidth = 1100,
+        int baseHeight = 760,
+        Microsoft.UI.Xaml.Controls.Grid? win10ResizeLayer = null,
+        Action<bool>? onMaximizedChanged = null)
     {
         var hwnd = WindowNative.GetWindowHandle(window);
         var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
@@ -347,46 +469,344 @@ public static class NativeShellHelper
             appWindow.SetIcon(icoPath);
         }
 
-        // 优先启用 Windows 11 Mica 材质，若在 Windows 10 上则尝试 Acrylic 或自动回落到主题背景
-        try
+        var useWin10Borderless = !OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000)
+            && win10ResizeLayer is not null
+            && AppWindowTitleBar.IsCustomizationSupported();
+
+        // 拦截 Win32 WM_ERASEBKGND 默认白底重绘；若主窗口在 Win10 下启用无原生框线模式，则不再需要 WindowDC 顶部补绘
+        AttachAntiFlickerGuard(hwnd, hasExtendedTitleBar: AppWindowTitleBar.IsCustomizationSupported() && !useWin10Borderless);
+
+        ApplyWindowBackdrop(
+            window,
+            AppServices.Current.LocalState.Current.BackdropStyle,
+            ThemeAppearanceLogic.ResolveEffectiveDark(
+                AppServices.Current.LocalState.Current.Theme,
+                IsOsDarkTheme(),
+                false,
+                false),
+            AppServices.Current.LocalState.Current.UsePureBlackDarkMode);
+
+        if (useWin10Borderless)
         {
-            if (MicaController.IsSupported())
-            {
-                window.SystemBackdrop = new MicaBackdrop { Kind = MicaKind.Base };
-            }
-            else if (DesktopAcrylicController.IsSupported())
-            {
-                window.SystemBackdrop = new DesktopAcrylicBackdrop();
-            }
-        }
-        catch
-        {
-            // 部分精简或远程桌面会话不支持 SystemBackdrop 时自动使用默认背景色
+            return new BorderlessWindowChromeHelper(window, titleBarDragRegion, win10ResizeLayer!, onMaximizedChanged);
         }
 
         if (AppWindowTitleBar.IsCustomizationSupported())
         {
             window.ExtendsContentIntoTitleBar = true;
             window.SetTitleBar(titleBarDragRegion);
+            titleBarDragRegion.Loaded += (_, _) =>
+            {
+                try { window.SetTitleBar(titleBarDragRegion); } catch { }
+            };
+        }
+
+        return null;
+    }
+
+    private static (EffectiveBackdropKind Kind, string StyleKey, Color SurfaceBase, bool BackdropInstanceReplaced) ApplyWindowBackdrop(
+        Window window,
+        string? requestedStyle,
+        bool isDark,
+        bool pureBlackDark)
+    {
+        var micaSupported = false;
+        var acrylicSupported = false;
+        try { micaSupported = MicaController.IsSupported(); } catch { }
+        try { acrylicSupported = DesktopAcrylicController.IsSupported(); } catch { }
+
+        var styleKey = BackdropStyleLogic.NormalizeStyle(requestedStyle);
+        var kind = BackdropStyleLogic.ResolveEffectiveKind(
+            styleKey,
+            isDark,
+            pureBlackDark,
+            micaSupported,
+            acrylicSupported);
+
+        var surfaceBase = ResolveSurfaceColor(kind, isDark, pureBlackDark);
+
+        if (AppliedWindowBackdrops.TryGetValue(window, out var current)
+            && current.Kind == kind
+            && string.Equals(current.StyleKey, styleKey, StringComparison.Ordinal)
+            && current.IsDark == isDark)
+        {
+            return (kind, styleKey, surfaceBase, false);
+        }
+
+        var replacedInstance = false;
+        try
+        {
+            switch (kind)
+            {
+                case EffectiveBackdropKind.NativeOriginal:
+                    // 完整还原加入 Ghost 背景之前的系统原生参数（Win11 原生 Mica Base / Win10 原生 DesktopAcrylic），并经安全包装层兜底主题切换异常
+                    if (micaSupported)
+                    {
+                        if (window.SystemBackdrop is not SafeMicaBackdrop origMica || !origMica.MatchesKind(MicaKind.Base))
+                        {
+                            replacedInstance = true;
+                            window.SystemBackdrop = new SafeMicaBackdrop(MicaKind.Base);
+                        }
+                    }
+                    else if (acrylicSupported)
+                    {
+                        if (window.SystemBackdrop is not ConfigurableAcrylicBackdrop origAcrylic || !origAcrylic.MatchesConfiguration(DesktopAcrylicKind.Default, isNativeDefault: true))
+                        {
+                            replacedInstance = true;
+                            window.SystemBackdrop = ConfigurableAcrylicBackdrop.CreateNativeDefault();
+                        }
+                    }
+                    else
+                    {
+                        replacedInstance = window.SystemBackdrop is not null;
+                        window.SystemBackdrop = null;
+                    }
+                    break;
+
+                case EffectiveBackdropKind.MicaBase:
+                    if (window.SystemBackdrop is not SafeMicaBackdrop mb || !mb.MatchesKind(MicaKind.Base))
+                    {
+                        replacedInstance = true;
+                        window.SystemBackdrop = new SafeMicaBackdrop(MicaKind.Base);
+                    }
+                    break;
+
+                case EffectiveBackdropKind.MicaAlt:
+                    if (window.SystemBackdrop is not SafeMicaBackdrop mba || !mba.MatchesKind(MicaKind.BaseAlt))
+                    {
+                        replacedInstance = true;
+                        window.SystemBackdrop = new SafeMicaBackdrop(MicaKind.BaseAlt);
+                    }
+                    break;
+
+                case EffectiveBackdropKind.Aero:
+                {
+                    var (tint, tintOp, lumOp, fallback) = ResolveAcrylicParams(kind, styleKey, isDark);
+                    if (window.SystemBackdrop is ConfigurableAcrylicBackdrop aero && aero.MatchesConfiguration(DesktopAcrylicKind.Thin, isNativeDefault: false))
+                    {
+                        aero.UpdateParameters(tint, tintOp, lumOp, fallback);
+                    }
+                    else
+                    {
+                        replacedInstance = true;
+                        window.SystemBackdrop = new ConfigurableAcrylicBackdrop(DesktopAcrylicKind.Thin, tint, tintOp, lumOp, fallback);
+                    }
+                    break;
+                }
+
+                case EffectiveBackdropKind.Acrylic:
+                {
+                    var (tint, tintOp, lumOp, fallback) = ResolveAcrylicParams(kind, styleKey, isDark);
+                    if (window.SystemBackdrop is ConfigurableAcrylicBackdrop acr && acr.MatchesConfiguration(DesktopAcrylicKind.Default, isNativeDefault: false))
+                    {
+                        acr.UpdateParameters(tint, tintOp, lumOp, fallback);
+                    }
+                    else
+                    {
+                        replacedInstance = true;
+                        window.SystemBackdrop = new ConfigurableAcrylicBackdrop(DesktopAcrylicKind.Default, tint, tintOp, lumOp, fallback);
+                    }
+                    break;
+                }
+
+                default:
+                    replacedInstance = window.SystemBackdrop is not null;
+                    window.SystemBackdrop = null;
+                    break;
+            }
+
+            AppliedWindowBackdrops.AddOrUpdate(window, new BoxedBackdropState
+            {
+                Kind = kind,
+                StyleKey = styleKey,
+                IsDark = isDark,
+                Epoch = Interlocked.Increment(ref _backdropEpoch)
+            });
+        }
+        catch
+        {
+            try
+            {
+                window.SystemBackdrop = null;
+                AppliedWindowBackdrops.AddOrUpdate(window, new BoxedBackdropState
+                {
+                    Kind = EffectiveBackdropKind.Solid,
+                    StyleKey = BackdropStyleLogic.SolidKey,
+                    IsDark = isDark,
+                    Epoch = Interlocked.Increment(ref _backdropEpoch)
+                });
+                return (EffectiveBackdropKind.Solid, BackdropStyleLogic.SolidKey, ResolveSurfaceColor(EffectiveBackdropKind.Solid, isDark, pureBlackDark), true);
+            }
+            catch
+            {
+            }
+        }
+
+        return (kind, styleKey, surfaceBase, replacedInstance);
+    }
+
+    private static (Color TintColor, float TintOpacity, float LuminosityOpacity, Color FallbackColor) ResolveAcrylicParams(
+        EffectiveBackdropKind kind,
+        string styleKey,
+        bool isDark)
+    {
+        if (kind == EffectiveBackdropKind.Aero)
+        {
+            return isDark
+                ? (Color.FromArgb(255, 18, 22, 30), 0.08f, 0.14f, Color.FromArgb(255, 22, 25, 32))
+                : (Color.FromArgb(255, 236, 244, 255), 0.10f, 0.18f, Color.FromArgb(255, 240, 244, 250));
+        }
+
+        // Ghost-Downloader-3 标准磨砂参数："00000030" / "FFFFFF30"（高透低浑浊）
+        return isDark
+            ? (Color.FromArgb(255, 18, 20, 26), 0.19f, 0.36f, Color.FromArgb(255, 28, 30, 38))
+            : (Color.FromArgb(255, 250, 252, 255), 0.22f, 0.42f, Color.FromArgb(255, 244, 246, 250));
+    }
+
+    private static Color ResolveSurfaceColor(EffectiveBackdropKind kind, bool isDark, bool pureBlackDark)
+    {
+        if (isDark && pureBlackDark) return Color.FromArgb(255, 0, 0, 0);
+        return kind switch
+        {
+            EffectiveBackdropKind.WallpaperMica => DesktopWallpaperTintHelper.ResolveMicaSurfaceColor(isDark, isAlt: false),
+            EffectiveBackdropKind.WallpaperMicaAlt => DesktopWallpaperTintHelper.ResolveMicaSurfaceColor(isDark, isAlt: true),
+            _ => isDark ? Color.FromArgb(255, 28, 29, 34) : Color.FromArgb(255, 243, 245, 249)
+        };
+    }
+
+    /// <summary>
+    /// 为 WinUI 3 窗口挂载 Win32 防擦除闪烁与顶部白边抑制子类：
+    /// 屏蔽 GDI 默认白底擦除、清除白底类画刷并在 Windows 10 下覆写扩展标题栏顶部 1px 非客户区白边。
+    /// </summary>
+    public static void AttachAntiFlickerGuard(IntPtr hwnd, bool hasExtendedTitleBar = false)
+    {
+        if (hwnd == IntPtr.Zero) return;
+        try
+        {
+            var nullBrush = GetStockObject(NullBrush);
+            if (nullBrush != IntPtr.Zero)
+            {
+                _ = SetClassLongPtr(hwnd, GclpHbrBackground, nullBrush);
+            }
+        }
+        catch
+        {
+        }
+
+        lock (SubclassLock)
+        {
+            if (hasExtendedTitleBar)
+            {
+                ExtendedTitleWindows[hwnd] = true;
+            }
+            if (SubclassProcs.ContainsKey(hwnd)) return;
+
+            SubclassProcDelegate? proc = null;
+            proc = (hWnd, uMsg, wParam, lParam, uId, _) =>
+            {
+                if (uMsg == WmEraseBkgnd)
+                {
+                    return new IntPtr(1);
+                }
+
+                if ((uMsg == WmNcPaint || uMsg == WmNcActivate) &&
+                    !OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000))
+                {
+                    var res = DefSubclassProc(hWnd, uMsg, wParam, lParam);
+                    PaintWindows10TopBorder(hWnd);
+                    return res;
+                }
+
+                if (uMsg == WmNcDestroy)
+                {
+                    SubclassProcDelegate? removed = null;
+                    lock (SubclassLock)
+                    {
+                        if (SubclassProcs.TryGetValue(hWnd, out var existing))
+                        {
+                            removed = existing;
+                            SubclassProcs.Remove(hWnd);
+                        }
+                        TopEdgeColorRefs.Remove(hWnd);
+                        ExtendedTitleWindows.Remove(hWnd);
+                    }
+                    if (removed is not null)
+                    {
+                        try { RemoveWindowSubclass(hWnd, removed, uId); } catch { }
+                    }
+                }
+                return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+            };
+
+            if (SetWindowSubclass(hwnd, proc, AntiFlickerSubclassId, UIntPtr.Zero))
+            {
+                SubclassProcs[hwnd] = proc;
+            }
         }
     }
 
-    private static bool _systemPaletteCaptured;
+    private static void PaintWindows10TopBorder(IntPtr hWnd)
+    {
+        bool isExtended;
+        uint colorRef;
+        lock (SubclassLock)
+        {
+            ExtendedTitleWindows.TryGetValue(hWnd, out isExtended);
+            if (!TopEdgeColorRefs.TryGetValue(hWnd, out colorRef))
+            {
+                colorRef = 0x00242020u; // COLORREF BGR: #202024 默认深灰
+            }
+        }
+        if (!isExtended || IsZoomed(hWnd)) return;
+        if (!GetWindowRect(hWnd, out var wr)) return;
+
+        var width = wr.Right - wr.Left;
+        if (width <= 0) return;
+
+        var hdc = GetWindowDC(hWnd);
+        if (hdc == IntPtr.Zero) return;
+        var brush = CreateSolidBrush(colorRef);
+        try
+        {
+            if (brush != IntPtr.Zero)
+            {
+                // Windows 10 自定义标题栏顶行 y=0 易由 DWM 绘成亮白色，按当前主题色覆盖 1px 顶部细线
+                var strip = new Win32Rect { Left = 0, Top = 0, Right = width, Bottom = 1 };
+                _ = FillRect(hdc, ref strip, brush);
+            }
+        }
+        finally
+        {
+            if (brush != IntPtr.Zero) DeleteObject(brush);
+            _ = ReleaseDC(hWnd, hdc);
+        }
+    }
+
     private static Color _sysAccent, _sysLight1, _sysLight2, _sysLight3, _sysDark1, _sysDark2, _sysDark3;
-    private static string _lastAccentKey = ThemeAccentHelper.SystemKey;
-    private static bool? _lastAccentDark;
+    private static string? _lastAccentKey;
 
     /// <summary>
-    /// 防止主题强调色刷新期间触发重复的 ActualThemeChanged 回调
+    /// 防止主题切换或刷新期间触发重复的 ActualThemeChanged 回调
     /// </summary>
     public static bool IsApplyingThemeRefresh { get; private set; }
 
     private static Color ToUiColor(RgbColor c) => Color.FromArgb(255, c.R, c.G, c.B);
 
-    private static void EnsureSystemPaletteCaptured()
+    private static bool IsOsDarkTheme()
     {
-        if (_systemPaletteCaptured) return;
-        _systemPaletteCaptured = true;
+        try
+        {
+            var bg = new UISettings().GetColorValue(UIColorType.Background);
+            return bg.R < 128 && bg.G < 128 && bg.B < 128;
+        }
+        catch
+        {
+            return Application.Current?.RequestedTheme == ApplicationTheme.Dark;
+        }
+    }
+
+    private static void RefreshSystemPalette()
+    {
         try
         {
             var ui = new UISettings();
@@ -411,19 +831,26 @@ public static class NativeShellHelper
         }
     }
 
-    private static bool ApplyAccentResources(bool isDark, string accentSetting)
+    /// <summary>
+    /// 在主窗口创建前预置 Light / Default(Dark) 主题下的可变 SolidColorBrush 字典，保证后续任意主题或配色切换零闪烁
+    /// </summary>
+    public static void InitializeThemeResources(string? initialAccentColor = null)
+    {
+        ApplyAccentResources(initialAccentColor ?? ThemeAccentHelper.SystemKey, forceApply: true);
+    }
+
+    private static bool ApplyAccentResources(string accentSetting, bool forceApply = false)
     {
         var normalized = ThemeAccentHelper.NormalizeSetting(accentSetting);
-        EnsureSystemPaletteCaptured();
-
-        if (_lastAccentKey == normalized && _lastAccentDark == isDark)
+        if (!forceApply && string.Equals(_lastAccentKey, normalized, StringComparison.Ordinal) &&
+            normalized != ThemeAccentHelper.SystemKey)
         {
             return false;
         }
-        if (normalized == ThemeAccentHelper.SystemKey && _lastAccentKey == ThemeAccentHelper.SystemKey)
+
+        if (normalized == ThemeAccentHelper.SystemKey || forceApply)
         {
-            _lastAccentDark = isDark;
-            return false;
+            RefreshSystemPalette();
         }
 
         Color baseC, l1, l2, l3, d1, d2, d3;
@@ -536,7 +963,7 @@ public static class NativeShellHelper
                     {
                         try
                         {
-                            brush.Color = color;
+                            if (brush.Color != color) brush.Color = color;
                             continue;
                         }
                         catch
@@ -551,24 +978,46 @@ public static class NativeShellHelper
             }
         }
 
+        static ResourceDictionary EnsureThemeDictionary(ResourceDictionary rootDict, string themeKey)
+        {
+            if (rootDict.ThemeDictionaries.TryGetValue(themeKey, out var obj) && obj is ResourceDictionary rd)
+            {
+                return rd;
+            }
+            var created = new ResourceDictionary();
+            rootDict.ThemeDictionaries[themeKey] = created;
+            return created;
+        }
+
         var lightMap = BuildBrushMap(false, baseC, l1, l2, l3, d1, d2, d3, darkTextLight, darkTextDark);
         var darkMap = BuildBrushMap(true, baseC, l1, l2, l3, d1, d2, d3, darkTextLight, darkTextDark);
-        var activeMap = isDark ? darkMap : lightMap;
 
-        // 仅在应用自身顶级 ResourceDictionary 上覆写键，绝不改动只读 XamlControlsResources(MergedDictionaries) 防止 XAML 底层 E_NOINTERFACE 崩溃
+        // 仅更新 Application.Current.Resources 及其 ThemeDictionaries["Light"/"Default"]，就地修改画刷 Color，绝不篡改只读 XamlControlsResources 或翻转窗口主题
         var appResources = Application.Current?.Resources;
         if (appResources is not null)
         {
             ApplyColorKeys(appResources);
-            ApplyBrushMap(appResources, activeMap);
+            var lightDict = EnsureThemeDictionary(appResources, "Light");
+            var darkDict = EnsureThemeDictionary(appResources, "Default");
+            ApplyColorKeys(lightDict);
+            ApplyColorKeys(darkDict);
+            ApplyBrushMap(lightDict, lightMap);
+            ApplyBrushMap(darkDict, darkMap);
         }
 
+        var changed = !string.Equals(_lastAccentKey, normalized, StringComparison.Ordinal);
         _lastAccentKey = normalized;
-        _lastAccentDark = isDark;
-        return true;
+        return changed;
     }
 
-    public static void ApplyThemeAndTitleBarColors(Window window, string themePreference, bool pureBlackDark, string? accentColorHex = null)
+    public static void ApplyThemeAndTitleBarColors(
+        Window window,
+        string themePreference,
+        bool pureBlackDark,
+        string? accentColorHex = null,
+        string? backdropStyle = null,
+        bool enableBackdrop = false,
+        Microsoft.UI.Xaml.Controls.NavigationView? navView = null)
     {
         if (window.Content is not FrameworkElement root) return;
 
@@ -578,73 +1027,55 @@ public static class NativeShellHelper
             "dark" => ElementTheme.Dark,
             _ => ElementTheme.Default
         };
+
+        // 首帧加载前或从显式深/浅色切回跟随系统时，采用系统实时偏好，避免先用旧主题渲染再二次切换闪烁
+        var isDark = ThemeAppearanceLogic.ResolveEffectiveDark(
+            themePreference,
+            IsOsDarkTheme(),
+            root.IsLoaded && root.RequestedTheme == ElementTheme.Default,
+            root.ActualTheme == ElementTheme.Dark);
+
+        ApplyAccentResources(accentColorHex ?? ThemeAccentHelper.SystemKey);
+
+        var hasExtendedChrome = AppWindowTitleBar.IsCustomizationSupported() && window.ExtendsContentIntoTitleBar;
+        var shouldManageBackdrop = enableBackdrop || hasExtendedChrome;
+        var appliedKind = EffectiveBackdropKind.Solid;
+        var appliedStyleKey = BackdropStyleLogic.SolidKey;
+        var surfaceBase = ResolveSurfaceColor(EffectiveBackdropKind.Solid, isDark, pureBlackDark);
+        var backdropInstanceReplaced = false;
+
+        // 预判是否即将更换 SystemBackdrop 实例；先用同色调保护画刷垫住底层防止 DWM 断开/重建瞬间的闪黑或闪白
+        if (shouldManageBackdrop && root is Microsoft.UI.Xaml.Controls.Panel prePanel)
+        {
+            var effectiveBackdrop = backdropStyle ?? AppServices.Current.LocalState.Current.BackdropStyle;
+            var targetKind = BackdropStyleLogic.ResolveEffectiveKind(
+                effectiveBackdrop,
+                isDark,
+                pureBlackDark,
+                IsMicaSupportedSafe(),
+                IsAcrylicSupportedSafe());
+            var targetSurface = ResolveSurfaceColor(targetKind, isDark, pureBlackDark);
+            if (AppliedWindowBackdrops.TryGetValue(window, out var prevState) &&
+                (prevState.Kind != targetKind || prevState.IsDark != isDark))
+            {
+                _transitionHoldBrush ??= new SolidColorBrush(targetSurface);
+                _transitionHoldBrush.Color = targetSurface;
+                prePanel.Background = _transitionHoldBrush;
+            }
+
+            // 在挂载新 Backdrop 之前先更新内容区与卡片画刷及主题，彻底消除资源与主题先后变更导致的闪烁
+            ApplyBackdropCardResources(targetKind, isDark, pureBlackDark);
+            if (navView is not null)
+            {
+                ApplyNavigationBackdropColors(navView, targetKind, BackdropStyleLogic.NormalizeStyle(effectiveBackdrop), targetSurface, isDark, pureBlackDark);
+            }
+        }
+
         if (root.RequestedTheme != desiredTheme)
-        {
-            root.RequestedTheme = desiredTheme;
-        }
-
-        // 先按目标主题确定深浅（防止 RequestedTheme 切换首帧 ActualTheme 尚未同步导致的短暂反色）
-        var isDark = desiredTheme switch
-        {
-            ElementTheme.Dark => true,
-            ElementTheme.Light => false,
-            _ => root.ActualTheme == ElementTheme.Dark
-        };
-
-        var accentChanged = ApplyAccentResources(isDark, accentColorHex ?? ThemeAccentHelper.SystemKey);
-        try
-        {
-            // 在根节点注入独立浅/深字典副本，确保运行时立即响应与跨页面继承
-            var norm = ThemeAccentHelper.NormalizeSetting(accentColorHex);
-            if (norm != ThemeAccentHelper.SystemKey && ThemeAccentHelper.TryParseHexRgb(norm, out var rgb))
-            {
-                var p = ThemeAccentHelper.ComputePalette(rgb);
-                var fill = ToUiColor(isDark ? p.Light2 : p.Dark1);
-                var txt = ToUiColor(isDark ? p.Light3 : p.Dark2);
-                var fg = (isDark ? p.DarkTextOnDarkFill : p.DarkTextOnLightFill) ? Colors.Black : Colors.White;
-                foreach (var (k, c) in new (string, Color)[]
-                {
-                    ("AccentFillColorDefaultBrush", fill),
-                    ("AccentTextFillColorPrimaryBrush", txt),
-                    ("TextOnAccentFillColorPrimaryBrush", fg),
-                    ("AccentButtonBackground", fill),
-                    ("AccentButtonForeground", fg),
-                    ("ToggleSwitchFillOn", fill),
-                    ("CheckBoxCheckBackgroundFillChecked", fill),
-                    ("CheckBoxCheckBackgroundStrokeChecked", fill),
-                    ("CheckBoxCheckGlyphForegroundChecked", fg)
-                })
-                {
-                    if (root.Resources.TryGetValue(k, out var ex) && ex is SolidColorBrush b) b.Color = c;
-                    else root.Resources[k] = new SolidColorBrush(c);
-                }
-            }
-            else if (accentChanged)
-            {
-                foreach (var k in new[]
-                {
-                    "AccentFillColorDefaultBrush", "AccentTextFillColorPrimaryBrush",
-                    "TextOnAccentFillColorPrimaryBrush", "AccentButtonBackground",
-                    "AccentButtonForeground", "ToggleSwitchFillOn",
-                    "CheckBoxCheckBackgroundFillChecked", "CheckBoxCheckBackgroundStrokeChecked",
-                    "CheckBoxCheckGlyphForegroundChecked"
-                })
-                {
-                    root.Resources.Remove(k);
-                }
-            }
-        }
-        catch
-        {
-        }
-
-        if (accentChanged && root.IsLoaded && !IsApplyingThemeRefresh)
         {
             IsApplyingThemeRefresh = true;
             try
             {
-                var flip = isDark ? ElementTheme.Light : ElementTheme.Dark;
-                root.RequestedTheme = flip;
                 root.RequestedTheme = desiredTheme;
             }
             finally
@@ -652,6 +1083,61 @@ public static class NativeShellHelper
                 IsApplyingThemeRefresh = false;
             }
         }
+
+        if (shouldManageBackdrop)
+        {
+            var effectiveBackdrop = backdropStyle ?? AppServices.Current.LocalState.Current.BackdropStyle;
+            (appliedKind, appliedStyleKey, surfaceBase, backdropInstanceReplaced) = ApplyWindowBackdrop(window, effectiveBackdrop, isDark, pureBlackDark);
+            ApplyBackdropCardResources(appliedKind, isDark, pureBlackDark);
+        }
+
+        try
+        {
+            var hwnd = WindowNative.GetWindowHandle(window);
+            if (hwnd != IntPtr.Zero)
+            {
+                var darkVal = isDark ? 1 : 0;
+                _ = DwmSetWindowAttribute(hwnd, DwmwaUseImmersiveDarkMode, ref darkVal, sizeof(int));
+
+                // 顶部边框色彩 (BGR COLORREF = 0x00BBGGRR) 仅供保留原生框线的副窗口回退使用
+                var isSolidBackdrop = window.SystemBackdrop is null;
+                uint topColorRef = (isDark && pureBlackDark)
+                    ? 0x00000000u
+                    : isDark
+                        ? (isSolidBackdrop ? 0x00221D1Cu : 0x002C2C2Cu)
+                        : (isSolidBackdrop ? 0x00F9F5F4u : 0x00F9F9F9u);
+                lock (SubclassLock)
+                {
+                    TopEdgeColorRefs[hwnd] = topColorRef;
+                }
+
+                if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000))
+                {
+                    uint borderColorRef = isDark ? (pureBlackDark ? 0x00181818u : 0x0032343Cu) : 0xFFFFFFFFu;
+                    _ = DwmSetWindowAttribute(hwnd, DwmwaBorderColor, ref borderColorRef, sizeof(uint));
+                }
+                else if (enableBackdrop)
+                {
+                    // Win10 主窗口采用 SetBorderAndTitleBar(false, false) 无框线方案：
+                    // Acrylic/Aero 使用全窗 -1 透明合成，PureSolid/WallpaperMica 保留 Bottom=1 消除顶部亮线
+                    var margins = window.SystemBackdrop is not null
+                        ? new DwmMargins { Left = -1, Right = -1, Top = -1, Bottom = -1 }
+                        : new DwmMargins { Left = 0, Right = 0, Top = 0, Bottom = 1 };
+                    _ = DwmExtendFrameIntoClientArea(hwnd, ref margins);
+                }
+                else if (hasExtendedChrome)
+                {
+                    var margins = new DwmMargins { Left = 0, Right = 0, Top = 1, Bottom = 0 };
+                    _ = DwmExtendFrameIntoClientArea(hwnd, ref margins);
+                    _ = RedrawWindow(hwnd, IntPtr.Zero, IntPtr.Zero, RdwFrame | RdwInvalidate);
+                    PaintWindows10TopBorder(hwnd);
+                }
+            }
+        }
+        catch
+        {
+        }
+
         if (root is Microsoft.UI.Xaml.Controls.Panel rootPanel)
         {
             SolidColorBrush targetBrush;
@@ -661,24 +1147,54 @@ public static class NativeShellHelper
             }
             else if (window.SystemBackdrop is null)
             {
-                targetBrush = isDark
-                    ? (_darkBgBrush ??= new SolidColorBrush(Color.FromArgb(255, 28, 29, 34)))
-                    : (_lightBgBrush ??= new SolidColorBrush(Color.FromArgb(255, 244, 245, 249)));
+                if (appliedKind is EffectiveBackdropKind.WallpaperMica or EffectiveBackdropKind.WallpaperMicaAlt)
+                {
+                    _wallpaperMicaBrush ??= new SolidColorBrush(surfaceBase);
+                    _wallpaperMicaBrush.Color = surfaceBase;
+                    targetBrush = _wallpaperMicaBrush;
+                }
+                else
+                {
+                    targetBrush = isDark
+                        ? (_darkBgBrush ??= new SolidColorBrush(Color.FromArgb(255, 28, 29, 34)))
+                        : (_lightBgBrush ??= new SolidColorBrush(Color.FromArgb(255, 243, 245, 249)));
+                }
             }
             else
             {
                 targetBrush = _transparentBrush ??= new SolidColorBrush(Colors.Transparent);
             }
 
-            if (!ReferenceEquals(rootPanel.Background, targetBrush))
+            // 当更换了新的 SystemBackdrop 实例且目标透明时，在保护垫层上延迟一帧待新 DWM 合成提交后再显露，杜绝黑/白闪帧
+            if (backdropInstanceReplaced && ReferenceEquals(targetBrush, _transparentBrush) && window.DispatcherQueue is not null)
+            {
+                var capturedEpoch = AppliedWindowBackdrops.TryGetValue(window, out var st) ? st.Epoch : 0;
+                window.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+                {
+                    if (window.SystemBackdrop is not null &&
+                        AppliedWindowBackdrops.TryGetValue(window, out var latest) &&
+                        latest.Epoch == capturedEpoch)
+                    {
+                        rootPanel.Background = _transparentBrush;
+                    }
+                });
+            }
+            else if (!ReferenceEquals(rootPanel.Background, targetBrush))
             {
                 rootPanel.Background = targetBrush;
             }
         }
 
-        if (AppWindowTitleBar.IsCustomizationSupported())
+        if (navView is not null)
+        {
+            ApplyNavigationBackdropColors(navView, appliedKind, appliedStyleKey, surfaceBase, isDark, pureBlackDark);
+        }
+
+        if (AppWindowTitleBar.IsCustomizationSupported() && window.ExtendsContentIntoTitleBar)
         {
             var tb = window.AppWindow.TitleBar;
+            tb.BackgroundColor = Colors.Transparent;
+            tb.InactiveBackgroundColor = Colors.Transparent;
             tb.ButtonBackgroundColor = Colors.Transparent;
             tb.ButtonInactiveBackgroundColor = Colors.Transparent;
             tb.ButtonForegroundColor = isDark ? Color.FromArgb(255, 240, 242, 248) : Color.FromArgb(255, 24, 28, 36);
@@ -686,6 +1202,216 @@ public static class NativeShellHelper
             tb.ButtonHoverBackgroundColor = isDark ? Color.FromArgb(30, 255, 255, 255) : Color.FromArgb(20, 0, 0, 0);
             tb.ButtonHoverForegroundColor = tb.ButtonForegroundColor;
         }
+    }
+
+    private static bool IsMicaSupportedSafe()
+    {
+        try { return MicaController.IsSupported(); } catch { return false; }
+    }
+
+    private static bool IsAcrylicSupportedSafe()
+    {
+        try { return DesktopAcrylicController.IsSupported(); } catch { return false; }
+    }
+
+    private static void ApplyBackdropCardResources(EffectiveBackdropKind kind, bool isDark, bool pureBlackDark)
+    {
+        Color lightSurface, darkSurface, lightBorder, darkBorder;
+        if (pureBlackDark)
+        {
+            lightSurface = Color.FromArgb(245, 255, 255, 255);
+            lightBorder = Color.FromArgb(24, 0, 0, 0);
+            darkSurface = Color.FromArgb(255, 16, 17, 21);
+            darkBorder = Color.FromArgb(34, 255, 255, 255);
+        }
+        else
+        {
+            switch (kind)
+            {
+                case EffectiveBackdropKind.Aero:
+                    // Ghost Aero 经典清透玻璃卡片：适度透光但保有清晰明度差与高光琉璃描边
+                    lightSurface = Color.FromArgb(196, 255, 255, 255);
+                    lightBorder = Color.FromArgb(62, 255, 255, 255);
+                    darkSurface = Color.FromArgb(164, 30, 34, 44);
+                    darkBorder = Color.FromArgb(64, 255, 255, 255);
+                    break;
+
+                case EffectiveBackdropKind.Acrylic:
+                    // Ghost Acrylic 磨砂：内容底板大面积高透，卡片具备醒目的高对比度半透明磨砂承载质感
+                    lightSurface = Color.FromArgb(212, 255, 255, 255);
+                    lightBorder = Color.FromArgb(34, 0, 0, 0);
+                    darkSurface = Color.FromArgb(184, 34, 36, 44);
+                    darkBorder = Color.FromArgb(40, 255, 255, 255);
+                    break;
+
+                case EffectiveBackdropKind.MicaBase:
+                case EffectiveBackdropKind.WallpaperMica:
+                    lightSurface = Color.FromArgb(224, 255, 255, 255);
+                    lightBorder = Color.FromArgb(24, 0, 0, 0);
+                    darkSurface = Color.FromArgb(202, 40, 42, 50);
+                    darkBorder = Color.FromArgb(32, 255, 255, 255);
+                    break;
+
+                case EffectiveBackdropKind.MicaAlt:
+                case EffectiveBackdropKind.WallpaperMicaAlt:
+                    lightSurface = Color.FromArgb(236, 255, 255, 255);
+                    lightBorder = Color.FromArgb(28, 0, 0, 0);
+                    darkSurface = Color.FromArgb(218, 42, 45, 54);
+                    darkBorder = Color.FromArgb(36, 255, 255, 255);
+                    break;
+
+                case EffectiveBackdropKind.NativeOriginal:
+                    // 原版经典参数：细腻均衡的卡片层次
+                    lightSurface = Color.FromArgb(235, 255, 255, 255);
+                    lightBorder = Color.FromArgb(22, 0, 0, 0);
+                    darkSurface = Color.FromArgb(222, 42, 44, 52);
+                    darkBorder = Color.FromArgb(30, 255, 255, 255);
+                    break;
+
+                default: // Solid
+                    lightSurface = Color.FromArgb(255, 255, 255, 255);
+                    lightBorder = Color.FromArgb(26, 0, 0, 0);
+                    darkSurface = Color.FromArgb(255, 42, 44, 52);
+                    darkBorder = Color.FromArgb(34, 255, 255, 255);
+                    break;
+            }
+        }
+
+        var appResources = Application.Current?.Resources;
+        if (appResources is null) return;
+        UpdateThemeDictBrush(appResources, "Light", "OmniCardSurfaceBrush", lightSurface);
+        UpdateThemeDictBrush(appResources, "Light", "OmniCardBorderBrush", lightBorder);
+        UpdateThemeDictBrush(appResources, "Default", "OmniCardSurfaceBrush", darkSurface);
+        UpdateThemeDictBrush(appResources, "Default", "OmniCardBorderBrush", darkBorder);
+    }
+
+    private static void UpdateThemeDictBrush(ResourceDictionary rootDict, string themeKey, string brushKey, Color color)
+    {
+        try
+        {
+            if (rootDict.ThemeDictionaries.TryGetValue(themeKey, out var obj) && obj is ResourceDictionary dict)
+            {
+                if (dict.TryGetValue(brushKey, out var val) && val is SolidColorBrush b)
+                {
+                    if (b.Color != color) b.Color = color;
+                }
+                else
+                {
+                    dict[brushKey] = new SolidColorBrush(color);
+                }
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    private static void ApplyNavigationBackdropColors(
+        Microsoft.UI.Xaml.Controls.NavigationView navView,
+        EffectiveBackdropKind kind,
+        string styleKey,
+        Color surfaceBase,
+        bool isDark,
+        bool pureBlackDark)
+    {
+        Color contentBg;
+        Color paneBg;
+        Color contentBorder;
+
+        if (isDark && pureBlackDark)
+        {
+            contentBg = Color.FromArgb(255, 8, 8, 10);
+            paneBg = Color.FromArgb(255, 0, 0, 0);
+            contentBorder = Color.FromArgb(36, 255, 255, 255);
+        }
+        else
+        {
+            switch (kind)
+            {
+                case EffectiveBackdropKind.NativeOriginal:
+                    // 原版原生平衡遮罩：既清晰凸显前景面板又柔和融出系统底层 Mica/Acrylic 光晕
+                    contentBg = isDark ? Color.FromArgb(136, 30, 32, 38) : Color.FromArgb(182, 250, 251, 253);
+                    paneBg = Colors.Transparent;
+                    contentBorder = isDark ? Color.FromArgb(28, 255, 255, 255) : Color.FromArgb(20, 0, 0, 0);
+                    break;
+
+                case EffectiveBackdropKind.Aero:
+                    // Ghost Aero：极低画布遮罩（~14%），凸显大比例通透玻璃底层，靠高亮分割线划分区域
+                    contentBg = isDark ? Color.FromArgb(28, 18, 24, 34) : Color.FromArgb(44, 244, 248, 255);
+                    paneBg = Colors.Transparent;
+                    contentBorder = isDark ? Color.FromArgb(56, 255, 255, 255) : Color.FromArgb(48, 0, 0, 0);
+                    break;
+
+                case EffectiveBackdropKind.Acrylic:
+                    // Ghost Acrylic：对标 Ghost 内容区轻透分层（~20-26%），让磨砂质感完整覆盖窗口主体而非仅靠侧边栏
+                    contentBg = isDark ? Color.FromArgb(48, 20, 22, 28) : Color.FromArgb(68, 255, 255, 255);
+                    paneBg = Colors.Transparent;
+                    contentBorder = isDark ? Color.FromArgb(38, 255, 255, 255) : Color.FromArgb(28, 0, 0, 0);
+                    break;
+
+                case EffectiveBackdropKind.MicaBase:
+                    contentBg = isDark ? Color.FromArgb(92, 28, 30, 38) : Color.FromArgb(134, 248, 250, 255);
+                    paneBg = Colors.Transparent;
+                    contentBorder = isDark ? Color.FromArgb(28, 255, 255, 255) : Color.FromArgb(20, 0, 0, 0);
+                    break;
+
+                case EffectiveBackdropKind.MicaAlt:
+                    contentBg = isDark ? Color.FromArgb(128, 22, 24, 32) : Color.FromArgb(164, 240, 244, 250);
+                    paneBg = Colors.Transparent;
+                    contentBorder = isDark ? Color.FromArgb(34, 255, 255, 255) : Color.FromArgb(26, 0, 0, 0);
+                    break;
+
+                case EffectiveBackdropKind.WallpaperMica:
+                    contentBg = BlendOpaqueColor(surfaceBase, isDark ? Color.FromArgb(255, 44, 47, 57) : Color.FromArgb(255, 255, 255, 255), isDark ? 0.36 : 0.50);
+                    paneBg = Colors.Transparent;
+                    contentBorder = isDark ? Color.FromArgb(32, 255, 255, 255) : Color.FromArgb(24, 0, 0, 0);
+                    break;
+
+                case EffectiveBackdropKind.WallpaperMicaAlt:
+                    contentBg = BlendOpaqueColor(surfaceBase, isDark ? Color.FromArgb(255, 34, 37, 46) : Color.FromArgb(255, 245, 248, 254), isDark ? 0.56 : 0.68);
+                    paneBg = Colors.Transparent;
+                    contentBorder = isDark ? Color.FromArgb(38, 255, 255, 255) : Color.FromArgb(28, 0, 0, 0);
+                    break;
+
+                default:
+                    contentBg = isDark ? Color.FromArgb(255, 34, 36, 43) : Color.FromArgb(255, 250, 251, 254);
+                    paneBg = isDark ? Color.FromArgb(255, 24, 25, 30) : Color.FromArgb(255, 238, 241, 247);
+                    contentBorder = isDark ? Color.FromArgb(32, 255, 255, 255) : Color.FromArgb(24, 0, 0, 0);
+                    break;
+            }
+        }
+
+        UpdateNavResourceBrush(navView.Resources, "NavigationViewContentBackground", contentBg);
+        UpdateNavResourceBrush(navView.Resources, "NavigationViewExpandedPaneBackground", paneBg);
+        UpdateNavResourceBrush(navView.Resources, "NavigationViewTopPaneBackground", paneBg);
+        UpdateNavResourceBrush(navView.Resources, "NavigationViewDefaultPaneBackground", paneBg);
+        UpdateNavResourceBrush(navView.Resources, "NavigationViewContentGridBorderBrush", contentBorder);
+    }
+
+    private static void UpdateNavResourceBrush(ResourceDictionary resources, string key, Color color)
+    {
+        if (resources.TryGetValue(key, out var val) && val is SolidColorBrush rootBrush)
+        {
+            rootBrush.Color = color;
+        }
+        foreach (var dictKey in new[] { "Light", "Default" })
+        {
+            if (resources.ThemeDictionaries.TryGetValue(dictKey, out var obj) &&
+                obj is ResourceDictionary dict &&
+                dict.TryGetValue(key, out var tVal) &&
+                tVal is SolidColorBrush themeBrush)
+            {
+                themeBrush.Color = color;
+            }
+        }
+    }
+
+    private static Color BlendOpaqueColor(Color a, Color b, double weight)
+    {
+        var r = (byte)Math.Clamp((int)Math.Round(a.R + (b.R - a.R) * weight), 0, 255);
+        var g = (byte)Math.Clamp((int)Math.Round(a.G + (b.G - a.G) * weight), 0, 255);
+        var bl = (byte)Math.Clamp((int)Math.Round(a.B + (b.B - a.B) * weight), 0, 255);
+        return Color.FromArgb(255, r, g, bl);
     }
 
     public static async Task<string> ReadClipboardTextAsync()
@@ -705,10 +1431,14 @@ public static class NativeShellHelper
         return string.Empty;
     }
 
+    public static event Action<string>? ClipboardTextCopied;
+
     public static void CopyText(string text)
     {
+        var value = text ?? string.Empty;
+        ClipboardTextCopied?.Invoke(value);
         var pkg = new DataPackage();
-        pkg.SetText(text ?? string.Empty);
+        pkg.SetText(value);
         Clipboard.SetContent(pkg);
     }
 
@@ -745,6 +1475,21 @@ public static class NativeShellHelper
         }
 
         return await Windows.Storage.FileIO.ReadTextAsync(file);
+    }
+
+    public static async Task<bool> PickSaveTextFileAsync(Window owner, string suggestedFileName, string content)
+    {
+        var picker = new FileSavePicker
+        {
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = suggestedFileName
+        };
+        picker.FileTypeChoices.Add("Omni Download Rules (.omnirule.json)", new List<string> { ".omnirule.json", ".json" });
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(owner));
+        var file = await picker.PickSaveFileAsync();
+        if (file is null) return false;
+        await Windows.Storage.FileIO.WriteTextAsync(file, content ?? string.Empty);
+        return true;
     }
 
     public static void OpenWithShell(string target)
@@ -911,7 +1656,18 @@ public static class NativeShellHelper
             }
             else if (!ct.IsCancellationRequested)
             {
-                FailedImageUrls[cacheKey] = DateTimeOffset.UtcNow;
+                var now = DateTimeOffset.UtcNow;
+                if (FailedImageUrls.Count >= MaxFailedImageUrls)
+                {
+                    foreach (var kv in FailedImageUrls)
+                    {
+                        if (now - kv.Value > TimeSpan.FromSeconds(30) || FailedImageUrls.Count >= MaxFailedImageUrls)
+                        {
+                            FailedImageUrls.TryRemove(kv.Key, out _);
+                        }
+                    }
+                }
+                FailedImageUrls[cacheKey] = now;
             }
             return data;
         }

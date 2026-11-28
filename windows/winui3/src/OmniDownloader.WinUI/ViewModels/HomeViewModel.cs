@@ -51,6 +51,7 @@ public sealed partial class RecentTaskItem : ObservableObject
     private double _progressValue;
     private string _progressSummary = string.Empty;
     private string _etaSummary = string.Empty;
+    private bool _isCompleted;
 
     public DownloadTask Task => _task;
     public string Title { get => _title; private set => SetProperty(ref _title, value); }
@@ -61,6 +62,7 @@ public sealed partial class RecentTaskItem : ObservableObject
     public double ProgressValue { get => _progressValue; private set => SetProperty(ref _progressValue, value); }
     public string ProgressSummary { get => _progressSummary; private set => SetProperty(ref _progressSummary, value); }
     public string EtaSummary { get => _etaSummary; private set => SetProperty(ref _etaSummary, value); }
+    public bool IsCompleted { get => _isCompleted; private set => SetProperty(ref _isCompleted, value); }
 
     public RecentTaskItem(DownloadTask task)
     {
@@ -76,6 +78,7 @@ public sealed partial class RecentTaskItem : ObservableObject
         TypeBadge = AppServices.Current.Loc.T(OmniDomainLogic.TypeLabelKey(task.DownloadType));
         StatusBadge = AppServices.Current.Loc.T(OmniDomainLogic.StatusLabelKey(task.Status));
         ShowProgress = task.Status is "DOWNLOADING" or "PROCESSING";
+        IsCompleted = task.Status == "COMPLETED";
         var clamped = Math.Clamp(task.Progress, 0, 100);
         ProgressValue = clamped;
         ProgressSummary = task.Status == "PROCESSING"
@@ -142,6 +145,12 @@ public sealed partial class HomeViewModel : ObservableObject
     public ObservableCollection<SelectableImageItem> ImageItems { get; } = new();
     public ObservableCollection<RecentTaskItem> RecentTasks { get; } = new();
     public ObservableCollection<RelaySite> QuickRelaySites { get; } = new();
+    public ObservableCollection<RuleSelectorChoice> QuickRuleChoices => _main.RulesVm.QuickRuleChoices;
+
+    private string _selectedRuleMode = "auto";
+    private string _selectedRuleId = string.Empty;
+    public string SelectedRuleMode { get => _selectedRuleMode; set => SetProperty(ref _selectedRuleMode, value); }
+    public string SelectedRuleId { get => _selectedRuleId; set => SetProperty(ref _selectedRuleId, value); }
 
     public LocalizationService Loc => _services.Loc;
     public bool HasInput => !string.IsNullOrWhiteSpace(InputUrl);
@@ -194,10 +203,31 @@ public sealed partial class HomeViewModel : ObservableObject
     public void ApplySingleRecentTaskUpdate(DownloadTask task)
     {
         var idx = _recentSourceTasks.FindIndex(t => string.Equals(t.Id, task.Id, StringComparison.Ordinal));
-        if (idx >= 0) _recentSourceTasks[idx] = task;
-        else _recentSourceTasks.Insert(0, task);
+        if (idx >= 0)
+        {
+            var prev = _recentSourceTasks[idx];
+            _recentSourceTasks[idx] = task;
+            if (string.Equals(prev.Status, task.Status, StringComparison.Ordinal) &&
+                task.Status is "DOWNLOADING" or "PROCESSING")
+            {
+                foreach (var item in RecentTasks)
+                {
+                    if (string.Equals(item.Task.Id, task.Id, StringComparison.Ordinal))
+                    {
+                        item.UpdateFrom(task);
+                        return;
+                    }
+                }
+            }
+        }
+        else
+        {
+            _recentSourceTasks.Insert(0, task);
+        }
         SyncRecentTasksCore();
     }
+
+    public void RefreshAfterWindowRestore() => SyncRecentTasksCore();
 
     private void SyncRecentTasksCore()
     {
@@ -316,6 +346,108 @@ public sealed partial class HomeViewModel : ObservableObject
         {
             _analyzeCts?.Dispose();
             _analyzeCts = null;
+            IsAnalyzing = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task ExecuteWithRuleAsync()
+    {
+        var url = InputUrl.Trim();
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            _main.Notify("请输入视频链接或分享文本", InfoBarSeverity.Warning);
+            return;
+        }
+        if (string.Equals(SelectedRuleMode, "bypass", StringComparison.Ordinal))
+        {
+            _main.Notify("当前已选择“不使用规则”，请点击右侧「立即解析」走手动流程", InfoBarSeverity.Informational);
+            return;
+        }
+        if (!_main.RulesVm.RulesSystemEnabled)
+        {
+            _main.Notify("下载规则系统当前已关闭，请前往「下载规则」页开启或使用「立即解析」", InfoBarSeverity.Warning);
+            return;
+        }
+
+        IsAnalyzing = true;
+        HasAnalyzeError = false;
+        try
+        {
+            var resp = await _services.ApiClient.ExecuteRulesAsync(
+                url,
+                trigger: "manual",
+                ruleMode: SelectedRuleMode,
+                ruleId: SelectedRuleId,
+                clientSource: "winui");
+
+            if (!resp.Matched || resp.Results.Count == 0)
+            {
+                _main.Notify("未匹配到适用的规则，请点击右侧「立即解析」走常规下载流程", InfoBarSeverity.Informational);
+                return;
+            }
+
+            var item = resp.Results[0];
+            if (!string.IsNullOrWhiteSpace(item.Error))
+            {
+                ShowAnalyzeError(new OmniApiException(400, item.Error, item.ErrorCode));
+                return;
+            }
+
+            if (item.Status == "queued")
+            {
+                var warn = item.Warnings.Count > 0 ? $" · {string.Join("；", item.Warnings)}" : string.Empty;
+                _main.Notify("规则「%s」已加入 %d 个任务%s", InfoBarSeverity.Success, item.RuleName, item.PlannedCount, warn);
+                await _main.RefreshTasksAsync();
+                _main.NavigateTo("tasks");
+                return;
+            }
+
+            if (item.Status == "confirm_required")
+            {
+                await _main.RulesVm.LoadOverviewAsync();
+                _main.Notify("命中规则「%s」，请前往「下载规则」页确认入队", InfoBarSeverity.Informational, item.RuleName);
+                return;
+            }
+
+            if (item.Status is "dedup_skipped" or "ignored" or "skipped")
+            {
+                _main.Notify("规则「%s」：%s", InfoBarSeverity.Informational, item.RuleName,
+                    item.Status == "ignored" ? _services.Loc.T("已忽略该链接") : _services.Loc.T("已命中去重或筛选策略跳过"));
+                return;
+            }
+
+            if (item.Status == "parse_only" && item.ParsedData is { } parsedEl)
+            {
+                var opts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                if (item.ParsedKind == "images")
+                {
+                    var post = System.Text.Json.JsonSerializer.Deserialize<ImagePost>(parsedEl.GetRawText(), opts);
+                    if (post is not null)
+                    {
+                        CurrentVideoMetadata = null;
+                        LoadImagePost(post);
+                    }
+                }
+                else
+                {
+                    var video = System.Text.Json.JsonSerializer.Deserialize<VideoMetadata>(parsedEl.GetRawText(), opts);
+                    if (video is not null)
+                    {
+                        ClearImagePost();
+                        CurrentVideoMetadata = video;
+                        VideoAnalyzedOptionsRequested?.Invoke(this, video);
+                    }
+                }
+                _main.Notify("已按规则「%s」完成仅解析", InfoBarSeverity.Success, item.RuleName);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowAnalyzeError(ex);
+        }
+        finally
+        {
             IsAnalyzing = false;
         }
     }
@@ -615,5 +747,17 @@ public sealed partial class HomeViewModel : ObservableObject
         {
             _main.NavigateTo("tasks");
         }
+    }
+
+    public void CopyRecentTaskFile(RecentTaskItem? item)
+    {
+        if (item?.Task is null) return;
+        FileTransferUiHelper.CopyTasksFilesWithNotice(_services, new[] { item.Task });
+    }
+
+    public void CopyRecentTaskFilePath(RecentTaskItem? item)
+    {
+        if (item?.Task is null) return;
+        FileTransferUiHelper.CopyTasksPathsWithNotice(_services, new[] { item.Task });
     }
 }

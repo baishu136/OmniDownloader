@@ -6,6 +6,7 @@ using OmniDownloader.WinUI.Core.Models;
 using OmniDownloader.WinUI.Helpers;
 using OmniDownloader.WinUI.Services;
 using Windows.System;
+using WinRT.Interop;
 
 namespace OmniDownloader.WinUI.Controls;
 
@@ -36,9 +37,16 @@ public sealed partial class BrowserAssistWindow : Window
         var icoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico");
         if (File.Exists(icoPath)) AppWindow.SetIcon(icoPath);
         AppWindow.Resize(new Windows.Graphics.SizeInt32(1060, 780));
+        NativeShellHelper.AttachAntiFlickerGuard(WindowNative.GetWindowHandle(this));
         ApplyTheme();
 
-        RootGrid.ActualThemeChanged += (_, _) => ApplyTheme();
+        RootGrid.ActualThemeChanged += (_, _) =>
+        {
+            if (ThemeAppearanceLogic.ShouldReapplyOnActualThemeChanged(_services.LocalState.Current.Theme))
+            {
+                ApplyTheme();
+            }
+        };
         _services.MainVm.ThemeAppearanceChanged += OnThemeChanged;
 
         AddressBox.Text = _initialUrl;
@@ -109,8 +117,33 @@ public sealed partial class BrowserAssistWindow : Window
     {
         try
         {
-            await AssistWebView.EnsureCoreWebView2Async();
-            if (_isClosed) return;
+            await WebViewEnvironmentHelper.EnsureInitializedAsync(AssistWebView, _services);
+            if (_isClosed || AssistWebView.CoreWebView2 is null) return;
+            AssistWebView.CoreWebView2.DownloadStarting += (coreSender, dlArgs) =>
+            {
+                // 客户端内置浏览器严禁落入 Edge 浏览器默认下载记录，全部拦截转由本地任务引擎直存
+                dlArgs.Cancel = true;
+                dlArgs.Handled = true;
+                var dlUri = dlArgs.DownloadOperation?.Uri;
+                if (!string.IsNullOrWhiteSpace(dlUri) &&
+                    Uri.TryCreate(dlUri, UriKind.Absolute, out var parsed) &&
+                    (parsed.Scheme == Uri.UriSchemeHttp || parsed.Scheme == Uri.UriSchemeHttps))
+                {
+                    var candidate = new BrowserAssistCandidate
+                    {
+                        Url = dlUri,
+                        Title = Path.GetFileNameWithoutExtension(dlArgs.ResultFilePath ?? string.Empty),
+                        SourcePage = coreSender.Source ?? AssistWebView.Source?.ToString() ?? string.Empty
+                    };
+                    _dispatcher.TryEnqueue(() =>
+                    {
+                        if (!_isClosed)
+                        {
+                            _ = _services.MainVm.HomeVm.ConfirmAndDownloadAssistVideoAsync(candidate);
+                        }
+                    });
+                }
+            };
             AssistWebView.NavigationCompleted += (_, _) =>
             {
                 if (!_isClosed)

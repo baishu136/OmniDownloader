@@ -100,6 +100,7 @@ public sealed partial class LocalizationService : ObservableObject
     public string NavHome => T("首页");
     public string NavBatch => T("批量下载");
     public string NavTasks => T("任务");
+    public string NavRules => T("下载规则");
     public string NavSettings => T("设置");
     public string NavHelp => T("使用帮助");
     public string HomePlaceholder => T("粘贴视频链接或分享文本...");

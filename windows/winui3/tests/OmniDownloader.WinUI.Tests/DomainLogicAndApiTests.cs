@@ -591,6 +591,136 @@ public sealed class DomainLogicAndApiTests
         }
     }
 
+    [Fact]
+    public void ThemeAppearanceLogic_ResolvesPreLoadOsThemeAndGuardsExplicitThemes()
+    {
+        // 首帧尚未 Loaded 时，auto 应直接使用系统真实深浅色，避免先渲染浅色再二跳变黑造成背景闪烁
+        Assert.True(ThemeAppearanceLogic.ResolveEffectiveDark("auto", osIsDark: true, rootIsLoaded: false, rootActualIsDark: false));
+        Assert.False(ThemeAppearanceLogic.ResolveEffectiveDark("auto", osIsDark: false, rootIsLoaded: false, rootActualIsDark: true));
+
+        // 已 Loaded 后跟随 ActualTheme；显式指定 light/dark 时不受 ActualTheme 延迟与系统主题干扰
+        Assert.True(ThemeAppearanceLogic.ResolveEffectiveDark("auto", osIsDark: false, rootIsLoaded: true, rootActualIsDark: true));
+        Assert.True(ThemeAppearanceLogic.ResolveEffectiveDark("dark", osIsDark: false, rootIsLoaded: false, rootActualIsDark: false));
+        Assert.False(ThemeAppearanceLogic.ResolveEffectiveDark("light", osIsDark: true, rootIsLoaded: true, rootActualIsDark: true));
+
+        // 仅在 auto 模式响应系统 ActualThemeChanged
+        Assert.True(ThemeAppearanceLogic.ShouldReapplyOnActualThemeChanged("auto"));
+        Assert.True(ThemeAppearanceLogic.ShouldReapplyOnActualThemeChanged(null));
+        Assert.False(ThemeAppearanceLogic.ShouldReapplyOnActualThemeChanged("light"));
+        Assert.False(ThemeAppearanceLogic.ShouldReapplyOnActualThemeChanged("dark"));
+    }
+
+    [Fact]
+    public void FileTransferPathHelper_ResolvesDeduplicatesAndBuildsValidDropFilesPayload()
+    {
+        var tempRoot = Path.Combine(Path.GetTempPath(), "omni_ft_" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(tempRoot);
+        try
+        {
+            var cnPath = Path.Combine(tempRoot, "中文测试视频 [4K] #1 & (demo).mp4");
+            var spPath = Path.Combine(tempRoot, "audio track % special!.flac");
+            var missingPath = Path.Combine(tempRoot, "not_exists.mkv");
+            File.WriteAllBytes(cnPath, new byte[] { 1, 2, 3, 4 });
+            File.WriteAllBytes(spPath, new byte[] { 5, 6, 7 });
+
+            var tasks = new[]
+            {
+                new DownloadTask { Id = "1", Status = "COMPLETED", LocalFilePath = cnPath },
+                new DownloadTask { Id = "2", Status = "COMPLETED", LocalFilePath = cnPath.ToUpperInvariant() },
+                new DownloadTask { Id = "3", Status = "COMPLETED", LocalFilePath = missingPath },
+                new DownloadTask { Id = "4", Status = "COMPLETED", LocalFilePath = spPath }
+            };
+
+            var resolved = FileTransferPathHelper.ResolveExistingLocalFiles(tasks);
+            Assert.Equal(2, resolved.ValidPaths.Count);
+            Assert.Equal(1, resolved.MissingCount);
+            Assert.Equal(1, resolved.DuplicateSkippedCount);
+
+            var payload = FileTransferPathHelper.BuildDropFilesPayload(resolved.ValidPaths);
+            Assert.Equal(20u, BitConverter.ToUInt32(payload, 0)); // pFiles = 20
+            Assert.Equal(1u, BitConverter.ToUInt32(payload, 16)); // fWide = 1
+            var expectedLen = 20 + (resolved.ValidPaths[0].Length + 1 + resolved.ValidPaths[1].Length + 1 + 1) * 2;
+            Assert.Equal(expectedLen, payload.Length);
+            Assert.Equal(0, payload[^1]);
+            Assert.Equal(0, payload[^2]);
+
+            var textLines = FileTransferPathHelper.FormatPathLinesForClipboard(resolved.ValidPaths);
+            Assert.Contains("中文测试视频 [4K] #1 & (demo).mp4", textLines);
+            Assert.Contains("audio track % special!.flac", textLines);
+        }
+        finally
+        {
+            try { Directory.Delete(tempRoot, recursive: true); } catch { }
+        }
+    }
+
+    [Fact]
+    public void BackdropStyleLogic_NormalizesAndResolvesOsFallbacksCleanly()
+    {
+        Assert.Equal(BackdropStyleLogic.MicaAltKey, BackdropStyleLogic.NormalizeStyle("MicaAlt"));
+        Assert.Equal(BackdropStyleLogic.AeroKey, BackdropStyleLogic.NormalizeStyle("glass"));
+        Assert.Equal(BackdropStyleLogic.SolidKey, BackdropStyleLogic.NormalizeStyle("NONE"));
+        Assert.Equal(BackdropStyleLogic.AutoKey, BackdropStyleLogic.NormalizeStyle("unknown"));
+
+        Assert.Equal(EffectiveBackdropKind.MicaAlt, BackdropStyleLogic.ResolveEffectiveKind("mica_alt", isDark: true, pureBlackDark: false, micaSupported: true, acrylicSupported: true));
+        Assert.Equal(EffectiveBackdropKind.WallpaperMicaAlt, BackdropStyleLogic.ResolveEffectiveKind("mica_alt", isDark: true, pureBlackDark: false, micaSupported: false, acrylicSupported: true));
+        Assert.Equal(EffectiveBackdropKind.WallpaperMica, BackdropStyleLogic.ResolveEffectiveKind("mica", isDark: false, pureBlackDark: false, micaSupported: false, acrylicSupported: true));
+        Assert.Equal(EffectiveBackdropKind.Aero, BackdropStyleLogic.ResolveEffectiveKind("aero", isDark: true, pureBlackDark: false, micaSupported: false, acrylicSupported: true));
+        Assert.Equal(EffectiveBackdropKind.Solid, BackdropStyleLogic.ResolveEffectiveKind("acrylic", isDark: true, pureBlackDark: true, micaSupported: true, acrylicSupported: true));
+        Assert.Equal(EffectiveBackdropKind.Solid, BackdropStyleLogic.ResolveEffectiveKind("solid", isDark: false, pureBlackDark: false, micaSupported: true, acrylicSupported: true));
+    }
+
+    [Fact]
+    public void FormatOption_GetPremiumBadges_Detects4K8KHdrHiResAndFps()
+    {
+        var ultra = new FormatOption
+        {
+            FormatId = "127-1",
+            Width = 7680,
+            Height = 4320,
+            DynamicRange = "HDR10+",
+            Fps = 120,
+            Note = "Hi-Res Master"
+        };
+        var ultraBadges = ultra.GetPremiumBadges();
+        Assert.Contains("8K", ultraBadges);
+        Assert.Contains("HDR10+", ultraBadges);
+        Assert.Contains("Hi-Res", ultraBadges);
+
+        var fourK = new FormatOption { FormatId = "120-1", Width = 3840, Height = 2160, DynamicRange = "SDR", Fps = 60 };
+        Assert.Equal(new[] { "4K" }, fourK.GetPremiumBadges());
+
+        var std1080 = new FormatOption { FormatId = "80-1", Width = 1920, Height = 1080, DynamicRange = "SDR", Fps = 60 };
+        Assert.Empty(std1080.GetPremiumBadges());
+    }
+
+    [Fact]
+    public async Task OmniApiClient_ClearBatchesAndClientSourceSerializeCorrectly()
+    {
+        string? capturedMethod = null;
+        string? capturedPath = null;
+        string? capturedBody = null;
+        var handler = new StubHttpMessageHandler(req =>
+        {
+            capturedMethod = req.Method.Method;
+            capturedPath = req.RequestUri?.PathAndQuery;
+            capturedBody = req.Content?.ReadAsStringAsync().Result;
+            return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"status":"success","cleared":2}""", System.Text.Encoding.UTF8, "application/json")
+            };
+        });
+
+        using var client = new OmniApiClient("http://127.0.0.1:58000", handler);
+        await client.SubmitDownloadTasksAsync(new[] { new CreateTaskItem { Url = "https://example.com/v", Title = "Demo" } });
+        Assert.Equal("/api/download", capturedPath);
+        Assert.Contains("\"clientSource\":\"winui\"", capturedBody);
+
+        await client.ClearBatchesAsync();
+        Assert.Equal("POST", capturedMethod);
+        Assert.Equal("/api/batches/clear?clearAll=true", capturedPath);
+    }
+
     private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>

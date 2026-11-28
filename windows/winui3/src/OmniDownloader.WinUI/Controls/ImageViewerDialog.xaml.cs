@@ -43,7 +43,7 @@ public sealed partial class ImageViewerDialog : ContentDialog
         PreviewImage.Source = null;
 
         var url = _services.ApiClient.BuildAbsoluteUrl(string.IsNullOrWhiteSpace(res.PreviewUrl) ? res.Url : res.PreviewUrl);
-        var bmp = await NativeShellHelper.LoadImageAsync(url);
+        var bmp = await NativeShellHelper.LoadImageAsync(url, decodePixelWidth: 1200);
 
         LoadingRing.IsActive = false;
         if (bmp is not null)

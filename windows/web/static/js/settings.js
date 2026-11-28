@@ -254,7 +254,8 @@ async function loadSettings() {
     $('setting-download-dir').value = dir;
     $('setting-download-dir-preview').textContent = dir || '默认目录';
     $('setting-concurrent').value = String(data.maxConcurrentTasks || 3);
-    $('setting-auto-browser-download').checked = localStorage.getItem('omni_auto_browser_download') !== 'false';
+    const checkbox = $('setting-auto-browser-download');
+    if (checkbox) checkbox.checked = localStorage.getItem('omni_auto_browser_download') === 'true';
     $('setting-autostart').checked = Boolean(data.autoStart);
     $('setting-amoled').checked = storedAmoled();
 

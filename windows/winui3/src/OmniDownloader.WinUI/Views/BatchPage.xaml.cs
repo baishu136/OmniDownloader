@@ -15,6 +15,7 @@ public sealed partial class BatchPage : Page
 
     private bool? _isNarrowLayout;
     private bool _langHooked;
+    private string? _appliedLanguage;
 
     public BatchPage()
     {
@@ -31,9 +32,14 @@ public sealed partial class BatchPage : Page
             _langHooked = true;
             AppServices.Current.Loc.LanguageChanged += Loc_LanguageChanged;
         }
-        Localized.RefreshTree(this);
-        RefreshLocalizedTexts();
-        try { Bindings.Update(); } catch { }
+        var lang = AppServices.Current.Loc.CurrentLanguage;
+        if (!string.Equals(_appliedLanguage, lang, StringComparison.Ordinal))
+        {
+            _appliedLanguage = lang;
+            Localized.RefreshTree(this);
+            RefreshLocalizedTexts();
+            try { Bindings.Update(); } catch { }
+        }
         _ = Vm.RefreshBatchesIfVisibleAsync();
     }
 
@@ -48,6 +54,7 @@ public sealed partial class BatchPage : Page
 
     private void Loc_LanguageChanged(object? sender, string e)
     {
+        _appliedLanguage = AppServices.Current.Loc.CurrentLanguage;
         Localized.RefreshTree(this);
         RefreshLocalizedTexts();
         try { Bindings.Update(); } catch { }
@@ -75,7 +82,7 @@ public sealed partial class BatchPage : Page
         if (_isNarrowLayout == narrow) return;
         _isNarrowLayout = narrow;
 
-        ContentContainer.Margin = narrow ? new Thickness(14, 10, 14, 24) : new Thickness(28, 18, 28, 32);
+        ContentContainer.Margin = narrow ? new Thickness(12, 10, 12, 20) : new Thickness(22, 14, 22, 26);
         PageTitleText.FontSize = narrow ? 22 : 28;
     }
 
@@ -113,6 +120,15 @@ public sealed partial class BatchPage : Page
         if (Vm is not null && BatchAudioCombo?.SelectedItem is ComboBoxItem item && item.Tag is string tag)
         {
             Vm.SelectedAudioFormat = tag;
+        }
+    }
+
+    private void BatchRuleCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (Vm is not null && BatchRuleCombo?.SelectedItem is Core.Models.RuleSelectorChoice choice)
+        {
+            Vm.SelectedRuleMode = choice.Mode;
+            Vm.SelectedRuleId = choice.RuleId;
         }
     }
 

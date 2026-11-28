@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using OmniDownloader.WinUI.Core.Models;
 using OmniDownloader.WinUI.Helpers;
 using OmniDownloader.WinUI.Services;
@@ -15,6 +16,8 @@ public sealed partial class TasksPage : Page
     public TasksViewModel Vm => AppServices.Current.MainVm.TasksVm;
 
     private bool? _isNarrowLayout;
+    private string? _appliedLanguage;
+    private readonly OleDragThresholdController _dragController = new();
 
     public TasksPage()
     {
@@ -24,14 +27,20 @@ public sealed partial class TasksPage : Page
         {
             AppServices.Current.Loc.LanguageChanged -= OnLanguageChanged;
             AppServices.Current.Loc.LanguageChanged += OnLanguageChanged;
-            Localized.RefreshTree(this);
-            try { Bindings.Update(); } catch { }
+            var lang = AppServices.Current.Loc.CurrentLanguage;
+            if (!string.Equals(_appliedLanguage, lang, StringComparison.Ordinal))
+            {
+                _appliedLanguage = lang;
+                Localized.RefreshTree(this);
+                try { Bindings.Update(); } catch { }
+            }
         };
         Unloaded += (_, _) => AppServices.Current.Loc.LanguageChanged -= OnLanguageChanged;
     }
 
     private void OnLanguageChanged(object? sender, string e)
     {
+        _appliedLanguage = AppServices.Current.Loc.CurrentLanguage;
         Localized.RefreshTree(this);
         try { Bindings.Update(); } catch { }
     }
@@ -48,7 +57,7 @@ public sealed partial class TasksPage : Page
         if (_isNarrowLayout == narrow) return;
         _isNarrowLayout = narrow;
 
-        ContentContainer.Margin = narrow ? new Thickness(14, 10, 14, 24) : new Thickness(28, 18, 28, 32);
+        ContentContainer.Margin = narrow ? new Thickness(12, 10, 12, 20) : new Thickness(22, 14, 22, 26);
         PageTitleText.FontSize = narrow ? 22 : 28;
         var filterPadding = narrow ? new Thickness(6, 7, 6, 5) : new Thickness(12, 10, 12, 7);
         var filterFontSize = narrow ? 13.0 : 14.0;
@@ -121,4 +130,57 @@ public sealed partial class TasksPage : Page
     {
         if (sender is Button btn && btn.Tag is TaskGroupViewModel g) _ = Vm.DeleteCollectionCommand.ExecuteAsync(g);
     }
+
+    private void GroupSelectCheck_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is CheckBox cb && cb.Tag is TaskGroupViewModel g)
+        {
+            Vm.UpdateGroupSelection(g, cb.IsChecked == true);
+        }
+    }
+
+    private void CopyTaskFileBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is DownloadTask t) Vm.CopyTaskFile(t);
+    }
+
+    private void CopyTaskPathBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is DownloadTask t) Vm.CopyTaskFilePath(t);
+    }
+
+    private void CopyCollectionFilesBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is TaskGroupViewModel g) Vm.CopyCollectionFiles(g);
+    }
+
+    private void CopyCollectionPathsBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is TaskGroupViewModel g) Vm.CopyCollectionFilePaths(g);
+    }
+
+    private void TaskCard_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement el || el.Tag is not TaskGroupViewModel group || !group.CanCopyOrDrag) return;
+        _dragController.TryArm(el, e, Vm.ResolveDragTasks(group));
+    }
+
+    private void EpisodeRow_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement el || el.Tag is not DownloadTask task || task.Status != "COMPLETED") return;
+        if (_dragController.TryArm(el, e, new[] { task }))
+        {
+            // 阻止事件继续冒泡到外层合集卡片，确保拖拽单集时仅拖出当前单集文件
+            e.Handled = true;
+        }
+    }
+
+    private void TaskCard_PointerMoved(object sender, PointerRoutedEventArgs e) =>
+        _dragController.HandlePointerMoved(sender, e);
+
+    private void TaskCard_PointerReleased(object sender, PointerRoutedEventArgs e) =>
+        _dragController.HandlePointerEnded(sender);
+
+    private void TaskCard_PointerCaptureLost(object sender, PointerRoutedEventArgs e) =>
+        _dragController.HandlePointerEnded(sender);
 }

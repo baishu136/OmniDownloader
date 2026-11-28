@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Animation;
 using OmniDownloader.WinUI.Controls;
+using OmniDownloader.WinUI.Core.Models;
 using OmniDownloader.WinUI.Helpers;
 using OmniDownloader.WinUI.Services;
 using OmniDownloader.WinUI.ViewModels;
@@ -21,6 +22,7 @@ public sealed partial class MainWindow : Window
         ["home"] = typeof(HomePage),
         ["batch"] = typeof(BatchPage),
         ["tasks"] = typeof(TasksPage),
+        ["rules"] = typeof(RulesPage),
         ["settings"] = typeof(SettingsPage)
     };
 
@@ -33,6 +35,8 @@ public sealed partial class MainWindow : Window
     private bool _isClosingPromptOpen;
     private bool _onboardingAutoChecked;
     private TrayIconManager? _trayIcon;
+    private ClipboardWatcherService? _clipboardWatcher;
+    private BorderlessWindowChromeHelper? _win10ChromeHelper;
 
     public MainWindow()
     {
@@ -41,7 +45,22 @@ public sealed partial class MainWindow : Window
         AppServices.Current.AttachUiDispatcher(DispatcherQueue);
         AppServices.Current.Dialogs.Attach(this);
 
-        NativeShellHelper.ConfigureWindowChrome(this, AppTitleBar);
+        _win10ChromeHelper = NativeShellHelper.ConfigureWindowChrome(
+            this,
+            AppTitleBar,
+            win10ResizeLayer: Win10ResizeLayer,
+            onMaximizedChanged: isMax =>
+            {
+                if (Win10MaxGlyph is not null)
+                {
+                    Win10MaxGlyph.Glyph = isMax ? "\uE923" : "\uE922";
+                }
+            });
+        if (_win10ChromeHelper is not null)
+        {
+            Win10CaptionButtonsPanel.Visibility = Visibility.Visible;
+            AppTitleBar.Padding = new Thickness(14, 0, 0, 0);
+        }
         var titleLogo = Path.Combine(AppContext.BaseDirectory, "Assets", "logo.png");
         if (File.Exists(titleLogo))
         {
@@ -53,7 +72,12 @@ public sealed partial class MainWindow : Window
         {
             _trayIcon = new TrayIconManager(
                 () => AppServices.Current.LocalState.Current.EnableWebService,
-                () => DispatcherQueue.TryEnqueue(() => TrayIconManager.RestoreWindow(this)),
+                () => DispatcherQueue.TryEnqueue(() =>
+                {
+                    _hiddenToTray = false;
+                    TrayIconManager.RestoreWindow(this);
+                    Vm.SetWindowActiveOrVisible(true);
+                }),
                 () => DispatcherQueue.TryEnqueue(() =>
                 {
                     if (AppServices.Current.LocalState.Current.EnableWebService)
@@ -61,19 +85,40 @@ public sealed partial class MainWindow : Window
                         Vm.SettingsVm.OpenWebCompanionCommand.Execute(null);
                     }
                 }),
-                () => DispatcherQueue.TryEnqueue(() => _ = PerformFullExitAsync()));
+                () => DispatcherQueue.TryEnqueue(() => _ = PerformFullExitAsync()),
+                () => (Vm.RulesVm.RulesSystemEnabled && Vm.RulesVm.ClipboardWatchEnabled, Vm.RulesVm.ClipboardPaused),
+                () => DispatcherQueue.TryEnqueue(() => _ = Vm.RulesVm.ToggleClipboardPauseAsync()));
         }
         catch (Exception ex)
         {
             AppServices.WriteCrashLog("TrayIconManager.Init", ex);
         }
 
-        RootGrid.ActualThemeChanged += (_, _) => ApplyCurrentTheme();
+        try
+        {
+            _clipboardWatcher = new ClipboardWatcherService(DispatcherQueue, HandleClipboardCandidateTextAsync);
+            NativeShellHelper.ClipboardTextCopied += OnAppCopiedClipboardText;
+            Vm.RulesVm.ClipboardPolicyChanged += OnClipboardPolicyChanged;
+            Vm.TrayBalloonRequested += OnTrayBalloonRequested;
+        }
+        catch (Exception ex)
+        {
+            AppServices.WriteCrashLog("ClipboardWatcher.Init", ex);
+        }
+
+        RootGrid.ActualThemeChanged += (_, _) =>
+        {
+            if (ThemeAppearanceLogic.ShouldReapplyOnActualThemeChanged(AppServices.Current.LocalState.Current.Theme))
+            {
+                ApplyCurrentTheme();
+            }
+        };
         Vm.ThemeAppearanceChanged += (_, _) => ApplyCurrentTheme();
         Vm.NavigationRequested += Vm_NavigationRequested;
         Vm.OnboardingRequested += (_, _) => _ = ShowOnboardingDialogAsync();
         Vm.WebServiceModeChanged += (_, _) => _trayIcon?.RefreshTooltip();
         AppWindow.Closing += AppWindow_Closing;
+        AppWindow.Changed += AppWindow_Changed;
         Closed += MainWindow_Closed;
 
         ContentFrame.Navigate(typeof(HomePage));
@@ -111,6 +156,8 @@ public sealed partial class MainWindow : Window
         {
             if (string.Equals(st.SavedCloseBehavior, "tray", StringComparison.OrdinalIgnoreCase))
             {
+                _hiddenToTray = true;
+                Vm.SetWindowActiveOrVisible(false);
                 TrayIconManager.HideToTray(this);
                 return;
             }
@@ -137,6 +184,8 @@ public sealed partial class MainWindow : Window
 
             if (result.Decision == CloseAppDecision.MinimizeToTray)
             {
+                _hiddenToTray = true;
+                Vm.SetWindowActiveOrVisible(false);
                 TrayIconManager.HideToTray(this);
             }
             else if (result.Decision == CloseAppDecision.Exit)
@@ -192,13 +241,100 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private volatile bool _hiddenToTray;
+
+    private void AppWindow_Changed(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs args)
+    {
+        if (_isClosed) return;
+        if (args.DidPresenterChange || args.DidVisibilityChange)
+        {
+            var isMinimized = sender.Presenter is Microsoft.UI.Windowing.OverlappedPresenter op
+                && op.State == Microsoft.UI.Windowing.OverlappedPresenterState.Minimized;
+            if (sender.IsVisible && !isMinimized)
+            {
+                _hiddenToTray = false;
+            }
+            Vm.SetWindowActiveOrVisible(sender.IsVisible && !isMinimized && !_hiddenToTray);
+        }
+    }
+
     private void MainWindow_Closed(object sender, WindowEventArgs args)
     {
         _isClosed = true;
+        AppWindow.Changed -= AppWindow_Changed;
+        MainNavView.LayoutUpdated -= MainNavView_InitialLayoutUpdated;
         AppServices.Current.Loc.LanguageChanged -= OnWindowLanguageChanged;
+        NativeShellHelper.ClipboardTextCopied -= OnAppCopiedClipboardText;
+        Vm.RulesVm.ClipboardPolicyChanged -= OnClipboardPolicyChanged;
+        Vm.TrayBalloonRequested -= OnTrayBalloonRequested;
+        _clipboardWatcher?.Dispose();
+        _clipboardWatcher = null;
         _trayIcon?.Dispose();
         _trayIcon = null;
         Vm.PrepareShutdown();
+    }
+
+    private void OnAppCopiedClipboardText(string text) => _clipboardWatcher?.SuppressEcho(text);
+
+    private void OnTrayBalloonRequested(object? sender, (string Title, string Message, bool IsWarning) e)
+    {
+        DispatcherQueue.TryEnqueue(() => _trayIcon?.ShowBalloonNotice(e.Title, e.Message, e.IsWarning));
+    }
+
+    private void OnClipboardPolicyChanged(object? sender, RuleSettingsDto policy)
+    {
+        var active = policy.RulesSystemEnabled && policy.ClipboardWatchEnabled;
+        _clipboardWatcher?.UpdatePolicy(active, policy.ClipboardPaused, policy.ClipboardDebounceMs, policy.ClipboardDedupWindowSec);
+        _trayIcon?.RefreshTooltip();
+    }
+
+    private async Task HandleClipboardCandidateTextAsync(string candidateText)
+    {
+        if (_isClosed || !Vm.IsBackendConnected || !Vm.RulesVm.RulesSystemEnabled || !Vm.RulesVm.ClipboardWatchEnabled || Vm.RulesVm.ClipboardPaused)
+        {
+            return;
+        }
+        try
+        {
+            var resp = await AppServices.Current.ApiClient.ExecuteRulesAsync(
+                candidateText,
+                trigger: "clipboard",
+                ruleMode: "auto",
+                clientSource: "clipboard").ConfigureAwait(false);
+            if (!resp.Matched) return;
+
+            var queuedCount = resp.Results.Where(r => r.Status == "queued").Sum(r => Math.Max(r.PlannedCount, r.TaskIds.Count));
+            var confirmCount = resp.Results.Count(r => r.Status == "confirm_required");
+            var parseOnlyItems = resp.Results.Where(r => r.Status == "parse_only").ToList();
+
+            if (queuedCount > 0)
+            {
+                var ruleNames = string.Join(" / ", resp.Results.Where(r => r.Status == "queued").Select(r => r.RuleName).Distinct());
+                var msg = AppServices.Current.Loc.T("剪贴板规则「%s」已自动入队 %d 个任务", ruleNames, queuedCount);
+                Vm.Notify(msg, InfoBarSeverity.Success);
+                if (Vm.RulesVm.ClipboardShowTrayNotice)
+                {
+                    Vm.RaiseTrayBalloon(AppServices.Current.Loc.T("OmniDownloader · 自动下载已添加"), msg, false);
+                }
+                _ = Vm.RefreshTasksAsync();
+            }
+            if (confirmCount > 0)
+            {
+                _ = Vm.RulesVm.LoadOverviewAsync();
+            }
+            if (parseOnlyItems.Count > 0)
+            {
+                var firstUrl = parseOnlyItems[0].Url;
+                Vm.RunOnUi(() =>
+                {
+                    Vm.HomeVm.FillAndAnalyze(firstUrl);
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            AppServices.WriteCrashLog("ClipboardWatcher.Execute", ex);
+        }
     }
 
     private void OnWindowLanguageChanged(object? sender, string e)
@@ -214,7 +350,14 @@ public sealed partial class MainWindow : Window
     {
         if (_isClosed || NativeShellHelper.IsApplyingThemeRefresh) return;
         var state = AppServices.Current.LocalState.Current;
-        NativeShellHelper.ApplyThemeAndTitleBarColors(this, state.Theme, state.UsePureBlackDarkMode, state.AccentColor);
+        NativeShellHelper.ApplyThemeAndTitleBarColors(
+            this,
+            state.Theme,
+            state.UsePureBlackDarkMode,
+            state.AccentColor,
+            state.BackdropStyle,
+            enableBackdrop: true,
+            navView: MainNavView);
     }
 
     private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -224,6 +367,13 @@ public sealed partial class MainWindow : Window
         TitleBadge.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
         TitleStatusText.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
         TitleStatusDot.Visibility = compact ? Visibility.Visible : Visibility.Collapsed;
+
+        if (_win10ChromeHelper is not null)
+        {
+            AppTitleBar.Padding = compact ? new Thickness(12, 0, 0, 0) : new Thickness(14, 0, 0, 0);
+            ScheduleNavPillUpdate(animate: false);
+            return;
+        }
 
         // 动态按真实标题栏系统按钮右留白计算内边距，避免高 DPI 窄窗口溢出到关闭/最大化按钮下方
         double rightInset = 148;
@@ -281,7 +431,8 @@ public sealed partial class MainWindow : Window
         "home" => 0,
         "batch" => 1,
         "tasks" => 2,
-        "settings" => 3,
+        "rules" => 3,
+        "settings" => 4,
         _ => 0
     };
 
@@ -296,6 +447,7 @@ public sealed partial class MainWindow : Window
             {
                 "batch" => NavBatch,
                 "tasks" => NavTasks,
+                "rules" => NavRules,
                 "settings" => NavSettings,
                 _ => NavHome
             };
@@ -323,7 +475,6 @@ public sealed partial class MainWindow : Window
     }
 
     private bool _hasPositionedNavPill;
-    private Storyboard? _navPillStoryboard;
 
     private void MainNavView_InitialLayoutUpdated(object? sender, object e)
     {
@@ -343,6 +494,7 @@ public sealed partial class MainWindow : Window
     {
         "batch" => NavBatch,
         "tasks" => NavTasks,
+        "rules" => NavRules,
         "settings" => NavSettings,
         _ => NavHome
     };
@@ -368,11 +520,17 @@ public sealed partial class MainWindow : Window
             var targetY = pt.Y + Math.Max(0, (item.ActualHeight - NavSelectionPill.Height) * 0.5);
 
             var currentY = NavPillTranslate.Y;
-            _navPillStoryboard?.Stop();
-            _navPillStoryboard = null;
+            var pillVisual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(NavSelectionPill);
+            Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.SetIsTranslationEnabled(NavSelectionPill, true);
 
-            if (!animate || !_hasPositionedNavPill)
+            if (!animate || !_hasPositionedNavPill || NativeShellHelper.SuppressNonEssentialAnimations)
             {
+                pillVisual.StopAnimation("Translation");
+                pillVisual.StopAnimation("Scale");
+                pillVisual.StopAnimation("Opacity");
+                pillVisual.Opacity = 1f;
+                pillVisual.Properties.InsertVector3("Translation", System.Numerics.Vector3.Zero);
+                pillVisual.Scale = System.Numerics.Vector3.One;
                 NavPillTranslate.X = targetX;
                 NavPillTranslate.Y = targetY;
                 NavPillScale.ScaleY = 1.0;
@@ -395,81 +553,54 @@ public sealed partial class MainWindow : Window
                 return;
             }
 
-            // 保持流畅连续的 WinUI 11 Decelerate 曲线，并在移动中段施加克制的竖向微拉伸弹性
-            var sb = new Storyboard();
-            var durationMs = Math.Clamp(185 + (int)Math.Round(distance * 0.14), 195, 275);
-            var midTime = KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(durationMs * 0.34));
-            var endTime = KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(durationMs));
+            // 通过 DWM GPU Composition Visual 驱动指示条位移与微拉伸动画，高刷新率屏下零 UI 线程帧开销
+            var compositor = pillVisual.Compositor;
+            var durationMs = Math.Clamp(165 + (int)Math.Round(distance * 0.12), 175, 250);
+            var duration = TimeSpan.FromMilliseconds(durationMs);
+            var decelerate = compositor.CreateCubicBezierEasingFunction(
+                new System.Numerics.Vector2(0.1f, 0.9f),
+                new System.Numerics.Vector2(0.2f, 1.0f));
+            var stretchEase = compositor.CreateCubicBezierEasingFunction(
+                new System.Numerics.Vector2(0.3f, 0.0f),
+                new System.Numerics.Vector2(0.5f, 1.0f));
 
-            var moveY = new DoubleAnimationUsingKeyFrames();
-            moveY.KeyFrames.Add(new DiscreteDoubleKeyFrame { KeyTime = KeyTime.FromTimeSpan(TimeSpan.Zero), Value = currentY });
-            moveY.KeyFrames.Add(new SplineDoubleKeyFrame
-            {
-                KeyTime = endTime,
-                Value = targetY,
-                KeySpline = new KeySpline
-                {
-                    ControlPoint1 = new Windows.Foundation.Point(0.1, 0.9),
-                    ControlPoint2 = new Windows.Foundation.Point(0.2, 1.0)
-                }
-            });
-            Storyboard.SetTarget(moveY, NavPillTranslate);
-            Storyboard.SetTargetProperty(moveY, "Y");
-            sb.Children.Add(moveY);
+            var deltaY = (float)(currentY - targetY);
+            NavPillTranslate.Y = targetY;
+            NavPillScale.ScaleY = 1.0;
 
-            var stretchScale = Math.Min(1.42, 1.12 + distance / 360.0);
-            var scaleY = new DoubleAnimationUsingKeyFrames();
-            scaleY.KeyFrames.Add(new DiscreteDoubleKeyFrame { KeyTime = KeyTime.FromTimeSpan(TimeSpan.Zero), Value = 1.0 });
-            scaleY.KeyFrames.Add(new SplineDoubleKeyFrame
-            {
-                KeyTime = midTime,
-                Value = stretchScale,
-                KeySpline = new KeySpline
-                {
-                    ControlPoint1 = new Windows.Foundation.Point(0.3, 0.0),
-                    ControlPoint2 = new Windows.Foundation.Point(0.5, 1.0)
-                }
-            });
-            scaleY.KeyFrames.Add(new SplineDoubleKeyFrame
-            {
-                KeyTime = endTime,
-                Value = 1.0,
-                KeySpline = new KeySpline
-                {
-                    ControlPoint1 = new Windows.Foundation.Point(0.1, 0.9),
-                    ControlPoint2 = new Windows.Foundation.Point(0.2, 1.0)
-                }
-            });
-            Storyboard.SetTarget(scaleY, NavPillScale);
-            Storyboard.SetTargetProperty(scaleY, "ScaleY");
-            sb.Children.Add(scaleY);
+            var startOffset = new System.Numerics.Vector3(0f, deltaY, 0f);
+            pillVisual.Properties.InsertVector3("Translation", startOffset);
+            var moveAnim = compositor.CreateVector3KeyFrameAnimation();
+            moveAnim.InsertKeyFrame(0f, startOffset);
+            moveAnim.InsertKeyFrame(1f, System.Numerics.Vector3.Zero, decelerate);
+            moveAnim.Duration = duration;
+            pillVisual.StartAnimation("Translation", moveAnim);
+
+            var stretchScale = (float)Math.Min(1.42, 1.12 + distance / 360.0);
+            var cx = (float)(NavSelectionPill.Width * 0.5);
+            var cy = (float)(NavSelectionPill.Height * 0.5);
+            pillVisual.CenterPoint = new System.Numerics.Vector3(cx, cy, 0f);
+            var scaleAnim = compositor.CreateVector3KeyFrameAnimation();
+            scaleAnim.InsertKeyFrame(0f, System.Numerics.Vector3.One);
+            scaleAnim.InsertKeyFrame(0.34f, new System.Numerics.Vector3(1f, stretchScale, 1f), stretchEase);
+            scaleAnim.InsertKeyFrame(1f, System.Numerics.Vector3.One, decelerate);
+            scaleAnim.Duration = duration;
+            pillVisual.StartAnimation("Scale", scaleAnim);
 
             if (NavSelectionPill.Opacity < 0.99)
             {
-                var fade = new DoubleAnimation
-                {
-                    From = NavSelectionPill.Opacity,
-                    To = 1.0,
-                    Duration = new Duration(TimeSpan.FromMilliseconds(120))
-                };
-                Storyboard.SetTarget(fade, NavSelectionPill);
-                Storyboard.SetTargetProperty(fade, "Opacity");
-                sb.Children.Add(fade);
+                NavSelectionPill.Opacity = 1.0;
+                pillVisual.Opacity = 0f;
+                var fadeAnim = compositor.CreateScalarKeyFrameAnimation();
+                fadeAnim.InsertKeyFrame(0f, 0f);
+                fadeAnim.InsertKeyFrame(1f, 1f, decelerate);
+                fadeAnim.Duration = TimeSpan.FromMilliseconds(120);
+                pillVisual.StartAnimation("Opacity", fadeAnim);
             }
-
-            sb.Completed += (_, _) =>
+            else
             {
-                if (ReferenceEquals(_navPillStoryboard, sb))
-                {
-                    NavPillTranslate.Y = targetY;
-                    NavPillScale.ScaleY = 1.0;
-                    NavSelectionPill.Opacity = 1.0;
-                    _navPillStoryboard = null;
-                }
-            };
-
-            _navPillStoryboard = sb;
-            sb.Begin();
+                pillVisual.Opacity = 1f;
+            }
         }
         catch
         {
@@ -500,6 +631,24 @@ public sealed partial class MainWindow : Window
         catch (Exception ex)
         {
             AppServices.WriteCrashLog("ReconnectBtn_Click", ex);
+        }
+    }
+
+    private void Win10MinBtn_Click(object sender, RoutedEventArgs e) => _win10ChromeHelper?.Minimize();
+
+    private void Win10MaxBtn_Click(object sender, RoutedEventArgs e) => _win10ChromeHelper?.ToggleMaximizeRestore();
+
+    private void Win10CloseBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        if (hwnd != IntPtr.Zero)
+        {
+            // 发送标准 WM_CLOSE，完整保留既有的「最小化到托盘 / 退出应用」确认弹窗逻辑
+            NativeShellHelper.SendWindowClose(hwnd);
+        }
+        else
+        {
+            try { Close(); } catch { }
         }
     }
 }

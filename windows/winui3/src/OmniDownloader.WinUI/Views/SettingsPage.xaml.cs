@@ -30,6 +30,7 @@ public sealed partial class SettingsPage : Page
     private bool _eventsHooked;
     private bool? _isNarrowLayout;
     private string _lastCategory = "root";
+    private string? _appliedLanguage;
 
     public SettingsPage()
     {
@@ -48,11 +49,20 @@ public sealed partial class SettingsPage : Page
     private void SettingsPage_Loaded(object sender, RoutedEventArgs e)
     {
         AttachEvents();
-        Localized.RefreshTree(this);
-        SyncCombosFromVm();
+        var lang = AppServices.Current.Loc.CurrentLanguage;
+        if (!string.Equals(_appliedLanguage, lang, StringComparison.Ordinal))
+        {
+            _appliedLanguage = lang;
+            Localized.RefreshTree(this);
+            SyncCombosFromVm();
+            UpdateBreadcrumb();
+            try { Bindings.Update(); } catch { }
+        }
+        else
+        {
+            SyncCombosFromVm();
+        }
         UpdateSubpageVisibility();
-        UpdateBreadcrumb();
-        try { Bindings.Update(); } catch { }
 
         if (Vm.CurrentCategory == "accounts") _ = Vm.LoadSelectedSessionPolicyAsync();
         else if (Vm.CurrentCategory == "engine") _ = Vm.CheckEngineDiagnosticsAsync();
@@ -88,6 +98,7 @@ public sealed partial class SettingsPage : Page
 
     private void Loc_LanguageChanged(object? sender, string e)
     {
+        _appliedLanguage = AppServices.Current.Loc.CurrentLanguage;
         Localized.RefreshTree(this);
         SyncCombosFromVm();
         UpdateBreadcrumb();
@@ -107,8 +118,8 @@ public sealed partial class SettingsPage : Page
         _isNarrowLayout = narrow;
 
         ContentContainer.Margin = narrow
-            ? new Thickness(14, 10, 14, 24)
-            : new Thickness(28, 18, 28, 32);
+            ? new Thickness(12, 10, 12, 20)
+            : new Thickness(22, 14, 22, 26);
     }
 
     private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -119,8 +130,10 @@ public sealed partial class SettingsPage : Page
             UpdateBreadcrumb();
         }
         else if (e.PropertyName is nameof(SettingsViewModel.SelectedTheme)
+                 or nameof(SettingsViewModel.SelectedBackdropStyle)
                  or nameof(SettingsViewModel.SelectedLanguage)
                  or nameof(SettingsViewModel.CloseBehaviorMode)
+                 or nameof(SettingsViewModel.GpuPreferredVendor)
                  or nameof(SettingsViewModel.SelectedSessionPlatform)
                  or nameof(SettingsViewModel.SessionPlatformOptions)
                  or nameof(SettingsViewModel.MaxConcurrentTasks)
@@ -138,11 +151,15 @@ public sealed partial class SettingsPage : Page
         {
             SelectComboByTag(LanguageCombo, Vm.SelectedLanguage);
             SelectComboByTag(ThemeCombo, Vm.SelectedTheme);
+            SelectComboByTag(BackdropStyleCombo, Vm.SelectedBackdropStyle);
             SelectComboByTag(CloseBehaviorCombo, Vm.CloseBehaviorMode);
+            SelectComboByTag(GpuVendorCombo, Vm.GpuPreferredVendor);
             SelectSessionPlatform(Vm.SelectedSessionPlatform);
             Localized.RefreshComboSelection(LanguageCombo);
             Localized.RefreshComboSelection(ThemeCombo);
+            Localized.RefreshComboSelection(BackdropStyleCombo);
             Localized.RefreshComboSelection(CloseBehaviorCombo);
+            Localized.RefreshComboSelection(GpuVendorCombo);
             Localized.RefreshComboSelection(SessionPlatformCombo);
             ConcurrentNumberBox.Value = Vm.MaxConcurrentTasks;
             AutoStartToggle.IsOn = Vm.AutoStartWithWindows;
@@ -273,12 +290,30 @@ public sealed partial class SettingsPage : Page
         }
     }
 
+    private void BackdropStyleCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_syncingControls || Localized.IsRefreshingSelection) return;
+        if (BackdropStyleCombo.SelectedItem is ComboBoxItem item && item.Tag is string style)
+        {
+            Vm.SelectedBackdropStyle = style;
+        }
+    }
+
     private void CloseBehaviorCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_syncingControls || Localized.IsRefreshingSelection) return;
         if (CloseBehaviorCombo.SelectedItem is ComboBoxItem item && item.Tag is string mode)
         {
             Vm.CloseBehaviorMode = mode;
+        }
+    }
+
+    private void GpuVendorCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_syncingControls || Localized.IsRefreshingSelection) return;
+        if (GpuVendorCombo.SelectedItem is ComboBoxItem item && item.Tag is string vendor)
+        {
+            Vm.GpuPreferredVendor = vendor;
         }
     }
 

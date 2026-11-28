@@ -246,8 +246,8 @@ class PlatformEngine:
         def fetch():
             with session.get(url, stream=True, timeout=30) as response:
                 response.raise_for_status(); total = 0
-                with archive.open('wb') as output:
-                    for chunk in response.iter_content(65536):
+                with archive.open('wb', buffering=1024 * 1024) as output:
+                    for chunk in response.iter_content(262144):
                         if cancel.is_set(): raise RuntimeError('[CANCELLED] 用户取消')
                         total += len(chunk)
                         if total > 256 * 1024 * 1024: raise ValueError('帧包超过限制')
@@ -266,9 +266,13 @@ class PlatformEngine:
             concat.write_text(concat_text(frames), encoding='utf-8')
             output = work / f'result.{chosen.ext}'
             args = ['-y', '-safe', '0', '-f', 'concat', '-i', str(concat), '-t', f'{duration + .001:.3f}', '-fps_mode', 'vfr']
-            if chosen.ext == 'gif': args += ['-vf', 'split[a][b];[a]palettegen[p];[b][p]paletteuse']
-            else: args += ['-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', '-c:v', 'libx264', '-bf', '0', '-pix_fmt', 'yuv420p', '-movflags', '+faststart']
-            if not await FFmpegHelper._run_command(args + [str(output)]): raise RuntimeError('[POSTPROCESS_FAILED] Ugoira编码失败，帧包已保留')
+            if chosen.ext == 'gif':
+                from engine.gpu_accel import optimal_ffmpeg_threads
+                args += ['-threads', str(optimal_ffmpeg_threads()), '-vf', 'split[a][b];[a]palettegen[p];[b][p]paletteuse']
+                ok_ugoira = await FFmpegHelper._run_command(args + [str(output)])
+            else:
+                ok_ugoira = await FFmpegHelper.encode_ugoira_video(concat, duration, output)
+            if not ok_ugoira: raise RuntimeError('[POSTPROCESS_FAILED] Ugoira编码失败，帧包已保留')
             actual = await asyncio.to_thread(verify, output, None, duration)
             if abs(actual['duration'] - duration) > max(.05, duration * .01): raise RuntimeError('[POSTPROCESS_FAILED] Ugoira成品时长与帧清单不符')
         if cancel.is_set(): raise RuntimeError('[CANCELLED] 用户取消')

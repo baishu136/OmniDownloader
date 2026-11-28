@@ -781,6 +781,9 @@ html[data-theme="dark"] .sheet-mini-pill { color: var(--primary); }
   display: flex;
   flex-direction: column;
   gap: 12px;
+  contain: layout style;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 108px;
 }
 .task-card__head {
   display: flex;

@@ -28,6 +28,10 @@ public sealed class TrayIconManager : IDisposable
     private const uint NifMessage = 0x00000001;
     private const uint NifIcon = 0x00000002;
     private const uint NifTip = 0x00000004;
+    private const uint NifInfo = 0x00000010;
+
+    private const uint NiifInfo = 0x00000001;
+    private const uint NiifWarning = 0x00000002;
 
     private const uint MfString = 0x00000000;
     private const uint MfSeparator = 0x00000800;
@@ -161,6 +165,8 @@ public sealed class TrayIconManager : IDisposable
     private readonly Action _onShowWindow;
     private readonly Action _onLaunchWeb;
     private readonly Action _onExitApp;
+    private readonly Func<(bool Enabled, bool Paused)>? _getClipboardState;
+    private readonly Action? _onToggleClipboardPause;
     private readonly WndProcDelegate _wndProcDelegate;
     private readonly string _className;
     private readonly IntPtr _hInstance;
@@ -176,12 +182,16 @@ public sealed class TrayIconManager : IDisposable
         Func<bool> isWebServiceEnabled,
         Action onShowWindow,
         Action onLaunchWeb,
-        Action onExitApp)
+        Action onExitApp,
+        Func<(bool Enabled, bool Paused)>? getClipboardState = null,
+        Action? onToggleClipboardPause = null)
     {
         _isWebServiceEnabled = isWebServiceEnabled;
         _onShowWindow = onShowWindow;
         _onLaunchWeb = onLaunchWeb;
         _onExitApp = onExitApp;
+        _getClipboardState = getClipboardState;
+        _onToggleClipboardPause = onToggleClipboardPause;
         _wndProcDelegate = WndProc;
         _hInstance = GetModuleHandleW(null);
         _className = "OmniWinUITrayHost_" + Guid.NewGuid().ToString("N")[..8];
@@ -236,7 +246,12 @@ public sealed class TrayIconManager : IDisposable
     private void AddOrUpdateNotifyIcon(bool isNew)
     {
         if (_disposed || _hwnd == IntPtr.Zero) return;
-        var tip = LocalizationService.Instance.T("OmniDownloader · 点击显示主窗口");
+        var clip = _getClipboardState?.Invoke() ?? (Enabled: false, Paused: false);
+        var tip = clip.Enabled
+            ? (clip.Paused
+                ? LocalizationService.Instance.T("OmniDownloader · 剪贴板监听已暂停")
+                : LocalizationService.Instance.T("OmniDownloader · 剪贴板自动下载监听中"))
+            : LocalizationService.Instance.T("OmniDownloader · 点击显示主窗口");
         if (tip.Length > 120) tip = tip[..120];
 
         var nid = new NotifyIconData
@@ -251,6 +266,33 @@ public sealed class TrayIconManager : IDisposable
         };
 
         Shell_NotifyIconW(isNew ? NimAdd : NimModify, ref nid);
+    }
+
+    public void ShowBalloonNotice(string title, string message, bool isWarning = false)
+    {
+        if (_disposed || _hwnd == IntPtr.Zero) return;
+        try
+        {
+            var safeTitle = (title ?? "OmniDownloader").Trim();
+            if (safeTitle.Length > 60) safeTitle = safeTitle[..60];
+            var safeMsg = (message ?? string.Empty).Trim();
+            if (safeMsg.Length > 240) safeMsg = safeMsg[..240];
+
+            var nid = new NotifyIconData
+            {
+                cbSize = (uint)Marshal.SizeOf<NotifyIconData>(),
+                hWnd = _hwnd,
+                uID = 1,
+                uFlags = NifInfo,
+                szInfoTitle = safeTitle,
+                szInfo = safeMsg,
+                dwInfoFlags = isWarning ? NiifWarning : NiifInfo
+            };
+            Shell_NotifyIconW(NimModify, ref nid);
+        }
+        catch
+        {
+        }
     }
 
     private void OnLanguageChanged(object? sender, string e) => RefreshTooltip();
@@ -293,9 +335,12 @@ public sealed class TrayIconManager : IDisposable
             hMenu = CreatePopupMenu();
             if (hMenu == IntPtr.Zero) return;
 
+            var clip = _getClipboardState?.Invoke() ?? (Enabled: false, Paused: false);
             var items = TrayMenuCatalog.BuildMenuItems(
                 _isWebServiceEnabled(),
-                key => LocalizationService.Instance.T(key));
+                key => LocalizationService.Instance.T(key),
+                clipboardWatchActive: clip.Enabled,
+                clipboardWatchPaused: clip.Paused);
 
             foreach (var entry in items)
             {
@@ -321,6 +366,9 @@ public sealed class TrayIconManager : IDisposable
                     break;
                 case TrayMenuAction.LaunchWeb:
                     _onLaunchWeb();
+                    break;
+                case TrayMenuAction.ToggleClipboardWatch:
+                    _onToggleClipboardPause?.Invoke();
                     break;
                 case TrayMenuAction.ExitApp:
                     _onExitApp();
@@ -360,14 +408,25 @@ public sealed class TrayIconManager : IDisposable
         try
         {
             var hwnd = WindowNative.GetWindowHandle(window);
-            window.AppWindow?.Show(true);
+            if (hwnd != IntPtr.Zero && IsIconic(hwnd))
+            {
+                ShowWindow(hwnd, SwRestore);
+            }
+
+            if (window.AppWindow is not null)
+            {
+                window.AppWindow.Show(true);
+            }
+            else
+            {
+                if (hwnd != IntPtr.Zero) ShowWindow(hwnd, SwShow);
+                window.Activate();
+            }
+
             if (hwnd != IntPtr.Zero)
             {
-                if (IsIconic(hwnd)) ShowWindow(hwnd, SwRestore);
-                else ShowWindow(hwnd, SwShow);
                 SetForegroundWindow(hwnd);
             }
-            window.Activate();
         }
         catch
         {

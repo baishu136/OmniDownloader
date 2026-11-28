@@ -130,6 +130,13 @@ class DownloadTask(BaseModel):
     collection_title: Optional[str] = Field(None, alias="collectionTitle")
     episode_index: int = Field(0, alias="episodeIndex")
     episode_total: int = Field(0, alias="episodeTotal")
+    client_source: str = Field("", alias="clientSource")
+
+    # 规则系统不可变参数快照与输出控制（向后兼容旧版持久化数据）
+    output_dir_override: str = Field("", alias="outputDirOverride")
+    filename_override: str = Field("", alias="filenameOverride")
+    duplicate_policy: str = Field("rename", alias="duplicatePolicy")
+    rule_snapshot: Optional[Dict[str, Any]] = Field(None, alias="ruleSnapshot")
 
     class Config:
         populate_by_name = True

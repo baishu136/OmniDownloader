@@ -16,6 +16,8 @@ namespace OmniDownloader.WinUI.ViewModels;
 public sealed partial class TaskGroupViewModel : ObservableObject
 {
     private bool _isExpanded;
+    private bool _showMultiSelectCheck;
+    private bool _isSelectedForCopy;
     private TaskGroupEntry _entry;
 
     private bool _isCollection;
@@ -51,6 +53,32 @@ public sealed partial class TaskGroupViewModel : ObservableObject
         get => _isExpanded;
         set { if (SetProperty(ref _isExpanded, value)) OnPropertyChanged(nameof(CollectionExpandText)); }
     }
+
+    public bool ShowMultiSelectCheck
+    {
+        get => _showMultiSelectCheck;
+        set
+        {
+            if (SetProperty(ref _showMultiSelectCheck, value))
+            {
+                OnPropertyChanged(nameof(IsMultiSelectCheckVisible));
+            }
+        }
+    }
+
+    public bool IsSelectedForCopy
+    {
+        get => _isSelectedForCopy;
+        set => SetProperty(ref _isSelectedForCopy, value);
+    }
+
+    public bool CanCopyOrDrag => (IsSingle && IsCompleted) || (IsCollection && CollectionHasCompleted);
+
+    public bool IsMultiSelectCheckVisible => ShowMultiSelectCheck && CanCopyOrDrag;
+
+    public IReadOnlyList<DownloadTask> GetCompletedLocalTasks() => IsSingle
+        ? (Primary.Status == "COMPLETED" ? new[] { Primary } : Array.Empty<DownloadTask>())
+        : Entry.Items.Where(t => t.Status == "COMPLETED").ToList();
 
     public bool IsCollection { get => _isCollection; private set => SetProperty(ref _isCollection, value); }
     public bool IsSingle { get => _isSingle; private set => SetProperty(ref _isSingle, value); }
@@ -94,6 +122,86 @@ public sealed partial class TaskGroupViewModel : ObservableObject
         UpdateFrom(entry, expanded);
     }
 
+    /// <summary>
+    /// 在任务状态与所属分组未发生变化时执行 O(1) 原地进度刷新，避免重建全部任务列表与触发视觉树布局抖动。
+    /// </summary>
+    public void ApplyActiveTaskProgress(DownloadTask task)
+    {
+        if (IsSingle)
+        {
+            _entry = new TaskGroupEntry
+            {
+                Key = _entry.Key,
+                IsCollection = false,
+                CollectionId = _entry.CollectionId,
+                Title = _entry.Title,
+                Items = new[] { task }
+            };
+            Primary = task;
+            var clamped = Math.Clamp(task.Progress, 0, 100);
+            ProgressValue = clamped;
+            ProgressSummary = task.Status == "PROCESSING"
+                ? AppServices.Current.Loc.T("正在合并音画轨...")
+                : $"{clamped:0}%{(string.IsNullOrWhiteSpace(task.SpeedText) ? "" : " · " + task.SpeedText)}";
+            EtaSummary = string.IsNullOrWhiteSpace(task.EtaText)
+                ? string.Empty
+                : AppServices.Current.Loc.T("剩余 %s", AppServices.Current.Loc.T(task.EtaText));
+            FileSizeText = task.FileSizeText ?? string.Empty;
+            ShowProgressBar = task.Status is "DOWNLOADING" or "PROCESSING";
+            StatusBadge = AppServices.Current.Loc.T(OmniDomainLogic.StatusLabelKey(task.Status));
+            return;
+        }
+
+        // 合集任务原地更新对应分集并重算合集汇总进度，不重置 Episodes 集合
+        var updatedItems = _entry.Items.ToList();
+        var matchedIndex = -1;
+        for (var i = 0; i < updatedItems.Count; i++)
+        {
+            if (string.Equals(updatedItems[i].Id, task.Id, StringComparison.Ordinal))
+            {
+                updatedItems[i] = task;
+                matchedIndex = i;
+                break;
+            }
+        }
+        if (matchedIndex < 0) return;
+
+        if (matchedIndex < Episodes.Count)
+        {
+            Episodes[matchedIndex].UpdateFrom(task, matchedIndex);
+        }
+
+        double sum = 0;
+        var completed = 0;
+        DownloadTask? activeChild = null;
+        foreach (var item in updatedItems)
+        {
+            if (item.Status == "COMPLETED")
+            {
+                completed++;
+                sum += 100;
+            }
+            else if (item.Status is "DOWNLOADING" or "PROCESSING")
+            {
+                activeChild ??= item;
+                sum += Math.Clamp(item.Progress, 0, 100);
+            }
+        }
+        var overall = updatedItems.Count > 0 ? Math.Clamp(sum / updatedItems.Count, 0, 100) : 0;
+        var primary = activeChild ?? updatedItems[0];
+        _entry = new TaskGroupEntry
+        {
+            Key = _entry.Key,
+            IsCollection = true,
+            CollectionId = _entry.CollectionId,
+            Title = _entry.Title,
+            Items = updatedItems
+        };
+        Primary = primary;
+        CollectionProgressValue = overall;
+        CollectionProgressSummary = AppServices.Current.Loc.T("总进度：已完成 %d/%d 集 (%d%%)", completed, updatedItems.Count, (int)Math.Round(overall));
+    }
+
     public void UpdateFrom(TaskGroupEntry entry, bool expanded)
     {
         _entry = entry;
@@ -132,6 +240,8 @@ public sealed partial class TaskGroupViewModel : ObservableObject
         CollectionProgressValue = entry.OverallProgress;
         CollectionHasCompleted = entry.Items.Any(t => t.Status == "COMPLETED");
         CollectionHasActive = entry.Items.Any(t => t.IsActive);
+        OnPropertyChanged(nameof(CanCopyOrDrag));
+        OnPropertyChanged(nameof(IsMultiSelectCheckVisible));
 
         var firstDone = entry.Items.FirstOrDefault(t => t.Status == "COMPLETED");
         if (firstDone is null)
@@ -225,12 +335,14 @@ public sealed partial class TasksViewModel : ObservableObject
     private readonly AppServices _services;
     private readonly MainViewModel _main;
     private readonly HashSet<string> _expandedCollections = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _selectedGroupKeys = new(StringComparer.Ordinal);
     private List<DownloadTask> _rawTasks = new();
 
     private string _filterMode = "all";
     private int _allCount;
     private int _activeCount;
     private int _completedCount;
+    private bool _isMultiSelectMode;
 
     public string FilterMode
     {
@@ -239,7 +351,43 @@ public sealed partial class TasksViewModel : ObservableObject
     }
     public int AllCount { get => _allCount; set => SetProperty(ref _allCount, value); }
     public int ActiveCount { get => _activeCount; set => SetProperty(ref _activeCount, value); }
-    public int CompletedCount { get => _completedCount; set => SetProperty(ref _completedCount, value); }
+    public int CompletedCount
+    {
+        get => _completedCount;
+        set
+        {
+            if (SetProperty(ref _completedCount, value))
+            {
+                OnPropertyChanged(nameof(HasCompletedTasks));
+            }
+        }
+    }
+
+    public bool IsMultiSelectMode
+    {
+        get => _isMultiSelectMode;
+        set
+        {
+            if (SetProperty(ref _isMultiSelectMode, value))
+            {
+                if (!value)
+                {
+                    _selectedGroupKeys.Clear();
+                }
+                foreach (var item in VisibleEntries)
+                {
+                    item.ShowMultiSelectCheck = value;
+                    if (!value) item.IsSelectedForCopy = false;
+                }
+                NotifyMultiSelectProperties();
+            }
+        }
+    }
+
+    public bool HasCompletedTasks => CompletedCount > 0;
+    public int SelectedGroupCount => VisibleEntries.Count(v => v.IsSelectedForCopy && v.CanCopyOrDrag);
+    public bool HasSelectedFiles => SelectedGroupCount > 0;
+    public string SelectedCountText => _services.Loc.T("已选 %d 项", SelectedGroupCount);
 
     public ObservableCollection<TaskGroupViewModel> VisibleEntries { get; } = new();
 
@@ -267,6 +415,7 @@ public sealed partial class TasksViewModel : ObservableObject
             OnPropertyChanged(nameof(CompletedTabText));
             OnPropertyChanged(nameof(ActiveSubtitle));
             OnPropertyChanged(nameof(EmptyTitle));
+            OnPropertyChanged(nameof(SelectedCountText));
             RebuildVisible();
         };
     }
@@ -280,10 +429,37 @@ public sealed partial class TasksViewModel : ObservableObject
     public void ApplySingleTaskUpdate(DownloadTask task)
     {
         var idx = _rawTasks.FindIndex(t => string.Equals(t.Id, task.Id, StringComparison.Ordinal));
-        if (idx >= 0) _rawTasks[idx] = task;
-        else _rawTasks.Insert(0, task);
+        if (idx >= 0)
+        {
+            var prev = _rawTasks[idx];
+            _rawTasks[idx] = task;
+
+            var sameActiveState = string.Equals(prev.Status, task.Status, StringComparison.Ordinal)
+                && string.Equals(prev.CollectionId ?? string.Empty, task.CollectionId ?? string.Empty, StringComparison.Ordinal)
+                && string.Equals(prev.Title ?? string.Empty, task.Title ?? string.Empty, StringComparison.Ordinal)
+                && task.Status is "DOWNLOADING" or "PROCESSING";
+            if (sameActiveState)
+            {
+                var targetKey = string.IsNullOrWhiteSpace(task.CollectionId) ? $"single:{task.Id}" : $"col:{task.CollectionId}";
+                foreach (var card in VisibleEntries)
+                {
+                    if (string.Equals(card.Entry.Key, targetKey, StringComparison.Ordinal))
+                    {
+                        card.ApplyActiveTaskProgress(task);
+                        break;
+                    }
+                }
+                return;
+            }
+        }
+        else
+        {
+            _rawTasks.Insert(0, task);
+        }
         SyncCountsAndRebuild();
     }
+
+    public void RefreshAfterWindowRestore() => SyncCountsAndRebuild();
 
     private void SyncCountsAndRebuild()
     {
@@ -328,6 +504,8 @@ public sealed partial class TasksViewModel : ObservableObject
             if (existingByKey.TryGetValue(entry.Key, out var vm))
             {
                 vm.UpdateFrom(entry, expanded);
+                vm.ShowMultiSelectCheck = IsMultiSelectMode;
+                vm.IsSelectedForCopy = IsMultiSelectMode && vm.CanCopyOrDrag && _selectedGroupKeys.Contains(entry.Key);
                 var currentIdx = VisibleEntries.IndexOf(vm);
                 if (currentIdx != i && currentIdx >= 0)
                 {
@@ -336,13 +514,128 @@ public sealed partial class TasksViewModel : ObservableObject
             }
             else
             {
-                VisibleEntries.Insert(i, new TaskGroupViewModel(entry, expanded));
+                var created = new TaskGroupViewModel(entry, expanded)
+                {
+                    ShowMultiSelectCheck = IsMultiSelectMode,
+                    IsSelectedForCopy = IsMultiSelectMode && _selectedGroupKeys.Contains(entry.Key)
+                };
+                if (!created.CanCopyOrDrag) created.IsSelectedForCopy = false;
+                VisibleEntries.Insert(i, created);
             }
         }
 
         OnPropertyChanged(nameof(IsEmpty));
         OnPropertyChanged(nameof(EmptyTitle));
+        if (IsMultiSelectMode || _selectedGroupKeys.Count > 0)
+        {
+            NotifyMultiSelectProperties();
+        }
     }
+
+    private void NotifyMultiSelectProperties()
+    {
+        OnPropertyChanged(nameof(SelectedGroupCount));
+        OnPropertyChanged(nameof(HasSelectedFiles));
+        OnPropertyChanged(nameof(SelectedCountText));
+    }
+
+    public void UpdateGroupSelection(TaskGroupViewModel? group, bool isSelected)
+    {
+        if (group is null) return;
+        group.IsSelectedForCopy = isSelected && group.CanCopyOrDrag;
+        if (group.IsSelectedForCopy) _selectedGroupKeys.Add(group.Entry.Key);
+        else _selectedGroupKeys.Remove(group.Entry.Key);
+        NotifyMultiSelectProperties();
+    }
+
+    [RelayCommand]
+    private void SelectAllCompleted()
+    {
+        foreach (var item in VisibleEntries)
+        {
+            if (item.CanCopyOrDrag)
+            {
+                item.IsSelectedForCopy = true;
+                _selectedGroupKeys.Add(item.Entry.Key);
+            }
+        }
+        NotifyMultiSelectProperties();
+    }
+
+    [RelayCommand]
+    private void ClearMultiSelection()
+    {
+        _selectedGroupKeys.Clear();
+        foreach (var item in VisibleEntries)
+        {
+            item.IsSelectedForCopy = false;
+        }
+        NotifyMultiSelectProperties();
+    }
+
+    public IReadOnlyList<DownloadTask> ResolveDragTasks(TaskGroupViewModel? group)
+    {
+        if (group is null || !group.CanCopyOrDrag) return Array.Empty<DownloadTask>();
+        if (IsMultiSelectMode && group.IsSelectedForCopy)
+        {
+            var batch = VisibleEntries
+                .Where(v => v.IsSelectedForCopy && v.CanCopyOrDrag)
+                .SelectMany(v => v.GetCompletedLocalTasks())
+                .ToList();
+            if (batch.Count > 0) return batch;
+        }
+        return group.GetCompletedLocalTasks();
+    }
+
+    public void CopyTaskFile(DownloadTask? task)
+    {
+        if (task is null) return;
+        CopyTasksFilesCore(new[] { task });
+    }
+
+    public void CopyTaskFilePath(DownloadTask? task)
+    {
+        if (task is null) return;
+        CopyTasksPathsCore(new[] { task });
+    }
+
+    public void CopyCollectionFiles(TaskGroupViewModel? group)
+    {
+        if (group is null) return;
+        CopyTasksFilesCore(group.GetCompletedLocalTasks());
+    }
+
+    public void CopyCollectionFilePaths(TaskGroupViewModel? group)
+    {
+        if (group is null) return;
+        CopyTasksPathsCore(group.GetCompletedLocalTasks());
+    }
+
+    [RelayCommand]
+    private void CopySelectedFiles()
+    {
+        var selectedTasks = VisibleEntries
+            .Where(v => v.IsSelectedForCopy && v.CanCopyOrDrag)
+            .SelectMany(v => v.GetCompletedLocalTasks())
+            .ToList();
+        CopyTasksFilesCore(selectedTasks);
+    }
+
+    [RelayCommand]
+    private void CopySelectedFilePaths()
+    {
+        var selectedTasks = VisibleEntries
+            .Where(v => v.IsSelectedForCopy && v.CanCopyOrDrag)
+            .SelectMany(v => v.GetCompletedLocalTasks())
+            .ToList();
+        CopyTasksPathsCore(selectedTasks);
+    }
+
+    private void CopyTasksFilesCore(IReadOnlyList<DownloadTask> tasks) =>
+        FileTransferUiHelper.CopyTasksFilesWithNotice(_services, tasks);
+
+    private void CopyTasksPathsCore(IReadOnlyList<DownloadTask> tasks) =>
+        FileTransferUiHelper.CopyTasksPathsWithNotice(_services, tasks);
 
     [RelayCommand]
     private void ToggleCollectionExpanded(TaskGroupViewModel? group)

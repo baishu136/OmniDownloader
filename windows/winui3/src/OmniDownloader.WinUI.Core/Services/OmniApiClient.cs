@@ -210,6 +210,9 @@ public sealed class OmniApiClient : IDisposable
     public Task<BatchJob> ControlBatchAsync(string batchId, string action, CancellationToken ct = default) =>
         SendJsonAsync<BatchJob>(HttpMethod.Post, $"/api/batches/{Uri.EscapeDataString(batchId)}/{Uri.EscapeDataString(action)}", null, ct);
 
+    public Task<JsonElement> ClearBatchesAsync(bool clearAll = true, CancellationToken ct = default) =>
+        SendJsonAsync<JsonElement>(HttpMethod.Post, $"/api/batches/clear?clearAll={(clearAll ? "true" : "false")}", null, ct);
+
     // === 设置与中转站 ===
 
     public Task<AppSettings> GetSettingsAsync(CancellationToken ct = default) =>
@@ -270,6 +273,9 @@ public sealed class OmniApiClient : IDisposable
     public Task<EngineDiagnostics> GetDiagnosticsAsync(CancellationToken ct = default) =>
         GetJsonAsync<EngineDiagnostics>("/api/engine/diagnostics", ct);
 
+    public Task<GpuStatusInfo> GetGpuStatusAsync(bool refresh = false, CancellationToken ct = default) =>
+        GetJsonAsync<GpuStatusInfo>($"/api/gpu/status?refresh={(refresh ? "true" : "false")}", ct);
+
     public Task<PlatformCatalogResponse> GetPlatformCatalogAsync(CancellationToken ct = default) =>
         GetJsonAsync<PlatformCatalogResponse>("/api/platforms", ct);
 
@@ -289,6 +295,64 @@ public sealed class OmniApiClient : IDisposable
 
     public Task<ImagePost> CaptureBrowserAssistImagesAsync(CancellationToken ct = default) =>
         SendJsonAsync<ImagePost>(HttpMethod.Post, "/api/browser-assist/images", null, ct);
+
+    // === Omni Download Rules 自定义规则系统 ===
+
+    public Task<RulesOverviewResponse> GetRulesOverviewAsync(CancellationToken ct = default) =>
+        GetJsonAsync<RulesOverviewResponse>("/api/rules/overview", ct);
+
+    public Task<List<DownloadRuleDto>> GetRulesAsync(CancellationToken ct = default) =>
+        GetJsonAsync<List<DownloadRuleDto>>("/api/rules", ct);
+
+    public Task<RuleSaveResponse> SaveRuleAsync(DownloadRuleDto rule, CancellationToken ct = default) =>
+        string.IsNullOrWhiteSpace(rule.Id)
+            ? SendJsonAsync<RuleSaveResponse>(HttpMethod.Post, "/api/rules", rule, ct)
+            : SendJsonAsync<RuleSaveResponse>(HttpMethod.Put, $"/api/rules/{Uri.EscapeDataString(rule.Id)}", rule, ct);
+
+    public Task<RuleSaveResponse> DuplicateRuleAsync(string ruleId, CancellationToken ct = default) =>
+        SendJsonAsync<RuleSaveResponse>(HttpMethod.Post, $"/api/rules/{Uri.EscapeDataString(ruleId)}/duplicate", null, ct);
+
+    public Task<JsonElement> DeleteRuleAsync(string ruleId, CancellationToken ct = default) =>
+        SendJsonAsync<JsonElement>(HttpMethod.Delete, $"/api/rules/{Uri.EscapeDataString(ruleId)}", null, ct);
+
+    public Task<JsonElement> ReorderRulesAsync(List<string> orderedIds, CancellationToken ct = default) =>
+        SendJsonAsync<JsonElement>(HttpMethod.Post, "/api/rules/reorder", new { orderedIds }, ct);
+
+    public Task<JsonElement> UpdateRuleSettingsAsync(RuleSettingsDto settings, CancellationToken ct = default) =>
+        SendJsonAsync<JsonElement>(HttpMethod.Post, "/api/rules/settings", settings, ct);
+
+    public Task<RuleValidationResponse> ValidateRuleJsonAsync(string jsonText, CancellationToken ct = default) =>
+        SendJsonAsync<RuleValidationResponse>(HttpMethod.Post, "/api/rules/validate", new { jsonText }, ct);
+
+    public Task<RuleImportResponse> ImportRuleJsonAsync(string jsonText, CancellationToken ct = default) =>
+        SendJsonAsync<RuleImportResponse>(HttpMethod.Post, "/api/rules/import", new { jsonText }, ct);
+
+    public Task<string> ExportRulesBundleTextAsync(string ruleId = "", CancellationToken ct = default)
+    {
+        var path = string.IsNullOrWhiteSpace(ruleId) ? "/api/rules/export" : $"/api/rules/export?ruleId={Uri.EscapeDataString(ruleId)}";
+        return _http.GetStringAsync(BuildRequestUri(path), ct);
+    }
+
+    public Task<RuleTestPreviewResponse> TestRulePreviewAsync(string url, string trigger = "manual", string ruleId = "", CancellationToken ct = default) =>
+        SendJsonAsync<RuleTestPreviewResponse>(HttpMethod.Post, "/api/rules/test", new { url, trigger, ruleId }, ct);
+
+    public Task<RuleExecuteResponse> ExecuteRulesAsync(string text, string trigger = "manual", string ruleMode = "auto", string ruleId = "", string clientSource = "winui", CancellationToken ct = default) =>
+        SendJsonAsync<RuleExecuteResponse>(HttpMethod.Post, "/api/rules/execute", new { text, trigger, ruleMode, ruleId, clientSource }, ct);
+
+    public Task<JsonElement> ApprovePendingRuleAsync(string confirmId, CancellationToken ct = default) =>
+        SendJsonAsync<JsonElement>(HttpMethod.Post, $"/api/rules/pending/{Uri.EscapeDataString(confirmId)}/approve", null, ct);
+
+    public Task<JsonElement> DismissPendingRuleAsync(string confirmId, CancellationToken ct = default) =>
+        SendJsonAsync<JsonElement>(HttpMethod.Post, $"/api/rules/pending/{Uri.EscapeDataString(confirmId)}/dismiss", null, ct);
+
+    public Task<RuleAuditListResponse> GetRuleAuditLogsAsync(int limit = 100, CancellationToken ct = default) =>
+        GetJsonAsync<RuleAuditListResponse>($"/api/rules/audit?limit={limit}", ct);
+
+    public Task<JsonElement> ClearRuleAuditLogsAsync(CancellationToken ct = default) =>
+        SendJsonAsync<JsonElement>(HttpMethod.Post, "/api/rules/audit/clear", null, ct);
+
+    public Task<JsonElement> ClearRuleDedupIndexAsync(CancellationToken ct = default) =>
+        SendJsonAsync<JsonElement>(HttpMethod.Post, "/api/rules/dedup/clear", null, ct);
 
     /// <summary>
     /// 订阅 /api/events SSE 任务状态与进度实时推送流

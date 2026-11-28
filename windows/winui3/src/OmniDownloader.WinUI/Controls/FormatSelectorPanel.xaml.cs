@@ -85,6 +85,8 @@ public sealed partial class FormatSelectorPanel : UserControl
 
             SelectComboByTag(DownloadTypeCombo, _downloadType, fallbackIndex: 0);
             ContainerCombo.SelectedIndex = 0;
+            CollectionRuleCombo.ItemsSource = _services.MainVm.RulesVm.QuickRuleChoices;
+            if (CollectionRuleCombo.Items.Count > 0) CollectionRuleCombo.SelectedIndex = 0;
         }
         finally
         {
@@ -399,47 +401,72 @@ public sealed partial class FormatSelectorPanel : UserControl
     {
         var secondaryStyle = Resources["TileSecondaryTextStyle"] as Style;
         var tagBorderStyle = Application.Current.Resources["OmniTagBorderStyle"] as Style;
+        var goldBadgeBorderStyle = Resources["MetallicGoldBadgeBorderStyle"] as Style;
+        var goldBadgeTextStyle = Resources["MetallicGoldBadgeTextStyle"] as Style;
 
-        // 顶行：分辨率主标题 + 档位标签 + 选中勾标（全部通过 XAML ThemeResource Style 响应深浅色切换）
+        // 顶行：左侧分辨率主标题 + 框内右上角金属金高亮规格标签 (<4K> / <8K> / <HDR> / <Hi-Res>...)
         var topRow = new Grid { ColumnSpacing = 6 };
         topRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        topRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         topRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
         var resText = new TextBlock
         {
             Text = _services.Loc.T(fmt.TileResolutionText),
-            Style = Resources["TilePrimaryTextStyle"] as Style
+            Style = Resources["TilePrimaryTextStyle"] as Style,
+            VerticalAlignment = VerticalAlignment.Center
         };
         Grid.SetColumn(resText, 0);
         topRow.Children.Add(resText);
 
-        var tier = fmt.TileTierBadgeText;
-        if (!string.IsNullOrEmpty(tier))
+        var premiumBadges = fmt.GetPremiumBadges();
+        if (premiumBadges.Count > 0)
         {
-            var tierBadge = new Border
+            var badgeStack = new StackPanel
             {
-                Style = tagBorderStyle,
-                Padding = new Thickness(6, 1, 6, 1),
-                VerticalAlignment = VerticalAlignment.Center,
-                Child = new TextBlock
-                {
-                    Text = tier,
-                    FontSize = 11,
-                    Style = secondaryStyle
-                }
+                Orientation = Orientation.Horizontal,
+                Spacing = 4,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Top
             };
-            Grid.SetColumn(tierBadge, 1);
-            topRow.Children.Add(tierBadge);
+            foreach (var badgeLabel in premiumBadges)
+            {
+                // 内层顶部高光斜角边框，增强拉丝金属铭牌立体质感
+                var bevelBorder = new Border
+                {
+                    Style = goldBadgeBorderStyle,
+                    Child = new TextBlock
+                    {
+                        Text = badgeLabel,
+                        Style = goldBadgeTextStyle
+                    }
+                };
+                badgeStack.Children.Add(bevelBorder);
+            }
+            Grid.SetColumn(badgeStack, 1);
+            topRow.Children.Add(badgeStack);
         }
-
-        var checkIcon = new FontIcon
+        else
         {
-            Style = Resources["TileCheckIconStyle"] as Style,
-            Visibility = isSelected ? Visibility.Visible : Visibility.Collapsed
-        };
-        Grid.SetColumn(checkIcon, 2);
-        topRow.Children.Add(checkIcon);
+            var tier = fmt.TileTierBadgeText;
+            if (!string.IsNullOrEmpty(tier))
+            {
+                var tierBadge = new Border
+                {
+                    Style = tagBorderStyle,
+                    Padding = new Thickness(6, 1, 6, 1),
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Child = new TextBlock
+                    {
+                        Text = tier,
+                        FontSize = 11,
+                        Style = secondaryStyle
+                    }
+                };
+                Grid.SetColumn(tierBadge, 1);
+                topRow.Children.Add(tierBadge);
+            }
+        }
 
         // 中行：格式与编码（如 MP4 · H.264 · 60fps）
         var formatText = new TextBlock
@@ -448,22 +475,35 @@ public sealed partial class FormatSelectorPanel : UserControl
             Style = secondaryStyle
         };
 
-        // 底行：预估体积或码率
+        // 底行：左侧预估体积或码率 + 右侧选中勾标（避免与右上角金属标签争抢空间）
+        var bottomRow = new Grid { ColumnSpacing = 6 };
+        bottomRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        bottomRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
         var sizeText = new TextBlock
         {
             Text = _services.Loc.T(fmt.TileSizeText),
-            Style = secondaryStyle
+            Style = secondaryStyle,
+            VerticalAlignment = VerticalAlignment.Center
         };
+        Grid.SetColumn(sizeText, 0);
+        bottomRow.Children.Add(sizeText);
+
+        var checkIcon = new FontIcon
+        {
+            Style = Resources["TileCheckIconStyle"] as Style,
+            Visibility = isSelected ? Visibility.Visible : Visibility.Collapsed
+        };
+        Grid.SetColumn(checkIcon, 1);
+        bottomRow.Children.Add(checkIcon);
 
         var stack = new StackPanel { Spacing = 3 };
         stack.Children.Add(topRow);
         stack.Children.Add(formatText);
-        stack.Children.Add(sizeText);
+        stack.Children.Add(bottomRow);
 
-        var isHdr = fmt.IsHdr;
-        var styleKey = isHdr
-            ? (isSelected ? "FormatTileHdrSelectedStyle" : "FormatTileHdrNormalStyle")
-            : (isSelected ? "FormatTileSelectedStyle" : "FormatTileNormalStyle");
+        // 统一使用简洁中性卡片样式，仅通过边框强调选中状态，不再整卡染金
+        var styleKey = isSelected ? "FormatTileSelectedStyle" : "FormatTileNormalStyle";
         var button = new Button
         {
             Tag = fmt.FormatId,
@@ -471,11 +511,6 @@ public sealed partial class FormatSelectorPanel : UserControl
             Style = Resources[styleKey] as Style,
             Content = stack
         };
-        if (isHdr)
-        {
-            // 在 Tag 外记录 HDR 标记便于点击切换选中态时保持金色外轮廓
-            Microsoft.UI.Xaml.Automation.AutomationProperties.SetItemType(button, "HDR");
-        }
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, fmt.DisplaySummary);
         button.Click += FormatTile_Click;
 
@@ -495,20 +530,15 @@ public sealed partial class FormatSelectorPanel : UserControl
     {
         var normalStyle = Resources["FormatTileNormalStyle"] as Style;
         var selectedStyle = Resources["FormatTileSelectedStyle"] as Style;
-        var hdrNormalStyle = Resources["FormatTileHdrNormalStyle"] as Style;
-        var hdrSelectedStyle = Resources["FormatTileHdrSelectedStyle"] as Style;
 
         foreach (var child in VideoFormatGrid.Children)
         {
             if (child is not Button btn || btn.Tag is not string fid) continue;
             var selected = fid == _selectedFormatId;
-            var isHdr = Microsoft.UI.Xaml.Automation.AutomationProperties.GetItemType(btn) == "HDR";
-            btn.Style = isHdr
-                ? (selected ? hdrSelectedStyle : hdrNormalStyle)
-                : (selected ? selectedStyle : normalStyle);
-            if (btn.Content is StackPanel sp && sp.Children.FirstOrDefault() is Grid topRow)
+            btn.Style = selected ? selectedStyle : normalStyle;
+            if (btn.Content is StackPanel sp && sp.Children.LastOrDefault() is Grid bottomRow)
             {
-                var check = topRow.Children.OfType<FontIcon>().FirstOrDefault();
+                var check = bottomRow.Children.OfType<FontIcon>().FirstOrDefault();
                 if (check is not null)
                 {
                     check.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
@@ -702,6 +732,57 @@ public sealed partial class FormatSelectorPanel : UserControl
         _selectedEpisodes.Clear();
         RenderCollectionCheckboxes();
         UpdateActionButtonsText();
+    }
+
+    private async void ApplyCollectionRule_Click(object sender, RoutedEventArgs e)
+    {
+        if (_submitting) return;
+        var choice = CollectionRuleCombo.SelectedItem as RuleSelectorChoice;
+        var ruleMode = choice?.Mode ?? "auto";
+        var ruleId = choice?.RuleId ?? string.Empty;
+        if (ruleMode == "bypass")
+        {
+            _services.MainVm.Notify("当前已选择“不使用规则”，请手动勾选分集后下载", InfoBarSeverity.Informational);
+            return;
+        }
+
+        SetSubmitting(true);
+        try
+        {
+            var resp = await _services.ApiClient.ExecuteRulesAsync(
+                _metadata.Url,
+                trigger: "collection",
+                ruleMode: ruleMode,
+                ruleId: ruleId,
+                clientSource: "winui_collection");
+            if (!resp.Matched || resp.Results.Count == 0)
+            {
+                _services.MainVm.Notify("当前合集未匹配到启用规则，可手动勾选分集或先在「下载规则」配置规则", InfoBarSeverity.Informational);
+                return;
+            }
+            var item = resp.Results[0];
+            if (!string.IsNullOrWhiteSpace(item.Error))
+            {
+                _services.MainVm.Notify(item.Error, InfoBarSeverity.Error);
+                return;
+            }
+            if (item.Status == "queued")
+            {
+                _services.MainVm.Notify("已按合集规则「%s」筛选入队 %d 个任务", InfoBarSeverity.Success, item.RuleName, item.PlannedCount);
+                await _services.MainVm.RefreshTasksAsync();
+                _services.MainVm.NavigateTo("tasks");
+                return;
+            }
+            _services.MainVm.Notify("规则「%s」状态：%s", InfoBarSeverity.Informational, item.RuleName, item.Status);
+        }
+        catch (Exception ex)
+        {
+            _services.MainVm.Notify(ex.Message, InfoBarSeverity.Error);
+        }
+        finally
+        {
+            SetSubmitting(false);
+        }
     }
 
     private void SaveCoverCheck_Changed(object sender, RoutedEventArgs e) => UpdateActionButtonsText();

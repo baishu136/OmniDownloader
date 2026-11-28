@@ -9,22 +9,20 @@
 
     <UserControl.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.ThemeDictionaries>
-                <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="HdrGoldBorderBrush" Color="#FFD49B1A" />
-                    <SolidColorBrush x:Key="HdrGoldFillBrush" Color="#14EAB308" />
-                    <SolidColorBrush x:Key="HdrGoldSelectedFillBrush" Color="#22EAB308" />
-                    <SolidColorBrush x:Key="HdrGoldBadgeBgBrush" Color="#28EAB308" />
-                    <SolidColorBrush x:Key="HdrGoldBadgeFgBrush" Color="#FF9A6700" />
-                </ResourceDictionary>
-                <ResourceDictionary x:Key="Default">
-                    <SolidColorBrush x:Key="HdrGoldBorderBrush" Color="#FFF5C451" />
-                    <SolidColorBrush x:Key="HdrGoldFillBrush" Color="#18F5C451" />
-                    <SolidColorBrush x:Key="HdrGoldSelectedFillBrush" Color="#26F5C451" />
-                    <SolidColorBrush x:Key="HdrGoldBadgeBgBrush" Color="#2DF5C451" />
-                    <SolidColorBrush x:Key="HdrGoldBadgeFgBrush" Color="#FFFDE047" />
-                </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries>
+            <!-- 高级拉丝金属金质感标签画刷：多段 135° 香槟金高光与斜切金属描边，浅深色背景下均具清晰金属光泽 -->
+            <LinearGradientBrush x:Key="MetallicGoldBgBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#FFFFF2B8" Offset="0.00" />
+                <GradientStop Color="#FFF5CE60" Offset="0.26" />
+                <GradientStop Color="#FFDFA020" Offset="0.54" />
+                <GradientStop Color="#FFFAE084" Offset="0.78" />
+                <GradientStop Color="#FFB77D0F" Offset="1.00" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="MetallicGoldBorderBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#FFFFF9D6" Offset="0.00" />
+                <GradientStop Color="#FFD39B24" Offset="0.52" />
+                <GradientStop Color="#FF8D5E08" Offset="1.00" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="MetallicGoldTextBrush" Color="#FF261700" />
 
         <!-- 未选中规格方格样式：纯 ThemeResource 状态切换，杜绝深浅色切换后悬停残留高亮 -->
         <Style x:Key="FormatTileNormalStyle" TargetType="Button">
@@ -92,117 +90,21 @@
             <Setter Property="Padding" Value="10,8" />
         </Style>
 
-        <!-- 含 HDR 参数方格样式（未选中）：外层一圈主题自适应金色轮廓 + 柔和金调底色 -->
-        <Style x:Key="FormatTileHdrNormalStyle" TargetType="Button" BasedOn="{StaticResource FormatTileNormalStyle}">
-            <Setter Property="Background" Value="{ThemeResource HdrGoldFillBrush}" />
-            <Setter Property="BorderBrush" Value="{ThemeResource HdrGoldBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1.5" />
-            <Setter Property="Padding" Value="10.5,8.5" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border
-                            x:Name="OuterHdrRing"
-                            BorderBrush="{ThemeResource HdrGoldBorderBrush}"
-                            BorderThickness="1.5"
-                            CornerRadius="9"
-                            Padding="1">
-                            <Border
-                                x:Name="TileSurface"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                BorderThickness="1"
-                                CornerRadius="7">
-                                <Border.BackgroundTransition>
-                                    <BrushTransition Duration="0:0:0.14" />
-                                </Border.BackgroundTransition>
-                                <VisualStateManager.VisualStateGroups>
-                                    <VisualStateGroup x:Name="CommonStates">
-                                        <VisualState x:Name="Normal" />
-                                        <VisualState x:Name="PointerOver">
-                                            <Storyboard>
-                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="TileSurface" Storyboard.TargetProperty="Background">
-                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource HdrGoldSelectedFillBrush}" />
-                                                </ObjectAnimationUsingKeyFrames>
-                                            </Storyboard>
-                                        </VisualState>
-                                        <VisualState x:Name="Pressed">
-                                            <Storyboard>
-                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="TileSurface" Storyboard.TargetProperty="Background">
-                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ControlFillColorTertiaryBrush}" />
-                                                </ObjectAnimationUsingKeyFrames>
-                                            </Storyboard>
-                                        </VisualState>
-                                        <VisualState x:Name="Disabled">
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="OuterHdrRing" Storyboard.TargetProperty="Opacity" To="0.55" Duration="0" />
-                                            </Storyboard>
-                                        </VisualState>
-                                    </VisualStateGroup>
-                                </VisualStateManager.VisualStateGroups>
-                                <ContentPresenter
-                                    Content="{TemplateBinding Content}"
-                                    ContentTemplate="{TemplateBinding ContentTemplate}"
-                                    Margin="{TemplateBinding Padding}" />
-                            </Border>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <!-- 框内右上角金属金色标签容器与文字样式 -->
+        <Style x:Key="MetallicGoldBadgeBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource MetallicGoldBgBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MetallicGoldBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Padding" Value="6,1.5" />
+            <Setter Property="VerticalAlignment" Value="Top" />
         </Style>
-
-        <!-- 含 HDR 参数方格样式（已选中）：保留外圈高亮金色轮廓，内层保留选中强调描边 -->
-        <Style x:Key="FormatTileHdrSelectedStyle" TargetType="Button" BasedOn="{StaticResource FormatTileHdrNormalStyle}">
-            <Setter Property="Background" Value="{ThemeResource HdrGoldSelectedFillBrush}" />
-            <Setter Property="Padding" Value="9.5,7.5" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border
-                            x:Name="OuterHdrRing"
-                            BorderBrush="{ThemeResource HdrGoldBorderBrush}"
-                            BorderThickness="2"
-                            CornerRadius="10"
-                            Padding="1">
-                            <Border
-                                x:Name="TileSurface"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
-                                BorderThickness="1.5"
-                                CornerRadius="7">
-                                <VisualStateManager.VisualStateGroups>
-                                    <VisualStateGroup x:Name="CommonStates">
-                                        <VisualState x:Name="Normal" />
-                                        <VisualState x:Name="PointerOver">
-                                            <Storyboard>
-                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="TileSurface" Storyboard.TargetProperty="Background">
-                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource HdrGoldSelectedFillBrush}" />
-                                                </ObjectAnimationUsingKeyFrames>
-                                            </Storyboard>
-                                        </VisualState>
-                                        <VisualState x:Name="Pressed">
-                                            <Storyboard>
-                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="TileSurface" Storyboard.TargetProperty="Background">
-                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ControlFillColorTertiaryBrush}" />
-                                                </ObjectAnimationUsingKeyFrames>
-                                            </Storyboard>
-                                        </VisualState>
-                                        <VisualState x:Name="Disabled">
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="OuterHdrRing" Storyboard.TargetProperty="Opacity" To="0.55" Duration="0" />
-                                            </Storyboard>
-                                        </VisualState>
-                                    </VisualStateGroup>
-                                </VisualStateManager.VisualStateGroups>
-                                <ContentPresenter
-                                    Content="{TemplateBinding Content}"
-                                    ContentTemplate="{TemplateBinding ContentTemplate}"
-                                    Margin="{TemplateBinding Padding}" />
-                            </Border>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <Style x:Key="MetallicGoldBadgeTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="CharacterSpacing" Value="40" />
+            <Setter Property="Foreground" Value="{StaticResource MetallicGoldTextBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <!-- 纯 ThemeResource 文字/图标/边框样式，随页面深浅色实时切换 -->
@@ -345,6 +247,12 @@
                         <Button locui:Localized.Content="全选" Click="SelectAllEpisodes_Click" />
                         <Button locui:Localized.Content="反选" Click="InvertEpisodes_Click" />
                         <Button locui:Localized.Content="全不选" Click="SelectNoneEpisodes_Click" />
+                        <ComboBox
+                            x:Name="CollectionRuleCombo"
+                            MinWidth="170"
+                            DisplayMemberPath="DisplayName"
+                            SelectedIndex="0" />
+                        <Button locui:Localized.Content="按规则筛选下载" Click="ApplyCollectionRule_Click" />
                     </controls:WrapPanel>
                     <TextBlock x:Name="EpisodesCountText" Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
                 </Grid>

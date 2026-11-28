@@ -14,15 +14,29 @@ using Windows.UI;
 namespace OmniDownloader.WinUI.ViewModels;
 
 /// <summary>
-/// 设置页预设主题色圆点展示模型
+/// 设置页预设主题色圆点展示模型（支持原地刷新选中态，避免切换配色时整行重构闪烁）
 /// </summary>
-public sealed class ThemeColorSwatchItem
+public sealed partial class ThemeColorSwatchItem : ObservableObject
 {
+    private bool _isSelected;
+
     public string Key { get; init; } = string.Empty;
     public string ToolTipText { get; init; } = string.Empty;
     public SolidColorBrush SwatchBrush { get; init; } = new(Colors.Transparent);
     public SolidColorBrush CheckBrush { get; init; } = new(Colors.White);
-    public bool IsSelected { get; init; }
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (SetProperty(ref _isSelected, value))
+            {
+                OnPropertyChanged(nameof(SelectedVisibility));
+            }
+        }
+    }
+
     public Visibility SelectedVisibility => IsSelected ? Visibility.Visible : Visibility.Collapsed;
 }
 
@@ -58,6 +72,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private string _currentCategory = "root";
     private string _selectedLanguage;
     private string _selectedTheme;
+    private string _selectedBackdropStyle;
     private string _selectedAccentColor;
     private bool _usePureBlackDark;
     private string _serviceBaseUrl;
@@ -86,6 +101,11 @@ public sealed partial class SettingsViewModel : ObservableObject
     private bool _isEngineReady;
     private string _updateStatusText = string.Empty;
     private string _updateDownloadUrl = string.Empty;
+    private bool _gpuAccelerationEnabled = true;
+    private string _gpuPreferredVendor = "auto";
+    private string _gpuStatusSummary = string.Empty;
+    private string _gpuStatusBadge = string.Empty;
+    private GpuStatusInfo? _lastGpuStatus;
 
     public string CurrentCategory
     {
@@ -145,6 +165,34 @@ public sealed partial class SettingsViewModel : ObservableObject
                 _services.LocalState.Save();
                 _main.RaiseThemeChanged();
             }
+        }
+    }
+
+    public string SelectedBackdropStyle
+    {
+        get => _selectedBackdropStyle;
+        set
+        {
+            var norm = BackdropStyleLogic.NormalizeStyle(value);
+            if (SetProperty(ref _selectedBackdropStyle, norm))
+            {
+                _services.LocalState.Current.BackdropStyle = norm;
+                _services.LocalState.Save();
+                OnPropertyChanged(nameof(BackdropStyleDescription));
+                _main.RaiseThemeChanged();
+            }
+        }
+    }
+
+    public string BackdropStyleDescription
+    {
+        get
+        {
+            var micaSupported = false;
+            try { micaSupported = Microsoft.UI.Composition.SystemBackdrops.MicaController.IsSupported(); } catch { }
+            return micaSupported
+                ? _services.Loc.T("默认保留原版经典原生质感，并可选 Ghost 风格的 Mica、Mica Alt、Acrylic 磨砂、Aero 玻璃与纯色模式")
+                : _services.Loc.T("默认保留原版经典亚克力参数，并可选壁纸染色云母、Ghost Acrylic 磨砂、Aero 玻璃与纯色模式");
         }
     }
 
@@ -228,16 +276,25 @@ public sealed partial class SettingsViewModel : ObservableObject
         _main.Notify("自定义主题颜色已应用", InfoBarSeverity.Success);
     }
 
-    private void RefreshAccentProperties()
+    private void RefreshAccentProperties(bool forceRebuildPresets = false)
     {
         OnPropertyChanged(nameof(IsCustomAccentActive));
         OnPropertyChanged(nameof(ActiveAccentDisplayText));
         OnPropertyChanged(nameof(ActiveAccentPreviewBrush));
-        RebuildAccentPresets();
+        RebuildAccentPresets(forceRebuildPresets);
     }
 
-    private void RebuildAccentPresets()
+    private void RebuildAccentPresets(bool forceRebuild = false)
     {
+        if (!forceRebuild && AccentPresets.Count > 0)
+        {
+            foreach (var item in AccentPresets)
+            {
+                item.IsSelected = string.Equals(SelectedAccentColor, item.Key, StringComparison.OrdinalIgnoreCase);
+            }
+            return;
+        }
+
         AccentPresets.Clear();
         foreach (var preset in ThemeAccentHelper.Presets)
         {
@@ -386,6 +443,48 @@ public sealed partial class SettingsViewModel : ObservableObject
         ManagedComponents.Count(c => c.IsRequired),
         ManagedComponents.Count(c => c.IsEnabled));
 
+    public bool GpuAccelerationEnabled
+    {
+        get => _gpuAccelerationEnabled;
+        set
+        {
+            if (SetProperty(ref _gpuAccelerationEnabled, value))
+            {
+                _services.LocalState.Current.GpuAccelerationEnabled = value;
+                _services.LocalState.Save();
+                if (!_suppressThemeSync)
+                {
+                    ApplyGpuStatusTexts(_lastGpuStatus);
+                    if (_main.IsBackendConnected)
+                    {
+                        _ = SaveGpuSettingsAsync();
+                    }
+                }
+            }
+        }
+    }
+
+    public string GpuPreferredVendor
+    {
+        get => _gpuPreferredVendor;
+        set
+        {
+            var normalized = string.IsNullOrWhiteSpace(value) ? "auto" : value.Trim().ToLowerInvariant();
+            if (SetProperty(ref _gpuPreferredVendor, normalized))
+            {
+                _services.LocalState.Current.GpuPreferredVendor = normalized;
+                _services.LocalState.Save();
+                if (!_suppressThemeSync && _main.IsBackendConnected)
+                {
+                    _ = SaveGpuSettingsAsync();
+                }
+            }
+        }
+    }
+
+    public string GpuStatusSummary { get => _gpuStatusSummary; set => SetProperty(ref _gpuStatusSummary, value); }
+    public string GpuStatusBadge { get => _gpuStatusBadge; set => SetProperty(ref _gpuStatusBadge, value); }
+
     public LocalizationService Loc => _services.Loc;
     public string EngineStatusSummary { get => _engineStatusSummary; set => SetProperty(ref _engineStatusSummary, value); }
     public string EngineReadyBadge { get => _engineReadyBadge; set => SetProperty(ref _engineReadyBadge, value); }
@@ -415,6 +514,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _main = main;
         _selectedLanguage = services.LocalState.Current.Language;
         _selectedTheme = services.LocalState.Current.Theme;
+        _selectedBackdropStyle = BackdropStyleLogic.NormalizeStyle(services.LocalState.Current.BackdropStyle);
         _selectedAccentColor = ThemeAccentHelper.NormalizeSetting(services.LocalState.Current.AccentColor);
         _usePureBlackDark = services.LocalState.Current.UsePureBlackDarkMode;
         _showRecentTasksOnHome = services.LocalState.Current.ShowRecentTasksOnHome;
@@ -423,12 +523,15 @@ public sealed partial class SettingsViewModel : ObservableObject
         _videoDownloadDir = services.LocalState.Current.VideoDownloadDir;
         _imageDownloadDir = services.LocalState.Current.ImageDownloadDir;
         _audioDownloadDir = services.LocalState.Current.AudioDownloadDir;
+        _gpuAccelerationEnabled = services.LocalState.Current.GpuAccelerationEnabled;
+        _gpuPreferredVendor = string.IsNullOrWhiteSpace(services.LocalState.Current.GpuPreferredVendor) ? "auto" : services.LocalState.Current.GpuPreferredVendor;
         _serviceBaseUrl = services.LocalState.Current.ServiceBaseUrl;
         _autoStartBackend = services.LocalState.Current.AutoStartBackend;
         _sessionStatusBadge = _services.Loc.T("未导入");
         _browserLoginStatusText = _services.Loc.T("使用独立 Edge 窗口登录。Google 登录后请返回目标平台，再点击「保存会话并关闭」；已保存不等于账号已验证。");
         _engineStatusSummary = _services.Loc.T("点击下方按钮探测运行环境");
         _engineReadyBadge = _services.Loc.T("未探测");
+        ApplyGpuStatusTexts(null);
         RebuildAccentPresets();
         RebuildSessionPlatformOptions();
         RebuildManagedComponents(direct: true);
@@ -437,8 +540,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             OnPropertyChanged(nameof(RelaySectionTitle));
             OnPropertyChanged(nameof(OutdatedBackendWarningText));
+            OnPropertyChanged(nameof(BackdropStyleDescription));
             RebuildSessionPlatformOptions();
-            RefreshAccentProperties();
+            RefreshAccentProperties(forceRebuildPresets: true);
             RebuildManagedComponents();
             if (!_isBrowserLoginBusy)
             {
@@ -458,7 +562,61 @@ public sealed partial class SettingsViewModel : ObservableObject
                 EngineStatusSummary = _services.Loc.T("点击下方按钮探测运行环境");
                 EngineReadyBadge = _services.Loc.T("未探测");
             }
+            ApplyGpuStatusTexts(_lastGpuStatus);
         };
+    }
+
+    private void ApplyGpuStatusTexts(GpuStatusInfo? gpu)
+    {
+        if (!_gpuAccelerationEnabled)
+        {
+            GpuStatusBadge = _services.Loc.T("已关闭");
+            GpuStatusSummary = _services.Loc.T("当前已关闭 GPU 硬件加速，转码与图形渲染均采用软件模式");
+            return;
+        }
+        if (gpu is null)
+        {
+            GpuStatusBadge = _services.Loc.T("待探测");
+            GpuStatusSummary = _services.Loc.T("已开启 GPU 硬件加速，等待核心引擎反馈真实硬件状态");
+            return;
+        }
+        if (string.Equals(gpu.StatusCode, "DISABLED", StringComparison.OrdinalIgnoreCase))
+        {
+            GpuStatusBadge = _services.Loc.T("已关闭");
+            GpuStatusSummary = _services.Loc.T("当前已关闭 GPU 硬件加速，转码与图形渲染均采用软件模式");
+            return;
+        }
+        if (gpu.FallbackActive || !gpu.HardwareAvailable || string.Equals(gpu.StatusCode, "FALLBACK_SOFTWARE", StringComparison.OrdinalIgnoreCase))
+        {
+            GpuStatusBadge = _services.Loc.T("已回退软件处理");
+            GpuStatusSummary = _services.Loc.T("未检测到可用硬件编码器或驱动初始化失败，已自动回退软件处理 (%s)", string.IsNullOrWhiteSpace(gpu.ActiveEncoder) ? "libx264" : gpu.ActiveEncoder);
+            return;
+        }
+
+        var backendLabel = string.IsNullOrWhiteSpace(gpu.ActiveBackend) ? "GPU" : gpu.ActiveBackend.ToUpperInvariant();
+        var adapter = string.IsNullOrWhiteSpace(gpu.ActiveAdapterName) ? gpu.ActiveVendor.ToUpperInvariant() : gpu.ActiveAdapterName;
+        var decodeNote = string.IsNullOrWhiteSpace(gpu.ActiveDecodeHwaccel) ? _services.Loc.T("软件解码") : gpu.ActiveDecodeHwaccel.ToUpperInvariant();
+        GpuStatusBadge = _services.Loc.T("已启用 · %s", backendLabel);
+        GpuStatusSummary = _services.Loc.T("显卡：%s · 编码器 %s · 解码 %s · 无损直传保持开启", adapter, gpu.ActiveEncoder, decodeNote);
+    }
+
+    public async Task SaveGpuSettingsAsync()
+    {
+        try
+        {
+            await _services.ApiClient.UpdateSettingsAsync(new UpdateSettingsRequest
+            {
+                GpuAccelerationEnabled = GpuAccelerationEnabled,
+                GpuPreferredVendor = GpuPreferredVendor
+            });
+            var gpu = await _services.ApiClient.GetGpuStatusAsync(refresh: false);
+            _lastGpuStatus = gpu;
+            _main.RunOnUi(() => ApplyGpuStatusTexts(gpu));
+        }
+        catch (Exception ex)
+        {
+            _main.Notify(ex.Message, InfoBarSeverity.Error);
+        }
     }
 
     private void RebuildSessionPlatformOptions()
@@ -555,6 +713,25 @@ public sealed partial class SettingsViewModel : ObservableObject
                     AutoStartWithWindows = s.AutoStart;
                     ProxyUrl = s.ProxyUrl;
                     HasBilibiliSession = s.HasBilibiliSession;
+                    if (!local.HasCompletedOnboarding)
+                    {
+                        GpuAccelerationEnabled = s.GpuAccelerationEnabled;
+                        GpuPreferredVendor = string.IsNullOrWhiteSpace(s.GpuPreferredVendor) ? "auto" : s.GpuPreferredVendor;
+                    }
+                    else if (s.GpuAccelerationEnabled != local.GpuAccelerationEnabled ||
+                             !string.Equals(s.GpuPreferredVendor, local.GpuPreferredVendor, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _ = _services.ApiClient.UpdateSettingsAsync(new UpdateSettingsRequest
+                        {
+                            GpuAccelerationEnabled = local.GpuAccelerationEnabled,
+                            GpuPreferredVendor = string.IsNullOrWhiteSpace(local.GpuPreferredVendor) ? "auto" : local.GpuPreferredVendor
+                        });
+                    }
+                    if (s.GpuStatus is not null)
+                    {
+                        _lastGpuStatus = s.GpuStatus;
+                        ApplyGpuStatusTexts(s.GpuStatus);
+                    }
                 }
                 finally
                 {
@@ -706,6 +883,9 @@ public sealed partial class SettingsViewModel : ObservableObject
             VideoDownloadDir = _services.LocalState.Current.VideoDownloadDir;
             ImageDownloadDir = _services.LocalState.Current.ImageDownloadDir;
             AudioDownloadDir = _services.LocalState.Current.AudioDownloadDir;
+            GpuAccelerationEnabled = _services.LocalState.Current.GpuAccelerationEnabled;
+            GpuPreferredVendor = string.IsNullOrWhiteSpace(_services.LocalState.Current.GpuPreferredVendor) ? "auto" : _services.LocalState.Current.GpuPreferredVendor;
+            ApplyGpuStatusTexts(_lastGpuStatus);
             OnPropertyChanged(nameof(CloseBehaviorMode));
         }
         finally
@@ -1217,6 +1397,26 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public async Task RefreshGpuStatusAsync()
+    {
+        if (!_main.IsBackendConnected)
+        {
+            ApplyGpuStatusTexts(null);
+            return;
+        }
+        try
+        {
+            var gpu = await _services.ApiClient.GetGpuStatusAsync(refresh: true);
+            _lastGpuStatus = gpu;
+            _main.RunOnUi(() => ApplyGpuStatusTexts(gpu));
+        }
+        catch
+        {
+            _main.RunOnUi(() => ApplyGpuStatusTexts(null));
+        }
+    }
+
+    [RelayCommand]
     public async Task CheckEngineDiagnosticsAsync()
     {
         EngineStatusSummary = _services.Loc.T("正在探测本机引擎环境...");
@@ -1224,7 +1424,13 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             var d = await _services.ApiClient.GetDiagnosticsAsync();
             _lastDiagnostics = d;
-            _main.RunOnUi(() => ApplyDiagnosticsTexts(d));
+            var gpu = d.Gpu ?? await _services.ApiClient.GetGpuStatusAsync(refresh: true);
+            _lastGpuStatus = gpu;
+            _main.RunOnUi(() =>
+            {
+                ApplyDiagnosticsTexts(d);
+                ApplyGpuStatusTexts(gpu);
+            });
             RebuildManagedComponents();
         }
         catch (Exception ex)

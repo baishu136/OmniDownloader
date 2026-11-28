@@ -7,14 +7,15 @@
 
     <Grid x:Name="RootGrid" SizeChanged="RootGrid_SizeChanged">
         <Grid.RowDefinitions>
-            <RowDefinition Height="44" />
+            <RowDefinition Height="42" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- 自定义扩展标题栏：3 列响应式排布，窄窗口自动隐藏副文本、省略标题并动态对齐系统控制键安全区 -->
+        <!-- 自定义扩展标题栏：Win11 保留原生右留白，Win10 自动启用内置 Fluent 控制按钮消除顶边细线 -->
         <Grid x:Name="AppTitleBar" Grid.Row="0" Padding="14,0,148,0" Background="Transparent">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
@@ -44,7 +45,7 @@
                 MaxWidth="360"
                 TextTrimming="CharacterEllipsis" />
 
-            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,4,0">
                 <Ellipse
                     x:Name="TitleStatusDot"
                     Width="8"
@@ -59,18 +60,64 @@
                     <FontIcon Glyph="&#xE72C;" FontSize="12" />
                 </Button>
             </StackPanel>
+
+            <!-- Windows 10 无边框模式专用标题栏控制按钮组（仅在 Win10 下显示） -->
+            <StackPanel
+                x:Name="Win10CaptionButtonsPanel"
+                Grid.Column="3"
+                Orientation="Horizontal"
+                Visibility="Collapsed"
+                VerticalAlignment="Stretch"
+                Margin="6,0,0,0">
+                <StackPanel.Resources>
+                    <Style x:Key="Win10CaptionBtnStyle" TargetType="Button">
+                        <Setter Property="Width" Value="46" />
+                        <Setter Property="Height" Value="38" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="CornerRadius" Value="0" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="VerticalAlignment" Value="Top" />
+                    </Style>
+                </StackPanel.Resources>
+                <Button
+                    x:Name="Win10MinBtn"
+                    Style="{StaticResource Win10CaptionBtnStyle}"
+                    Click="Win10MinBtn_Click">
+                    <FontIcon Glyph="&#xE921;" FontSize="10" />
+                </Button>
+                <Button
+                    x:Name="Win10MaxBtn"
+                    Style="{StaticResource Win10CaptionBtnStyle}"
+                    Click="Win10MaxBtn_Click">
+                    <FontIcon x:Name="Win10MaxGlyph" Glyph="&#xE922;" FontSize="10" />
+                </Button>
+                <Button
+                    x:Name="Win10CloseBtn"
+                    Style="{StaticResource Win10CaptionBtnStyle}"
+                    Click="Win10CloseBtn_Click">
+                    <Button.Resources>
+                        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#C42B1C" />
+                        <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#FFFFFF" />
+                        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#B22417" />
+                        <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#FFFFFF" />
+                    </Button.Resources>
+                    <FontIcon Glyph="&#xE8BB;" FontSize="10" />
+                </Button>
+            </StackPanel>
         </Grid>
 
         <!-- Windows 11 原生侧边导航架构 + 统一平滑选中指示滑块（覆盖 FooterMenuItems 与 MenuItems） -->
         <Grid Grid.Row="1">
             <NavigationView
                 x:Name="MainNavView"
+                Background="Transparent"
                 PaneDisplayMode="Auto"
                 IsBackButtonVisible="Collapsed"
                 IsSettingsVisible="False"
-                OpenPaneLength="210"
+                OpenPaneLength="196"
                 CompactModeThresholdWidth="680"
-                ExpandedModeThresholdWidth="980"
+                ExpandedModeThresholdWidth="940"
                 DisplayModeChanged="MainNavView_DisplayModeChanged"
                 SelectionChanged="MainNavView_SelectionChanged"
                 PaneOpened="MainNavView_PaneStateChanged"
@@ -80,9 +127,19 @@
                         <ResourceDictionary.ThemeDictionaries>
                             <ResourceDictionary x:Key="Light">
                                 <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="Transparent" />
+                                <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#FFFFFFFF" />
+                                <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="Transparent" />
+                                <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="Transparent" />
+                                <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="Transparent" />
+                                <SolidColorBrush x:Key="NavigationViewContentGridBorderBrush" Color="#16000000" />
                             </ResourceDictionary>
                             <ResourceDictionary x:Key="Default">
                                 <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="Transparent" />
+                                <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#FF24262D" />
+                                <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="Transparent" />
+                                <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="Transparent" />
+                                <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="Transparent" />
+                                <SolidColorBrush x:Key="NavigationViewContentGridBorderBrush" Color="#20FFFFFF" />
                             </ResourceDictionary>
                             <ResourceDictionary x:Key="HighContrast">
                                 <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="Transparent" />
@@ -110,6 +167,16 @@
                             <InfoBadge
                                 Value="{x:Bind Vm.ActiveTasksCount, Mode=OneWay}"
                                 Visibility="{x:Bind Vm.ActiveTasksBadgeVisibility, Mode=OneWay}" />
+                        </NavigationViewItem.InfoBadge>
+                    </NavigationViewItem>
+                    <NavigationViewItem x:Name="NavRules" Content="{x:Bind Vm.Loc.NavRules, Mode=OneWay}" Tag="rules">
+                        <NavigationViewItem.Icon>
+                            <FontIcon Glyph="&#xE71C;" />
+                        </NavigationViewItem.Icon>
+                        <NavigationViewItem.InfoBadge>
+                            <InfoBadge
+                                Value="{x:Bind Vm.RulesVm.PendingConfirmCount, Mode=OneWay}"
+                                Visibility="{x:Bind Vm.RulesVm.PendingConfirmBadgeVisibility, Mode=OneWay}" />
                         </NavigationViewItem.InfoBadge>
                     </NavigationViewItem>
                 </NavigationView.MenuItems>
@@ -161,5 +228,8 @@
                 </Border>
             </Canvas>
         </Grid>
+
+        <!-- Windows 10 无边框模式八方向透明尺寸拖拽手柄 -->
+        <Grid x:Name="Win10ResizeLayer" Grid.RowSpan="2" Visibility="Collapsed" />
     </Grid>
 </Window>

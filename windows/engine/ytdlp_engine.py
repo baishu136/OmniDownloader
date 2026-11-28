@@ -95,7 +95,8 @@ class YtDlpEngine:
     def _build_ydl_opts(cls, proxy_url='', extra_headers=None):
         opts = {'quiet': True, 'no_warnings': False, 'ignoreerrors': False,
                 'socket_timeout': 25, 'logger': YtDlpSafeLogger(), 'retries': 2,
-                'fragment_retries': 2, 'noplaylist': True, 'format_sort': ['res', 'fps']}
+                'fragment_retries': 2, 'concurrent_fragment_downloads': 4,
+                'buffersize': 262144, 'noplaylist': True, 'format_sort': ['res', 'fps']}
         if get_ffmpeg_path(): opts['ffmpeg_location'] = get_ffmpeg_path()
         if proxy_url: opts['proxy'] = proxy_url.strip()
         if extra_headers: opts['http_headers'] = extra_headers
@@ -335,11 +336,16 @@ class YtDlpEngine:
                 source = target
             ready.write_text(json.dumps({'signature': signature, 'file': source.name}), encoding='utf-8')
         if cancel_event.is_set(): raise RuntimeError('[CANCELLED] 用户取消')
-        export_dir = Path(config.resolve_download_dir(task.download_type))
-        destination = export_dir / f'{title}{source.suffix}'
-        index = 1
-        while destination.exists():
-            destination = destination.with_name(f'{title}_{index}{source.suffix}'); index += 1
+        from core.rules.output_helper import resolve_task_export_target
+        destination, dup_action = resolve_task_export_target(task, title, source.suffix)
+        if dup_action == 'skip':
+            try:
+                source.unlink(missing_ok=True)
+            except Exception:
+                pass
+            ready.unlink(missing_ok=True)
+            on_progress(100, '', '', TaskStatus.PROCESSING)
+            return str(destination)
         try:
             destination.parent.mkdir(parents=True, exist_ok=True)
             partial = destination.with_name('.' + destination.name + '.' + task.id + '.part')

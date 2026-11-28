@@ -9,8 +9,8 @@
     NavigationCacheMode="Required">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid x:Name="ContentContainer" MaxWidth="820" Margin="28,18,28,32">
-            <StackPanel Spacing="18">
+        <Grid x:Name="ContentContainer" MaxWidth="940" Margin="22,14,22,26">
+            <StackPanel Spacing="14">
                 <!-- 头部 -->
                 <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
@@ -129,6 +129,15 @@
                                 locui:Localized.OffContent="仅当前"
                                 locui:Localized.OnContent="下载全部分集"
                                 IsOn="{x:Bind Vm.DownloadAllEpisodes, Mode=TwoWay}" />
+
+                            <ComboBox
+                                x:Name="BatchRuleCombo"
+                                MinWidth="200"
+                                locui:Localized.Header="下载规则（可选）"
+                                ItemsSource="{x:Bind Vm.QuickRuleChoices, Mode=OneWay}"
+                                DisplayMemberPath="DisplayName"
+                                SelectedIndex="0"
+                                SelectionChanged="BatchRuleCombo_SelectionChanged" />
                         </controls:WrapPanel>
 
                         <Button
@@ -153,14 +162,30 @@
                 <StackPanel
                     Spacing="10"
                     Visibility="{x:Bind Vm.HasJobs, Mode=OneWay, Converter={StaticResource BoolToVis}}">
-                    <controls:WrapPanel HorizontalSpacing="10" VerticalSpacing="4">
-                        <TextBlock locui:Localized.Text="批次记录" Style="{StaticResource GroupHeaderTextStyle}" />
-                        <TextBlock
-                            Text="{x:Bind Vm.SummaryText, Mode=OneWay}"
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <controls:WrapPanel Grid.Column="0" HorizontalSpacing="10" VerticalSpacing="4" VerticalAlignment="Center">
+                            <TextBlock locui:Localized.Text="批次记录" Style="{StaticResource GroupHeaderTextStyle}" />
+                            <TextBlock
+                                Text="{x:Bind Vm.SummaryText, Mode=OneWay}"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </controls:WrapPanel>
+                        <Button
+                            Grid.Column="1"
+                            HorizontalAlignment="Right"
                             VerticalAlignment="Center"
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                    </controls:WrapPanel>
+                            Command="{x:Bind Vm.ClearBatchJobsCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE74D;" FontSize="13" />
+                                <TextBlock locui:Localized.Text="清空解析记录" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
 
                     <ItemsRepeater ItemsSource="{x:Bind Vm.Jobs, Mode=OneWay}">
                         <ItemsRepeater.Layout>

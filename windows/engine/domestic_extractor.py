@@ -206,9 +206,8 @@ class DomesticDirectExtractor:
         from engine.platforms import PlatformEngine, platform
         if platform(task.url) in ('抖音', '小红书', '快手'):
             return await PlatformEngine.download(task, on_progress, cancel_event)
+        from core.rules.output_helper import resolve_task_export_target
         clean_title = sanitize_filename(task.title)
-        download_dir = Path(config.resolve_download_dir(task.download_type))
-        download_dir.mkdir(parents=True, exist_ok=True)
         staging_dir = Path(config.download_dir) / ".staging"
         staging_dir.mkdir(parents=True, exist_ok=True)
 
@@ -224,7 +223,10 @@ class DomesticDirectExtractor:
         # 0. 仅保存封面
         if task.download_type == DownloadType.COVER:
             cover_url = task.thumbnail_url or task.url
-            dest = download_dir / f"{clean_title}_cover.jpg"
+            dest, dup_action = resolve_task_export_target(task, f"{clean_title}_cover", ".jpg")
+            if dup_action == "skip":
+                on_progress(100.0, "", "已跳过重复文件", TaskStatus.COMPLETED)
+                return str(dest)
             on_progress(20.0, "", "正在下载封面图片...", TaskStatus.DOWNLOADING)
             resp = await asyncio.to_thread(requests.get, cover_url, headers={"User-Agent": DESKTOP_UA}, timeout=15)
             with open(dest, "wb") as f:
@@ -244,8 +246,8 @@ class DomesticDirectExtractor:
                 start_time = time.time()
                 last_time = start_time
 
-                with open(temp_file, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=1024 * 64):
+                with open(temp_file, "wb", buffering=1024 * 1024) as f:
+                    for chunk in r.iter_content(chunk_size=262144):
                         if cancel_event.is_set():
                             raise asyncio.CancelledError("下载被取消")
                         if chunk:
@@ -263,22 +265,24 @@ class DomesticDirectExtractor:
         # 后续格式处理
         try:
             if task.download_type == DownloadType.AUDIO_ONLY:
-                final_file = download_dir / f"{clean_title}.{task.audio_format.value}"
-                on_progress(92.0, "", "正在提取并转码音频...", TaskStatus.PROCESSING)
-                await FFmpegHelper.extract_audio(str(temp_file), str(final_file), task.audio_format.value)
+                final_file, dup_action = resolve_task_export_target(task, clean_title, f".{task.audio_format.value}")
+                if dup_action != "skip":
+                    on_progress(92.0, "", "正在提取并转码音频...", TaskStatus.PROCESSING)
+                    await FFmpegHelper.extract_audio(str(temp_file), str(final_file), task.audio_format.value)
             elif task.download_type == DownloadType.VIDEO_ONLY:
-                final_file = download_dir / f"{clean_title}_mute.mp4"
-                on_progress(92.0, "", "正在消除视频音频...", TaskStatus.PROCESSING)
-                await FFmpegHelper.strip_audio(str(temp_file), str(final_file))
+                final_file, dup_action = resolve_task_export_target(task, f"{clean_title}_mute", ".mp4")
+                if dup_action != "skip":
+                    on_progress(92.0, "", "正在消除视频音频...", TaskStatus.PROCESSING)
+                    await FFmpegHelper.strip_audio(str(temp_file), str(final_file))
             elif task.download_type == DownloadType.GIF:
-                final_file = download_dir / f"{clean_title}.gif"
-                on_progress(92.0, "", "正在渲染生成 GIF...", TaskStatus.PROCESSING)
-                await FFmpegHelper.convert_to_gif(str(temp_file), str(final_file))
+                final_file, dup_action = resolve_task_export_target(task, clean_title, ".gif")
+                if dup_action != "skip":
+                    on_progress(92.0, "", "正在渲染生成 GIF...", TaskStatus.PROCESSING)
+                    await FFmpegHelper.convert_to_gif(str(temp_file), str(final_file))
             else:
-                final_file = download_dir / f"{clean_title}.mp4"
-                if final_file.exists():
-                    final_file.unlink()
-                temp_file.rename(final_file)
+                final_file, dup_action = resolve_task_export_target(task, clean_title, ".mp4")
+                if dup_action != "skip":
+                    temp_file.replace(final_file)
 
             on_progress(100.0, "", "下载完成", TaskStatus.COMPLETED)
             return str(final_file)

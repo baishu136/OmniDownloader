@@ -212,10 +212,12 @@ public sealed partial class OnboardingDialog : ContentDialog
         {
             _selectedTheme = theme;
             _services.MainVm.SettingsVm.SelectedTheme = theme;
-            if (_services.Dialogs.OwnerWindow?.Content is FrameworkElement root)
+            RequestedTheme = theme switch
             {
-                RequestedTheme = root.ActualTheme;
-            }
+                "light" => ElementTheme.Light,
+                "dark" => ElementTheme.Dark,
+                _ => _services.Dialogs.OwnerWindow?.Content is FrameworkElement root ? root.ActualTheme : ElementTheme.Default
+            };
         }
     }
 

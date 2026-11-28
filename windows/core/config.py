@@ -41,6 +41,8 @@ class AppConfig:
         self.proxy_url: str = ""
         self.bilibili_cookie: str = ""
         self.max_concurrent_tasks: int = 3
+        self.gpu_acceleration_enabled: bool = True
+        self.gpu_preferred_vendor: str = "auto"
         self.theme: str = "auto"  # auto, dark, light
         self.accent_color: str = "system"  # system 或 #RRGGBB
         self.relay_sites: list = []
@@ -60,6 +62,9 @@ class AppConfig:
                     self.proxy_url = data.get("proxy_url", "")
                     self.bilibili_cookie = data.get("bilibili_cookie", "")
                     self.max_concurrent_tasks = data.get("max_concurrent_tasks", 3)
+                    self.gpu_acceleration_enabled = bool(data.get("gpu_acceleration_enabled", True))
+                    raw_vendor = str(data.get("gpu_preferred_vendor", "auto") or "auto").strip().lower()
+                    self.gpu_preferred_vendor = raw_vendor if raw_vendor in ("auto", "nvidia", "intel", "amd", "software") else "auto"
                     self.theme = data.get("theme", "auto")
                     self.accent_color = data.get("accent_color", "system") or "system"
                     raw_sites = data.get("relay_sites", [])
@@ -162,6 +167,8 @@ class AppConfig:
             "proxy_url": self.proxy_url,
             "bilibili_cookie": self.bilibili_cookie,
             "max_concurrent_tasks": self.max_concurrent_tasks,
+            "gpu_acceleration_enabled": self.gpu_acceleration_enabled,
+            "gpu_preferred_vendor": self.gpu_preferred_vendor,
             "theme": self.theme,
             "accent_color": self.accent_color,
             "relay_sites": self.relay_sites,
@@ -188,6 +195,8 @@ class AppConfig:
             "bilibiliCookie": "",
             "hasBilibiliSession": __import__("core.session_store", fromlist=["sessions"]).sessions.status("哔哩哔哩")["state"] == "IMPORTED",
             "maxConcurrentTasks": self.max_concurrent_tasks,
+            "gpuAccelerationEnabled": self.gpu_acceleration_enabled,
+            "gpuPreferredVendor": self.gpu_preferred_vendor,
             "theme": self.theme,
             "accentColor": self.accent_color,
             "relaySites": self.relay_sites,

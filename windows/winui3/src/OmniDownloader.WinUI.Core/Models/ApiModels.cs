@@ -164,6 +164,99 @@ public sealed class FormatOption
     }
 
     /// <summary>
+    /// 是否为 4K 及以上超高清规格
+    /// </summary>
+    [JsonIgnore]
+    public bool IsFourKOrAbove
+    {
+        get
+        {
+            var edge = Width > 0 && Height > 0 ? Math.Min(Width, Height) : Math.Max(Width, Height);
+            if (edge >= 2160) return true;
+            var label = ResolutionLabel ?? string.Empty;
+            return label.Contains("4K", StringComparison.OrdinalIgnoreCase) ||
+                   label.Contains("5K", StringComparison.OrdinalIgnoreCase) ||
+                   label.Contains("6K", StringComparison.OrdinalIgnoreCase) ||
+                   label.Contains("8K", StringComparison.OrdinalIgnoreCase) ||
+                   label.Contains("2160", StringComparison.OrdinalIgnoreCase) ||
+                   label.Contains("4320", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    /// <summary>
+    /// 是否为 Hi-Res 高解析/高码率/无损规格
+    /// </summary>
+    [JsonIgnore]
+    public bool IsHiRes
+    {
+        get
+        {
+            var ext = (Ext ?? string.Empty).Trim().ToLowerInvariant();
+            if (ext is "flac" or "alac" or "wav" or "dsf" or "ape") return true;
+
+            var combined = $"{ResolutionLabel} {Note} {ACodec} {VCodec}".ToLowerInvariant();
+            if (combined.Contains("hi-res") || combined.Contains("hires") || combined.Contains("hi res") ||
+                combined.Contains("无损") || combined.Contains("lossless") || combined.Contains("atmos") ||
+                combined.Contains("24bit") || combined.Contains("96khz") || combined.Contains("192khz") ||
+                combined.Contains("flac") || combined.Contains("alac") || combined.Contains("臻彩") ||
+                combined.Contains("高码率"))
+            {
+                return true;
+            }
+
+            return VideoBitrateKbps >= 20000;
+        }
+    }
+
+    /// <summary>
+    /// 提取画质卡片右上角展示的金色金属质感高级标签（如 8K / 4K / HDR / Hi-Res / Dolby Vision / 120FPS）
+    /// </summary>
+    public IReadOnlyList<string> GetPremiumBadges()
+    {
+        var badges = new List<string>(3);
+        var tier = TileTierBadgeText;
+        if (tier is "8K" or "6K" or "5K" or "4K")
+        {
+            badges.Add(tier);
+        }
+        else if (IsFourKOrAbove)
+        {
+            var lbl = ResolutionLabel ?? string.Empty;
+            badges.Add(lbl.Contains("8K", StringComparison.OrdinalIgnoreCase) || lbl.Contains("4320", StringComparison.OrdinalIgnoreCase) ? "8K" : "4K");
+        }
+
+        var dynText = $"{DynamicRange} {Note} {ResolutionLabel}".ToUpperInvariant();
+        if (dynText.Contains("DOLBY") || dynText.Contains("DOVI") || FormatId.StartsWith("126-", StringComparison.Ordinal))
+        {
+            badges.Add("Dolby Vision");
+        }
+        else if (dynText.Contains("HDR10+"))
+        {
+            badges.Add("HDR10+");
+        }
+        else if (dynText.Contains("HLG"))
+        {
+            badges.Add("HLG");
+        }
+        else if (IsHdr || FormatId.StartsWith("125-", StringComparison.Ordinal))
+        {
+            badges.Add("HDR");
+        }
+
+        if (IsHiRes)
+        {
+            badges.Add("Hi-Res");
+        }
+
+        if (Fps >= 100 && badges.Count < 3)
+        {
+            badges.Add($"{Fps}FPS");
+        }
+
+        return badges;
+    }
+
+    /// <summary>
     /// 是否为高动态范围（HDR / HLG / Dolby Vision 等，排除 SDR）
     /// </summary>
     [JsonIgnore]
@@ -397,6 +490,9 @@ public sealed class CreateTaskItem
 
     [JsonPropertyName("episodeTotal")]
     public int EpisodeTotal { get; set; }
+
+    [JsonPropertyName("clientSource")]
+    public string ClientSource { get; set; } = "winui";
 }
 
 public sealed class BatchCreateTaskRequest
@@ -491,6 +587,12 @@ public sealed class DownloadTask
     [JsonPropertyName("episodeTotal")]
     public int EpisodeTotal { get; set; }
 
+    [JsonPropertyName("clientSource")]
+    public string ClientSource { get; set; } = string.Empty;
+
+    [JsonPropertyName("ruleSnapshot")]
+    public JsonElement? RuleSnapshot { get; set; }
+
     [JsonIgnore]
     public bool IsActive => Status is "PENDING" or "DOWNLOADING" or "PROCESSING" or "WAITING_FOR_AUTH";
 
@@ -514,6 +616,15 @@ public sealed class BatchInputRequest
 
     [JsonPropertyName("allEpisodes")]
     public bool AllEpisodes { get; set; }
+
+    [JsonPropertyName("clientSource")]
+    public string ClientSource { get; set; } = "winui";
+
+    [JsonPropertyName("ruleMode")]
+    public string RuleMode { get; set; } = "auto";
+
+    [JsonPropertyName("ruleId")]
+    public string RuleId { get; set; } = string.Empty;
 }
 
 public sealed class BatchJobOptions
@@ -526,6 +637,15 @@ public sealed class BatchJobOptions
 
     [JsonPropertyName("allEpisodes")]
     public bool AllEpisodes { get; set; }
+
+    [JsonPropertyName("clientSource")]
+    public string ClientSource { get; set; } = "winui";
+
+    [JsonPropertyName("ruleMode")]
+    public string RuleMode { get; set; } = "auto";
+
+    [JsonPropertyName("ruleId")]
+    public string RuleId { get; set; } = string.Empty;
 }
 
 public sealed class BatchJobItem
@@ -623,6 +743,15 @@ public sealed class AppSettings
     [JsonPropertyName("maxConcurrentTasks")]
     public int MaxConcurrentTasks { get; set; } = 3;
 
+    [JsonPropertyName("gpuAccelerationEnabled")]
+    public bool GpuAccelerationEnabled { get; set; } = true;
+
+    [JsonPropertyName("gpuPreferredVendor")]
+    public string GpuPreferredVendor { get; set; } = "auto";
+
+    [JsonPropertyName("gpuStatus")]
+    public GpuStatusInfo? GpuStatus { get; set; }
+
     [JsonPropertyName("theme")]
     public string Theme { get; set; } = "auto";
 
@@ -683,6 +812,14 @@ public sealed class UpdateSettingsRequest
     [JsonPropertyName("maxConcurrentTasks")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? MaxConcurrentTasks { get; set; }
+
+    [JsonPropertyName("gpuAccelerationEnabled")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? GpuAccelerationEnabled { get; set; }
+
+    [JsonPropertyName("gpuPreferredVendor")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? GpuPreferredVendor { get; set; }
 
     [JsonPropertyName("theme")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -775,6 +912,66 @@ public enum MediaViewKind
 /// <summary>
 /// 引擎组件诊断信息，对应 /api/engine/diagnostics
 /// </summary>
+public sealed class GpuAdapterInfo
+{
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("vendor")]
+    public string Vendor { get; set; } = string.Empty;
+
+    [JsonPropertyName("deviceId")]
+    public string DeviceId { get; set; } = string.Empty;
+
+    [JsonPropertyName("active")]
+    public bool Active { get; set; }
+
+    [JsonPropertyName("primary")]
+    public bool Primary { get; set; }
+}
+
+public sealed class GpuStatusInfo
+{
+    [JsonPropertyName("enabled")]
+    public bool Enabled { get; set; } = true;
+
+    [JsonPropertyName("preferredVendor")]
+    public string PreferredVendor { get; set; } = "auto";
+
+    [JsonPropertyName("activeBackend")]
+    public string ActiveBackend { get; set; } = "software";
+
+    [JsonPropertyName("activeVendor")]
+    public string ActiveVendor { get; set; } = "software";
+
+    [JsonPropertyName("activeEncoder")]
+    public string ActiveEncoder { get; set; } = "libx264";
+
+    [JsonPropertyName("activeDecodeHwaccel")]
+    public string ActiveDecodeHwaccel { get; set; } = string.Empty;
+
+    [JsonPropertyName("hardwareAvailable")]
+    public bool HardwareAvailable { get; set; }
+
+    [JsonPropertyName("fallbackActive")]
+    public bool FallbackActive { get; set; }
+
+    [JsonPropertyName("statusCode")]
+    public string StatusCode { get; set; } = "DISABLED";
+
+    [JsonPropertyName("activeAdapterName")]
+    public string ActiveAdapterName { get; set; } = string.Empty;
+
+    [JsonPropertyName("adapters")]
+    public List<GpuAdapterInfo> Adapters { get; set; } = new();
+
+    [JsonPropertyName("supportedVendors")]
+    public List<string> SupportedVendors { get; set; } = new();
+
+    [JsonPropertyName("ffmpegThreads")]
+    public int FfmpegThreads { get; set; } = 4;
+}
+
 public sealed class EngineDiagnostics
 {
     [JsonPropertyName("python")]
@@ -791,6 +988,9 @@ public sealed class EngineDiagnostics
 
     [JsonPropertyName("denoAvailable")]
     public bool DenoAvailable { get; set; }
+
+    [JsonPropertyName("gpu")]
+    public GpuStatusInfo? Gpu { get; set; }
 }
 
 /// <summary>
